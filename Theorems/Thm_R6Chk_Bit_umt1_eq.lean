@@ -46,4 +46,4 @@ end R6Chk.Bit
 
 end
 
-theorem solution : type_of% @R6Chk.Bit.umt1_eq_sol_aux := @R6Chk.Bit.umt1_eq_sol_aux
+theorem R6Chk.Bit.umt1_eq : type_of% @R6Chk.Bit.umt1_eq_sol_aux := @R6Chk.Bit.umt1_eq_sol_aux

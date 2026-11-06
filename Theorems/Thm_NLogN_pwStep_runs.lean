@@ -175,7 +175,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution (pF : Fin P) (n C : ℕ) (hFM : NLogN.FMSpec pF iprog I n C) (s : NLogN.IState NLogN.NS)
+theorem NLogN.pwStep_runs (pF : Fin P) (n C : ℕ) (hFM : NLogN.FMSpec pF iprog I n C) (s : NLogN.IState NLogN.NS)
     (a b c : ℤ) (RV RX LC LP LN LF : List NLogN.Item) (ha : 0 ≤ a ∧ a < 2 ^ n + 1)
     (hb : 0 ≤ b ∧ b < 2 ^ n + 1) (hc : NLogN.zsz c ≤ n)
     (hV : s.G NLogN.V = .int a :: RV) (hX : s.G NLogN.DX = .int b :: RX) (hC : s.G NLogN.CC = .int c :: LC)

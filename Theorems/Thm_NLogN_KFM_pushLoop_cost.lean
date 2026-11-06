@@ -446,4 +446,4 @@ end NLogN.KFM
 
 end
 
-theorem solution : type_of% @NLogN.KFM.pushLoop_cost_sol_aux := @NLogN.KFM.pushLoop_cost_sol_aux
+theorem NLogN.KFM.pushLoop_cost : type_of% @NLogN.KFM.pushLoop_cost_sol_aux := @NLogN.KFM.pushLoop_cost_sol_aux

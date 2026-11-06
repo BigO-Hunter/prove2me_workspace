@@ -109,4 +109,4 @@ end NLogN.KIL
 
 end
 
-theorem solution : type_of% @NLogN.KIL.Sp.dupK_sol_aux := @NLogN.KIL.Sp.dupK_sol_aux
+theorem NLogN.KIL.Sp_dupK : type_of% @NLogN.KIL.Sp.dupK_sol_aux := @NLogN.KIL.Sp.dupK_sol_aux

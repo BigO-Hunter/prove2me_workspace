@@ -627,4 +627,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution : type_of% @NLogN.KFZ.pops_end_sol_aux := @NLogN.KFZ.pops_end_sol_aux
+theorem NLogN.KFZ.pops_end : type_of% @NLogN.KFZ.pops_end_sol_aux := @NLogN.KFZ.pops_end_sol_aux

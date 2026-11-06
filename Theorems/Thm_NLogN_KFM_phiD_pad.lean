@@ -1340,4 +1340,4 @@ end NLogN.KFM
 
 end
 
-theorem solution : type_of% @NLogN.KFM.phiD_pad_sol_aux := @NLogN.KFM.phiD_pad_sol_aux
+theorem NLogN.KFM.phiD_pad : type_of% @NLogN.KFM.phiD_pad_sol_aux := @NLogN.KFM.phiD_pad_sol_aux

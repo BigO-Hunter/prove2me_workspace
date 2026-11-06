@@ -30,4 +30,4 @@ end R6Chk.Bit.Loc
 
 end
 
-theorem solution : type_of% @R6Chk.Bit.Loc.cov_chk_sol_aux := @R6Chk.Bit.Loc.cov_chk_sol_aux
+theorem R6Chk.Bit.Loc.cov_chk : type_of% @R6Chk.Bit.Loc.cov_chk_sol_aux := @R6Chk.Bit.Loc.cov_chk_sol_aux

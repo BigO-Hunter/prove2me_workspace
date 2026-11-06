@@ -448,7 +448,7 @@ open NLogN
 open NLogN.KFM
 open IntMul KFC KFB KFT KIL
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-theorem solution (Δ w : ℕ) (h : ℤ) (s : NLogN.IState NLogN.HS) (L : List ℤ) (R0 LR LH : List NLogN.Item)
+theorem NLogN.KFM.roundPU_runs (Δ w : ℕ) (h : ℤ) (s : NLogN.IState NLogN.HS) (L : List ℤ) (R0 LR LH : List NLogN.Item)
     (h0 : s.G 0 = NLogN.ints L ++ R0) (hR : s.G NLogN.KFM.pR = .int (2 ^ Δ) :: LR) (hH : s.G NLogN.KFM.pX2 = .int h :: LH)
     (hw : ∀ x ∈ L, NLogN.zsz x ≤ w) (hh : NLogN.zsz h ≤ w)
     (LX : List NLogN.Item) (hX : s.G NLogN.KFM.nX = .int (L.length : ℤ) :: LX) :

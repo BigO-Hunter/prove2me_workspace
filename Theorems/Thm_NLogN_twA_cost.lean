@@ -779,7 +779,7 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS IntMul.HvdH
 set_option maxHeartbeats 4000000
-theorem solution (n k j : ℕ) (s : NLogN.IState NLogN.HS) (L28 L29 L53 : List NLogN.Item)
+theorem NLogN.twA_cost (n k j : ℕ) (s : NLogN.IState NLogN.HS) (L28 L29 L53 : List NLogN.Item)
     (h28 : s.G 28 = .int n :: L28) (h29 : s.G 29 = .int k :: L29)
     (h53 : s.G 53 = .int j :: L53) :
     NLogN.twA.cost s ≤ 10 ^ 12 * (NLogN.twBB n (NLogN.zsz (j : ℤ)) (NLogN.zsz (k : ℤ)) + 6) ^ 2 := by

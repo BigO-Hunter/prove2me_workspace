@@ -490,7 +490,7 @@ open NLogN
 open NLogN.KIL
 open AModel AModelL12 AModelFac AModelRat
 variable {m : ℕ}
-theorem solution {R : Type*} [CommRing R] {W : ℕ} (C : AModelRat.QCircuit R m W) {q b N : ℕ}
+theorem NLogN.KIL.edgeSteps_toCircuit {R : Type*} [CommRing R] {W : ℕ} (C : AModelRat.QCircuit R m W) {q b N : ℕ}
     (hq : q.Prime) (hN : N ∣ q ^ b) (hN1 : 1 < N) (X : AModel.IMat m)
     (hg : AModelRat.GoodAtQ q ((C.den : ℚ)⁻¹ • AModelFac.ratM X)) :
     AModel.edgeSteps (C.toCircuit (q ^ b)) N X = (NLogN.KIL.edgeTplQ C X).map (NLogN.KIL.TStep.eval N) := by

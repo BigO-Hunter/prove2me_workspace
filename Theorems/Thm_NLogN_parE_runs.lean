@@ -471,7 +471,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution (pP : Fin P) (hP : iprog pP = NLogN.pow2Body pP) (s : NLogN.IState NLogN.NS) (N n k Q ℓ : ℕ)
+theorem NLogN.parE_runs (pP : Fin P) (hP : iprog pP = NLogN.pow2Body pP) (s : NLogN.IState NLogN.NS) (N n k Q ℓ : ℕ)
     (L1 L2 L3 LZ : List NLogN.Item) (hn : 1 ≤ n) (hkn : k ≤ n) (hnN : n ≤ N) (hQ : Q ≤ N)
     (hℓ : ℓ ≤ N)
     (hT1 : s.G NLogN.T1 = .int k :: L1) (hT2 : s.G NLogN.T2 = .int Q :: L2) (hT3 : s.G NLogN.T3 = .int n :: L3)

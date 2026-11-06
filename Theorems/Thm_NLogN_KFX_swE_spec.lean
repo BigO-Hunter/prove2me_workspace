@@ -720,4 +720,4 @@ end NLogN.KFX
 
 end
 
-theorem solution : type_of% @NLogN.KFX.swE_spec_sol_aux := @NLogN.KFX.swE_spec_sol_aux
+theorem NLogN.KFX.swE_spec : type_of% @NLogN.KFX.swE_spec_sol_aux := @NLogN.KFX.swE_spec_sol_aux

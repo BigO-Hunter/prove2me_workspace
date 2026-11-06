@@ -1378,7 +1378,7 @@ set_option linter.unnecessarySeqFocus false
 open NLogN
 open NLogN.KFZ
 open IntMul NLogN.KIL KFB NLogN.KFM IntMul.OpenAI.Glue
-theorem solution (s : NLogN.IState NLogN.HS) (f : Fin NLogN.HS → List ℤ) (hf : NLogN.KFZ.EmptyEx f) (K p α h d : ℕ)
+theorem NLogN.KFZ.setup_St (s : NLogN.IState NLogN.HS) (f : Fin NLogN.HS → List ℤ) (hf : NLogN.KFZ.EmptyEx f) (K p α h d : ℕ)
     (bs ss : List ℕ) (hbl : bs.length = d) (hsl : ss.length = d) (hb1 : ∀ b ∈ bs, b ≤ 1)
     (hst : ∀ (i : ℕ) (hi : i < d), ss[i]'(by omega) ≤ 2 ^ (h + bs[i]'(by omega)))
     (hc : f NLogN.KFZ.cS = (K : ℤ) :: (p : ℤ) :: (α : ℤ) :: (h : ℤ) :: (d : ℤ) :: (NLogN.KFZ.zl bs ++ NLogN.KFZ.zl ss))

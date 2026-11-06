@@ -13,17 +13,6 @@ namespace AModel
 
 open Matrix
 
-lemma decode_encode {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) : decode sh (encode sh a) = a := by
-  induction h with
-  | nil => rfl
-  | @cons x q as sh hx hr ih =>
-    have he := encode_lt hr
-    have hV : 0 < AModel.vol sh := by omega
-    simp only [encode, List.headD_cons, List.tail_cons, decode]
-    rw [show x * AModel.vol sh + encode sh as = encode sh as + AModel.vol sh * x by ring,
-      Nat.add_mul_div_left _ _ hV, Nat.div_eq_of_lt he, Nat.add_mul_mod_self_left,
-      Nat.mod_eq_of_lt he, ih, zero_add, Nat.mod_eq_of_lt hx]
-
 lemma encode_decode {sh : Shape} {m : ℕ} (h : m < AModel.vol sh) : encode sh (decode sh m) = m := by
   induction sh generalizing m with
   | nil => simp at h; subst h; rfl
@@ -82,57 +71,6 @@ section
 namespace NLogN.KIL
 
 open AModel
-
-theorem fm_congr {α β : Type*} {l : List α} {f g : α → List β} (h : ∀ x ∈ l, f x = g x) :
-    l.flatMap f = l.flatMap g := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    simp only [List.flatMap_cons]
-    rw [h a (by simp), ih (fun x hx => h x (by simp [hx]))]
-
-theorem range_mul (m n : ℕ) :
-    List.range (m * n) = (List.range m).flatMap fun i => (List.range n).map fun j => i * n + j := by
-  induction m with
-  | zero => simp
-  | succ m ih =>
-    rw [Nat.succ_mul, List.range_add, ih, List.range_succ, List.flatMap_append]
-    simp
-
-theorem map_range4 {α : Type*} (a b c d : ℕ) (G : ℕ → α) :
-    (List.range (a * b * c * d)).map G =
-      (List.range a).flatMap fun i => (List.range b).flatMap fun j =>
-        (List.range c).flatMap fun k => (List.range d).map fun l => G (((i * b + j) * c + k) * d + l) := by
-  rw [range_mul, range_mul, range_mul]
-  simp only [List.map_flatMap, List.flatMap_assoc, List.flatMap_map, List.map_map]
-  rfl
-
-theorem decode4 {a b c d i j k l : ℕ} (hi : i < a) (hj : j < b) (hk : k < c) (hl : l < d) :
-    decode [a, b, c, d] (((i * b + j) * c + k) * d + l) = [i, j, k, l] := by
-  have hv : AModel.Valid [a, b, c, d] [i, j, k, l] :=
-    List.Forall₂.cons hi (List.Forall₂.cons hj (List.Forall₂.cons hk
-      (List.Forall₂.cons hl List.Forall₂.nil)))
-  have he : encode [a, b, c, d] [i, j, k, l] = ((i * b + j) * c + k) * d + l := by
-    simp [encode, AModel.vol]; ring
-  rw [← he, decode_encode hv]
-
-theorem encode4 (a b c d i j k l : ℕ) :
-    encode [a, b, c, d] [i, j, k, l] = ((i * b + j) * c + k) * d + l := by
-  simp [encode, AModel.vol]; ring
-
-theorem vol4 (a b c d : ℕ) : AModel.vol [a, b, c, d] = a * b * c * d := by
-  simp [AModel.vol]; ring
-
-theorem inp_recOf' (xs : List ℤ) (P q M B : ℕ) :
-    inp (recOf' xs q M B) P q M = AModel.pull [P, M, q, B] [P, q, M, B] gS 0 xs := by
-  unfold AModel.pull
-  rw [vol4, map_range4]
-  unfold inp blkIn recOf'
-  refine fm_congr fun p hp => fm_congr fun y hy => fm_congr fun m hm => ?_
-  refine List.map_congr_left fun b hb => ?_
-  simp only [List.mem_range] at hp hm hy hb
-  rw [NLogN.KIL.decode4 hp hy hm hb]
-  simp [gS, encode4]
 
 end NLogN.KIL
 
@@ -204,7 +142,7 @@ open NLogN
 open IntMul AModel
 open NLogN.KFC
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-theorem solution (t : NLogN.IState NLogN.HS) (xs : List ℤ) (P W L : ℕ) (rest : AModel.Shape) (w : ℕ)
+theorem NLogN.KFC.rowSplitF_spec (t : NLogN.IState NLogN.HS) (xs : List ℤ) (P W L : ℕ) (rest : AModel.Shape) (w : ℕ)
     (R L1 L2 L3 L4 : List NLogN.Item)
     (hlen : xs.length = AModel.vol (P :: W * L :: rest)) (hb : NLogN.Bnd w xs)
     (hB1 : 1 ≤ AModel.vol rest) (hPL : 1 ≤ P * L) (hW : 1 ≤ W)

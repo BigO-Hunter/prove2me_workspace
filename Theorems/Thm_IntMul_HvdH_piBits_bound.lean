@@ -252,5 +252,5 @@ theorem log2Bits_bound (n : ℕ) : |(log2Bits n : ℝ) - 2 ^ n * Real.log 2| ≤
 
 end IntMul.HvdH.Num
 
-theorem solution (n : ℕ) : |(IntMul.HvdH.piBits n : ℝ) - 2 ^ n * Real.pi| ≤ 1 :=
+theorem IntMul.HvdH.piBits_bound (n : ℕ) : |(IntMul.HvdH.piBits n : ℝ) - 2 ^ n * Real.pi| ≤ 1 :=
   IntMul.HvdH.Num.piBits_bound n

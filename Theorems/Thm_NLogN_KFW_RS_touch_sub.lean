@@ -122,4 +122,4 @@ end NLogN.KFW
 
 end
 
-theorem solution : type_of% @NLogN.KFW.RS.touch_sub_sol_aux := @NLogN.KFW.RS.touch_sub_sol_aux
+theorem NLogN.KFW.RS_touch_sub : type_of% @NLogN.KFW.RS.touch_sub_sol_aux := @NLogN.KFW.RS.touch_sub_sol_aux

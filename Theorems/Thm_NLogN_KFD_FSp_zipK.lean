@@ -375,4 +375,4 @@ end NLogN
 
 end
 
-theorem solution : type_of% @NLogN.KFD.FSp.zipK_sol_aux := @NLogN.KFD.FSp.zipK_sol_aux
+theorem NLogN.KFD.FSp_zipK : type_of% @NLogN.KFD.FSp.zipK_sol_aux := @NLogN.KFD.FSp.zipK_sol_aux

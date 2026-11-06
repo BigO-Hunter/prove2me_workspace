@@ -1178,7 +1178,7 @@ open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD Butterfly Finset
 variable {K ρ f : ℕ} {g : Geo}
-theorem solution (hK : 6 ≤ K) (hρK : ρ < K) (hf : 1 ≤ f) (hg : g.Pos)
+theorem NLogN.KFL.card_moved (hK : 6 ≤ K) (hρK : ρ < K) (hf : 1 ≤ f) (hg : g.Pos)
     (hQe : g.Q = 2 ^ (f * K)) :
     NLogN.KFL.nMv (NLogN.KFL.keyR K ρ f g) g.recG.V * 2 ^ K ≤ 80 * (f - 1) * g.recG.V := by
   set M := g.recG.V

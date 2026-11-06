@@ -12,7 +12,7 @@ open NLogN
 open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 open NLogN.IRuns
-theorem solution {p q : NLogN.IStmt S P} {s s₁ s₂ : NLogN.IState S} {c₁ c₂ : ℕ} (h₁ : NLogN.IRuns I iprog p s s₁ c₁)
+theorem NLogN.IRuns.seq {p q : NLogN.IStmt S P} {s s₁ s₂ : NLogN.IState S} {c₁ c₂ : ℕ} (h₁ : NLogN.IRuns I iprog p s s₁ c₁)
     (h₂ : NLogN.IRuns I iprog q s₁ s₂ c₂) : NLogN.IRuns I iprog (.seq p q) s s₂ (c₁ + c₂) := by
   obtain ⟨d₁, hd₁, h₁⟩ := h₁; obtain ⟨d₂, hd₂, h₂⟩ := h₂
   exact ⟨d₁ + d₂, by omega, .seq h₁ h₂⟩

@@ -1531,4 +1531,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.bodyQH_sol_aux := @IntMul.Kappa.R6.IL3H.bodyQH_sol_aux
+theorem IntMul.Kappa.R6.IL3H.bodyQH : type_of% @IntMul.Kappa.R6.IL3H.bodyQH_sol_aux := @IntMul.Kappa.R6.IL3H.bodyQH_sol_aux

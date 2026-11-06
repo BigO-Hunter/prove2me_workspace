@@ -47,7 +47,7 @@ theorem h50i_conj {E : Type*} [AddCommGroup E] [Module ℚ E] [FiniteDimensional
   have := key (PA.symm x)
   simpa using this
 
-theorem solution (A B : Matrix (Fin n) (Fin n) ℚ) (hA : A * A = A) (hB : B * B = B)
+theorem IntMul.Kappa.R6.Bit.NB.idem_similar (A B : Matrix (Fin n) (Fin n) ℚ) (hA : A * A = A) (hB : B * B = B)
     (hr : A.rank = B.rank) : ∃ Q : Matrix (Fin n) (Fin n) ℚ, IsUnit Q.det ∧ Q * A = B * Q := by
   have hfA : IsIdempotentElem A.mulVecLin := by
     show A.mulVecLin * A.mulVecLin = A.mulVecLin

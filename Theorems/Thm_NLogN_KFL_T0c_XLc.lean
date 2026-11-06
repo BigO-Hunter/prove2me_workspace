@@ -118,7 +118,7 @@ open NLogN
 open NLogN.KFL
 open Butterfly
 variable {K ρ f : ℕ}
-theorem solution (hK : 1 ≤ K) (hf : 1 ≤ f) (c : NLogN.KFL.Tr) : NLogN.KFL.T0c K ρ f (NLogN.KFL.XLc K ρ f c) = NLogN.KFL.RAc K ρ f c := by
+theorem NLogN.KFL.T0c_XLc (hK : 1 ≤ K) (hf : 1 ≤ f) (c : NLogN.KFL.Tr) : NLogN.KFL.T0c K ρ f (NLogN.KFL.XLc K ρ f c) = NLogN.KFL.RAc K ρ f c := by
   unfold NLogN.KFL.XLc
   rw [NLogN.KFL.flip1_xor]
   unfold NLogN.KFL.T0c NLogN.KFL.RAc

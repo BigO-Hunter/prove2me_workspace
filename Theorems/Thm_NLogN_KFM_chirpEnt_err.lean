@@ -56,7 +56,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFM
 open Complex KFB
-theorem solution {d : ℕ} (P : ℕ) (s t : Fin d → ℕ) [∀ i, NeZero (t i)]
+theorem NLogN.KFM.chirpEnt_err {d : ℕ} (P : ℕ) (s t : Fin d → ℕ) [∀ i, NeZero (t i)]
     (hst : ∀ i, s i ≤ t i) (T : ℕ) (hT : ∀ i, t i ≤ T)
     (hu : d * (8 * (T : ℝ) ^ 2 + 2) * (2 : ℝ)⁻¹ ^ P ≤ 1) (j : (i : Fin d) → ZMod (t i)) :
     ‖NLogN.KFM.vP P (NLogN.KFM.chirpEnt P s t j) - IntMul.OpenAI.RC.chirp s t j‖ ≤

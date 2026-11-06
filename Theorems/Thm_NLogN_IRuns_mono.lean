@@ -12,7 +12,7 @@ open NLogN
 open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 open NLogN.IRuns
-theorem solution {p : NLogN.IStmt S P} {s s' : NLogN.IState S} {c c' : ℕ} (h : NLogN.IRuns I iprog p s s' c)
+theorem NLogN.IRuns.mono {p : NLogN.IStmt S P} {s s' : NLogN.IState S} {c c' : ℕ} (h : NLogN.IRuns I iprog p s s' c)
     (hc : c ≤ c') : NLogN.IRuns I iprog p s s' c' := by
   obtain ⟨d, hd, h⟩ := h; exact ⟨d, by omega, h⟩
 end

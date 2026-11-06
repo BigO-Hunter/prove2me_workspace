@@ -257,4 +257,4 @@ end IntMul.Kappa.R6
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.cost_final6_sol_aux := @IntMul.Kappa.R6.cost_final6_sol_aux
+theorem IntMul.Kappa.R6.cost_final6 : type_of% @IntMul.Kappa.R6.cost_final6_sol_aux := @IntMul.Kappa.R6.cost_final6_sol_aux

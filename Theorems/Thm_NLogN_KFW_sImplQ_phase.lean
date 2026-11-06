@@ -2129,7 +2129,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFW
 open IntMul KIL KFD KFB KFG KFN Complex
-theorem solution {Is : List NLogN.Sym} {Pp : ℕ} {iprog : Fin Pp → NLogN.IStmt NLogN.HS Pp}
+theorem NLogN.KFW.sImplQ_phase {Is : List NLogN.Sym} {Pp : ℕ} {iprog : Fin Pp → NLogN.IStmt NLogN.HS Pp}
     {Q : NLogN.IState NLogN.HS → Prop} {lo hi : ℕ}
     {ι : Type*} [Fintype ι] [DecidableEq ι] (r S t B u : ℕ) (pos : ι → ℕ)
     (hpos : ∀ i, pos i < t) (a' : ι → ℕ) (hr : 0 < r) (hS : 0 < S) (hB : 1 ≤ B) (Z : ℕ)

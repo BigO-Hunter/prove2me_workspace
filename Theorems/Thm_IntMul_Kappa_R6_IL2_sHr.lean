@@ -901,4 +901,4 @@ end IntMul.Kappa.R6.IL2
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2.sHr_sol_aux := @IntMul.Kappa.R6.IL2.sHr_sol_aux
+theorem IntMul.Kappa.R6.IL2.sHr : type_of% @IntMul.Kappa.R6.IL2.sHr_sol_aux := @IntMul.Kappa.R6.IL2.sHr_sol_aux

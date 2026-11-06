@@ -1128,7 +1128,7 @@ open NLogN
 open NLogN.KFM
 open IntMul NLogN
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution (pF pD pT pP : Fin P) (hPF : iprog pF = NLogN.fmBody pF pD pT pP)
+theorem NLogN.KFM.mulBody_runs (pF pD pT pP : Fin P) (hPF : iprog pF = NLogN.fmBody pF pD pT pP)
     (hPD : iprog pD = NLogN.difBody pD) (hPT : iprog pT = NLogN.ditBody pT) (hPP : iprog pP = NLogN.pow2Body pP)
     (s : NLogN.IState NLogN.NS) (a b : ℤ) (LA : List NLogN.Item) (hA : s.G NLogN.ARG = .int a :: .int b :: LA) :
     NLogN.IRuns I iprog (NLogN.KFM.mulBody pF pP) s (s.upd NLogN.ARG (.int (a * b) :: LA))

@@ -1049,7 +1049,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD KFE KFB AModel AModelL12 NetProp7
-theorem solution :
+theorem NLogN.KFL.swI_spec :
     ∃ T q₀ : ℕ, ∀ q, q.Prime → q₀ < q → ∃ K : ℝ, 0 ≤ K ∧
       ∀ (u : ℕ) (Pre G Suf : AModel.Shape), 1 ≤ u →
       (∀ a ∈ Pre, 1 ≤ a) → (∀ a ∈ G, 1 ≤ a) → (∀ a ∈ Suf, 1 ≤ a) →

@@ -250,7 +250,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution (s : NLogN.IState NLogN.NS) (N : ℕ) (a b : ℤ) (LA LN : List NLogN.Item) (ha : 0 ≤ a ∧ a ≤ 2 ^ N)
+theorem NLogN.fmPre_runs (s : NLogN.IState NLogN.NS) (N : ℕ) (a b : ℤ) (LA LN : List NLogN.Item) (ha : 0 ≤ a ∧ a ≤ 2 ^ N)
     (hb : 0 ≤ b ∧ b ≤ 2 ^ N) (hA : s.G NLogN.ARG = .int a :: .int b :: LA)
     (hN : s.G NLogN.RN = .int (2 ^ N) :: LN) :
     NLogN.IRuns I iprog NLogN.fmPre s

@@ -44,4 +44,4 @@ end IntMul.Kappa.R6.Bit.NB
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.Bit.NB.DC_eq2_sol_aux := @IntMul.Kappa.R6.Bit.NB.DC_eq2_sol_aux
+theorem IntMul.Kappa.R6.Bit.NB.DC_eq2 : type_of% @IntMul.Kappa.R6.Bit.NB.DC_eq2_sol_aux := @IntMul.Kappa.R6.Bit.NB.DC_eq2_sol_aux

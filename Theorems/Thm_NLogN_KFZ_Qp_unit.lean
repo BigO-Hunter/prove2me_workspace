@@ -261,4 +261,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution : type_of% @NLogN.KFZ.Qp_unit_sol_aux := @NLogN.KFZ.Qp_unit_sol_aux
+theorem NLogN.KFZ.Qp_unit : type_of% @NLogN.KFZ.Qp_unit_sol_aux := @NLogN.KFZ.Qp_unit_sol_aux

@@ -907,4 +907,4 @@ end IntMul.Kappa.R6
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.cpyD_sp_sol_aux := @IntMul.Kappa.R6.cpyD_sp_sol_aux
+theorem IntMul.Kappa.R6.cpyD_sp : type_of% @IntMul.Kappa.R6.cpyD_sp_sol_aux := @IntMul.Kappa.R6.cpyD_sp_sol_aux

@@ -1307,7 +1307,7 @@ theorem lv_all_aux (hGc : NLogN.KFN.GClass J A) (hrow : NLogN.KFN.RowHyp Isym ip
     have : (0 : ℝ) ≤ CR * ((m : ℝ) ^ k + 1) ^ τ := mul_nonneg hCR (by positivity)
     positivity
 
-theorem solution (hGc : NLogN.KFN.GClass J A) (hrow : NLogN.KFN.RowHyp Isym iprog K m r Z Ψ CR τ) (hCR : 0 ≤ CR) (hτ : 0 ≤ τ)
+theorem NLogN.KFN.lv_all (hGc : NLogN.KFN.GClass J A) (hrow : NLogN.KFN.RowHyp Isym iprog K m r Z Ψ CR τ) (hCR : 0 ≤ CR) (hτ : 0 ≤ τ)
     (hW : 1 ≤ W) (hr : 1 ≤ r) (hΨm : Monotone Ψ) (hZΨ : ∀ v, Z + 2 ≤ Ψ v) :
     ∀ k, NLogN.KFN.Lv Isym iprog K W m r Z Ψ k (NLogN.KFN.Eb J.net.length s k) (NLogN.KFN.DWb J.net.length s W A k)
       (NLogN.KFN.Whb J.net.length s W A k) (NLogN.KFN.cb J.net.length s W A m CR τ k) ∧

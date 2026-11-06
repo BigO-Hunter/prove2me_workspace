@@ -42,7 +42,7 @@ set_option linter.unnecessarySeqFocus false
 open NLogN
 open NLogN.KIL
 open IntMul RS
-theorem solution {l : List (Fin NLogN.HS × ℤ)} {s : NLogN.IState NLogN.HS}
+theorem NLogN.KIL.PV_of_list {l : List (Fin NLogN.HS × ℤ)} {s : NLogN.IState NLogN.HS}
     (h : ∀ p ∈ l, ∃ L, s.G p.1 = .int p.2 :: L) : NLogN.KIL.PV (NLogN.KIL.pmOf l) s :=
   fun _ _ hv => h _ (NLogN.KIL.pmOf_some hv)
 end

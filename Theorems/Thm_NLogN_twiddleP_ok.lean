@@ -553,7 +553,7 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS IntMul.HvdH
 set_option maxHeartbeats 2000000
-theorem solution (n k j : ℕ) (s : NLogN.IState NLogN.HS) (L28 L29 L53 : List NLogN.Item)
+theorem NLogN.twiddleP_ok (n k j : ℕ) (s : NLogN.IState NLogN.HS) (L28 L29 L53 : List NLogN.Item)
     (h28 : s.G 28 = .int n :: L28) (h29 : s.G 29 = .int k :: L29)
     (h53 : s.G 53 = .int j :: L53) : NLogN.twiddleP.ok s := by
   simp (config := {decide := true}) only [NLogN.twiddleP, NLogN.twA, NLogN.twB, NLogN.RS.seqL, NLogN.RS.run_seq, NLogN.RS.ok]

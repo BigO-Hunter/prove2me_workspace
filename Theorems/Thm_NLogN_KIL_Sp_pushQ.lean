@@ -65,7 +65,7 @@ open NLogN
 open IntMul RS
 open NLogN.KIL
 variable (s : IState HS) (f : Fin HS → List ℤ)
-theorem solution {i : Fin NLogN.HS} {e : NLogN.Ex NLogN.HS} {B : ℕ} (hi : i.val < 56) (hc : e.Clean)
+theorem NLogN.KIL.Sp.pushQ {i : Fin NLogN.HS} {e : NLogN.Ex NLogN.HS} {B : ℕ} (hi : i.val < 56) (hc : e.Clean)
     (hok : e.ok (NLogN.KIL.encK s f)) (hB : e.Bnd (NLogN.KIL.encK s f) B) :
     NLogN.KIL.Sp (.push i e) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i (e.eval (NLogN.KIL.encK s f) :: f i)))
       ((e.size + 1) * 10 ^ 7 * (B + 2) ^ 2) := by

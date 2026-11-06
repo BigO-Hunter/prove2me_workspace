@@ -12,6 +12,6 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS
 open NLogN.KIL
-theorem solution (c : ℤ) : (NLogN.Ex.lit (S := NLogN.HS) c).Clean := by
+theorem NLogN.KIL.clean_lit (c : ℤ) : (NLogN.Ex.lit (S := NLogN.HS) c).Clean := by
   intro j hj; simp [NLogN.Ex.regs] at hj
 end

@@ -14,11 +14,6 @@ namespace AModel
 
 open Finset
 
-/-- `((m:ℝ)^k)^τ = (m^τ)^k`. -/
-lemma pow_rpow_eq (m : ℕ) (k : ℕ) (τ : ℝ) :
-    (((m : ℝ) ^ k) ^ τ) = ((m : ℝ) ^ τ) ^ k :=
-  (Real.rpow_pow_comm (Nat.cast_nonneg m) τ k).symm
-
 lemma one_lt_base_rpow {m : ℕ} (hm : 2 ≤ m) {τ : ℝ} (hτ : 0 < τ) :
     1 < (m : ℝ) ^ τ :=
   Real.one_lt_rpow (by exact_mod_cast (by omega : 1 < m)) hτ
@@ -375,13 +370,6 @@ open IntMul RS AModel AModelL12
 theorem one_le_vol {S : Shape} (h : ∀ a ∈ S, 1 ≤ a) : 1 ≤ vol S := by
   unfold vol; exact Nat.one_le_iff_ne_zero.2 (List.prod_ne_zero (fun h0 => by have := h 0 h0; omega))
 
-theorem pow_le_of_lt_len {m n j : ℕ} (hm : 2 ≤ m) (hn : 1 ≤ n) (hj : j < (Nat.digits m n).length) :
-    m ^ j ≤ n := by
-  have h := Nat.base_pow_length_digits_le m n (by omega) (by omega)
-  have : m ^ j * m ≤ m * n := le_trans (by rw [← pow_succ]; exact Nat.pow_le_pow_right (by omega) hj) h
-  rw [mul_comm] at this
-  exact Nat.le_of_mul_le_mul_left this (by omega)
-
 end NLogN.KIL
 
 end
@@ -529,14 +517,6 @@ theorem cPcs_le (m n : ℕ) (cO : ℕ → ℕ) (B : ℕ) (hm : 2 ≤ m) :
   calc _ ≤ (∑ j ∈ range L, (n / m ^ j % m * cO j + (3 * m + 3) * 10 ^ 9 * X)) +
         2 * 10 ^ 9 * (n + 2) * X := Nat.add_le_add_right (sum_le_sum h) _
     _ = _ := by rw [sum_add_distrib, sum_const, card_range, smul_eq_mul]; ring
-
-theorem digits_len_le {m n : ℕ} (hm : 2 ≤ m) (hn : 1 ≤ n) : (Nat.digits m n).length ≤ n := by
-  have h1 : 1 ≤ (Nat.digits m n).length := by
-    rw [Nat.digits_def' (by omega) (by omega)]; simp
-  have h2 := pow_le_of_lt_len hm hn (j := (Nat.digits m n).length - 1) (by omega)
-  have h3 : (Nat.digits m n).length - 1 < 2 ^ ((Nat.digits m n).length - 1) := Nat.lt_two_pow_self
-  have h4 := Nat.pow_le_pow_left hm ((Nat.digits m n).length - 1)
-  omega
 
 theorem e_le_u {q u : ℕ} (hq : 2 ≤ q) : Nat.clog q (2 ^ u) ≤ u :=
   Nat.clog_le_of_le_pow (Nat.pow_le_pow_left hq u)
@@ -705,7 +685,7 @@ open NLogN
 open NLogN.KFE
 open IntMul RS AModel AModelL12 Finset KIL KFD
 set_option maxHeartbeats 4000000
-theorem solution {m W S : ℕ} (Kc Kb Kd q : ℕ) (hm : 2 ≤ m) (hW : 1 ≤ W) (hq : 2 ≤ q) {τ : ℝ}
+theorem NLogN.KFE.cL12F_le {m W S : ℕ} (Kc Kb Kd q : ℕ) (hm : 2 ≤ m) (hW : 1 ≤ W) (hq : 2 ≤ q) {τ : ℝ}
     (hτ : 0 < τ ∧ τ < 1) (hs : (S : ℝ) / W < (m : ℝ) ^ τ) :
     ∃ K : ℝ, 0 ≤ K ∧ ∀ (u : ℕ) (Pre G Suf : AModel.Shape) (Bb e Kp : ℕ), 1 ≤ u →
       (∀ a ∈ Pre, 1 ≤ a) → (∀ a ∈ G, 1 ≤ a) → (∀ a ∈ Suf, 1 ≤ a) →

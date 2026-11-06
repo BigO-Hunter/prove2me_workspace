@@ -848,4 +848,4 @@ end NLogN
 
 end
 
-theorem solution : type_of% @NLogN.KFD.copyCU_fsp_sol_aux := @NLogN.KFD.copyCU_fsp_sol_aux
+theorem NLogN.KFD.copyCU_fsp : type_of% @NLogN.KFD.copyCU_fsp_sol_aux := @NLogN.KFD.copyCU_fsp_sol_aux

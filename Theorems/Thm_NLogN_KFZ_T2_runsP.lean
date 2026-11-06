@@ -1260,4 +1260,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution : type_of% @NLogN.KFZ.T2_runsP_sol_aux := @NLogN.KFZ.T2_runsP_sol_aux
+theorem NLogN.KFZ.T2_runsP : type_of% @NLogN.KFZ.T2_runsP_sol_aux := @NLogN.KFZ.T2_runsP_sol_aux

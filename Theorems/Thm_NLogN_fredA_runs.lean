@@ -196,7 +196,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution {X : Fin NLogN.NS} (h1 : X ≠ NLogN.RN) (h2 : X ≠ NLogN.T1) (h3 : X ≠ NLogN.T2) (s : NLogN.IState NLogN.NS)
+theorem NLogN.fredA_runs {X : Fin NLogN.NS} (h1 : X ≠ NLogN.RN) (h2 : X ≠ NLogN.T1) (h3 : X ≠ NLogN.T2) (s : NLogN.IState NLogN.NS)
     (z : ℤ) (n : ℕ) (L LN : List NLogN.Item) (hX : s.G X = .int z :: L)
     (hN : s.G NLogN.RN = .int (2 ^ n) :: LN) (hz : z.natAbs < 2 ^ (2 * n + 1)) :
     NLogN.IRuns I iprog (NLogN.fredA X) s (s.upd X (.int (NLogN.fredW n z) :: L)) (2000 * (n + 2)) := by

@@ -269,7 +269,7 @@ open NLogN
 open NLogN.KFM
 open IntMul KFC KFB KFT KIL
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-theorem solution (γ w : ℕ) (s : NLogN.IState NLogN.HS) (L : List ℤ) (R0 LR : List NLogN.Item)
+theorem NLogN.KFM.shlPU_runs (γ w : ℕ) (s : NLogN.IState NLogN.HS) (L : List ℤ) (R0 LR : List NLogN.Item)
     (h0 : s.G 0 = NLogN.ints L ++ R0) (hR : s.G NLogN.KFM.pR = .int (2 ^ γ) :: LR) (hw : ∀ x ∈ L, NLogN.zsz x ≤ w)
     (LX : List NLogN.Item) (hX : s.G NLogN.KFM.nX = .int (L.length : ℤ) :: LX) :
     NLogN.IRuns I iprog (NLogN.KFM.itemPU NLogN.KFM.shlB) s (s.upd 0 (NLogN.ints (L.map (· * 2 ^ γ)) ++ R0))

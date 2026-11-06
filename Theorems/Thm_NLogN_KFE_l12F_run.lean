@@ -2473,7 +2473,7 @@ open NLogN
 open NLogN.KFE
 open IntMul RS AModel AModelL12 KIL KFD
 set_option maxHeartbeats 4000000
-theorem solution {I : List NLogN.Sym} {iprog : Fin 1 → NLogN.IStmt NLogN.HS 1} (s : NLogN.IState NLogN.HS)
+theorem NLogN.KFE.l12F_run {I : List NLogN.Sym} {iprog : Fin 1 → NLogN.IStmt NLogN.HS 1} (s : NLogN.IState NLogN.HS)
     (F : Fin NLogN.HS → List ℤ) {M B : ℕ} (hM : NLogN.zsz (M : ℤ) ≤ B) (hB1 : 1 ≤ B) {q m W u : ℕ}
     (Pre G Suf : AModel.Shape) (child : AModelL12.Oracle (ZMod 2)) (cO : ℕ → ℕ) (xs : List (ZMod 2))
     (hq : 2 ≤ q) (hm : 2 ≤ m) (hW : 1 ≤ W) (hu : 1 ≤ u)

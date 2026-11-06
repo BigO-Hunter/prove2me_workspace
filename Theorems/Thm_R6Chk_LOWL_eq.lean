@@ -26,4 +26,4 @@ end R6Chk
 
 end
 
-theorem solution : type_of% @R6Chk.LOWL_eq_sol_aux := @R6Chk.LOWL_eq_sol_aux
+theorem R6Chk.LOWL_eq : type_of% @R6Chk.LOWL_eq_sol_aux := @R6Chk.LOWL_eq_sol_aux

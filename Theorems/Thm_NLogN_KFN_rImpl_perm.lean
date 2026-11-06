@@ -270,7 +270,7 @@ open NLogN
 open NLogN.KFN
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
-theorem solution (T : Butterfly.Op κ) (σ : Equiv.Perm (Fin W)) {r n : ℕ} (hr : 0 < r)
+theorem NLogN.KFN.rImpl_perm (T : Butterfly.Op κ) (σ : Equiv.Perm (Fin W)) {r n : ℕ} (hr : 0 < r)
     (st : Fin m × κ → ℕ) (Z : ℕ) (hZ : NLogN.zsz ((2 * (W * (n * r)) : ℕ) : ℤ) ≤ Z) :
     NLogN.KFN.RImpl r n st ((P8Lift.RStep.perm σ : P8Lift.RStep (Fin W) m).den T) (NLogN.KFG.swapsP (n * r) (NLogN.KFG.permSw σ)) 0 0
       (fun w => W * NLogN.KFG.cAtom w 0 (n * r) W Z + 1) := by

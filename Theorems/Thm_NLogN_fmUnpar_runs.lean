@@ -181,7 +181,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution (s : NLogN.IState NLogN.NS) (n k Q : ℕ) (LN LF LP L2 LH LE LQ : List NLogN.Item)
+theorem NLogN.fmUnpar_runs (s : NLogN.IState NLogN.NS) (n k Q : ℕ) (LN LF LP L2 LH LE LQ : List NLogN.Item)
     (hkn : k ≤ n) (hQ : Q ≤ n)
     (hN : s.G NLogN.RN = .int (2 ^ n) :: LN) (hF : s.G NLogN.RF = .int (2 ^ n + 1) :: LF)
     (hP : s.G NLogN.PRM = .int n :: LP) (h2 : s.G NLogN.W2 = .int (2 ^ (n - k)) :: L2)

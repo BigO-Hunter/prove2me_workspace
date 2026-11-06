@@ -108,4 +108,4 @@ end NLogN.KFX
 
 end
 
-theorem solution : type_of% @NLogN.KFX.agree_σM_sol_aux := @NLogN.KFX.agree_σM_sol_aux
+theorem NLogN.KFX.agree_sigmaM : type_of% @NLogN.KFX.agree_σM_sol_aux := @NLogN.KFX.agree_σM_sol_aux

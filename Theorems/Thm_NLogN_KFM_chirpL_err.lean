@@ -60,7 +60,7 @@ theorem chirpL_err_aux (P : ℕ) (c : NLogN.KFB.GI) (C : ℂ) (hC : ‖C‖ ≤ 
       refine ih.trans (le_of_eq ?_)
       congr 2; push_cast; ring
 
-theorem solution (P : ℕ) (c : NLogN.KFB.GI) (C : ℂ) (hC : ‖C‖ ≤ 1)
+theorem NLogN.KFM.chirpL_err (P : ℕ) (c : NLogN.KFB.GI) (C : ℂ) (hC : ‖C‖ ≤ 1)
     (hc : ‖NLogN.KFM.vP P c - C‖ ≤ (2 : ℝ)⁻¹ ^ P) :
     ∀ (n m : ℕ) (h g : NLogN.KFB.GI) (H G : ℂ), ‖H‖ ≤ 1 → ‖G‖ ≤ 1 →
       ‖NLogN.KFM.vP P g - G‖ ≤ 4 * m ^ 2 * (2 : ℝ)⁻¹ ^ P →

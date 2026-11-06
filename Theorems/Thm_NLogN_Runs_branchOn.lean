@@ -230,4 +230,4 @@ end NLogN
 
 end
 
-theorem solution : type_of% @NLogN.Runs.branchOn_sol_aux := @NLogN.Runs.branchOn_sol_aux
+theorem NLogN.Runs_branchOn : type_of% @NLogN.Runs.branchOn_sol_aux := @NLogN.Runs.branchOn_sol_aux

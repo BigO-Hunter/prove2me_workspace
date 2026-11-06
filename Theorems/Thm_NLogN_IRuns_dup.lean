@@ -34,7 +34,7 @@ open NLogN
 open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 open NLogN.IRuns
-theorem solution {s : NLogN.IState S} {i j : Fin S} {a : ℤ} {L : List NLogN.Item} (hij : i ≠ j)
+theorem NLogN.IRuns.dup {s : NLogN.IState S} {i j : Fin S} {a : ℤ} {L : List NLogN.Item} (hij : i ≠ j)
     (hi : s.G i = .int a :: L) :
     NLogN.IRuns I iprog (.op (.dup i j)) s (s.upd j (.int a :: s.G j)) (NLogN.dupCost (NLogN.zsz a) + 17) :=
   NLogN.IRuns.op (.dup hij hi)

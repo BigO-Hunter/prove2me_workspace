@@ -17,7 +17,7 @@ open NLogN
 open NLogN.KFM
 open IntMul KFC KFB KFT KIL
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-theorem solution {X A C D : Fin NLogN.HS} {b : NLogN.IStmt NLogN.HS P} {n : ℕ} {s t : NLogN.IState NLogN.HS} {c : ℕ}
+theorem NLogN.KFM.rptX_of_rpt {X A C D : Fin NLogN.HS} {b : NLogN.IStmt NLogN.HS P} {n : ℕ} {s t : NLogN.IState NLogN.HS} {c : ℕ}
     (hXA : X ≠ A) {LX : List NLogN.Item} (hX : s.G X = .int (n : ℤ) :: LX)
     (h : NLogN.IRuns I iprog (NLogN.KFT.rpt A C D n b) s t c) :
     NLogN.IRuns I iprog (NLogN.KFT.rptX X A C D b) s t (c + (NLogN.dupCost (NLogN.zsz (n : ℤ)) + 17)) := by

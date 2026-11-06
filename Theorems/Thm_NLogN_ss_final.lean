@@ -194,7 +194,7 @@ end
 section
 open NLogN
 open IntMul
-theorem solution (N k M : ℕ) (a b : ℤ) (hN : 1 ≤ N) (hKM : 2 ^ k * M = N)
+theorem NLogN.ss_final (N k M : ℕ) (a b : ℤ) (hN : 1 ≤ N) (hKM : 2 ^ k * M = N)
     (ha : 0 ≤ a ∧ a ≤ 2 ^ N) (hb : 0 ≤ b ∧ b ≤ 2 ^ N) :
     (2 ^ (2 ^ k * M) + NLogN.zev (2 ^ M) (NLogN.carZ M (NLogN.ncZ (2 ^ k) (NLogN.pcs M (2 ^ k) (NLogN.fold N a))
       (NLogN.pcs M (2 ^ k) (NLogN.fold N b))) 0).1 - 2 ^ N -

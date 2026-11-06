@@ -26,5 +26,5 @@ end
 
 section
 open NLogN
-theorem solution (z : ℤ) : NLogN.zsz (-z) = NLogN.zsz z := by simp [NLogN.zsz, NLogN.zbits_neg]
+theorem NLogN.zsz_neg (z : ℤ) : NLogN.zsz (-z) = NLogN.zsz z := by simp [NLogN.zsz, NLogN.zbits_neg]
 end

@@ -13,7 +13,7 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS
 open NLogN.KIL
-theorem solution {s : NLogN.IState NLogN.HS} {f : Fin NLogN.HS → List ℤ} {i : Fin NLogN.HS} {a : ℤ} {l : List ℤ}
+theorem NLogN.KIL.bnd_reg {s : NLogN.IState NLogN.HS} {f : Fin NLogN.HS → List ℤ} {i : Fin NLogN.HS} {a : ℤ} {l : List ℤ}
     {B : ℕ} (h : f i = a :: l) (ha : NLogN.zsz a ≤ B) : (NLogN.Ex.reg i).Bnd (NLogN.KIL.encK s f) B := by
   simp only [NLogN.Ex.Bnd, NLogN.KIL.top_encK h]; exact ha
 end

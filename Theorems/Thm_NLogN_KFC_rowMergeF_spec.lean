@@ -13,17 +13,6 @@ namespace AModel
 
 open Matrix
 
-lemma decode_encode {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) : decode sh (encode sh a) = a := by
-  induction h with
-  | nil => rfl
-  | @cons x q as sh hx hr ih =>
-    have he := encode_lt hr
-    have hV : 0 < AModel.vol sh := by omega
-    simp only [encode, List.headD_cons, List.tail_cons, decode]
-    rw [show x * AModel.vol sh + encode sh as = encode sh as + AModel.vol sh * x by ring,
-      Nat.add_mul_div_left _ _ hV, Nat.div_eq_of_lt he, Nat.add_mul_mod_self_left,
-      Nat.mod_eq_of_lt he, ih, zero_add, Nat.mod_eq_of_lt hx]
-
 lemma encode_decode {sh : Shape} {m : ℕ} (h : m < AModel.vol sh) : encode sh (decode sh m) = m := by
   induction sh generalizing m with
   | nil => simp at h; subst h; rfl
@@ -82,70 +71,6 @@ section
 namespace NLogN.KIL
 
 open AModel
-
-theorem fm_congr {α β : Type*} {l : List α} {f g : α → List β} (h : ∀ x ∈ l, f x = g x) :
-    l.flatMap f = l.flatMap g := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    simp only [List.flatMap_cons]
-    rw [h a (by simp), ih (fun x hx => h x (by simp [hx]))]
-
-theorem length_fm_const {α β : Type*} (l : List α) (f : α → List β) (w : ℕ)
-    (h : ∀ x ∈ l, (f x).length = w) : (l.flatMap f).length = l.length * w := by
-  induction l with
-  | nil => simp
-  | cons a l ih =>
-    simp only [List.flatMap_cons, List.length_append, List.length_cons]
-    rw [h a (by simp), ih (fun x hx => h x (by simp [hx]))]; ring
-
-theorem range_mul (m n : ℕ) :
-    List.range (m * n) = (List.range m).flatMap fun i => (List.range n).map fun j => i * n + j := by
-  induction m with
-  | zero => simp
-  | succ m ih =>
-    rw [Nat.succ_mul, List.range_add, ih, List.range_succ, List.flatMap_append]
-    simp
-
-theorem map_range4 {α : Type*} (a b c d : ℕ) (G : ℕ → α) :
-    (List.range (a * b * c * d)).map G =
-      (List.range a).flatMap fun i => (List.range b).flatMap fun j =>
-        (List.range c).flatMap fun k => (List.range d).map fun l => G (((i * b + j) * c + k) * d + l) := by
-  rw [range_mul, range_mul, range_mul]
-  simp only [List.map_flatMap, List.flatMap_assoc, List.flatMap_map, List.map_map]
-  rfl
-
-theorem decode4 {a b c d i j k l : ℕ} (hi : i < a) (hj : j < b) (hk : k < c) (hl : l < d) :
-    decode [a, b, c, d] (((i * b + j) * c + k) * d + l) = [i, j, k, l] := by
-  have hv : AModel.Valid [a, b, c, d] [i, j, k, l] :=
-    List.Forall₂.cons hi (List.Forall₂.cons hj (List.Forall₂.cons hk
-      (List.Forall₂.cons hl List.Forall₂.nil)))
-  have he : encode [a, b, c, d] [i, j, k, l] = ((i * b + j) * c + k) * d + l := by
-    simp [encode, AModel.vol]; ring
-  rw [← he, decode_encode hv]
-
-theorem encode4 (a b c d i j k l : ℕ) :
-    encode [a, b, c, d] [i, j, k, l] = ((i * b + j) * c + k) * d + l := by
-  simp [encode, AModel.vol]; ring
-
-theorem vol4 (a b c d : ℕ) : AModel.vol [a, b, c, d] = a * b * c * d := by
-  simp [AModel.vol]; ring
-
-theorem list_eq_range (xs : List ℤ) : xs = (List.range xs.length).map fun j => xs.getD j 0 := by
-  apply List.ext_getElem (by simp)
-  intro j h1 h2
-  simp [List.getElem?_eq_getElem h1]
-
-theorem outF_recOf (xs : List ℤ) (P q M B : ℕ) :
-    outF (recOf xs q M B) P q M = AModel.pull [P, q, M, B] [P, M, q, B] gS 0 xs := by
-  unfold AModel.pull
-  rw [vol4, map_range4]
-  unfold outF blkOut recOf
-  refine fm_congr fun p hp => fm_congr fun m hm => fm_congr fun y hy => ?_
-  refine List.map_congr_left fun b hb => ?_
-  simp only [List.mem_range] at hp hm hy hb
-  rw [NLogN.KIL.decode4 hp hm hy hb]
-  simp [gS, encode4]
 
 end NLogN.KIL
 
@@ -274,7 +199,7 @@ open NLogN
 open IntMul AModel
 open NLogN.KFC
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-theorem solution (t : NLogN.IState NLogN.HS) {W : ℕ} (s : Fin W → List ℤ) (P L : ℕ) [NeZero W]
+theorem NLogN.KFC.rowMergeF_spec (t : NLogN.IState NLogN.HS) {W : ℕ} (s : Fin W → List ℤ) (P L : ℕ) [NeZero W]
     (rest : AModel.Shape) (w : ℕ) (R L1 L2 L3 L4 : List NLogN.Item)
     (hs : ∀ v, (s v).length = P * L * AModel.vol rest) (hb : ∀ v, NLogN.Bnd w (s v))
     (hB1 : 1 ≤ AModel.vol rest) (hPL : 1 ≤ P * L)

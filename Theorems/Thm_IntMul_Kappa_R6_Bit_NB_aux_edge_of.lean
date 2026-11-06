@@ -627,4 +627,4 @@ end IntMul.Kappa.R6.Bit.NB
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.Bit.NB.aux_edge_of_sol_aux := @IntMul.Kappa.R6.Bit.NB.aux_edge_of_sol_aux
+theorem IntMul.Kappa.R6.Bit.NB.aux_edge_of : type_of% @IntMul.Kappa.R6.Bit.NB.aux_edge_of_sol_aux := @IntMul.Kappa.R6.Bit.NB.aux_edge_of_sol_aux

@@ -404,4 +404,4 @@ end IntMul.Kappa.R6.IL
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL.l12Canon_of_IL_sol_aux := @IntMul.Kappa.R6.IL.l12Canon_of_IL_sol_aux
+theorem IntMul.Kappa.R6.IL.l12Canon_of_IL : type_of% @IntMul.Kappa.R6.IL.l12Canon_of_IL_sol_aux := @IntMul.Kappa.R6.IL.l12Canon_of_IL_sol_aux

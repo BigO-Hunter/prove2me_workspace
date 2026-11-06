@@ -178,7 +178,7 @@ section
 open NLogN
 open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-theorem solution {A X Y W Q R T : Fin S} (hd : [A, X, Y, W, Q, R, T].Nodup)
+theorem NLogN.smulBody_runs {A X Y W Q R T : Fin S} (hd : [A, X, Y, W, Q, R, T].Nodup)
     (s : NLogN.IState S) (L : List NLogN.Item) (a b c : ℤ) (hb : b ≠ 0) (N : ℕ)
     (ha : NLogN.zsz a ≤ N) (hc : NLogN.zsz c ≤ N) :
     NLogN.IRuns I iprog (NLogN.smulBody X Y W Q R T) (NLogN.schoolSt s A X Y W Q L a b c)

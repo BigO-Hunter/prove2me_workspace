@@ -1847,7 +1847,7 @@ open IntMul RS
 open NLogN.KFD
 open KIL AModel
 variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q)
-theorem solution [NeZero Q] (i : Fin n) (c : Fin n → ZMod Q)
+theorem NLogN.KFD.shFracU_fspec [NeZero Q] (i : Fin n) (c : Fin n → ZMod Q)
     (hc : ∀ j, i ≤ j → c j = 0) (A C : AModel.Shape) (hsh : sh = A ++ Q :: C)
     (hA : (Λ.pos i : ℕ) = A.length) (k d : ℕ) (neg : Bool) (hk : 1 ≤ k) (hkQ : k ≤ Q)
     (hd : 1 ≤ d) (hdQ : d ≤ Q) (hQk : Nat.Coprime Q k) (hQd : Nat.Coprime Q d)

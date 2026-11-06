@@ -1314,4 +1314,4 @@ end NLogN.KFX
 
 end
 
-theorem solution : type_of% @NLogN.KFX.linesU_runs_sol_aux := @NLogN.KFX.linesU_runs_sol_aux
+theorem NLogN.KFX.linesU_runs : type_of% @NLogN.KFX.linesU_runs_sol_aux := @NLogN.KFX.linesU_runs_sol_aux

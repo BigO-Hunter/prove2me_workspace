@@ -355,7 +355,7 @@ section
 set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS
-theorem solution (x₁ x₂ : ℕ) (σ c₁ c₂ : ℤ) (hx₁ : 0 < x₁) (hx₂ : 0 < x₂) (n : ℕ)
+theorem NLogN.twoAtanP_ok (x₁ x₂ : ℕ) (σ c₁ c₂ : ℤ) (hx₁ : 0 < x₁) (hx₂ : 0 < x₂) (n : ℕ)
     (s : NLogN.IState NLogN.HS) (L3 : List NLogN.Item) (h3 : s.G 3 = .int n :: L3) :
     (NLogN.twoAtanP x₁ x₂ σ c₁ c₂).ok s := by
   have hM : NLogN.mE.eval ((NLogN.RS.push 0 NLogN.mE).run s) = ((2 * n + 9 : ℕ) : ℤ) := by

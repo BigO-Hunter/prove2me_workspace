@@ -115,4 +115,4 @@ end NLogN.KFX
 
 end
 
-theorem solution : type_of% @NLogN.KFX.l13U_arith_sol_aux := @NLogN.KFX.l13U_arith_sol_aux
+theorem NLogN.KFX.l13U_arith : type_of% @NLogN.KFX.l13U_arith_sol_aux := @NLogN.KFX.l13U_arith_sol_aux

@@ -702,4 +702,4 @@ end NLogN.KFX
 
 end
 
-theorem solution : type_of% @NLogN.KFX.xorU_geo_sol_aux := @NLogN.KFX.xorU_geo_sol_aux
+theorem NLogN.KFX.xorU_geo : type_of% @NLogN.KFX.xorU_geo_sol_aux := @NLogN.KFX.xorU_geo_sol_aux

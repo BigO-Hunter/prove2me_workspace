@@ -515,7 +515,7 @@ open NLogN.KFM
 open IntMul KFC KFB KFT
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 set_option maxHeartbeats 1000000
-theorem solution (b B : ℕ) (hb : 1 ≤ b) (zs : List NLogN.KFB.GI) (hre : ∀ z ∈ zs, 0 ≤ z.1)
+theorem NLogN.KFM.carIU_spec (b B : ℕ) (hb : 1 ≤ b) (zs : List NLogN.KFB.GI) (hre : ∀ z ∈ zs, 0 ≤ z.1)
     (hB : NLogN.KFB.GB B zs) (s : NLogN.IState NLogN.HS) (R0 L1 L2 : List NLogN.Item) (h0 : s.G 0 = NLogN.ints (NLogN.KFB.gflat zs) ++ R0)
     (hB2 : s.G NLogN.KFM.uB2 = .int ((2 : ℤ) ^ b) :: L1) (hM : s.G NLogN.KFM.uM = .int (zs.length : ℤ) :: L2) :
     NLogN.IRuns I iprog NLogN.KFM.carIU s (s.upd 0 (.int (NLogN.KFT.carOut b zs : ℤ) :: R0)) (NLogN.KFM.cCarU b B zs.length) := by

@@ -113,4 +113,4 @@ end R6Chk.Bit
 
 end
 
-theorem solution : type_of% @R6Chk.Bit.eq_zero_of_Q_sol_aux := @R6Chk.Bit.eq_zero_of_Q_sol_aux
+theorem R6Chk.Bit.eq_zero_of_Q : type_of% @R6Chk.Bit.eq_zero_of_Q_sol_aux := @R6Chk.Bit.eq_zero_of_Q_sol_aux

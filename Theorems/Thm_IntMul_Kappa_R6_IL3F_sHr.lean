@@ -536,4 +536,4 @@ end IntMul.Kappa.R6.IL3F
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3F.sHr_sol_aux := @IntMul.Kappa.R6.IL3F.sHr_sol_aux
+theorem IntMul.Kappa.R6.IL3F.sHr : type_of% @IntMul.Kappa.R6.IL3F.sHr_sol_aux := @IntMul.Kappa.R6.IL3F.sHr_sol_aux

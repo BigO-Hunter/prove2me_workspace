@@ -13,11 +13,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
 theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
   induction m using Nat.strong_induction_on with
   | _ m ih =>
@@ -166,7 +161,7 @@ theorem zsz_eval_le_aux (s : NLogN.IState S) (B : ℕ) : ∀ e : NLogN.Ex S, e.B
     · exact zsz_eval_le_aux s B x (by simpa [hc] using h.2)
     · exact zsz_eval_le_aux s B y (by simpa [hc] using h.2)
 
-theorem solution (s : NLogN.IState S) (B : ℕ) : ∀ e : NLogN.Ex S, e.Bnd s B → NLogN.zsz (e.eval s) ≤ B := by
+theorem NLogN.Ex.zsz_eval_le (s : NLogN.IState S) (B : ℕ) : ∀ e : NLogN.Ex S, e.Bnd s B → NLogN.zsz (e.eval s) ≤ B := by
   first
   | exact zsz_eval_le_aux
   | (intros; apply zsz_eval_le_aux <;> assumption)

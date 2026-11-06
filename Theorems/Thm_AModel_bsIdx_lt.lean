@@ -9,7 +9,7 @@ set_option maxHeartbeats 1000000
 
 section
 open AModel
-theorem solution {i j r k L : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ L) (hk : k < L) :
+theorem AModel.bsIdx_lt {i j r k L : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ L) (hk : k < L) :
     AModel.bsIdx i j r k < L := by
   unfold AModel.bsIdx; split_ifs <;> omega
 end

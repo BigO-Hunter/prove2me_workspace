@@ -9,5 +9,5 @@ set_option maxHeartbeats 1000000
 
 section
 open AModel
-theorem solution (A B : AModel.Shape) : AModel.vol (A ++ B) = AModel.vol A * AModel.vol B := List.prod_append
+theorem AModel.vol_append (A B : AModel.Shape) : AModel.vol (A ++ B) = AModel.vol A * AModel.vol B := List.prod_append
 end

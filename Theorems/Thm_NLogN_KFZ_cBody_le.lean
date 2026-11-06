@@ -569,4 +569,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution : type_of% @NLogN.KFZ.cBody_le_sol_aux := @NLogN.KFZ.cBody_le_sol_aux
+theorem NLogN.KFZ.cBody_le : type_of% @NLogN.KFZ.cBody_le_sol_aux := @NLogN.KFZ.cBody_le_sol_aux

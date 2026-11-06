@@ -1827,7 +1827,7 @@ open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD Butterfly
 set_option maxHeartbeats 4000000
-theorem solution {K ρ f : ℕ} (hK : 1 ≤ K) (hρK : ρ < K) (hf : 1 ≤ f) {g : NLogN.KFL.Geo} (hg : g.Pos)
+theorem NLogN.KFL.corrRS_fsp {K ρ f : ℕ} (hK : 1 ≤ K) (hρK : ρ < K) (hf : 1 ≤ f) {g : NLogN.KFL.Geo} (hg : g.Pos)
     (hQe : g.Q = 2 ^ (f * K)) (recs : ℕ → List ℤ) (hlen : ∀ m, (recs m).length = g.B)
     (hbits : ∀ m, NLogN.Bnd 1 (recs m)) (s : NLogN.IState NLogN.HS) :
     NLogN.KFD.FSp (NLogN.KFL.corrRS K ρ f g (NLogN.zsz (g.V : ℤ))) (NLogN.KIL.encK s (Function.update (fun _ => []) 0 (NLogN.KFL.flR recs g.recG.V)))

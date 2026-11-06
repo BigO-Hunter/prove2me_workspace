@@ -24,5 +24,5 @@ end
 
 section
 open NLogN
-theorem solution : NLogN.zsz 0 = 0 := by simp [NLogN.zsz, NLogN.zbits, NLogN.nbits_zero]
+theorem NLogN.zsz_zero : NLogN.zsz 0 = 0 := by simp [NLogN.zsz, NLogN.zbits, NLogN.nbits_zero]
 end

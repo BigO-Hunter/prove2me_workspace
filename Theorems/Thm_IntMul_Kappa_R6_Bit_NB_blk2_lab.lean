@@ -3821,4 +3821,4 @@ end IntMul.Kappa.R6.Bit.NB
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.Bit.NB.blk2_lab_sol_aux := @IntMul.Kappa.R6.Bit.NB.blk2_lab_sol_aux
+theorem IntMul.Kappa.R6.Bit.NB.blk2_lab : type_of% @IntMul.Kappa.R6.Bit.NB.blk2_lab_sol_aux := @IntMul.Kappa.R6.Bit.NB.blk2_lab_sol_aux

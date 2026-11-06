@@ -73,7 +73,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution {X : Fin NLogN.NS} (h1 : X ≠ NLogN.RF) (h2 : X ≠ NLogN.T1) (s : NLogN.IState NLogN.NS) (w F : ℤ) (m : ℕ)
+theorem NLogN.fadd_runs {X : Fin NLogN.NS} (h1 : X ≠ NLogN.RF) (h2 : X ≠ NLogN.T1) (s : NLogN.IState NLogN.NS) (w F : ℤ) (m : ℕ)
     (L LF : List NLogN.Item) (hX : s.G X = .int w :: L) (hF : s.G NLogN.RF = .int F :: LF)
     (hwm : NLogN.zsz w ≤ m) (hFm : NLogN.zsz F ≤ m) :
     NLogN.IRuns I iprog (NLogN.fadd X) s (s.upd X (.int (if w < 0 then F + w else w) :: L)) (1000 * (m + 1)) := by

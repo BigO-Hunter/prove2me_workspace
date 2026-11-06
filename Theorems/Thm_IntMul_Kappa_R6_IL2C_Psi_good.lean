@@ -36,11 +36,6 @@ open Finset
 
 /-! ## Digits -/
 
-theorem dgt_zero (W x : ℕ) : dgt W 0 x = x % W := by simp [dgt]
-
-theorem dgt_succ (W s x : ℕ) : dgt W (s + 1) x = dgt W s (x / W) := by
-  simp only [dgt, pow_succ, Nat.div_div_eq_div_mul, mul_comm]
-
 /-- `x = Σ_{s<n} dgt s x W^s + W^n (x / W^n)`. -/
 theorem digits_sum (W : ℕ) : ∀ (n x : ℕ),
     (x : ℤ) = ∑ s ∈ range n, (dgt W s x : ℤ) * (W : ℤ) ^ s + (W : ℤ) ^ n * ((x / W ^ n : ℕ) : ℤ)
@@ -71,57 +66,7 @@ theorem eq_of_digits (W n : ℕ) {x x' : ℕ} (hd : ∀ s < n, dgt W s x = dgt W
     exact sum_congr rfl fun s hs => by rw [hd s (mem_range.1 hs)]
   exact_mod_cast this
 
-/-- **Digit-wise addition without carries.** -/
-theorem digits_add (W : ℕ) (hW : 0 < W) : ∀ (n x : ℕ) (δ : ℕ → ℤ),
-    (∀ s < n, 0 ≤ (dgt W s x : ℤ) + δ s ∧ (dgt W s x : ℤ) + δ s < W) →
-    ∃ x' : ℕ, (x' : ℤ) = x + ∑ s ∈ range n, δ s * (W : ℤ) ^ s ∧
-      (∀ s < n, (dgt W s x' : ℤ) = dgt W s x + δ s) ∧ x' / W ^ n = x / W ^ n
-  | 0, x, δ, _ => ⟨x, by simp, fun s hs => absurd hs (by omega), rfl⟩
-  | n + 1, x, δ, h => by
-    obtain ⟨y', e1, e2, e3⟩ := digits_add W hW n (x / W) (fun s => δ (s + 1)) (fun s hs => by
-      have := h (s + 1) (by omega); rwa [dgt_succ] at this)
-    have h0 := h 0 (by omega)
-    rw [dgt_zero] at h0
-    set d0 : ℤ := ((x % W : ℕ) : ℤ) + δ 0
-    have hd0 : 0 ≤ d0 := h0.1
-    refine ⟨d0.toNat + W * y', ?_, ?_, ?_⟩
-    · push_cast
-      rw [Int.toNat_of_nonneg hd0, e1, sum_range_succ']
-      have hx : (x : ℤ) = ((x % W : ℕ) : ℤ) + (W : ℤ) * ((x / W : ℕ) : ℤ) := by
-        exact_mod_cast (Nat.mod_add_div x W).symm
-      simp only [d0, pow_zero, mul_one, pow_succ]
-      rw [hx, mul_add, mul_sum]
-      have : ∀ s ∈ range n, (W : ℤ) * (δ (s + 1) * (W : ℤ) ^ s) = δ (s + 1) * ((W : ℤ) ^ s * W) :=
-        fun s _ => by ring
-      rw [sum_congr rfl this]
-      ring
-    · intro s hs
-      have hlt : d0.toNat < W := by
-        have := h0.2; omega
-      have hdiv : (d0.toNat + W * y') / W = y' := by
-        rw [Nat.add_mul_div_left _ _ hW, Nat.div_eq_of_lt hlt, zero_add]
-      rcases s with _ | s
-      · rw [dgt_zero, dgt_zero, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hlt,
-          Int.toNat_of_nonneg hd0]
-      · rw [dgt_succ, dgt_succ, hdiv, e2 s (by omega)]
-    · have hlt : d0.toNat < W := by
-        have := h0.2; omega
-      have hdiv : (d0.toNat + W * y') / W = y' := by
-        rw [Nat.add_mul_div_left _ _ hW, Nat.div_eq_of_lt hlt, zero_add]
-      have k : ∀ a, a / W ^ (n + 1) = a / W / W ^ n := fun a => by
-        rw [pow_succ, mul_comm, Nat.div_div_eq_div_mul]
-      rw [k, k, hdiv, e3]
-
-/-- A number with the same high part as one below `W^n (q+1)`. -/
-theorem lt_of_hi {W n x : ℕ} (hW : 0 < W) : x < W ^ n * (x / W ^ n + 1) := by
-  have h := Nat.lt_mul_div_succ x (pow_pos hW n)
-  linarith [Nat.mul_comm (W ^ n) (x / W ^ n + 1)]
-
 /-! ## The register-loop sum -/
-
-/-- For an even radix, the parity of `u / W^s` is that of its digit. -/
-theorem par_dgt {W : ℕ} (hW : 2 ∣ W) (s u : ℕ) : (u / W ^ s) % 2 = dgt W s u % 2 := by
-  unfold dgt; rw [Nat.mod_mod_of_dvd _ hW]
 
 /-! ## Parameters and the offsets -/
 
@@ -130,26 +75,6 @@ theorem par_dgt {W : ℕ} (hW : 2 ∣ W) (s u : ℕ) : (u / W ^ s) % 2 = dgt W s
 section Closed
 
 variable {K ρ G n : ℕ}
-
-theorem two_pow_dvd {G : ℕ} (hG : 1 ≤ G) : 2 ∣ 2 ^ G := dvd_pow_self 2 (by omega)
-
-theorem cdiv (u W s : ℕ) : ((u : ℤ) / ((W : ℤ)) ^ s) = ((u / W ^ s : ℕ) : ℤ) := by
-  rw [Int.natCast_div]; push_cast; rfl
-
-theorem cdivG (u G s : ℕ) : ((u : ℤ) / ((2 : ℤ) ^ G) ^ s) = ((u / (2 ^ G) ^ s : ℕ) : ℤ) := by
-  have := cdiv u (2 ^ G) s; push_cast at this; exact this
-
-theorem cpar {W : ℕ} (hW : 2 ∣ W) (u s : ℕ) :
-    ((u / W ^ s : ℕ) : ℤ) % 2 = ((dgt W s u % 2 : ℕ) : ℤ) := by
-  exact_mod_cast par_dgt hW s u
-
-theorem oS_eq (hK : 1 ≤ K) (y : ℕ) : oS K ρ G n y =
-    ∑ s ∈ range n, ((ybit K ρ s y : ℕ) : ℤ) * ((2 : ℤ) ^ G) ^ s := by
-  unfold oS segSum
-  refine sum_congr rfl fun s _ => ?_
-  beta_reduce
-  rw [cdivG, cpar (two_pow_dvd hK)]
-  unfold ybit seg; ring
 
 theorem oT_eq (hK : 1 ≤ K) (x y : ℕ) : oT K ρ n x y =
     ∑ s ∈ range n, ((ybit K ρ s x : ℕ) * (1 - 2 * (ybit K ρ s y : ℕ)) : ℤ) *
@@ -174,26 +99,9 @@ theorem slot_eq {y y' : ℕ} (h0 : y % 2 ^ ρ = y' % 2 ^ ρ) (hs : ∀ s < n, se
   have e : y / 2 ^ ρ = y' / 2 ^ ρ := eq_of_digits (2 ^ K) n (fun s h => hs s h) hh
   rw [← Nat.mod_add_div y (2 ^ ρ), ← Nat.mod_add_div y' (2 ^ ρ), h0, e]
 
-/-- Compact fields: digit-wise addition, staying below `R^n`. -/
-theorem cf_add {G : ℕ} {w : ℕ} (hw : w < (2 ^ G) ^ n) (δ : ℕ → ℤ)
-    (h : ∀ s < n, 0 ≤ (cdg G s w : ℤ) + δ s ∧ (cdg G s w : ℤ) + δ s < 2 ^ G) :
-    ∃ w' : ℕ, (w' : ℤ) = w + ∑ s ∈ range n, δ s * ((2 : ℤ) ^ G) ^ s ∧ w' < (2 ^ G) ^ n ∧
-      (∀ s < n, (cdg G s w' : ℤ) = cdg G s w + δ s) := by
-  obtain ⟨z, e1, e2, e3⟩ := digits_add (2 ^ G) (by positivity) n w δ (by
-    intro s hs; have := h s hs; unfold cdg at this; push_cast at this ⊢; exact this)
-  refine ⟨z, by push_cast at e1 ⊢; exact e1, ?_, fun s hs => e2 s hs⟩
-  have : w / (2 ^ G) ^ n = 0 := Nat.div_eq_of_lt hw
-  have hz := lt_of_hi (W := 2 ^ G) (n := n) (x := z) (by positivity)
-  rw [e3, this] at hz; simpa using hz
-
 end Slot
 
 /-! ## Modular pulls -/
-
-/-- `subM` of an exact result. -/
-theorem subM_of {Q : ℕ} {a a' : ℕ} {o : ℤ} (h : (a' : ℤ) = a - o) (ha' : a' < Q) :
-    subM Q a o = a' := by
-  unfold subM; rw [← h, Int.emod_eq_of_lt (by omega) (by omega)]; simp
 
 /-! ## States, the phases, the composites -/
 
@@ -317,4 +225,4 @@ end IntMul.Kappa.R6.IL2C
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2C.Psi_good_sol_aux := @IntMul.Kappa.R6.IL2C.Psi_good_sol_aux
+theorem IntMul.Kappa.R6.IL2C.Psi_good : type_of% @IntMul.Kappa.R6.IL2C.Psi_good_sol_aux := @IntMul.Kappa.R6.IL2C.Psi_good_sol_aux

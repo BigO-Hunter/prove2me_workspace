@@ -454,4 +454,4 @@ end NLogN.KFL
 
 end
 
-theorem solution : type_of% @NLogN.KFL.xorGen_fsp_sol_aux := @NLogN.KFL.xorGen_fsp_sol_aux
+theorem NLogN.KFL.xorGen_fsp : type_of% @NLogN.KFL.xorGen_fsp_sol_aux := @NLogN.KFL.xorGen_fsp_sol_aux

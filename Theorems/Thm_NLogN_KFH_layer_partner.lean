@@ -196,7 +196,7 @@ open NLogN
 open NLogN.KFH
 open IntMul RS AModel KIL KFD KFB Complex
 variable {P K D S ρ : ℕ}
-theorem solution (hρ : ρ < K) (i : Fin D) {j : ℕ}
+theorem NLogN.KFH.layer_partner (hρ : ρ < K) (i : Fin D) {j : ℕ}
     (hj : j < AModel.vol (Butterfly.layerShape P K D S)) (b : Fin 2) :
     ((Butterfly.layerSel P K D S ρ hρ).bits (AModel.decode (Butterfly.layerShape P K D S) j) i : ℕ) =
       j / NLogN.KFH.stT K D S ρ i % 2 ∧

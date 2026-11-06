@@ -93,7 +93,7 @@ open NLogN
 open NLogN.KFM
 open Complex
 variable {D : ℕ}
-theorem solution (t : Fin (D + 1) → ℕ) [∀ i, NeZero (t i)]
+theorem NLogN.KFM.mrt_err_of_list (t : Fin (D + 1) → ℕ) [∀ i, NeZero (t i)]
     (f g : ((i : Fin (D + 1)) → ZMod (t i)) → ℂ) {xh : List (Fin (t (Fin.last D)) → ℂ)} {E : ℝ}
     (hE : 0 ≤ E) (hl : xh.length = (NLogN.KFM.tsOf t).prod)
     (h : ∀ j < (NLogN.KFM.tsOf t).prod, ∀ k : Fin (t (Fin.last D)),

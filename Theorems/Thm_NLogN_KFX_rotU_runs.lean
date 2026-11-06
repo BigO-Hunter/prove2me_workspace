@@ -742,4 +742,4 @@ end NLogN.KFX
 
 end
 
-theorem solution : type_of% @NLogN.KFX.rotU_runs_sol_aux := @NLogN.KFX.rotU_runs_sol_aux
+theorem NLogN.KFX.rotU_runs : type_of% @NLogN.KFX.rotU_runs_sol_aux := @NLogN.KFX.rotU_runs_sol_aux

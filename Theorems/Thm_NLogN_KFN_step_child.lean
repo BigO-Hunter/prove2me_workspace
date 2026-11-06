@@ -770,7 +770,7 @@ open NLogN.KFN
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 variable {Pp : ℕ} {Isym : List Sym} {iprog : Fin Pp → IStmt HS Pp} {K : ℕ}
 variable {W m s : ℕ} (J : Prop8IfaceR W m s) {A r Z : ℕ} {Ψ : ℕ → ℕ}
-theorem solution {k Ek DWk Wk : ℕ} {ck : ℝ} (IH : NLogN.KFN.Lv Isym iprog K W m r Z Ψ k Ek DWk Wk ck) (G : ℝ)
+theorem NLogN.KFN.step_child {k Ek DWk Wk : ℕ} {ck : ℝ} (IH : NLogN.KFN.Lv Isym iprog K W m r Z Ψ k Ek DWk Wk ck) (G : ℝ)
     (hG : 0 ≤ G) (hW : 1 ≤ W) (hr : 1 ≤ r) (hΨm : Monotone Ψ) (hZΨ : ∀ v, Z + 2 ≤ Ψ v)
     (pos : Fin m × Fin (m ^ k) → ℕ) (hinj : Function.Injective pos) {t S0 B : ℕ}
     (hpos : ∀ p, pos p < t) (haff : NLogN.KFN.AffK2 K t m k pos) (hS : 1 ≤ S0) (hB : 1 ≤ B)

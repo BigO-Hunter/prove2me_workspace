@@ -1736,7 +1736,7 @@ open NLogN
 open NLogN.KFE
 open IntMul RS AModel AModelL12 AModelRat AModelFac Finset KIL KFD
 open NetProp7
-theorem solution :
+theorem NLogN.KFE.lemma12_fine :
     ∃ T q₀ cE : ℕ, ∀ q, q.Prime → q₀ < q → ∃ K : ℝ, 0 ≤ K ∧
       ∀ (u : ℕ) (Pre G Suf : AModel.Shape) (Bb : ℕ), 1 ≤ u →
       (∀ a ∈ Pre, 1 ≤ a) → (∀ a ∈ G, 1 ≤ a) → (∀ a ∈ Suf, 1 ≤ a) →

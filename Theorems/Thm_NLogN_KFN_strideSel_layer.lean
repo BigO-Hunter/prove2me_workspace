@@ -31,17 +31,6 @@ open Matrix
 
 /-! ## 1. Mixed-radix basics -/
 
-lemma encode_decode {sh : Shape} {m : ℕ} (h : m < vol sh) : encode sh (decode sh m) = m := by
-  induction sh generalizing m with
-  | nil => simp at h; subst h; rfl
-  | cons q sh ih =>
-    simp only [vol_cons] at h
-    have hV : 0 < vol sh := Nat.pos_of_ne_zero (by rintro h'; simp [h'] at h)
-    have hq : m / vol sh < q := (Nat.div_lt_iff_lt_mul hV).2 h
-    simp only [decode, encode, List.headD_cons, List.tail_cons, Nat.mod_eq_of_lt hq,
-      ih (Nat.mod_lt m hV)]
-    exact Nat.div_add_mod' m (vol sh)
-
 /-! ## 2. Pull maps -/
 
 /-! ## 3. Active fields -/
@@ -266,24 +255,8 @@ open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
 
-theorem layerShape_drop (P K D S i : ℕ) (hi : i < D) :
-    (Butterfly.layerShape P K D S).drop (i + 2) = List.replicate (D - (i + 1)) (2 ^ K) ++ [S] := by
-  simp only [Butterfly.layerShape, List.cons_append, List.drop_succ_cons]
-  rw [List.drop_append_of_le_length (by simp; omega), List.drop_replicate]
-
 theorem stS_eq (K D S i : ℕ) (hi : i < D) : stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S := by
   simp [stS, layerShape_drop 1 K D S i hi, vol]
-
-theorem setBit_sub (ρ v : ℕ) (b : Fin 2) :
-    (Butterfly.setBit ρ v b : ℤ) - v = ((b : ℤ) - (Butterfly.getBit ρ v : ℕ)) * 2 ^ ρ := by
-  have h1 := Butterfly.setBit_eq ρ v b
-  have h2 := Butterfly.setBit_eq ρ v (Butterfly.getBit ρ v)
-  rw [Butterfly.setBit_getBit] at h2
-  have : ((Butterfly.setBit ρ v b : ℕ) : ℤ) - ((v : ℕ) : ℤ) =
-      (((2 * (v / 2 ^ (ρ + 1)) + b) * 2 ^ ρ + v % 2 ^ ρ : ℕ) : ℤ) -
-      (((2 * (v / 2 ^ (ρ + 1)) + (Butterfly.getBit ρ v : ℕ)) * 2 ^ ρ + v % 2 ^ ρ : ℕ) : ℤ) := by
-    rw [← h1]; nth_rewrite 2 [h2]; rfl
-  rw [this]; push_cast; ring
 
 /-! ## The kernel pass on records -/
 
@@ -416,4 +389,4 @@ end NLogN.KFN
 
 end
 
-theorem solution : type_of% @NLogN.KFN.strideSel_layer_sol_aux := @NLogN.KFN.strideSel_layer_sol_aux
+theorem NLogN.KFN.strideSel_layer : type_of% @NLogN.KFN.strideSel_layer_sol_aux := @NLogN.KFN.strideSel_layer_sol_aux

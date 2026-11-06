@@ -391,7 +391,7 @@ section
 set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS
-theorem solution (x₁ x₂ : ℕ) (σ c₁ c₂ : ℤ) (hx₁ : 0 < x₁) (hx₂ : 0 < x₂) (n : ℕ)
+theorem NLogN.twoAtanP_run (x₁ x₂ : ℕ) (σ c₁ c₂ : ℤ) (hx₁ : 0 < x₁) (hx₂ : 0 < x₂) (n : ℕ)
     (s : NLogN.IState NLogN.HS) (L3 : List NLogN.Item) (h3 : s.G 3 = .int n :: L3) :
     (NLogN.twoAtanP x₁ x₂ σ c₁ c₂).run s = s.upd 4 (.int ((c₁ * NLogN.atanSum x₁ (2 * n + 9) σ (2 * n + 9) +
       c₂ * NLogN.atanSum x₂ (2 * n + 9) σ (2 * n + 9) + 2 ^ (n + 8)) / 2 ^ (n + 9)) :: s.G 4) := by

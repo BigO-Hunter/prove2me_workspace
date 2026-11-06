@@ -230,7 +230,7 @@ section
 set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS
-theorem solution (c₁ c₂ : ℤ) (hc₁ : |c₁| ≤ 16) (hc₂ : |c₂| ≤ 16) (n M B : ℕ) (L3 : List NLogN.Item)
+theorem NLogN.roundE_bnd (c₁ c₂ : ℤ) (hc₁ : |c₁| ≤ 16) (hc₂ : |c₂| ≤ 16) (n M B : ℕ) (L3 : List NLogN.Item)
     (hnM : n + 9 ≤ M) (hMB : 2 * M + 12 ≤ B) :
     ∀ t : NLogN.IState NLogN.HS, ∀ a b : ℤ, ∀ La Lb : List NLogN.Item, t.G 3 = .int n :: L3 →
       t.G 46 = .int a :: La → t.G 47 = .int b :: Lb → |a| ≤ 2 ^ (2 * M + 6) - 1 →

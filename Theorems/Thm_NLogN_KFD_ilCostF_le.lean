@@ -146,7 +146,7 @@ open NLogN
 open IntMul RS
 open NLogN.KFD
 open KIL AModel
-theorem solution {m W S : ℕ} (K Kb Kd q : ℕ) (hm : 2 ≤ m) (hW : 1 ≤ W) {τ : ℝ}
+theorem NLogN.KFD.ilCostF_le {m W S : ℕ} (K Kb Kd q : ℕ) (hm : 2 ≤ m) (hW : 1 ≤ W) {τ : ℝ}
     (hτ : 0 < τ ∧ τ < 1) (hs : (S : ℝ) / W < (m : ℝ) ^ τ) :
     ∃ K₀ : ℝ, 0 ≤ K₀ ∧ ∀ Bb j V, (NLogN.KFD.ilCostF W K Kb Kd S q Bb j V : ℝ) ≤
       K₀ * ((V : ℝ) + (W : ℝ) ^ j) * ((m : ℝ) ^ j) ^ τ +

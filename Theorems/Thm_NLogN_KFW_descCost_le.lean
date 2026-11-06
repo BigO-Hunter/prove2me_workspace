@@ -190,7 +190,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFW
 open IntMul RS KIL KFD KFB KFS KFL AModel AModelL12
-theorem solution (L V w u : ℕ) :
+theorem NLogN.KFW.descCost_le (L V w u : ℕ) :
     25 * NLogN.KFW.xD L (Nat.size V + w + u + 8) (Nat.size V + w + u + 8 + NLogN.zsz (L : ℤ)) +
       6 * (2 * (Nat.size V + w + u + 8) + 2) ≤
       10 ^ 14 * ((L + 1) * (Nat.size V + w + u + 1) ^ 2) := by

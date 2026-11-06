@@ -12,5 +12,5 @@ section
 open NLogN
 open NLogN.KFR
 open IntMul RS KIL KFH KFN
-theorem solution : Lem13IL := NLogN.KFL.lem13_il
+theorem NLogN.KFR.lem13IL_holds : Lem13IL := NLogN.KFL.lem13_il
 end

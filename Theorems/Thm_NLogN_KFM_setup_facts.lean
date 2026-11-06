@@ -502,7 +502,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFM
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
-theorem solution {n : ℕ} (hn : IntMul.OpenAI.Glue.n0 ≤ n) :
+theorem NLogN.KFM.setup_facts {n : ℕ} (hn : IntMul.OpenAI.Glue.n0 ≤ n) :
     8192 ≤ IntMul.OpenAI.Glue.bP n ∧ 1 ≤ IntMul.OpenAI.Glue.dP n ∧ IntMul.OpenAI.Glue.dP n ≤ IntMul.OpenAI.Glue.bP n ∧ IntMul.OpenAI.Glue.dP n ^ 2 ≤ IntMul.OpenAI.Glue.bP n ∧ n ≤ 2 ^ IntMul.OpenAI.Glue.bP n ∧ IntMul.OpenAI.Glue.LP n < IntMul.OpenAI.Glue.bP n ∧
     IntMul.OpenAI.Glue.ℓP n ≤ IntMul.OpenAI.Glue.LP n ∧ 64 * IntMul.OpenAI.Glue.dP n ^ 2 * (256 * IntMul.OpenAI.Glue.dP n ^ 2).factorial ≤ IntMul.OpenAI.Glue.rP n ∧ IntMul.OpenAI.Glue.rP n ≤ 2 ^ IntMul.OpenAI.Glue.bP n ∧
     12 * IntMul.OpenAI.Glue.dP n ^ 2 * IntMul.OpenAI.Glue.bP n ≤ 2 ^ IntMul.OpenAI.Glue.bP n ∧ 64 ≤ IntMul.OpenAI.Glue.rP n ∧ NLogN.KFM.srcQ (IntMul.OpenAI.Glue.dP n) (IntMul.OpenAI.Glue.rP n) ≤ 3 * 2 ^ IntMul.OpenAI.Glue.bP n := by

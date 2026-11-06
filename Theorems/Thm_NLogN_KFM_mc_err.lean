@@ -95,7 +95,7 @@ open NLogN
 open NLogN.KFM
 open Complex
 variable {ι : Type*} [Fintype ι]
-theorem solution (p : ℕ) {Mr Mrt : (ι → ℂ) → (ι → ℂ) → (ι → ℂ)} (hMr : NLogN.KFM.BilC Mr) (Er : ℝ)
+theorem NLogN.KFM.mc_err (p : ℕ) {Mr Mrt : (ι → ℂ) → (ι → ℂ) → (ι → ℂ)} (hMr : NLogN.KFM.BilC Mr) (Er : ℝ)
     (hMrt : ∀ a b, NLogN.KFM.Grid p a → NLogN.KFM.Grid p b → ‖a‖ ≤ 1 → ‖b‖ ≤ 1 → ‖Mrt a b - Mr a b‖ ≤ Er * NLogN.KFM.hp p)
     {θ θt θi θit : ι → ℂ} (hθ : NLogN.KFM.Phases p θ θt) (hθi : NLogN.KFM.Phases p θi θit)
     {f g : ι → ℂ} (hf : ‖f‖ ≤ 1) (hg : ‖g‖ ≤ 7 / 10) (hE : Er * NLogN.KFM.hp p ≤ 3 / 10) :

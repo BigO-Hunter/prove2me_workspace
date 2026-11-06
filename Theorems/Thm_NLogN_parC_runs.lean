@@ -395,7 +395,7 @@ open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 set_option maxHeartbeats 1000000
-theorem solution (pP : Fin P) (hP : iprog pP = NLogN.pow2Body pP) (s : NLogN.IState NLogN.NS) (N M k : ℕ)
+theorem NLogN.parC_runs (pP : Fin P) (hP : iprog pP = NLogN.pow2Body pP) (s : NLogN.IState NLogN.NS) (N M k : ℕ)
     (L1 L2 LL : List NLogN.Item) (hM : M ≤ N) (hk : k ≤ N)
     (hQ : (2 * M + 2 * k + 3) / 2 ^ k + 1 ≤ N)
     (hT1 : s.G NLogN.T1 = .int k :: L1) (hT2 : s.G NLogN.T2 = .int M :: L2)

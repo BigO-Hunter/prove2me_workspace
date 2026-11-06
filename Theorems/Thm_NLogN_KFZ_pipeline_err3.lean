@@ -292,4 +292,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution.{u_1} : type_of% @NLogN.KFZ.pipeline_err3_sol_aux.{u_1} := @NLogN.KFZ.pipeline_err3_sol_aux.{u_1}
+theorem NLogN.KFZ.pipeline_err3.{u_1} : type_of% @NLogN.KFZ.pipeline_err3_sol_aux.{u_1} := @NLogN.KFZ.pipeline_err3_sol_aux.{u_1}

@@ -48,7 +48,7 @@ open IntMul RS
 open NLogN.KFD
 open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-theorem solution {p : NLogN.RS} {s t : NLogN.IState NLogN.HS} {c : ℕ} (hr : NLogN.KFD.norep p = true)
+theorem NLogN.KFD.FSp_of_norep {p : NLogN.RS} {s t : NLogN.IState NLogN.HS} {c : ℕ} (hr : NLogN.KFD.norep p = true)
     (h : NLogN.KIL.Sp p s t c) : NLogN.KFD.FSp p s t c :=
   ⟨h.1, h.2.1, by rw [NLogN.KFD.fcost_norep p hr]; exact h.2.2⟩
 end

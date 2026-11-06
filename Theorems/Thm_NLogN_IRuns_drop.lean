@@ -34,6 +34,6 @@ open NLogN
 open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 open NLogN.IRuns
-theorem solution {s : NLogN.IState S} {i : Fin S} {a : ℤ} {L : List NLogN.Item} (hi : s.G i = .int a :: L) :
+theorem NLogN.IRuns.drop {s : NLogN.IState S} {i : Fin S} {a : ℤ} {L : List NLogN.Item} (hi : s.G i = .int a :: L) :
     NLogN.IRuns I iprog (.op (.drop i)) s (s.upd i L) (2 * NLogN.zsz a + 2) := NLogN.IRuns.op (.drop hi)
 end

@@ -2629,4 +2629,4 @@ end IntMul.Kappa.R6
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.chirp_of_P18_sol_aux := @IntMul.Kappa.R6.chirp_of_P18_sol_aux
+theorem IntMul.Kappa.R6.chirp_of_P18 : type_of% @IntMul.Kappa.R6.chirp_of_P18_sol_aux := @IntMul.Kappa.R6.chirp_of_P18_sol_aux

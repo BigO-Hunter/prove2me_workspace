@@ -193,4 +193,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.nodeRH_of_sol_aux := @IntMul.Kappa.R6.IL3H.nodeRH_of_sol_aux
+theorem IntMul.Kappa.R6.IL3H.nodeRH_of : type_of% @IntMul.Kappa.R6.IL3H.nodeRH_of_sol_aux := @IntMul.Kappa.R6.IL3H.nodeRH_of_sol_aux

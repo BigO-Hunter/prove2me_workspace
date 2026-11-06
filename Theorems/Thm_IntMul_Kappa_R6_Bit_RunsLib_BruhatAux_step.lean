@@ -226,4 +226,4 @@ end IntMul.Kappa.R6.Bit.RunsLib
 
 end
 
-theorem solution.{u_1} : type_of% @IntMul.Kappa.R6.Bit.RunsLib.BruhatAux.step_sol_aux.{u_1} := @IntMul.Kappa.R6.Bit.RunsLib.BruhatAux.step_sol_aux.{u_1}
+theorem IntMul.Kappa.R6.Bit.RunsLib.BruhatAux_step.{u_1} : type_of% @IntMul.Kappa.R6.Bit.RunsLib.BruhatAux.step_sol_aux.{u_1} := @IntMul.Kappa.R6.Bit.RunsLib.BruhatAux.step_sol_aux.{u_1}

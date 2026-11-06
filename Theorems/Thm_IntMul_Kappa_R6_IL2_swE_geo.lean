@@ -716,4 +716,4 @@ end IntMul.Kappa.R6.IL2
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2.swE_geo_sol_aux := @IntMul.Kappa.R6.IL2.swE_geo_sol_aux
+theorem IntMul.Kappa.R6.IL2.swE_geo : type_of% @IntMul.Kappa.R6.IL2.swE_geo_sol_aux := @IntMul.Kappa.R6.IL2.swE_geo_sol_aux

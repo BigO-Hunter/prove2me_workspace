@@ -12,6 +12,6 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution {j k : ℕ} (h : j ≤ k) : NLogN.zsz (j : ℤ) ≤ NLogN.zsz (k : ℤ) :=
+theorem NLogN.zsz_natCast_le {j k : ℕ} (h : j ≤ k) : NLogN.zsz (j : ℤ) ≤ NLogN.zsz (k : ℤ) :=
   NLogN.zsz_mono (by simpa using h)
 end

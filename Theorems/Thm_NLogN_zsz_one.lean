@@ -27,6 +27,6 @@ end
 
 section
 open NLogN
-theorem solution : NLogN.zsz 1 = 1 := by
+theorem NLogN.zsz_one : NLogN.zsz 1 = 1 := by
   simp [NLogN.zsz, NLogN.zbits]; rw [NLogN.nbits_pos (by norm_num)]; simp [NLogN.nbits_zero]
 end

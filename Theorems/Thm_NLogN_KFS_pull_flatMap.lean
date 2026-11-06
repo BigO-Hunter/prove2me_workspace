@@ -246,7 +246,7 @@ open NLogN
 open NLogN.KFS
 open IntMul KIL KFB KFL AModel AModelL12
 variable {α β : Type*}
-theorem solution (sh : AModel.Shape) (g : List ℕ → List ℕ) (hg : ∀ a, AModel.Valid sh a → AModel.Valid sh (g a))
+theorem NLogN.KFS.pull_flatMap (sh : AModel.Shape) (g : List ℕ → List ℕ) (hg : ∀ a, AModel.Valid sh a → AModel.Valid sh (g a))
     (f : α → List β) (B : ℕ) (hf : ∀ x, (f x).length = B) (d : α) (d' : β)
     (xs : List α) (hxs : xs.length = AModel.vol sh) :
     (AModel.pull sh sh g d xs).flatMap f =

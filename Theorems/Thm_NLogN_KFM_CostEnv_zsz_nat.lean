@@ -15,6 +15,6 @@ open NLogN
 open NLogN.KFM
 open IntMul RS
 open NLogN.KFM.CostEnv
-theorem solution {A B : ℕ} (h : NLogN.KFM.CostEnv A B) {m : ℕ} (hm : m ≤ A) : NLogN.zsz (m : ℤ) ≤ B :=
+theorem NLogN.KFM.CostEnv.zsz_nat {A B : ℕ} (h : NLogN.KFM.CostEnv A B) {m : ℕ} (hm : m ≤ A) : NLogN.zsz (m : ℤ) ≤ B :=
   h.zsz_le (by rw [Nat.abs_cast]; exact_mod_cast hm)
 end

@@ -53,7 +53,7 @@ end
 
 section
 open NLogN
-theorem solution (m : ℕ) : NLogN.zsz ((2 : ℤ) ^ m) = m + 1 := by
+theorem NLogN.zsz_two_pow (m : ℕ) : NLogN.zsz ((2 : ℤ) ^ m) = m + 1 := by
   have : ((2 : ℤ) ^ m) = ((2 ^ m : ℕ) : ℤ) := by push_cast; rfl
   rw [this, NLogN.zsz, NLogN.zbits_two_pow]; simp
 end

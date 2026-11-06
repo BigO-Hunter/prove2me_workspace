@@ -89,4 +89,4 @@ end NLogN
 
 end
 
-theorem solution : type_of% @NLogN.exec_flat_sol_aux := @NLogN.exec_flat_sol_aux
+theorem NLogN.exec_flat : type_of% @NLogN.exec_flat_sol_aux := @NLogN.exec_flat_sol_aux

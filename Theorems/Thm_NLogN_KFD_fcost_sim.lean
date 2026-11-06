@@ -238,4 +238,4 @@ end NLogN
 
 end
 
-theorem solution : type_of% @NLogN.KFD.fcost_sim_sol_aux := @NLogN.KFD.fcost_sim_sol_aux
+theorem NLogN.KFD.fcost_sim : type_of% @NLogN.KFD.fcost_sim_sol_aux := @NLogN.KFD.fcost_sim_sol_aux

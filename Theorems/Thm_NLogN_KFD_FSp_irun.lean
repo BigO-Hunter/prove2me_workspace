@@ -25,72 +25,11 @@ variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 namespace IRuns
 
-theorem mono' {p : IStmt S P} {s s' s'' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (he : s' = s'') (hc : c ≤ c') : IRuns I iprog p s s'' c' := he ▸ h.mono hc
-
-theorem op {o : IOp S} {s s' : IState S} {c : ℕ} (h : o.Step I s s' c) :
-    IRuns I iprog (.op o) s s' c := ⟨c, le_rfl, .op h⟩
-
-theorem iteT {i f} {p q : IStmt S P} {s s' : IState S} {c : ℕ} (hf : f (s.cl i) = true)
-    (h : IRuns I iprog p s s' c) : IRuns I iprog (.ite i f p q) s s' (c + 25) := by
-  obtain ⟨d, hd, h⟩ := h; exact ⟨d + 25, by omega, .iteT hf h⟩
-
-theorem iteF {i f} {p q : IStmt S P} {s s' : IState S} {c : ℕ} (hf : f (s.cl i) = false)
-    (h : IRuns I iprog q s s' c) : IRuns I iprog (.ite i f p q) s s' (c + 25) := by
-  obtain ⟨d, hd, h⟩ := h; exact ⟨d + 25, by omega, .iteF hf h⟩
-
-theorem loopF {i f} {p : IStmt S P} {s : IState S} (hf : f (s.cl i) = false) :
-    IRuns I iprog (.loop i f p) s s 30 := ⟨30, le_rfl, .loopF hf⟩
-
-theorem loopT {i f} {p : IStmt S P} {s s₁ s₂ : IState S} {c₁ c₂ : ℕ} (hf : f (s.cl i) = true)
-    (h₁ : IRuns I iprog p s s₁ c₁) (h₂ : IRuns I iprog (.loop i f p) s₁ s₂ c₂) :
-    IRuns I iprog (.loop i f p) s s₂ (c₁ + c₂ + 30) := by
-  obtain ⟨d₁, hd₁, h₁⟩ := h₁; obtain ⟨d₂, hd₂, h₂⟩ := h₂
-  exact ⟨d₁ + d₂ + 30, by omega, .loopT hf h₁ h₂⟩
-
-/-- A loop running through the states `ss 0, …, ss m`. -/
-theorem loop {i f} {p : IStmt S P} (ss : ℕ → IState S) (cs : ℕ → ℕ) (m : ℕ)
-    (hT : ∀ k < m, f ((ss k).cl i) = true) (hF : f ((ss m).cl i) = false)
-    (hb : ∀ k < m, IRuns I iprog p (ss k) (ss (k + 1)) (cs k)) :
-    IRuns I iprog (.loop i f p) (ss 0) (ss m) ((∑ k ∈ Finset.range m, (cs k + 30)) + 30) := by
-  suffices H : ∀ r j, j + r = m → IRuns I iprog (.loop i f p) (ss j) (ss m)
-      ((∑ k ∈ Finset.Ico j m, (cs k + 30)) + 30) by
-    have := H m 0 (by omega)
-    rwa [Finset.range_eq_Ico]
-  intro r
-  induction r with
-  | zero => intro j hj; subst hj; simpa using loopF hF
-  | succ r ih =>
-    intro j hj
-    have hjm : j < m := by omega
-    have := loopT (hT j hjm) (hb j hjm) (ih (j + 1) (by omega))
-    refine this.mono ?_
-    rw [Finset.sum_eq_sum_Ico_succ_bot hjm]
-    omega
-
 end IRuns
 
 namespace IRuns
 
-theorem unmark {s : IState S} {i : Fin S} {L : List Item} (hi : s.G i = .mark :: L) :
-    IRuns I iprog (.op (.unmark i)) s (s.upd i L) 1 := NLogN.IRuns.op (.unmark hi)
-
 end IRuns
-
-@[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
-    (s.upd i L).upd i L' = s.upd i L' := by
-  simp [IState.upd]
-
-@[simp] theorem IState.upd_self (s : IState S) (i : Fin S) : s.upd i (s.G i) = s := by
-  simp [IState.upd]
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
-@[simp] theorem cl_int (s : IState S) (i : Fin S) (z : ℤ) (L : List Item) (h : s.G i = .int z :: L) :
-    s.cl i = if z = 0 then .zero else if z < 0 then .neg else .pos := by
-  simp [IState.cl, h, cls]
 
 end NLogN
 
@@ -105,8 +44,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-theorem zX_all : NLogN.zX.all = [56, 57, 58, 59, 60, 61, 62, 63] := rfl
 
 namespace Ex
 
@@ -351,21 +288,6 @@ open IntMul
 namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-theorem marks_succ (n : ℕ) : marks (n + 1) = .mark :: marks n := rfl
-
-theorem NM_int (a : ℤ) (L : List Item) : NM (.int a :: L) := by simp [NM]
-
-theorem isMk_marks_succ (n : ℕ) (L : List Item) : isMk (cls (marks (n + 1) ++ L).head?) = true := by
-  simp [marks, List.replicate_succ, isMk, cls]
-
-theorem isMk_NM {L : List Item} (h : NM L) : isMk (cls L.head?) = false := by
-  unfold NM at h; unfold isMk
-  rcases L with _ | ⟨x, L⟩
-  · simp [cls]
-  · rcases x with a | _
-    · simp only [List.head?_cons, cls]; split_ifs <;> simp
-    · simp at h
 
 end KFC
 
@@ -702,7 +624,7 @@ open IntMul RS
 open NLogN.KFD
 open KFC (marks marks_zero marks_succ isMk NM NM_int isMk_marks_succ isMk_NM toUL toUL_runs cUL uK uR uY uB)
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-theorem solution {p : NLogN.RS} {s t : NLogN.IState NLogN.HS} {c : ℕ} (hf : NLogN.KFD.fok p = true) (h : NLogN.KFD.FSp p s t c) :
+theorem NLogN.KFD.FSp_irun {p : NLogN.RS} {s t : NLogN.IState NLogN.HS} {c : ℕ} (hf : NLogN.KFD.fok p = true) (h : NLogN.KFD.FSp p s t c) :
     NLogN.IRuns I iprog (NLogN.KFD.fcode p) s t c := by
   have := NLogN.KFD.fcode_runs0 (I := I) (iprog := iprog) p s h.1 hf
   rw [h.2.1] at this

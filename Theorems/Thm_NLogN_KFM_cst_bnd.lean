@@ -90,7 +90,7 @@ open NLogN
 open NLogN.KFM
 open IntMul KFC KFB KFT KIL
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-theorem solution (Δ n : ℕ) (c h : NLogN.KFB.GI) (C H : ℂ) (hC : ‖C‖ ≤ 1) (hH : ‖H‖ ≤ 1)
+theorem NLogN.KFM.cst_bnd (Δ n : ℕ) (c h : NLogN.KFB.GI) (C H : ℂ) (hC : ‖C‖ ≤ 1) (hH : ‖H‖ ≤ 1)
     (hc : ‖NLogN.KFM.vP Δ c - C‖ ≤ (2 : ℝ)⁻¹ ^ Δ) (hh : ‖NLogN.KFM.vP Δ h - H‖ ≤ (2 : ℝ)⁻¹ ^ Δ)
     (hu : (4 * (n : ℝ) ^ 2 + 1) * (2 : ℝ)⁻¹ ^ Δ ≤ 1) :
     ∀ k ≤ n, NLogN.KFM.GBnd (Δ + 2) (NLogN.KFM.cst Δ c h (NLogN.KFM.oneP Δ) k).1 ∧ NLogN.KFM.GBnd (Δ + 2) (NLogN.KFM.cst Δ c h (NLogN.KFM.oneP Δ) k).2 := by

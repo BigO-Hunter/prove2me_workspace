@@ -284,4 +284,4 @@ end NLogN.KFM
 
 end
 
-theorem solution : type_of% @NLogN.KFM.conjPU_runs_sol_aux := @NLogN.KFM.conjPU_runs_sol_aux
+theorem NLogN.KFM.conjPU_runs : type_of% @NLogN.KFM.conjPU_runs_sol_aux := @NLogN.KFM.conjPU_runs_sol_aux

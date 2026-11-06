@@ -140,7 +140,7 @@ set_option linter.unusedSectionVars false
 open NLogN
 open NLogN.KFR
 open IntMul RS KIL KFH KFN
-theorem solution {iprog : Fin 1 → NLogN.IStmt NLogN.HS 1} (H : NLogN.KFR.Lem13ILP iprog) :
+theorem NLogN.KFR.closedHyps_of_lem13 {iprog : Fin 1 → NLogN.IStmt NLogN.HS 1} (H : NLogN.KFR.Lem13ILP iprog) :
     ∃ Kc : ℝ, 0 < Kc ∧ ∀ (Isym : List NLogN.Sym) {K r Z : ℕ}, 6 ≤ K → 1 ≤ r →
       80 * Z * (Z + 2) ≤ 2 ^ K →
       NLogN.KFN.RowHyp Isym iprog K (100 ^ 3) r Z (NLogN.KFR.PsiR r Z) (Kc * (K + 2) + 1) NLogN.KFN.τ50 ∧

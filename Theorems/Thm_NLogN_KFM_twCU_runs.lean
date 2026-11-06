@@ -627,7 +627,7 @@ open NLogN
 open NLogN.KFM
 open IntMul KFC KFB KFT KIL
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-theorem solution (rn rk rj X : Fin NLogN.HS) (n k j : ℕ) (hk : 0 < k)
+theorem NLogN.KFM.twCU_runs (rn rk rj X : Fin NLogN.HS) (n k j : ℕ) (hk : 0 < k)
     (hn28 : rn ≠ 28) (hk28 : rk ≠ 28) (hk29 : rk ≠ 29) (hj28 : rj ≠ 28) (hj29 : rj ≠ 29)
     (hj53 : rj ≠ 53)
     (hX51 : X ≠ 51) (hX52 : X ≠ 52) (hX28 : X ≠ 28) (hX29 : X ≠ 29) (hX53 : X ≠ 53)

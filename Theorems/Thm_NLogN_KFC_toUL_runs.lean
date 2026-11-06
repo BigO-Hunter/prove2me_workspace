@@ -459,7 +459,7 @@ open NLogN
 open IntMul
 open NLogN.KFC
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-theorem solution {A X : Fin NLogN.HS} (hAK : A ≠ NLogN.KFC.uK) (hXK : X ≠ NLogN.KFC.uK) (hXR : X ≠ NLogN.KFC.uR) (hXY : X ≠ NLogN.KFC.uY)
+theorem NLogN.KFC.toUL_runs {A X : Fin NLogN.HS} (hAK : A ≠ NLogN.KFC.uK) (hXK : X ≠ NLogN.KFC.uK) (hXR : X ≠ NLogN.KFC.uR) (hXY : X ≠ NLogN.KFC.uY)
     (hXB : X ≠ NLogN.KFC.uB) (s : NLogN.IState NLogN.HS) (n : ℕ) (LA : List NLogN.Item) (hA : s.G A = .int n :: LA)
     (hX : NLogN.KFC.NM (s.G X)) :
     NLogN.IRuns I iprog (NLogN.KFC.toUL A X) s (s.upd X (NLogN.KFC.marks n ++ s.G X)) (NLogN.KFC.cUL n) := by

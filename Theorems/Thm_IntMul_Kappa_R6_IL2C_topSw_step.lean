@@ -1176,4 +1176,4 @@ end IntMul.Kappa.R6.IL2C
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2C.topSw_step_sol_aux := @IntMul.Kappa.R6.IL2C.topSw_step_sol_aux
+theorem IntMul.Kappa.R6.IL2C.topSw_step : type_of% @IntMul.Kappa.R6.IL2C.topSw_step_sol_aux := @IntMul.Kappa.R6.IL2C.topSw_step_sol_aux

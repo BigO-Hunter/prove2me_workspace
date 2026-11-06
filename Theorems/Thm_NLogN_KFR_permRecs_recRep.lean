@@ -53,7 +53,7 @@ set_option linter.unusedSectionVars false
 open NLogN
 open NLogN.KFR
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly KFN
-theorem solution {sh : AModel.Shape} {π : List ℕ → List ℕ} {r F : ℕ} {zs : List NLogN.KFB.GI}
+theorem NLogN.KFR.permRecs_recRep {sh : AModel.Shape} {π : List ℕ → List ℕ} {r F : ℕ} {zs : List NLogN.KFB.GI}
     {xs : List (Fin r → ℂ)} (h : NLogN.KFH.RecRep r F zs xs) (hn : xs.length = AModel.vol sh)
     (hπ : ∀ q < AModel.vol sh, AModel.encode sh (π (AModel.decode sh q)) < AModel.vol sh) :
     NLogN.KFH.RecRep r F (NLogN.KFH.permRecs sh π r zs)

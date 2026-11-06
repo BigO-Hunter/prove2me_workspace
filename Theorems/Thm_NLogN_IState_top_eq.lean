@@ -12,6 +12,6 @@ open NLogN
 open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 open NLogN.IState
-theorem solution {s : NLogN.IState S} {i : Fin S} {a : ℤ} {L : List NLogN.Item} (h : s.G i = .int a :: L) :
+theorem NLogN.IState.top_eq {s : NLogN.IState S} {i : Fin S} {a : ℤ} {L : List NLogN.Item} (h : s.G i = .int a :: L) :
     s.top i = a := by simp [NLogN.IState.top, h]
 end

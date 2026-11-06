@@ -69,5 +69,5 @@ end
 
 section
 open NLogN
-theorem solution {z : ℤ} {m : ℕ} (h : z.natAbs < 2 ^ m) : NLogN.zsz z ≤ m := NLogN.length_nbits_le h
+theorem NLogN.zsz_le_of_lt {z : ℤ} {m : ℕ} (h : z.natAbs < 2 ^ m) : NLogN.zsz z ≤ m := NLogN.length_nbits_le h
 end

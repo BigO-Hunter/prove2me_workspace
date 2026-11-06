@@ -857,4 +857,4 @@ end IntMul.Kappa.R6.IL2C
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2C.topXB_step_sol_aux := @IntMul.Kappa.R6.IL2C.topXB_step_sol_aux
+theorem IntMul.Kappa.R6.IL2C.topXB_step : type_of% @IntMul.Kappa.R6.IL2C.topXB_step_sol_aux := @IntMul.Kappa.R6.IL2C.topXB_step_sol_aux

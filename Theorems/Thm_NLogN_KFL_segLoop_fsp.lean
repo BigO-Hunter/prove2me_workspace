@@ -15,27 +15,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -66,8 +48,6 @@ end NLogN
 namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
-
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
 
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
@@ -114,12 +94,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
 
 end NLogN
 
@@ -767,7 +741,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD
-theorem solution {K : ℕ} (hK : 1 ≤ K) {T : NLogN.Ex NLogN.HS} {tf : ℤ → ℤ → ℤ} {Bb : ℕ}
+theorem NLogN.KFL.segLoop_fsp {K : ℕ} (hK : 1 ≤ K) {T : NLogN.Ex NLogN.HS} {tf : ℤ → ℤ → ℤ} {Bb : ℕ}
     (hT : NLogN.KFL.SegT T tf Bb) (s : NLogN.IState NLogN.HS) (F : Fin NLogN.HS → List ℤ) (hF : F NLogN.KFL.rC = [])
     (a u v w : ℤ) (hu : 0 ≤ u) (hv : 0 ≤ v) (hw : 0 < w)
     (n : ℕ) (hub : NLogN.zsz u ≤ Bb) (hvb : NLogN.zsz v ≤ Bb) (hKb : NLogN.zsz ((2 : ℤ) ^ K) ≤ Bb)

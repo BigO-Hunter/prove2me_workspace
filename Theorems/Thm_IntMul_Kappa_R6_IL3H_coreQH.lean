@@ -2059,4 +2059,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.coreQH_sol_aux := @IntMul.Kappa.R6.IL3H.coreQH_sol_aux
+theorem IntMul.Kappa.R6.IL3H.coreQH : type_of% @IntMul.Kappa.R6.IL3H.coreQH_sol_aux := @IntMul.Kappa.R6.IL3H.coreQH_sol_aux

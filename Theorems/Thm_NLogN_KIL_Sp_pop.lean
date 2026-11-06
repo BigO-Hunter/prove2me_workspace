@@ -70,7 +70,7 @@ open NLogN
 open IntMul RS
 open NLogN.KIL
 variable (s : IState HS) (f : Fin HS → List ℤ)
-theorem solution {i : Fin NLogN.HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l)
+theorem NLogN.KIL.Sp_pop {i : Fin NLogN.HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l)
     (ha : NLogN.zsz a ≤ B) :
     NLogN.KIL.Sp (.pop i) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i l)) (2 * B + 2) := by
   refine ⟨⟨hi, NLogN.KIL.isInt_encK hf⟩, ?_, ?_⟩

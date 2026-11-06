@@ -122,7 +122,7 @@ open NLogN.KFM
 open Complex IntMul.OpenAI.RT IntMul.OpenAI.RC
 variable {d : ℕ}
 variable {D : ℕ}
-theorem solution (t : Fin (D + 1) → ℕ) [∀ i, NeZero (t i)] : NLogN.KFM.BilC (NLogN.KFM.mrX t) := by
+theorem NLogN.KFM.bilC_mrX (t : Fin (D + 1) → ℕ) [∀ i, NeZero (t i)] : NLogN.KFM.BilC (NLogN.KFM.mrX t) := by
   refine ⟨fun a a' b b' => ?_, fun a b => ?_⟩
   · funext j
     simp only [NLogN.KFM.mrX, Pi.sub_apply, Pi.add_apply, ← mul_add, ← mul_sub, ← Finset.sum_add_distrib,

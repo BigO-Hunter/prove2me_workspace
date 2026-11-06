@@ -1343,4 +1343,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution : type_of% @NLogN.KFZ.M_runsG_sol_aux := @NLogN.KFZ.M_runsG_sol_aux
+theorem NLogN.KFZ.M_runsG : type_of% @NLogN.KFZ.M_runsG_sol_aux := @NLogN.KFZ.M_runsG_sol_aux

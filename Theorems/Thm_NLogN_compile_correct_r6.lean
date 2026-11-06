@@ -164,4 +164,4 @@ end NLogN
 
 end
 
-theorem solution : type_of% @NLogN.compile_correct_sol_aux := @NLogN.compile_correct_sol_aux
+theorem NLogN.compile_correct_r6 : type_of% @NLogN.compile_correct_sol_aux := @NLogN.compile_correct_sol_aux

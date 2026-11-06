@@ -391,7 +391,7 @@ set_option maxRecDepth 20000
 open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD KFE KFB Butterfly AModel
-theorem solution :
+theorem NLogN.KFL.linesI_spec :
     ∃ T q₀ : ℕ, ∀ q, q.Prime → q₀ < q → ∃ Ks : ℝ, 0 ≤ Ks ∧
       ∀ (K ρ f : ℕ), 1 ≤ K → ρ < K → 1 ≤ f →
       ∀ (g : NLogN.KFL.Geo), g.Pos → g.Q = 2 ^ (f * K) →

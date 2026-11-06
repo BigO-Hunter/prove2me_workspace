@@ -1723,7 +1723,7 @@ open IntMul RS
 open NLogN.KFD
 open KIL AModel AModelL12
 variable {m : ℕ}
-theorem solution {N : ℕ} [NeZero N] (A B Cs : AModel.Shape) (P L : ℕ) (T : NLogN.KIL.TSh m) (rX : Fin NLogN.HS)
+theorem NLogN.KFD.stepU_fspec {N : ℕ} [NeZero N] (A B Cs : AModel.Shape) (P L : ℕ) (T : NLogN.KIL.TSh m) (rX : Fin NLogN.HS)
     (hrX : 38 ≤ rX.val ∧ rX.val < 56)
     (hpos : ∀ a ∈ P :: L :: AModel.hdShape A B Cs m N, 1 ≤ a)
     (t : NLogN.IState NLogN.HS) (xs : List ℤ) (w Bb : ℕ) (R : List NLogN.Item) (hT : NLogN.KIL.TOK T N Bb)

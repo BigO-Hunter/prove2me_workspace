@@ -256,4 +256,4 @@ end IntMul.Kappa.R6.Bit
 
 end
 
-theorem solution.{u_1, u_2} : type_of% @IntMul.Kappa.R6.Bit.genF_labGates_sol_aux.{u_1, u_2} := @IntMul.Kappa.R6.Bit.genF_labGates_sol_aux.{u_1, u_2}
+theorem IntMul.Kappa.R6.Bit.genF_labGates.{u_1, u_2} : type_of% @IntMul.Kappa.R6.Bit.genF_labGates_sol_aux.{u_1, u_2} := @IntMul.Kappa.R6.Bit.genF_labGates_sol_aux.{u_1, u_2}

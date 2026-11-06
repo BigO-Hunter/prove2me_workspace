@@ -227,4 +227,4 @@ end NLogN.KFR
 
 end
 
-theorem solution : type_of% @NLogN.KFR.ceil_bnd_le_sol_aux := @NLogN.KFR.ceil_bnd_le_sol_aux
+theorem NLogN.KFR.ceil_bnd_le : type_of% @NLogN.KFR.ceil_bnd_le_sol_aux := @NLogN.KFR.ceil_bnd_le_sol_aux

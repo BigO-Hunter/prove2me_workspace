@@ -2720,4 +2720,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution : type_of% @NLogN.KFZ.body_runsP_sol_aux := @NLogN.KFZ.body_runsP_sol_aux
+theorem NLogN.KFZ.body_runsP : type_of% @NLogN.KFZ.body_runsP_sol_aux := @NLogN.KFZ.body_runsP_sol_aux

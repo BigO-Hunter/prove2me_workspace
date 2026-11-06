@@ -583,4 +583,4 @@ end IntMul.Kappa.R6.IL2C
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2C.rotR_runs_sol_aux := @IntMul.Kappa.R6.IL2C.rotR_runs_sol_aux
+theorem IntMul.Kappa.R6.IL2C.rotR_runs : type_of% @IntMul.Kappa.R6.IL2C.rotR_runs_sol_aux := @IntMul.Kappa.R6.IL2C.rotR_runs_sol_aux

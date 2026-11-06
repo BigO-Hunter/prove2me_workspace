@@ -560,7 +560,7 @@ open NLogN
 open NLogN.KFM
 open IntMul KFC KFB KFT KIL
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-theorem solution {M : NLogN.MulSpec} {pM : Fin P} (hM : NLogN.MulOK I iprog pM M) (hdom : ∀ x y, M.dom x y)
+theorem NLogN.KFM.smulPU_runs {M : NLogN.MulSpec} {pM : Fin P} (hM : NLogN.MulOK I iprog pM M) (hdom : ∀ x y, M.dom x y)
     {w φ : ℕ} (hΦ : ∀ x y : ℤ, NLogN.zsz x ≤ w → NLogN.zsz y ≤ w → M.Φ x y ≤ φ) (Δ : ℕ) (S : ℤ)
     (s : NLogN.IState NLogN.HS) (L : List ℤ) (R0 LR LS : List NLogN.Item)
     (h0 : s.G 0 = NLogN.ints L ++ R0) (hR : s.G NLogN.KFM.pR = .int (2 ^ Δ) :: LR) (hS : s.G NLogN.KFM.pX3 = .int S :: LS)

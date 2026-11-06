@@ -60,7 +60,7 @@ section
 open NLogN
 open NLogN.KFM
 open NLogN.KFN
-theorem solution :
+theorem NLogN.KFM.lam_complex_eq :
     Real.logb ((100 ^ 3 : ℕ) : ℝ) (NLogN.KFN.Rb P8Lift.sc P8Lift.Wc (100 ^ 3) NLogN.KFN.τ50) = τ50 := by
   rw [NLogN.KFM.Rb_complex, Real.logb_rpow (by norm_num) (by norm_num)]
 end

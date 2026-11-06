@@ -1391,4 +1391,4 @@ end NLogN.KFW
 
 end
 
-theorem solution : type_of% @NLogN.KFW.sImplQ_leafU_sol_aux := @NLogN.KFW.sImplQ_leafU_sol_aux
+theorem NLogN.KFW.sImplQ_leafU : type_of% @NLogN.KFW.sImplQ_leafU_sol_aux := @NLogN.KFW.sImplQ_leafU_sol_aux

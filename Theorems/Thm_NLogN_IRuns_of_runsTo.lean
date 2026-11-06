@@ -145,7 +145,7 @@ section
 open NLogN
 open IntMul
 open NLogN.IRuns
-theorem solution {S P : ℕ} {I : List NLogN.Sym} {iprog : Fin P → NLogN.IStmt S P} {p : NLogN.IStmt S P}
+theorem NLogN.IRuns.of_runsTo {S P : ℕ} {I : List NLogN.Sym} {iprog : Fin P → NLogN.IStmt S P} {p : NLogN.IStmt S P}
     {s t : NLogN.IState S} {c : ℕ} (n : ℕ) (h : NLogN.runsTo (NLogN.IStmt.run iprog n p s) t c) :
     NLogN.IRuns I iprog p s t c := by
   unfold NLogN.runsTo at h

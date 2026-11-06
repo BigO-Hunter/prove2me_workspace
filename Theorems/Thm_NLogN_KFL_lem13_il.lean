@@ -1184,7 +1184,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD KFB KFH AModel Butterfly
-theorem solution :
+theorem NLogN.KFL.lem13_il :
     ∃ (code : ℕ → ℕ → ℕ → ℕ → ℕ → ℕ → ℕ → ℕ → ℕ → Fin 3 → Fin 3 → NLogN.IStmt NLogN.HS 1) (Kc : ℝ), 0 < Kc ∧
     ∀ {I : List NLogN.Sym} (N0 N1 N2 N3 K f ρ R w : ℕ) (px py : Fin 3), px ≠ py → 6 ≤ K → ρ < K →
       1 ≤ f → 1 ≤ N0 → 1 ≤ N1 → 1 ≤ N2 → 1 ≤ N3 → 1 ≤ R →

@@ -544,4 +544,4 @@ end IntMul.Kappa.R6
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.MS_of_sol_aux := @IntMul.Kappa.R6.MS_of_sol_aux
+theorem IntMul.Kappa.R6.MS_of : type_of% @IntMul.Kappa.R6.MS_of_sol_aux := @IntMul.Kappa.R6.MS_of_sol_aux

@@ -259,4 +259,4 @@ end NLogN.KIL
 
 end
 
-theorem solution : type_of% @NLogN.KIL.RSim.sim_sol_aux := @NLogN.KIL.RSim.sim_sol_aux
+theorem NLogN.KIL.RSim_sim : type_of% @NLogN.KIL.RSim.sim_sol_aux := @NLogN.KIL.RSim.sim_sol_aux

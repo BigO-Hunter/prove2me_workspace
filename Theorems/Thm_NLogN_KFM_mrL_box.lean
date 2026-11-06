@@ -121,7 +121,7 @@ open NLogN
 open NLogN.KFM
 open Complex
 variable {D : ℕ}
-theorem solution (t : Fin (D + 1) → ℕ) [∀ i, NeZero (t i)] (f g : ((i : Fin (D + 1)) → ZMod (t i)) → ℂ) :
+theorem NLogN.KFM.mrL_box (t : Fin (D + 1) → ℕ) [∀ i, NeZero (t i)] (f g : ((i : Fin (D + 1)) → ZMod (t i)) → ℂ) :
     NLogN.KFM.mrL (t (Fin.last D)) (NLogN.KFM.tsOf t) (NLogN.KFM.recL t f) (NLogN.KFM.recL t g) = NLogN.KFM.recL t (NLogN.KFM.mrX t f g) := by
   have hpos := NLogN.KFM.tsOf_pos t
   set r := t (Fin.last D) with hr

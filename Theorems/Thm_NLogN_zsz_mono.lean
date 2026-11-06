@@ -84,3 +84,15 @@ theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
 end NLogN
 
 end
+
+section
+namespace NLogN
+
+/-- zsz is monotone in natAbs.  Home of the declaration: this module is the
+sibling that every consumer of NLogN.zsz_mono imports. -/
+theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
+  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
+
+end NLogN
+
+end

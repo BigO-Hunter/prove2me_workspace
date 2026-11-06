@@ -2418,7 +2418,7 @@ open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 attribute [local irreducible] fmA
-theorem solution (pF pD pT pP : Fin P) (hPF : iprog pF = NLogN.fmBody pF pD pT pP)
+theorem NLogN.fm_spec (pF pD pT pP : Fin P) (hPF : iprog pF = NLogN.fmBody pF pD pT pP)
     (hPD : iprog pD = NLogN.difBody pD) (hPT : iprog pT = NLogN.ditBody pT) (hPP : iprog pP = NLogN.pow2Body pP)
     (Hpar : ∀ N, 2048 ≤ NLogN.fmL N → 2 ^ NLogN.fmK N ∣ N →
       1 ≤ N ∧ NLogN.fmB N ≤ NLogN.fmL N / 2 ∧ 2 ^ NLogN.fmK N * NLogN.fmM N = N ∧ 1 ≤ NLogN.fmM N ∧

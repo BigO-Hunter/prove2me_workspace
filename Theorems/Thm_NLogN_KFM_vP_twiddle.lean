@@ -211,7 +211,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFM
 open Complex KFB
-theorem solution (n k j : ℕ) (hk : 0 < k) :
+theorem NLogN.KFM.vP_twiddle (n k j : ℕ) (hk : 0 < k) :
     ‖NLogN.KFM.vP n (IntMul.HvdH.twiddle n k j) - exp (2 * Real.pi * I * j / k)‖ ≤ (2 : ℝ)⁻¹ ^ n := by
   have h := IntMul.HvdH.TwPf.twiddle_bound n k j hk
   have e : NLogN.KFM.vP n (IntMul.HvdH.twiddle n k j) - exp (2 * Real.pi * I * j / k) =

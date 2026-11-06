@@ -50,6 +50,6 @@ open NLogN
 open NLogN.KFM
 open IntMul RS
 open NLogN.KFM.CostEnv
-theorem solution {A B : ℕ} (h : NLogN.KFM.CostEnv A B) {z : ℤ} (hz : |z| ≤ (A : ℤ)) : NLogN.zsz z ≤ B :=
+theorem NLogN.KFM.CostEnv.zsz_le {A B : ℕ} (h : NLogN.KFM.CostEnv A B) {z : ℤ} (hz : |z| ≤ (A : ℤ)) : NLogN.zsz z ≤ B :=
   NLogN.KFM.zsz_of_abs (k := 1) (by simpa using hz) (h.hAB 1 (by norm_num))
 end

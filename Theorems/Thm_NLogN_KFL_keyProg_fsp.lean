@@ -16,27 +16,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -68,8 +50,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -86,8 +66,6 @@ section
 namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
-
-theorem zbits_neg (z : ℤ) : zbits (-z) = zbits z := by simp [zbits]
 
 end NLogN
 
@@ -115,10 +93,6 @@ namespace IRuns
 
 end IRuns
 
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
 end NLogN
 
 end
@@ -127,18 +101,10 @@ section
 -- Source module: NLogN.Costs
 namespace NLogN
 
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_neg (z : ℤ) : zsz (-z) = zsz z := by simp [zsz, zbits_neg]
-
 theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
 
 theorem zsz_one : zsz 1 = 1 := by
   simp [zsz, zbits]; rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
 
 end NLogN
 
@@ -151,9 +117,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-
-theorem IState.top_eq {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (h : s.G i = .int a :: L) :
-    s.top i = a := by simp [IState.top, h]
 
 namespace Ex
 
@@ -179,9 +142,6 @@ open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
-theorem IState.isInt_of {s : IState S} {i : Fin S} {a : ℤ} {L : List Item}
-    (h : s.G i = .int a :: L) : s.IsInt i := ⟨L, by rw [IState.top_eq h, h]⟩
-
 namespace Ex
 
 end Ex
@@ -199,8 +159,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-theorem zX_all : zX.all = [56, 57, 58, 59, 60, 61, 62, 63] := rfl
 
 namespace Ex
 
@@ -221,18 +179,6 @@ open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
-
-theorem clean_of_lt {i : Fin HS} (hi : i.val < 56) : (Ex.reg i).Clean := by
-  intro j hj
-  simp only [Ex.regs, List.mem_singleton] at hj
-  subst hj; simp only [zX_all, List.mem_cons, List.not_mem_nil, or_false]
-  intro h; rcases h with h | h | h | h | h | h | h | h <;> (subst h; exact absurd hi (by decide))
-
-theorem asgCost_le (i : Fin HS) (e : Ex HS) (s : IState HS) (B : ℕ) (h : e.Bnd s B)
-    (hi : zsz (s.top i) ≤ B) : asgCost i e s ≤ (e.size + 1) * 10 ^ 7 * (B + 2) ^ 2 := by
-  have h1 := Ex.cost_le s B e h
-  have h2 := Ex.zsz_eval_le s B e h
-  simp only [asgCost, moveCost]; nlinarith
 
 theorem pushCost_le (e : Ex HS) (s : IState HS) (B : ℕ) (h : e.Bnd s B) :
     e.cost s + (2 * moveCost (zsz (e.eval s)) + 19) ≤ (e.size + 1) * 10 ^ 7 * (B + 2) ^ 2 := by
@@ -255,21 +201,6 @@ namespace NLogN
 open IntMul RS
 
 namespace KIL
-
-theorem top_encK {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (NLogN.KIL.encK s f).top i = a :=
-  IState.top_eq (L := ints l ++ s.G i) (by simp [h])
-
-theorem isInt_encK {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (NLogN.KIL.encK s f).IsInt i :=
-  IState.isInt_of (L := ints l ++ s.G i) (a := a) (by simp [h])
-
-theorem encK_upd (s : IState HS) (f : Fin HS → List ℤ) (i : Fin HS) (l : List ℤ) :
-    (NLogN.KIL.encK s f).upd i (ints l ++ s.G i) = NLogN.KIL.encK s (Function.update f i l) := by
-  refine IState.ext' (fun j => ?_) rfl rfl
-  by_cases h : j = i
-  · subst h; simp
-  · simp [h]
 
 section
 variable (s : IState HS) (f : Fin HS → List ℤ)
@@ -294,36 +225,10 @@ theorem Sp.pop {i : Fin HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56)
 
 end
 
-theorem ok_reg {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (Ex.reg i).ok (NLogN.KIL.encK s f) := isInt_encK h
-
-theorem bnd_reg {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    {B : ℕ} (h : f i = a :: l) (ha : zsz a ≤ B) : (Ex.reg i).Bnd (NLogN.KIL.encK s f) B := by
-  simp only [Ex.Bnd, top_encK h]; exact ha
-
-theorem clean_reg {i : Fin HS} (hi : i.val < 56) : (Ex.reg i).Clean := clean_of_lt hi
-
-theorem clean_add {a b : Ex HS} (ha : a.Clean) (hb : b.Clean) : (Ex.add a b).Clean := by
-  intro j hj
-  simp only [Ex.regs, List.mem_append] at hj
-  rcases hj with hj | hj
-  · exact ha j hj
-  · exact hb j hj
-
-theorem clean_mul {a b : Ex HS} (ha : a.Clean) (hb : b.Clean) : (Ex.mul a b).Clean := by
-  intro j hj
-  simp only [Ex.regs, List.mem_append] at hj
-  rcases hj with hj | hj
-  · exact ha j hj
-  · exact hb j hj
-
 theorem clean_neg {a : Ex HS} (ha : a.Clean) : (Ex.neg a).Clean := by
   intro j hj
   simp only [Ex.regs] at hj
   exact ha j hj
-
-theorem clean_lit (c : ℤ) : (Ex.lit (S := HS) c).Clean := by
-  intro j hj; simp [Ex.regs] at hj
 
 end KIL
 
@@ -418,17 +323,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-/-- An assignment of an arbitrary expression on a managed state (quadratic cost). -/
-theorem Sp.asgQ (s : IState HS) (f : Fin HS → List ℤ) {i : Fin HS} {e : Ex HS} {a : ℤ}
-    {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l) (ha : zsz a ≤ B) (hc : e.Clean)
-    (hok : e.ok (encK s f)) (hB : e.Bnd (encK s f) B) :
-    Sp (.asg i e) (encK s f) (encK s (Function.update f i (e.eval (encK s f) :: l)))
-      ((e.size + 1) * 10 ^ 7 * (B + 2) ^ 2) := by
-  refine ⟨⟨hi, hc, hok, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [RS.run]
-    rw [← encK_upd]; simp [hf, ints]
-  · exact asgCost_le i e _ B hB (by rw [top_encK hf]; exact ha)
-
 section IRep
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
@@ -454,9 +348,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-theorem FSp.mono {p : RS} {s t : IState HS} {c c' : ℕ} (h : FSp p s t c) (hc : c ≤ c') :
-    FSp p s t c' := ⟨h.1, h.2.1, le_trans h.2.2 hc⟩
-
 theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
     FSp p s t' c := e ▸ h
 
@@ -468,23 +359,6 @@ theorem FSp.seq {a b : RS} {s t u : IState HS} {c1 c2 : ℕ} (ha : FSp a s t c1)
   · simp only [fcost]; rw [ha.2.1]; have := ha.2.2; have := hb.2.2; omega
 
 theorem FSp.skip (s : IState HS) : FSp .skip s s 1 := ⟨trivial, rfl, le_rfl⟩
-
-theorem fcost_norep : ∀ (p : RS), norep p = true → ∀ s, fcost p s = p.cost s
-  | .skip, _, _ => rfl
-  | .asg _ _, _, _ => rfl
-  | .push _ _, _, _ => rfl
-  | .pop _, _, _ => rfl
-  | .seq a b, h, s => by
-    simp only [norep, Bool.and_eq_true] at h
-    simp only [fcost, RS.cost, fcost_norep a h.1, fcost_norep b h.2]
-  | .ite c a b, h, s => by
-    simp only [norep, Bool.and_eq_true] at h
-    simp only [fcost, RS.cost, fcost_norep a h.1, fcost_norep b h.2]
-  | .rep _ _ _, h, _ => by simp [norep] at h
-
-theorem FSp.of_norep {p : RS} {s t : IState HS} {c : ℕ} (hr : norep p = true)
-    (h : KIL.Sp p s t c) : FSp p s t c :=
-  ⟨h.1, h.2.1, by rw [fcost_norep p hr]; exact h.2.2⟩
 
 end KFD
 
@@ -903,48 +777,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD
-
-theorem zsz_le_of_abs {v : ℤ} {B : ℕ} (h : |v| < 2 ^ B) : zsz v ≤ B := by
-  apply zsz_le_of_lt
-  have : (v.natAbs : ℤ) < 2 ^ B := by rw [Int.natCast_natAbs]; exact h
-  exact_mod_cast this
-
-theorem geom_lt {K : ℕ} (hK : 1 ≤ K) (k : ℕ) :
-    ∑ i ∈ Finset.range k, (2 : ℤ) ^ (i * K) ≤ 2 ^ (k * K) - 1 := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    rw [Finset.sum_range_succ]
-    have : (2 : ℤ) ^ (k * K) * 2 ≤ 2 ^ ((k + 1) * K) := by
-      rw [← pow_succ]; exact pow_le_pow_right₀ (by norm_num) (by nlinarith)
-    linarith
-
-theorem segAcc_abs {K : ℕ} (hK : 1 ≤ K) {tf : ℤ → ℤ → ℤ} (htf : ∀ a b, |tf a b| ≤ 2)
-    (u v w : ℤ) (hw : 0 ≤ w) (k : ℕ) : |segAcc K tf u v w k| ≤ 2 * w * (2 ^ (k * K) - 1) := by
-  unfold segAcc
-  refine le_trans (Finset.abs_sum_le_sum_abs _ _) ?_
-  have h1 : ∀ i ∈ Finset.range k, |w * 2 ^ (i * K) * tf (u / 2 ^ (i * K)) (v / 2 ^ (i * K))| ≤
-      2 * w * 2 ^ (i * K) := by
-    intro i _
-    rw [abs_mul, abs_of_nonneg (by positivity : 0 ≤ w * 2 ^ (i * K))]
-    have := htf (u / 2 ^ (i * K)) (v / 2 ^ (i * K))
-    have hp : (0 : ℤ) ≤ w * 2 ^ (i * K) := by positivity
-    nlinarith
-  refine le_trans (Finset.sum_le_sum h1) ?_
-  rw [← Finset.mul_sum]
-  have := geom_lt hK k
-  have h2 : 0 ≤ 2 * w := by linarith
-  nlinarith
-
-theorem zsz_ediv_le {u d : ℤ} (hu : 0 ≤ u) (hd : 0 < d) : zsz (u / d) ≤ zsz u := by
-  apply zsz_mono
-  have h1 := Int.ediv_nonneg hu hd.le
-  have h2 := Int.ediv_le_self d hu
-  rw [← Int.ofNat_le, Int.natCast_natAbs, Int.natCast_natAbs, abs_of_nonneg h1, abs_of_nonneg hu]
-  exact h2
-
-theorem upd_ne {F : Fin HS → List ℤ} {i j : Fin HS} (h : j ≠ i) (x : List ℤ) :
-    Function.update F i x j = F j := Function.update_of_ne h _ _
 
 theorem segF_zero (F : Fin HS → List ℤ) (K : ℕ) (tf : ℤ → ℤ → ℤ) (a u v w : ℤ)
     (hA : F rA ≠ []) (hU : F NLogN.KFL.rU ≠ []) (hV : F NLogN.KFL.rV ≠ []) (hW : F NLogN.KFL.rW ≠ [])
@@ -1607,7 +1439,7 @@ open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD Butterfly
 set_option maxHeartbeats 2000000
-theorem solution {K ρ f : ℕ} (hK : 1 ≤ K) (hρK : ρ < K) (hf : 1 ≤ f) {g : NLogN.KFL.Geo} (hg : g.Pos)
+theorem NLogN.KFL.keyProg_fsp {K ρ f : ℕ} (hK : 1 ≤ K) (hρK : ρ < K) (hf : 1 ≤ f) {g : NLogN.KFL.Geo} (hg : g.Pos)
     (hQe : g.Q = 2 ^ (f * K)) {Bb : ℕ} (hB2 : 2 ≤ Bb) (hbig : 4 * g.V < 2 ^ Bb)
     (s : NLogN.IState NLogN.HS) (G : Fin NLogN.HS → List ℤ) (hGc : G NLogN.KFL.rC = []) {m : ℕ} (hm : m < g.V)
     {lm : List ℤ} (hGm : G NLogN.KFL.rm = (m : ℤ) :: lm) :

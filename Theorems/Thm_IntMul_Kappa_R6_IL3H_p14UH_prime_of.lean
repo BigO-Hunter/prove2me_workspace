@@ -2627,4 +2627,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.p14UH'_of_sol_aux := @IntMul.Kappa.R6.IL3H.p14UH'_of_sol_aux
+theorem IntMul.Kappa.R6.IL3H.p14UH_prime_of : type_of% @IntMul.Kappa.R6.IL3H.p14UH'_of_sol_aux := @IntMul.Kappa.R6.IL3H.p14UH'_of_sol_aux

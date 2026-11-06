@@ -2798,7 +2798,7 @@ open NLogN
 open NLogN.KFM
 open IntMul RS AModel KIL KFD KFB KFG KFH KFN Complex P8Lift Butterfly
 variable {Pp : ℕ} {Isym : List Sym} {iprog : Fin Pp → IStmt HS Pp} {P K D S ρ : ℕ}
-theorem solution (hρ : ρ < K) (hD : 1 ≤ D) {r p w : ℕ} (hr : 1 ≤ r) (hS : 1 ≤ S)
+theorem NLogN.KFM.p14Ph_iruns (hρ : ρ < K) (hD : 1 ≤ D) {r p w : ℕ} (hr : 1 ≤ r) (hS : 1 ≤ S)
     (hP : 1 ≤ P) {Cc : ℕ → NLogN.IStmt NLogN.HS Pp} {E dC : ℕ} {kC : ℕ → ℕ}
     (hCimpl : NLogN.KFN.SImplI Isym iprog r (fun i : Fin D => NLogN.KFH.stT K D S ρ i)
       (AModel.vol (Butterfly.layerShape P K D S)) (Butterfly.tens Butterfly.Cm : Butterfly.Op (Fin D)) Cc E dC kC)

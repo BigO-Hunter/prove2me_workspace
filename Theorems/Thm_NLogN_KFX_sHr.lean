@@ -759,4 +759,4 @@ end NLogN.KFX
 
 end
 
-theorem solution : type_of% @NLogN.KFX.sHr_sol_aux := @NLogN.KFX.sHr_sol_aux
+theorem NLogN.KFX.sHr : type_of% @NLogN.KFX.sHr_sol_aux := @NLogN.KFX.sHr_sol_aux

@@ -13,7 +13,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD KFB KFH AModel Butterfly
-theorem solution (K ρ f : ℕ) (px py : Fin 3) (hne : px ≠ py) (c : NLogN.KFL.Tr) :
+theorem NLogN.KFL.Fpp_conj (K ρ f : ℕ) (px py : Fin 3) (hne : px ≠ py) (c : NLogN.KFL.Tr) :
     NLogN.KFL.Fpp K ρ f px py c = (NLogN.KFL.compL (NLogN.KFL.preL px py) ∘ NLogN.KFL.RAc K ρ f ∘ NLogN.KFL.compL (NLogN.KFL.preL px py).reverse) c := by
   obtain ⟨x, y, z⟩ := c
   fin_cases px <;> fin_cases py <;>

@@ -1475,4 +1475,4 @@ end NLogN.KFX
 
 end
 
-theorem solution : type_of% @NLogN.KFX.corrU_spec_sol_aux := @NLogN.KFX.corrU_spec_sol_aux
+theorem NLogN.KFX.corrU_spec : type_of% @NLogN.KFX.corrU_spec_sol_aux := @NLogN.KFX.corrU_spec_sol_aux

@@ -140,7 +140,7 @@ open NLogN
 open NLogN.KFM
 open IntMul.OpenAI.RT
 variable {d : ℕ}
-theorem solution (s t : Fin d → ℕ) [∀ i, NeZero (s i)] [∀ i, NeZero (t i)] (c : ℂ)
+theorem NLogN.KFM.tensor_of_lines_expl (s t : Fin d → ℕ) [∀ i, NeZero (s i)] [∀ i, NeZero (t i)] (c : ℂ)
     (A : (i : Fin d) → (ZMod (s i) → ℂ) →L[ℂ] (ZMod (t i) → ℂ))
     (B : (i : Fin d) → (ZMod (t i) → ℂ) →L[ℂ] (ZMod (s i) → ℂ))
     (hA : ∀ i, ‖A i‖ ≤ 1) (hB : ∀ i, ‖B i‖ ≤ 1)

@@ -1760,4 +1760,4 @@ end IntMul.Kappa.R6.Bit.NB
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.Bit.NB.blk2_sc_sol_aux := @IntMul.Kappa.R6.Bit.NB.blk2_sc_sol_aux
+theorem IntMul.Kappa.R6.Bit.NB.blk2_sc : type_of% @IntMul.Kappa.R6.Bit.NB.blk2_sc_sol_aux := @IntMul.Kappa.R6.Bit.NB.blk2_sc_sol_aux

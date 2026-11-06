@@ -449,7 +449,7 @@ open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 attribute [local irreducible] fmA
-theorem solution (s : NLogN.IState NLogN.NS) (N : ℕ) (LP : List NLogN.Item) (hP : s.G NLogN.PRM = .int N :: LP) :
+theorem NLogN.fmTest_runs (s : NLogN.IState NLogN.NS) (N : ℕ) (LP : List NLogN.Item) (hP : s.G NLogN.PRM = .int N :: LP) :
     NLogN.IRuns I iprog (.seq (NLogN.blenS NLogN.PRM NLogN.ZZ) (.seq (.op (.const NLogN.T4 (-(NLogN.fmThr : ℤ)))) (.op (.add NLogN.T4 NLogN.ZZ NLogN.ZZ))))
       s (s.upd NLogN.ZZ (.int (-(NLogN.fmThr : ℤ) + NLogN.fmL N) :: s.G NLogN.ZZ))
       (1000 * (NLogN.fmL N + 1) ^ 2 + 1000 * (NLogN.fmL N + 15)) := by

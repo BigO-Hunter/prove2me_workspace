@@ -85,7 +85,7 @@ open NLogN.KFN
 open AModel Matrix Finset
 variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
-theorem solution {g : κ → ι} (hg : Function.Injective g) (st : ι → ℕ) (n : ℕ)
+theorem NLogN.KFN.selOpF_subOp {g : κ → ι} (hg : Function.Injective g) (st : ι → ℕ) (n : ℕ)
     (T : Matrix (κ → Fin 2) (κ → Fin 2) ℂ) (xs : List M) :
     NLogN.KFN.selOpF st n (NLogN.KFN.subOp g T) xs = NLogN.KFN.selOpF (st ∘ g) n T xs := by
   apply List.ext_getElem (by simp)

@@ -90,7 +90,7 @@ open NLogN
 open NLogN.KFL
 variable (κ γ : ℕ → ℕ) (M : ℕ)
 variable {κ γ M}
-theorem solution (hγκ : ∀ m, γ (κ m) = m) (hκγ : ∀ m, κ (γ m) = m)
+theorem NLogN.KFL.sort_moved (hγκ : ∀ m, γ (κ m) = m) (hκγ : ∀ m, κ (γ m) = m)
     (hκ : ∀ m < M, κ m < M) (hγ : ∀ m < M, γ m < M) {A : ℕ} (hA : M ≤ 2 ^ A)
     (recs : ℕ → List ℤ) : NLogN.KFL.rsort A (NLogN.KFL.ent0 κ M recs) = NLogN.KFL.ent1 κ γ M recs := by
   have hinj : Function.Injective κ := fun a b h => by rw [← hγκ a, h, hγκ b]

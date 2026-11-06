@@ -179,7 +179,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution {X : Fin NLogN.NS} (h1 : X ≠ NLogN.RF) (h2 : X ≠ NLogN.T1) (h3 : X ≠ NLogN.T2) (s : NLogN.IState NLogN.NS)
+theorem NLogN.fsub_runs {X : Fin NLogN.NS} (h1 : X ≠ NLogN.RF) (h2 : X ≠ NLogN.T1) (h3 : X ≠ NLogN.T2) (s : NLogN.IState NLogN.NS)
     (w F : ℤ) (m : ℕ) (L LF : List NLogN.Item) (hX : s.G X = .int w :: L) (hF : s.G NLogN.RF = .int F :: LF)
     (hwm : NLogN.zsz w ≤ m) (hFm : NLogN.zsz F ≤ m) :
     NLogN.IRuns I iprog (NLogN.fsub X) s

@@ -23,4 +23,4 @@ end R6Chk.Bit.Loc
 
 end
 
-theorem solution : type_of% @R6Chk.Bit.Loc.seg2_0_sol_aux := @R6Chk.Bit.Loc.seg2_0_sol_aux
+theorem R6Chk.Bit.Loc.seg2_0 : type_of% @R6Chk.Bit.Loc.seg2_0_sol_aux := @R6Chk.Bit.Loc.seg2_0_sol_aux

@@ -2903,7 +2903,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD Butterfly Finset
-theorem solution :
+theorem NLogN.KFL.corrI_spec :
     ∃ Kc : ℝ, 0 < Kc ∧
       ∀ (K ρ f : ℕ), 6 ≤ K → ρ < K → 1 ≤ f →
       ∀ (g : NLogN.KFL.Geo), g.Pos → g.Q = 2 ^ (f * K) →

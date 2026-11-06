@@ -529,4 +529,4 @@ end IntMul.Kappa.R6.Bit
 
 end
 
-theorem solution.{u_1, u_2, u_3} : type_of% @IntMul.Kappa.R6.Bit.physical_formal_sol_aux.{u_1, u_2, u_3} := @IntMul.Kappa.R6.Bit.physical_formal_sol_aux.{u_1, u_2, u_3}
+theorem IntMul.Kappa.R6.Bit.physical_formal.{u_1, u_2, u_3} : type_of% @IntMul.Kappa.R6.Bit.physical_formal_sol_aux.{u_1, u_2, u_3} := @IntMul.Kappa.R6.Bit.physical_formal_sol_aux.{u_1, u_2, u_3}

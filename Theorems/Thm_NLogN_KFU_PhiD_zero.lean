@@ -135,7 +135,7 @@ set_option linter.unnecessarySeqFocus false
 open NLogN
 open NLogN.KFU
 open IntMul KFC AModel AModelL12
-theorem solution (h d : ℕ) (bL : ℕ → Bool) (sF μ : ℕ → ℕ) (xs : List ℤ) (b : List ℕ)
+theorem NLogN.KFU.PhiD_zero (h d : ℕ) (bL : ℕ → Bool) (sF μ : ℕ → ℕ) (xs : List ℤ) (b : List ℕ)
     (hbT : AModel.Valid (NLogN.KFU.shR d (NLogN.KFU.tP d h bL)) b) (hbS : ¬ AModel.Valid (NLogN.KFU.shR d (NLogN.KFU.sP d sF)) b) :
     (NLogN.KFU.PhiD h d bL sF μ xs).getD (AModel.encode (NLogN.KFU.shR d (NLogN.KFU.tP d h bL)) b) 0 = 0 := by
   unfold NLogN.KFU.PhiD

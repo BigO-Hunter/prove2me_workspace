@@ -13,6 +13,6 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFM
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
-theorem solution (a b : NLogN.RS) (s : NLogN.IState NLogN.HS) : (NLogN.RS.seq a b).cost s = a.cost s + b.cost (a.run s) :=
+theorem NLogN.KFM.rsCost_seq (a b : NLogN.RS) (s : NLogN.IState NLogN.HS) : (NLogN.RS.seq a b).cost s = a.cost s + b.cost (a.run s) :=
   rfl
 end

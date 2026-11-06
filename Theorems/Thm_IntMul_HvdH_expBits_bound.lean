@@ -234,7 +234,7 @@ theorem expBits_bound (n : ℕ) (x y : ℤ) (h : ‖toC (x, y)‖ ≤ 2 ^ n) :
 end IntMul.HvdH.ExpPf
 
 open IntMul.HvdH in
-theorem solution (n : ℕ) (x y : ℤ) (h : ‖(x : ℂ) + (y : ℂ) * Complex.I‖ ≤ 2 ^ n) :
+theorem IntMul.HvdH.expBits_bound (n : ℕ) (x y : ℤ) (h : ‖(x : ℂ) + (y : ℂ) * Complex.I‖ ≤ 2 ^ n) :
     ‖((expBits n x y).1 : ℂ) + ((expBits n x y).2 : ℂ) * Complex.I -
       2 ^ n * Complex.exp (((x : ℂ) + (y : ℂ) * Complex.I) / 2 ^ n)‖ ≤ 1 :=
   IntMul.HvdH.ExpPf.expBits_bound n x y h

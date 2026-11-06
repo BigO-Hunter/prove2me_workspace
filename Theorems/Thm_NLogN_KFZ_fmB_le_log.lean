@@ -111,4 +111,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution : type_of% @NLogN.KFZ.fmB_le_log_sol_aux := @NLogN.KFZ.fmB_le_log_sol_aux
+theorem NLogN.KFZ.fmB_le_log : type_of% @NLogN.KFZ.fmB_le_log_sol_aux := @NLogN.KFZ.fmB_le_log_sol_aux

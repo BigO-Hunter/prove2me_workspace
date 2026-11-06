@@ -51,7 +51,7 @@ open NLogN
 open NLogN.KFU
 open IntMul KFC AModel AModelL12
 variable {d : ℕ} {sF μ : ℕ → ℕ}
-theorem solution (H : NLogN.KFU.CrtOK d sF μ) (k c : ℕ) (i : Fin d) :
+theorem NLogN.KFU.phiAddr_eq_Phi (H : NLogN.KFU.CrtOK d sF μ) (k c : ℕ) (i : Fin d) :
     have : ∀ i : Fin d, NeZero (sF i) := fun i => ⟨by have := H.pos i i.2; omega⟩
     (NLogN.KFU.phiAddr d sF μ k c).getD i 0 =
       (IntMul.OpenAI.RCRT.Phi (fun i : Fin d => sF i) (fun i : Fin d => μ i)

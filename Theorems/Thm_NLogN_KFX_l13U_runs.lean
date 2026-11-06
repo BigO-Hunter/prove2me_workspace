@@ -3077,7 +3077,7 @@ open NLogN.KFX
 open IntMul RS KIL KFD KFE KFB KFL KFW KFH AModel Butterfly
 variable {N0 N1 N2 N3 K f ρ R w : ℕ} {px py : Fin 3} {t : IState HS}
 set_option maxHeartbeats 2000000
-theorem solution {q : ℕ} {Ksw Kc : ℝ} (hKsw : 0 ≤ Ksw) (hKc : 0 ≤ Kc) (HSw : NLogN.KFX.SwEOK q Ksw)
+theorem NLogN.KFX.l13U_runs {q : ℕ} {Ksw Kc : ℝ} (hKsw : 0 ≤ Ksw) (hKc : 0 ≤ Kc) (HSw : NLogN.KFX.SwEOK q Ksw)
     (HC : NLogN.KFX.CorrUOK Kc) (hne : px ≠ py) (hK6 : 6 ≤ K) (hp : NLogN.KFX.PPos N0 N1 N2 N3 K f ρ R)
     (I : List NLogN.Sym) (t : NLogN.IState NLogN.HS) (hA : NLogN.KFW.Agree (NLogN.KFX.σMR N0 N1 N2 N3 K f ρ R w px py) t)
     (zs : List NLogN.KFB.GI) (R0 : List NLogN.Item) (h0 : t.G 0 = NLogN.ints (NLogN.KFB.gflat zs) ++ R0)

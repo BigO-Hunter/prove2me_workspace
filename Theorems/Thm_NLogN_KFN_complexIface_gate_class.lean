@@ -306,7 +306,7 @@ set_option synthInstance.maxSize 512
 open NLogN
 open NLogN.KFN
 open Matrix Finset Complex
-theorem solution (G : Matrix (Fin P8Lift.Wc) (Fin P8Lift.Wc) ℂ)
+theorem NLogN.KFN.complexIface_gate_class (G : Matrix (Fin P8Lift.Wc) (Fin P8Lift.Wc) ℂ)
     (hm : P8Lift.RStep.gate G ∈ P8Lift.complexIface.net) :
     (∃ as : List NLogN.KFG.Atom, (∀ a ∈ as, a.Ok P8Lift.Wc ∧ a.h ≤ 1) ∧ NLogN.KFG.NoTS as ∧
         G = NLogN.KFG.gateMat P8Lift.Wc as) ∨

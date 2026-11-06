@@ -89,7 +89,7 @@ theorem cst_err_aux (Δ : ℕ) (c h g : NLogN.KFB.GI) (C H G : ℂ) (hC : ‖C�
         G * H ^ k * C ^ (k * (k - 1) / 2) * (H * C ^ k) by ring]
       refine s2.trans (le_of_eq ?_); push_cast; ring
 
-theorem solution (Δ : ℕ) (c h g : NLogN.KFB.GI) (C H G : ℂ) (hC : ‖C‖ ≤ 1) (hH : ‖H‖ ≤ 1)
+theorem NLogN.KFM.cst_err (Δ : ℕ) (c h g : NLogN.KFB.GI) (C H G : ℂ) (hC : ‖C‖ ≤ 1) (hH : ‖H‖ ≤ 1)
     (hG : ‖G‖ ≤ 1) (hc : ‖NLogN.KFM.vP Δ c - C‖ ≤ (2 : ℝ)⁻¹ ^ Δ) (hh : ‖NLogN.KFM.vP Δ h - H‖ ≤ (2 : ℝ)⁻¹ ^ Δ)
     (hg : ‖NLogN.KFM.vP Δ g - G‖ ≤ 0) :
     ∀ k : ℕ, (4 * (k : ℝ) ^ 2 + 1) * (2 : ℝ)⁻¹ ^ Δ ≤ 1 →

@@ -13,6 +13,6 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFM
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
-theorem solution (i : Fin NLogN.HS) (e : NLogN.Ex NLogN.HS) (s : NLogN.IState NLogN.HS) :
+theorem NLogN.KFM.rsCost_push (i : Fin NLogN.HS) (e : NLogN.Ex NLogN.HS) (s : NLogN.IState NLogN.HS) :
     (NLogN.RS.push i e).cost s = e.cost s + (2 * NLogN.moveCost (NLogN.zsz (e.eval s)) + 19) := rfl
 end

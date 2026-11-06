@@ -2355,7 +2355,7 @@ variable {S P : ℕ}
 variable {I : List Sym} {prog : Fin P → Stmt (S + 4) P}
 open NLogN.IOp
 open NLogN.IOp.Step
-theorem solution {o : IOp S} {s s' : IState S} {c : ℕ} (h : o.Step I s s' c) :
+theorem NLogN.IOp.Step.runs {o : IOp S} {s s' : IState S} {c : ℕ} (h : o.Step I s s' c) :
     Runs I prog (o.stmt : Stmt (S + 4) P) (encI s) (encI s') c := by
   cases h with
   | add hij hi hj =>

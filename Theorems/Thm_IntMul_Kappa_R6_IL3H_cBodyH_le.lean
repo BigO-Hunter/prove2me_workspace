@@ -40,9 +40,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem zsz_natCast_le_self (k : ℕ) : zsz (k : ℤ) ≤ k := by
-  apply zsz_le_of_lt; simp only [Int.natAbs_natCast]; exact Nat.lt_two_pow_self
-
 end NLogN
 
 end
@@ -68,27 +65,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem yu_z (r Z H : ℕ) : (Z + 2) ^ 3 ≤ Yu r Z H := Nat.le_add_left _ _
-
-theorem yu_r (r Z H : ℕ) : r * (2 * H + 21) ≤ Yu r Z H := Nat.le_add_right _ _
-
-theorem yu_z2 (r Z H : ℕ) : (Z + 2) ^ 2 ≤ Yu r Z H := by
-  have : (Z + 2) ^ 2 ≤ (Z + 2) ^ 3 := Nat.pow_le_pow_right (by omega) (by omega)
-  exact this.trans (yu_z r Z H)
-
-theorem yu_z1 (r Z H : ℕ) : Z + 2 ≤ Yu r Z H := by
-  have : Z + 2 ≤ (Z + 2) ^ 2 := by nlinarith
-  exact this.trans (yu_z2 r Z H)
-
-theorem yu_8 (r Z H : ℕ) : 8 ≤ Yu r Z H := by
-  have : 2 ^ 3 ≤ (Z + 2) ^ 3 := Nat.pow_le_pow_left (by omega) 3
-  exact le_trans (by simpa using this) (yu_z r Z H)
-
-theorem moveCost_Y (Z r H : ℕ) : moveCost Z ≤ 50 * Yu r Z H := by
-  unfold moveCost
-  have := yu_z1 r Z H
-  omega
 
 end NLogN.KFW
 
@@ -185,11 +161,6 @@ section Step
 
 variable {Pp : ℕ} {Isym : List Sym} {tbl : Fin Pp → IStmt HS Pp}
 variable {σ : Fin HS → Option ℤ} {K t S0 r H Z k e B Bn : ℕ}
-
-theorem yu_monoZ {r Z Z' H : ℕ} (h : Z ≤ Z') : Yu r Z H ≤ Yu r Z' H := by
-  unfold Yu
-  have : (Z + 2) ^ 3 ≤ (Z' + 2) ^ 3 := Nat.pow_le_pow_left (by omega) 3
-  omega
 
 end Step
 
@@ -553,4 +524,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.cBodyH_le_sol_aux := @IntMul.Kappa.R6.IL3H.cBodyH_le_sol_aux
+theorem IntMul.Kappa.R6.IL3H.cBodyH_le : type_of% @IntMul.Kappa.R6.IL3H.cBodyH_le_sol_aux := @IntMul.Kappa.R6.IL3H.cBodyH_le_sol_aux

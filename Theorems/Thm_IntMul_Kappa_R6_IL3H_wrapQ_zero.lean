@@ -1578,4 +1578,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.wrapQ_zero_sol_aux := @IntMul.Kappa.R6.IL3H.wrapQ_zero_sol_aux
+theorem IntMul.Kappa.R6.IL3H.wrapQ_zero : type_of% @IntMul.Kappa.R6.IL3H.wrapQ_zero_sol_aux := @IntMul.Kappa.R6.IL3H.wrapQ_zero_sol_aux

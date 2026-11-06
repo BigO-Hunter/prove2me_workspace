@@ -344,46 +344,7 @@ open Finset
 
 /-! ## Digits -/
 
-theorem dgt_zero (W x : ℕ) : dgt W 0 x = x % W := by simp [dgt]
-
-theorem dgt_succ (W s x : ℕ) : dgt W (s + 1) x = dgt W s (x / W) := by
-  simp only [dgt, pow_succ, Nat.div_div_eq_div_mul, mul_comm]
-
-/-- `x = Σ_{s<n} dgt s x W^s + W^n (x / W^n)`. -/
-theorem digits_sum (W : ℕ) : ∀ (n x : ℕ),
-    (x : ℤ) = ∑ s ∈ range n, (dgt W s x : ℤ) * (W : ℤ) ^ s + (W : ℤ) ^ n * ((x / W ^ n : ℕ) : ℤ)
-  | 0, x => by simp
-  | n + 1, x => by
-    have ih := digits_sum W n (x / W)
-    rw [sum_range_succ']
-    have h1 : x = x % W + W * (x / W) := (Nat.mod_add_div x W).symm
-    have e : x / W ^ (n + 1) = x / W / W ^ n := by
-      rw [pow_succ, mul_comm, Nat.div_div_eq_div_mul]
-    simp only [dgt_succ, dgt_zero, e]
-    have : (x : ℤ) = ((x % W : ℕ) : ℤ) + (W : ℤ) * ((x / W : ℕ) : ℤ) := by exact_mod_cast h1
-    rw [this, ih]
-    simp only [pow_zero, mul_one, pow_succ]
-    rw [mul_add, mul_sum]
-    have : ∀ s ∈ range n, (W : ℤ) * ((dgt W s (x / W) : ℤ) * (W : ℤ) ^ s) =
-        (dgt W s (x / W) : ℤ) * ((W : ℤ) ^ s * W) := fun s _ => by ring
-    rw [sum_congr rfl this]
-    ring
-
-theorem eq_of_digits (W n : ℕ) {x x' : ℕ} (hd : ∀ s < n, dgt W s x = dgt W s x')
-    (hh : x / W ^ n = x' / W ^ n) : x = x' := by
-  have a := digits_sum W n x
-  have b := digits_sum W n x'
-  have : (x : ℤ) = x' := by
-    rw [a, b, hh]
-    congr 1
-    exact sum_congr rfl fun s hs => by rw [hd s (mem_range.1 hs)]
-  exact_mod_cast this
-
 /-! ## The register-loop sum -/
-
-/-- For an even radix, the parity of `u / W^s` is that of its digit. -/
-theorem par_dgt {W : ℕ} (hW : 2 ∣ W) (s u : ℕ) : (u / W ^ s) % 2 = dgt W s u % 2 := by
-  unfold dgt; rw [Nat.mod_mod_of_dvd _ hW]
 
 /-! ## Parameters and the offsets -/
 
@@ -393,27 +354,6 @@ section Closed
 
 variable {K ρ G n : ℕ}
 
-theorem two_pow_dvd {G : ℕ} (hG : 1 ≤ G) : 2 ∣ 2 ^ G := dvd_pow_self 2 (by omega)
-
-theorem cdiv (u W s : ℕ) : ((u : ℤ) / ((W : ℤ)) ^ s) = ((u / W ^ s : ℕ) : ℤ) := by
-  rw [Int.natCast_div]; push_cast; rfl
-
-theorem cdivG (u G s : ℕ) : ((u : ℤ) / ((2 : ℤ) ^ G) ^ s) = ((u / (2 ^ G) ^ s : ℕ) : ℤ) := by
-  have := cdiv u (2 ^ G) s; push_cast at this; exact this
-
-theorem cpar {W : ℕ} (hW : 2 ∣ W) (u s : ℕ) :
-    ((u / W ^ s : ℕ) : ℤ) % 2 = ((dgt W s u % 2 : ℕ) : ℤ) := by
-  exact_mod_cast par_dgt hW s u
-
-theorem oT_eq (hK : 1 ≤ K) (x y : ℕ) : oT K ρ n x y =
-    ∑ s ∈ range n, ((ybit K ρ s x : ℕ) * (1 - 2 * (ybit K ρ s y : ℕ)) : ℤ) *
-      ((2 : ℤ) ^ ρ * (2 ^ K) ^ s) := by
-  unfold oT segSum
-  refine sum_congr rfl fun s _ => ?_
-  beta_reduce
-  rw [cdivG, cdivG, cpar (two_pow_dvd hK), cpar (two_pow_dvd hK)]
-  unfold ybit seg; ring
-
 end Closed
 
 /-! ## Segment-wise updates of a slot -/
@@ -421,12 +361,6 @@ end Closed
 section Slot
 
 variable {K ρ n L : ℕ}
-
-/-- Slots with equal low part, segments and high part are equal. -/
-theorem slot_eq {y y' : ℕ} (h0 : y % 2 ^ ρ = y' % 2 ^ ρ) (hs : ∀ s < n, seg K ρ s y = seg K ρ s y')
-    (hh : y / 2 ^ ρ / (2 ^ K) ^ n = y' / 2 ^ ρ / (2 ^ K) ^ n) : y = y' := by
-  have e : y / 2 ^ ρ = y' / 2 ^ ρ := eq_of_digits (2 ^ K) n (fun s h => hs s h) hh
-  rw [← Nat.mod_add_div y (2 ^ ρ), ← Nat.mod_add_div y' (2 ^ ρ), h0, e]
 
 end Slot
 
@@ -439,37 +373,6 @@ end Slot
 section Good
 
 variable {K ρ G n L : ℕ}
-
-theorem seg_lt (s y : ℕ) : seg K ρ s y < 2 ^ K := Nat.mod_lt _ (by positivity)
-
-theorem two_pow_even (hK : 1 ≤ K) : 2 ^ K = 2 * 2 ^ (K - 1) := by
-  rw [← pow_succ']; congr 1; omega
-
-/-- The ideal map on one slot. -/
-theorem Tl_spec (hK : 1 ≤ K) (hL : ρ + n * K ≤ L) (x : ℕ) {y : ℕ} (hy : y < 2 ^ L) :
-    Tl K ρ n x y < 2 ^ L ∧ Tl K ρ n x y % 2 ^ ρ = y % 2 ^ ρ ∧
-      Tl K ρ n x y / 2 ^ ρ / (2 ^ K) ^ n = y / 2 ^ ρ / (2 ^ K) ^ n ∧
-      ∀ s < n, (seg K ρ s (Tl K ρ n x y) : ℤ) = seg K ρ s y +
-        ((ybit K ρ s x : ℕ) : ℤ) * (1 - 2 * ((ybit K ρ s y : ℕ) : ℤ)) := by
-  obtain ⟨y', ey, hy', ly, dy, hhy⟩ := slot_add hK hL hy
-    (fun s => ((ybit K ρ s x : ℕ) : ℤ) * (1 - 2 * ((ybit K ρ s y : ℕ) : ℤ))) (by
-    intro s hs
-    have h1 := seg_lt (K := K) (ρ := ρ) s y
-    have hev := two_pow_even hK
-    have hxb : ybit K ρ s x < 2 := Nat.mod_lt _ (by norm_num)
-    unfold ybit at hxb ⊢
-    have h1' : (seg K ρ s y : ℤ) < 2 * 2 ^ (K - 1) := by
-      have h1c := h1; rw [hev] at h1c; exact_mod_cast h1c
-    have hev' : ((2 : ℤ) ^ K) = 2 * 2 ^ (K - 1) := by exact_mod_cast hev
-    rw [hev']
-    rcases (show seg K ρ s x % 2 = 0 ∨ seg K ρ s x % 2 = 1 by omega) with h | h <;> rw [h] <;>
-      push_cast <;> omega)
-  have e : Tl K ρ n x y = y' := by
-    unfold Tl; rw [oT_eq hK]
-    have : (y : ℤ) + ∑ s ∈ range n, ((ybit K ρ s x : ℕ) * (1 - 2 * (ybit K ρ s y : ℕ)) : ℤ) *
-        ((2 : ℤ) ^ ρ * (2 ^ K) ^ s) = y' := by rw [ey]
-    rw [this]; simp
-  rw [e]; exact ⟨hy', ly, hhy, dy⟩
 
 theorem Tl_Tl (hK : 1 ≤ K) (hL : ρ + n * K ≤ L) (x : ℕ) {y : ℕ} (hy : y < 2 ^ L) :
     Tl K ρ n x (Tl K ρ n x y) = y := by
@@ -828,4 +731,4 @@ end IntMul.Kappa.R6.IL2C
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2C.Lay.card_moved_C_sol_aux := @IntMul.Kappa.R6.IL2C.Lay.card_moved_C_sol_aux
+theorem IntMul.Kappa.R6.IL2C.Lay_card_moved_C : type_of% @IntMul.Kappa.R6.IL2C.Lay.card_moved_C_sol_aux := @IntMul.Kappa.R6.IL2C.Lay.card_moved_C_sol_aux

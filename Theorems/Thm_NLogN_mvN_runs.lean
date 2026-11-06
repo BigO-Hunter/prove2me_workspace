@@ -233,7 +233,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution {X Y C : Fin NLogN.NS} (hXY : X ≠ Y) (hXC : X ≠ C) (hYC : Y ≠ C) (hX3 : X ≠ NLogN.T3)
+theorem NLogN.mvN_runs {X Y C : Fin NLogN.NS} (hXY : X ≠ Y) (hXC : X ≠ C) (hYC : Y ≠ C) (hX3 : X ≠ NLogN.T3)
     (hY3 : Y ≠ NLogN.T3) (hC3 : C ≠ NLogN.T3) (s : NLogN.IState NLogN.NS) (A : List ℤ) (R LC : List NLogN.Item) (m : ℕ)
     (hX : s.G X = NLogN.ints A ++ R) (hC : s.G C = .int A.length :: LC) (hA : NLogN.Bnd m A) :
     NLogN.IRuns I iprog (NLogN.mvN X Y C) s

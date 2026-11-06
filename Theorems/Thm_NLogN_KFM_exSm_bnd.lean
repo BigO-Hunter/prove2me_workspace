@@ -104,7 +104,7 @@ theorem exSm_bnd_aux (A B : ℕ) (s : NLogN.IState NLogN.HS) (hA : 2 ≤ A) :
     omega
   | .shl _ _, h, _ | .quo _ _, h, _ | .rem _ _, h, _ | .sel _ _ _, h, _ => h.elim
 
-theorem solution (A B : ℕ) (s : NLogN.IState NLogN.HS) (hA : 2 ≤ A) :
+theorem NLogN.KFM.exSm_bnd (A B : ℕ) (s : NLogN.IState NLogN.HS) (hA : 2 ≤ A) :
     ∀ e : NLogN.Ex NLogN.HS, NLogN.KFM.exSm A s e → A ^ NLogN.KFM.exDg e < 2 ^ B → e.Bnd s B := by
   first
   | exact exSm_bnd_aux

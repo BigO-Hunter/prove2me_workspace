@@ -390,7 +390,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFW
 open IntMul RS KFD
-theorem solution {σ : Fin NLogN.HS → Option ℤ} (hσ : NLogN.KFW.SClean σ) {p : NLogN.RS} (hw : NLogN.KFW.NoW σ p)
+theorem NLogN.KFW.FSp.of_sub {σ : Fin NLogN.HS → Option ℤ} (hσ : NLogN.KFW.SClean σ) {p : NLogN.RS} (hw : NLogN.KFW.NoW σ p)
     {s t : NLogN.IState NLogN.HS} (hs : NLogN.KFW.Agree σ s) {c : ℕ} (h : NLogN.KFD.FSp (NLogN.KFW.RS.sub σ p) s t c) : NLogN.KFD.FSp p s t (400 * c) :=
   ⟨NLogN.KFW.RS.ok_sub σ hσ p hw s hs h.1, by rw [← NLogN.KFW.RS.run_sub σ p hw s hs]; exact h.2.1,
     (NLogN.KFW.fcost_sub σ p hw s hs).trans (Nat.mul_le_mul_left _ h.2.2)⟩

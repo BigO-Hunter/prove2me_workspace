@@ -1066,7 +1066,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD Butterfly
-theorem solution {K ρ f : ℕ} (hK : 1 ≤ K) (hρK : ρ < K) (hf : 1 ≤ f) {d0 d1 Q : ℕ}
+theorem NLogN.KFL.tabGen_fsp {K ρ f : ℕ} (hK : 1 ≤ K) (hρK : ρ < K) (hf : 1 ≤ f) {d0 d1 Q : ℕ}
     (hd0 : 0 < d0) (hd1 : 0 < d1) (hQ : 0 < Q) (l : Butterfly.Line) (hs : l.sgn = 1 ∨ l.sgn = -1)
     (hb : l.b = 0 ∨ l.b = 1) {Bb : ℕ} (hB2 : 2 ≤ Bb) (hbig : 4 * 2 ^ (f * K) < 2 ^ Bb)
     (zd0 : NLogN.zsz (d0 : ℤ) ≤ Bb) (zd1 : NLogN.zsz (d1 : ℤ) ≤ Bb) (hQM : Q ≤ 2 ^ (f * K))

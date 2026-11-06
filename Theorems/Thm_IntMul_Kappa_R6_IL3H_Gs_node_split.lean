@@ -163,4 +163,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.Gs_node_split_sol_aux := @IntMul.Kappa.R6.IL3H.Gs_node_split_sol_aux
+theorem IntMul.Kappa.R6.IL3H.Gs_node_split : type_of% @IntMul.Kappa.R6.IL3H.Gs_node_split_sol_aux := @IntMul.Kappa.R6.IL3H.Gs_node_split_sol_aux

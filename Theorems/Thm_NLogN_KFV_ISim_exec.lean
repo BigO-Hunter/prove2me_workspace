@@ -227,4 +227,4 @@ end NLogN.KFV
 
 end
 
-theorem solution : type_of% @NLogN.KFV.ISim.exec_sol_aux := @NLogN.KFV.ISim.exec_sol_aux
+theorem NLogN.KFV.ISim_exec : type_of% @NLogN.KFV.ISim.exec_sol_aux := @NLogN.KFV.ISim.exec_sol_aux

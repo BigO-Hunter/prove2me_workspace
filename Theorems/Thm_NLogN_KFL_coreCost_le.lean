@@ -639,4 +639,4 @@ end NLogN.KFL
 
 end
 
-theorem solution : type_of% @NLogN.KFL.coreCost_le_sol_aux := @NLogN.KFL.coreCost_le_sol_aux
+theorem NLogN.KFL.coreCost_le : type_of% @NLogN.KFL.coreCost_le_sol_aux := @NLogN.KFL.coreCost_le_sol_aux

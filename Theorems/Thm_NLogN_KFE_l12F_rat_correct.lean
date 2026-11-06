@@ -1262,7 +1262,7 @@ open NLogN
 open NLogN.KFE
 open IntMul RS AModel AModelL12 AModelRat AModelFac KIL KFD
 variable {m W : ℕ} [NeZero W]
-theorem solution (Qc : AModelRat.QCircuit (ZMod 2) m W) (hm : 2 ≤ m)
+theorem NLogN.KFE.l12F_rat_correct (Qc : AModelRat.QCircuit (ZMod 2) m W) (hm : 2 ≤ m)
     (q : ℕ) (hq : q.Prime) (Bb u : ℕ) (Pre G Suf : AModel.Shape) (hu : 1 ≤ u)
     (hPre : ∀ a ∈ Pre, 1 ≤ a) (hG : ∀ a ∈ G, 1 ≤ a) (hS : ∀ a ∈ Suf, 1 ≤ a)
     (e Kp : ℕ) (he : e = Nat.clog q (2 ^ u)) (hKp : Kp = Nat.clog m e)

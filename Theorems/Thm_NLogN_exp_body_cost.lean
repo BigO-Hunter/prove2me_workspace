@@ -311,7 +311,7 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS IntMul.HvdH
 set_option maxHeartbeats 2000000
-theorem solution (N K : ℕ) (X Y : ℤ) (s0 t : NLogN.IState NLogN.HS) (k : ℕ)
+theorem NLogN.exp_body_cost (N K : ℕ) (X Y : ℤ) (s0 t : NLogN.IState NLogN.HS) (k : ℕ)
     (h : NLogN.expInv N K X Y s0 k t) (hk : k < K) (M : ℤ) (B : ℕ)
     (hM : ((K : ℤ) + 1) * (2 ^ N * (|X| + |Y| + 1) ^ K) ≤ M)
     (big : ∀ z : ℤ, |z| ≤ M → NLogN.zsz z ≤ B) :

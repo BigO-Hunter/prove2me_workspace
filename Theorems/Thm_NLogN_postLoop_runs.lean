@@ -815,7 +815,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution (s : NLogN.IState NLogN.NS) (n M Q k K : ℕ) (D : List ℤ)
+theorem NLogN.postLoop_runs (s : NLogN.IState NLogN.NS) (n M Q k K : ℕ) (D : List ℤ)
     (RX LW L2 LH LY LM LQ LC LN LF : List NLogN.Item)
     (hn : 1 ≤ n) (hM1 : 1 ≤ M) (hM : M ≤ n) (hKQ : K * Q = n) (hk : k ≤ n)
     (hK : NLogN.zsz (K : ℤ) ≤ n) (hDl : D.length = K) (hD : NLogN.Canon (2 ^ n + 1) D)

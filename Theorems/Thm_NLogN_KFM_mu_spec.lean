@@ -11,7 +11,7 @@ section
 open NLogN
 open NLogN.KFM
 open IntMul.OpenAI.Glue IntMul.OpenAI.RCost
-theorem solution (P s : ℕ) (hs : 1 ≤ s) (hc : Nat.Coprime P s) :
+theorem NLogN.KFM.mu_spec (P s : ℕ) (hs : 1 ≤ s) (hc : Nat.Coprime P s) :
     NLogN.KFM.muInv P s < s ∧ (NLogN.KFM.muInv P s * P) % s = 1 % s := by
   have hs0 : (0 : ℤ) < s := by exact_mod_cast hs
   have hnn : 0 ≤ Nat.gcdA P s % (s : ℤ) := Int.emod_nonneg _ hs0.ne'

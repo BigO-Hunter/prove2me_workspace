@@ -935,4 +935,4 @@ end NLogN.KFX
 
 end
 
-theorem solution : type_of% @NLogN.KFX.bodyZ_sp_sol_aux := @NLogN.KFX.bodyZ_sp_sol_aux
+theorem NLogN.KFX.bodyZ_sp : type_of% @NLogN.KFX.bodyZ_sp_sol_aux := @NLogN.KFX.bodyZ_sp_sol_aux

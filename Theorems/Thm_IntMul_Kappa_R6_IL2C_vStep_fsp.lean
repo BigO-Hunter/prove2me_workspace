@@ -855,4 +855,4 @@ end IntMul.Kappa.R6.IL2C
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2C.vStep_fsp_sol_aux := @IntMul.Kappa.R6.IL2C.vStep_fsp_sol_aux
+theorem IntMul.Kappa.R6.IL2C.vStep_fsp : type_of% @IntMul.Kappa.R6.IL2C.vStep_fsp_sol_aux := @IntMul.Kappa.R6.IL2C.vStep_fsp_sol_aux

@@ -180,4 +180,4 @@ end NLogN.KFW
 
 end
 
-theorem solution : type_of% @NLogN.KFW.εAff_spec_sol_aux := @NLogN.KFW.εAff_spec_sol_aux
+theorem NLogN.KFW.epsAff_spec : type_of% @NLogN.KFW.εAff_spec_sol_aux := @NLogN.KFW.εAff_spec_sol_aux

@@ -542,7 +542,7 @@ section
 set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS
-theorem solution (n : ℕ) (s : NLogN.IState NLogN.HS) (L3 : List NLogN.Item) (h3 : s.G 3 = .int n :: L3) :
+theorem NLogN.piP_spec (n : ℕ) (s : NLogN.IState NLogN.HS) (L3 : List NLogN.Item) (h3 : s.G 3 = .int n :: L3) :
     NLogN.piP.ok s ∧ NLogN.piP.run s = s.upd 4 (.int (IntMul.HvdH.piBits n) :: s.G 4) ∧
       NLogN.piP.cost s ≤ NLogN.piCost 5 239 n := by
   refine ⟨NLogN.twoAtanP_ok 5 239 (-1) 16 (-4) (by norm_num) (by norm_num) n s L3 h3, ?_,

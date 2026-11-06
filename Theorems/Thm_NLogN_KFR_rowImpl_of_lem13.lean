@@ -527,7 +527,7 @@ set_option linter.unusedSectionVars false
 open NLogN
 open NLogN.KFR
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly KFN
-theorem solution {iprog : Fin 1 → NLogN.IStmt NLogN.HS 1} {code} {Kc : ℝ}
+theorem NLogN.KFR.rowImpl_of_lem13 {iprog : Fin 1 → NLogN.IStmt NLogN.HS 1} {code} {Kc : ℝ}
     (H : NLogN.KFR.Lem13Body iprog code Kc) (Isym : List NLogN.Sym) {K m k r : ℕ} (hK : 6 ≤ K) (hm : 3 ≤ m)
     (hr : 1 ≤ r) (pos : Fin m × Fin (m ^ k) → ℕ) (t S0 B : ℕ) (hinj : Function.Injective pos)
     (hpos : ∀ p, pos p < t) (haff : NLogN.KFN.AffK2 K t m k pos) (hS0 : 1 ≤ S0) (hB : 1 ≤ B)

@@ -10,7 +10,7 @@ set_option maxHeartbeats 1000000
 section
 open AModel
 open Matrix
-theorem solution {sh : AModel.Shape} {a : List ℕ} (h : AModel.Valid sh a) : AModel.decode sh (AModel.encode sh a) = a := by
+theorem AModel.decode_encode {sh : AModel.Shape} {a : List ℕ} (h : AModel.Valid sh a) : AModel.decode sh (AModel.encode sh a) = a := by
   induction h with
   | nil => rfl
   | @cons x q as sh hx hr ih =>

@@ -14,7 +14,7 @@ open NLogN
 open NLogN.KFM
 open IntMul RS
 open NLogN.KFM.SrcRegs
-theorem solution {u : NLogN.IState NLogN.HS} {d' Q Mh Mf : ℕ} (h : NLogN.KFM.SrcRegs u d' Q Mh Mf) (j : Fin NLogN.HS)
+theorem NLogN.KFM.SrcRegs.upd {u : NLogN.IState NLogN.HS} {d' Q Mh Mf : ℕ} (h : NLogN.KFM.SrcRegs u d' Q Mh Mf) (j : Fin NLogN.HS)
     (hj : j ≠ NLogN.KFM.zDp ∧ j ≠ NLogN.KFM.zQ ∧ j ≠ NLogN.KFM.zMh ∧ j ≠ NLogN.KFM.zMf) (L : List NLogN.Item) :
     NLogN.KFM.SrcRegs (u.upd j L) d' Q Mh Mf := by
   obtain ⟨⟨L1, h1⟩, ⟨L2, h2⟩, ⟨L3, h3⟩, ⟨L4, h4⟩⟩ := h

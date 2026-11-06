@@ -22,16 +22,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-theorem FSp.mono {p : RS} {s t : IState HS} {c c' : ℕ} (h : FSp p s t c) (hc : c ≤ c') :
-    FSp p s t c' := ⟨h.1, h.2.1, le_trans h.2.2 hc⟩
-
-theorem FSp.seq {a b : RS} {s t u : IState HS} {c1 c2 : ℕ} (ha : FSp a s t c1) (hb : FSp b t u c2) :
-    FSp (.seq a b) s u (c1 + c2) := by
-  refine ⟨⟨ha.1, ?_⟩, ?_, ?_⟩
-  · rw [ha.2.1]; exact hb.1
-  · simp only [RS.run, ha.2.1, hb.2.1]
-  · simp only [fcost]; rw [ha.2.1]; have := ha.2.2; have := hb.2.2; omega
-
 end KFD
 
 end NLogN
@@ -63,12 +53,6 @@ namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
 
-theorem ClP.upd0 {f : Fin HS → List ℤ} (h : ClP f) (v : List ℤ) : ClP (Function.update f 0 v) :=
-  ⟨⟨by simp +decide [h.scr.t], by simp +decide [h.scr.o], by simp +decide [h.scr.ur],
-    by simp +decide [h.scr.ui], by simp +decide [h.scr.vr], by simp +decide [h.scr.vi],
-    by simp +decide [h.scr.c]⟩, by simp +decide [h.a], by simp +decide [h.p], by simp +decide [h.q],
-    by simp +decide [h.b], by simp +decide [h.b2], by simp +decide [h.rp], by simp +decide [h.rq]⟩
-
 end NLogN.KFG
 
 end
@@ -87,11 +71,6 @@ namespace Atom
 variable (a : Atom) (e : ℕ → ℕ)
 
 end Atom
-
-theorem cPair_mono {w w' D D' L P P' Q Q' : ℕ} (h1 : w ≤ w') (h2 : D ≤ D') (h3 : P + Q ≤ P' + Q') :
-    cPair w D L P Q ≤ cPair w' D' L P' Q' := by
-  unfold cPair cZS cD
-  gcongr
 
 theorem sum_atoms {W : ℕ} (p : Fin W) (Y : Fin W → ℂ) (YN : ℕ → ℂ) (hY : ∀ q : Fin W, YN q.val = Y q) :
     ∀ (as : List Atom), (∀ a ∈ as, a.s < W) →
@@ -620,7 +599,7 @@ open NLogN
 open NLogN.KFN
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
-theorem solution (T : Butterfly.Op κ) (as : List NLogN.KFG.Atom) (hok : ∀ a ∈ as, a.Ok W ∧ a.h ≤ 1)
+theorem NLogN.KFN.rImpl_gate (T : Butterfly.Op κ) (as : List NLogN.KFG.Atom) (hok : ∀ a ∈ as, a.Ok W ∧ a.h ≤ 1)
     (hts : NLogN.KFG.NoTS as) {r n : ℕ} (hr : 0 < r) (st : Fin m × κ → ℕ) (Z : ℕ)
     (hZ : NLogN.zsz ((2 * (W * (n * r)) : ℕ) : ℤ) ≤ Z) :
     NLogN.KFN.RImpl r n st ((P8Lift.RStep.gate (NLogN.KFG.gateMat W as) : P8Lift.RStep (Fin W) m).den T) (NLogN.KFN.gateC W (n * r) as)

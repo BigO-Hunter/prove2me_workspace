@@ -60,7 +60,7 @@ open NLogN
 open NLogN.KFR
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly KFN
 variable {K m k e : ℕ} {pos : Fin m × Fin (m ^ k) → ℕ}
-theorem solution (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) {u : ℕ}
+theorem NLogN.KFR.pos_eq_sR (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) {u : ℕ}
     (hu : u < m ^ k) : pos (r, ⟨m ^ k - 1 - u, by omega⟩) = NLogN.KFR.sR K (m ^ k) e r + e % K + u * K := by
   have h0 := NLogN.KFR.sR_add he r
   have h1 : pos (r, ⟨m ^ k - 1 - u, by omega⟩) + K * (m ^ k - 1 - u + m ^ k * r.val) = e := he _

@@ -1704,4 +1704,4 @@ end NLogN.KFW
 
 end
 
-theorem solution.{u_1} : type_of% @NLogN.KFW.rImplQ_onRole_sol_aux.{u_1} := @NLogN.KFW.rImplQ_onRole_sol_aux.{u_1}
+theorem NLogN.KFW.rImplQ_onRole.{u_1} : type_of% @NLogN.KFW.rImplQ_onRole_sol_aux.{u_1} := @NLogN.KFW.rImplQ_onRole_sol_aux.{u_1}

@@ -1092,4 +1092,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.Hyp14.cost_nat_sol_aux := @IntMul.Kappa.R6.IL3H.Hyp14.cost_nat_sol_aux
+theorem IntMul.Kappa.R6.IL3H.Hyp14_cost_nat : type_of% @IntMul.Kappa.R6.IL3H.Hyp14.cost_nat_sol_aux := @IntMul.Kappa.R6.IL3H.Hyp14.cost_nat_sol_aux

@@ -84,7 +84,7 @@ end
 section
 open NLogN
 open NLogN.KFR
-theorem solution {K ρ f L Y X : ℕ} (hK : 1 ≤ K) (hρ : ρ < K) (hL : f * K ≤ L)
+theorem NLogN.KFR.xor_mask_sub {K ρ f L Y X : ℕ} (hK : 1 ≤ K) (hρ : ρ < K) (hL : f * K ≤ L)
     (hY : Y < 2 ^ L) (hX : X < 2 ^ L) :
     ((Y ^^^ (X &&& NLogN.KFH.selMask K ρ f) : ℕ) : ℤ) - Y =
       ∑ u ∈ Finset.range f, (NLogN.KFR.bitZ (Y ^^^ X) (ρ + u * K) - NLogN.KFR.bitZ Y (ρ + u * K)) * 2 ^ (ρ + u * K) := by

@@ -142,7 +142,7 @@ theorem chirpArr_near_aux (Δ T : ℕ) : ∀ (d : ℕ) (s t : Fin d → ℕ), (�
     refine (NLogN.KFM.oprod_near Δ _ _ ih hB' hu' x hx).mono (le_of_eq ?_)
     push_cast; ring
 
-theorem solution (Δ T : ℕ) : ∀ (d : ℕ) (s t : Fin d → ℕ), (∀ i, s i ≤ t i) →
+theorem NLogN.KFM.chirpArr_near (Δ T : ℕ) : ∀ (d : ℕ) (s t : Fin d → ℕ), (∀ i, s i ≤ t i) →
     (∀ i, 0 < t i) → (∀ i, t i ≤ T) → d * (8 * (T : ℝ) ^ 2 + 2) * (2 : ℝ)⁻¹ ^ Δ ≤ 1 →
     ∀ x ∈ NLogN.KFM.chirpArr Δ d s t, NLogN.KFM.NearU Δ (d * (8 * (T : ℝ) ^ 2 + 2) * (2 : ℝ)⁻¹ ^ Δ) x := by
   first

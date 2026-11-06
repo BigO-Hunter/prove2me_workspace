@@ -216,7 +216,7 @@ theorem stepsU_fspec_aux {N : ℕ} [NeZero N] (A B Cs : AModel.Shape) (P L : ℕ
     refine (S1.seq S2).mono ?_
     simp only [NLogN.KFD.cStepsUF]; omega
 
-theorem solution {N : ℕ} [NeZero N] (A B Cs : AModel.Shape) (P L : ℕ) (rX : Fin NLogN.HS)
+theorem NLogN.KFD.stepsU_fspec {N : ℕ} [NeZero N] (A B Cs : AModel.Shape) (P L : ℕ) (rX : Fin NLogN.HS)
     (hrX : 38 ≤ rX.val ∧ rX.val < 56)
     (hpos : ∀ a ∈ P :: L :: AModel.hdShape A B Cs m N, 1 ≤ a) (w Bb : ℕ) (R : List NLogN.Item)
     (hV : NLogN.zsz ((AModel.vol (P :: L :: AModel.hdShape A B Cs m N) : ℕ) : ℤ) ≤ Bb)

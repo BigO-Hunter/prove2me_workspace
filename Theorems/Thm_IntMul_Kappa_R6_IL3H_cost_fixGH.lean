@@ -108,12 +108,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-theorem one_le_nN {Bn t S0 : ℕ} (hB : 1 ≤ Bn) (hS : 1 ≤ S0) : 1 ≤ nN Bn t S0 := by
-  unfold nN
-  have : 1 ≤ 2 ^ t := Nat.one_le_two_pow
-  have := Nat.mul_le_mul (Nat.mul_le_mul hB this) hS
-  simpa using this
-
 end NLogN.KFW
 
 end
@@ -139,12 +133,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem yu_z (r Z H : ℕ) : (Z + 2) ^ 3 ≤ Yu r Z H := Nat.le_add_left _ _
-
-theorem yu_8 (r Z H : ℕ) : 8 ≤ Yu r Z H := by
-  have : 2 ^ 3 ≤ (Z + 2) ^ 3 := Nat.pow_le_pow_left (by omega) 3
-  exact le_trans (by simpa using this) (yu_z r Z H)
 
 end NLogN.KFW
 
@@ -273,4 +261,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.cost_fixGH_sol_aux := @IntMul.Kappa.R6.IL3H.cost_fixGH_sol_aux
+theorem IntMul.Kappa.R6.IL3H.cost_fixGH : type_of% @IntMul.Kappa.R6.IL3H.cost_fixGH_sol_aux := @IntMul.Kappa.R6.IL3H.cost_fixGH_sol_aux

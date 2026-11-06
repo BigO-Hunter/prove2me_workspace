@@ -215,7 +215,7 @@ open NLogN
 open NLogN.KFM
 open IntMul KFC KFB KFT KIL
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-theorem solution (Δ φ AX : ℕ) {d : ℕ} (s t : Fin d → ℕ) (ht : ∀ i, 2 ≤ t i)
+theorem NLogN.KFM.cChirpTabU_le (Δ φ AX : ℕ) {d : ℕ} (s t : Fin d → ℕ) (ht : ∀ i, 2 ≤ t i)
     (hAX : ∀ i, NLogN.KFM.cAxU Δ (s i) (t i) φ ≤ AX) :
     NLogN.KFM.cChirpTabU Δ φ (NLogN.KFM.axL s t) (∏ i, t i) ≤
       d * (AX + 4000) + 10 ^ 11 * ((∏ i, t i) + 1) * (φ + Δ + 3) := by

@@ -12,7 +12,7 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open NLogN.KFM
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
-theorem solution (b : ℕ) (hb : 3 ≤ b) : NLogN.KFM.CostEnv (2 ^ (2 * b + 2)) (16 * b + 17) := by
+theorem NLogN.KFM.costEnv_n (b : ℕ) (hb : 3 ≤ b) : NLogN.KFM.CostEnv (2 ^ (2 * b + 2)) (16 * b + 17) := by
   refine ⟨?_, fun k hk => ?_⟩
   · calc 256 = 2 ^ 8 := by norm_num
       _ ≤ 2 ^ (2 * b + 2) := Nat.pow_le_pow_right (by norm_num) (by omega)

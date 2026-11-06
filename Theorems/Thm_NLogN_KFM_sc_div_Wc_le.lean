@@ -48,7 +48,7 @@ section
 open NLogN
 open NLogN.KFM
 open NLogN.KFN
-theorem solution :
+theorem NLogN.KFM.sc_div_Wc_le :
     (P8Lift.sc : ℝ) / P8Lift.Wc ≤ ((100 ^ 3 : ℕ) : ℝ) ^ τ50 := by
   have hm : (0 : ℝ) < ((100 ^ 3 : ℕ) : ℝ) := by norm_num
   have hsplit : ((100 ^ 3 : ℕ) : ℝ) ^ NLogN.KFN.τ50 * ((100 ^ 3 : ℕ) : ℝ) ^ ((2 : ℝ)⁻¹ ^ 50) =

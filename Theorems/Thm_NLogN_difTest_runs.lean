@@ -122,7 +122,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution (s : NLogN.IState NLogN.NS) (L : ℤ) (LL : List NLogN.Item) (m : ℕ)
+theorem NLogN.difTest_runs (s : NLogN.IState NLogN.NS) (L : ℤ) (LL : List NLogN.Item) (m : ℕ)
     (hL : s.G NLogN.DL = .int L :: LL) (hm : NLogN.zsz L ≤ m) :
     NLogN.IRuns I iprog NLogN.difTest s (s.upd NLogN.CC (.int (L + -1) :: s.G NLogN.CC)) (2000 * (m + 2)) := by
   apply NLogN.IRuns.of_runsTo 0

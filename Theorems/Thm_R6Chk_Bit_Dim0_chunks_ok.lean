@@ -89,4 +89,4 @@ end R6Chk.Bit.Dim0
 
 end
 
-theorem solution : type_of% @R6Chk.Bit.Dim0.chunks_ok_sol_aux := @R6Chk.Bit.Dim0.chunks_ok_sol_aux
+theorem R6Chk.Bit.Dim0.chunks_ok : type_of% @R6Chk.Bit.Dim0.chunks_ok_sol_aux := @R6Chk.Bit.Dim0.chunks_ok_sol_aux

@@ -228,4 +228,4 @@ end IntMul.Kappa.R6
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.kappaBound_of_machine6_sol_aux := @IntMul.Kappa.R6.kappaBound_of_machine6_sol_aux
+theorem IntMul.Kappa.R6.kappaBound_of_machine6 : type_of% @IntMul.Kappa.R6.kappaBound_of_machine6_sol_aux := @IntMul.Kappa.R6.kappaBound_of_machine6_sol_aux

@@ -263,7 +263,7 @@ open NLogN
 open NLogN.KFM
 open IntMul RS AModel KIL KFD KFB KFG KFH KFN Complex P8Lift Butterfly
 variable {E : ℕ}
-theorem solution (ext : Fin E → NLogN.IStmt NLogN.HS (7 + E)) :
+theorem NLogN.KFM.kTable_rowHyp (ext : Fin E → NLogN.IStmt NLogN.HS (7 + E)) :
     ∃ Kc : ℝ, 0 < Kc ∧ ∀ (Isym : List NLogN.Sym) {K r Z : ℕ}, 6 ≤ K → 1 ≤ r →
       80 * Z * (Z + 2) ≤ 2 ^ K →
       NLogN.KFN.RowHyp Isym (NLogN.KFM.kTable ext) K (100 ^ 3) r Z (NLogN.KFR.PsiR r Z) (Kc * (K + 2) + 1) NLogN.KFN.τ50 ∧

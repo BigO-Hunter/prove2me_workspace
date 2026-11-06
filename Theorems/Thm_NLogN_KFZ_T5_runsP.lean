@@ -1227,4 +1227,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution : type_of% @NLogN.KFZ.T5_runsP_sol_aux := @NLogN.KFZ.T5_runsP_sol_aux
+theorem NLogN.KFZ.T5_runsP : type_of% @NLogN.KFZ.T5_runsP_sol_aux := @NLogN.KFZ.T5_runsP_sol_aux

@@ -370,7 +370,7 @@ set_option linter.style.longLine false
 open NLogN
 open NLogN.KFM
 open IntMul NLogN
-theorem solution {P' : ℕ} {I : List NLogN.Sym} {iprog' : Fin P' → NLogN.IStmt NLogN.HS P'}
+theorem NLogN.KFM.mulOK_of_embed {P' : ℕ} {I : List NLogN.Sym} {iprog' : Fin P' → NLogN.IStmt NLogN.HS P'}
     {g : Fin 5 → Fin P'} {pM : Fin P'} (hg : ∀ j, iprog' (g j) = (NLogN.KFM.mulProg j).ren NLogN.KFM.ssE g)
     (hM : iprog' pM = NLogN.KFM.mulWrap g) :
     NLogN.MulOK I iprog' pM ⟨fun a b => NLogN.KFM.mulCostH (NLogN.zsz a + NLogN.zsz b), fun _ _ => True⟩ := by

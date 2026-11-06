@@ -14,7 +14,7 @@ open NLogN
 open NLogN.KFM
 open IntMul RS
 open NLogN.KFM.CostEnv
-theorem solution {A B : ℕ} (h : NLogN.KFM.CostEnv A B) : 1 ≤ B := by
+theorem NLogN.KFM.CostEnv.B1 {A B : ℕ} (h : NLogN.KFM.CostEnv A B) : 1 ≤ B := by
   have := h.hAB 1 (by norm_num)
   by_contra h0; push Not at h0
   have : B = 0 := by omega

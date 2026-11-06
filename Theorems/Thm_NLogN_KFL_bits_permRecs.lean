@@ -593,7 +593,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD KFB KFH AModel Butterfly
-theorem solution {N0 N1 N2 N3 K ρ f R w : ℕ} (h0 : 1 ≤ N0) (h1 : 1 ≤ N1) (h2 : 1 ≤ N2)
+theorem NLogN.KFL.bits_permRecs {N0 N1 N2 N3 K ρ f R w : ℕ} (h0 : 1 ≤ N0) (h1 : 1 ≤ N1) (h2 : 1 ≤ N2)
     (h3 : 1 ≤ N3) (hR : 1 ≤ R) (px py : Fin 3) (zs : List NLogN.KFB.GI)
     (hl : zs.length = AModel.vol (NLogN.KFH.rect N0 N1 N2 N3 (f * K)) * R) :
     NLogN.KFL.bitsL w (NLogN.KFB.gflat (NLogN.KFH.permRecs (NLogN.KFH.rect N0 N1 N2 N3 (f * K)) (NLogN.KFH.rowAddAddr K ρ f px py) R zs)) =

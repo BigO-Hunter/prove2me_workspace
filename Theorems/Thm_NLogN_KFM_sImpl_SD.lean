@@ -14,27 +14,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -66,8 +48,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -83,12 +63,6 @@ section
 -- Source module: NLogN.Costs
 namespace NLogN
 
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
-
 end NLogN
 
 end
@@ -100,9 +74,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-
-theorem zsz_natCast_le {j k : ℕ} (h : j ≤ k) : zsz (j : ℤ) ≤ zsz (k : ℤ) :=
-  zsz_mono (by simpa using h)
 
 end NLogN
 
@@ -206,7 +177,7 @@ set_option linter.unusedSectionVars false
 open NLogN
 open NLogN.KFM
 open IntMul RS AModel KIL KFD KFB KFG KFH KFN Complex P8Lift Butterfly
-theorem solution {P K D S ρ r : ℕ} (hρ : ρ < K) (hr : 1 ≤ r) (hS : 1 ≤ S) (hP : 1 ≤ P) (Z : ℕ)
+theorem NLogN.KFM.sImpl_SD {P K D S ρ r : ℕ} (hρ : ρ < K) (hr : 1 ≤ r) (hS : 1 ≤ S) (hP : 1 ≤ P) (Z : ℕ)
     (hZ : NLogN.zsz ((16 * (AModel.vol (Butterfly.layerShape P K D S) * r) : ℕ) : ℤ) ≤ Z) :
     NLogN.KFN.SImpl r (fun i : Fin D => NLogN.KFH.stT K D S ρ i) (AModel.vol (Butterfly.layerShape P K D S))
       (Butterfly.SD : Matrix (Fin D → Fin 2) (Fin D → Fin 2) ℂ) (NLogN.KFM.sdP P K D S ρ r) 0 0

@@ -144,20 +144,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-theorem yu_z (r Z H : ℕ) : (Z + 2) ^ 3 ≤ Yu r Z H := Nat.le_add_left _ _
-
-theorem yu_z2 (r Z H : ℕ) : (Z + 2) ^ 2 ≤ Yu r Z H := by
-  have : (Z + 2) ^ 2 ≤ (Z + 2) ^ 3 := Nat.pow_le_pow_right (by omega) (by omega)
-  exact this.trans (yu_z r Z H)
-
-theorem yu_z1 (r Z H : ℕ) : Z + 2 ≤ Yu r Z H := by
-  have : Z + 2 ≤ (Z + 2) ^ 2 := by nlinarith
-  exact this.trans (yu_z2 r Z H)
-
-theorem yu_8 (r Z H : ℕ) : 8 ≤ Yu r Z H := by
-  have : 2 ^ 3 ≤ (Z + 2) ^ 3 := Nat.pow_le_pow_left (by omega) 3
-  exact le_trans (by simpa using this) (yu_z r Z H)
-
 /-- **One atom** at a width in the window. -/
 theorem cAtom_Y {W n x D r Z H : ℕ} (hW : 1 ≤ W) (hn : 1 ≤ n) (hx : x + D ≤ 2 * H + 16) :
     cAtom x D (n * r) W Z ≤ 1000000 * (W * n) * Yu r Z H := by
@@ -329,4 +315,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.cost_phaseH_sol_aux := @IntMul.Kappa.R6.IL3H.cost_phaseH_sol_aux
+theorem IntMul.Kappa.R6.IL3H.cost_phaseH : type_of% @IntMul.Kappa.R6.IL3H.cost_phaseH_sol_aux := @IntMul.Kappa.R6.IL3H.cost_phaseH_sol_aux

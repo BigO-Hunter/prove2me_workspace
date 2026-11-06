@@ -181,4 +181,4 @@ end IntMul.Kappa.R6.Bit
 
 end
 
-theorem solution.{u_1} : type_of% @IntMul.Kappa.R6.Bit.cH_rec_sol_aux.{u_1} := @IntMul.Kappa.R6.Bit.cH_rec_sol_aux.{u_1}
+theorem IntMul.Kappa.R6.Bit.cH_rec.{u_1} : type_of% @IntMul.Kappa.R6.Bit.cH_rec_sol_aux.{u_1} := @IntMul.Kappa.R6.Bit.cH_rec_sol_aux.{u_1}

@@ -807,4 +807,4 @@ end NLogN
 
 end
 
-theorem solution : type_of% @NLogN.KFD.applyCF_runs_sol_aux := @NLogN.KFD.applyCF_runs_sol_aux
+theorem NLogN.KFD.applyCF_runs : type_of% @NLogN.KFD.applyCF_runs_sol_aux := @NLogN.KFD.applyCF_runs_sol_aux

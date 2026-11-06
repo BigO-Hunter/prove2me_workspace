@@ -254,4 +254,4 @@ end NLogN.KIL
 
 end
 
-theorem solution : type_of% @NLogN.KIL.Sp.zipK_sol_aux := @NLogN.KIL.Sp.zipK_sol_aux
+theorem NLogN.KIL.Sp_zipK : type_of% @NLogN.KIL.Sp.zipK_sol_aux := @NLogN.KIL.Sp.zipK_sol_aux

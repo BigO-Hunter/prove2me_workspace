@@ -3980,4 +3980,4 @@ end IntMul.Kappa.R6.Bit.NB
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.Bit.NB.formalOK_sol_aux := @IntMul.Kappa.R6.Bit.NB.formalOK_sol_aux
+theorem IntMul.Kappa.R6.Bit.NB.formalOK : type_of% @IntMul.Kappa.R6.Bit.NB.formalOK_sol_aux := @IntMul.Kappa.R6.Bit.NB.formalOK_sol_aux

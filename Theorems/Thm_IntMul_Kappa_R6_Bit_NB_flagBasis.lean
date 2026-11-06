@@ -203,4 +203,4 @@ end IntMul.Kappa.R6.Bit.NB
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.Bit.NB.flagBasis_sol_aux := @IntMul.Kappa.R6.Bit.NB.flagBasis_sol_aux
+theorem IntMul.Kappa.R6.Bit.NB.flagBasis : type_of% @IntMul.Kappa.R6.Bit.NB.flagBasis_sol_aux := @IntMul.Kappa.R6.Bit.NB.flagBasis_sol_aux

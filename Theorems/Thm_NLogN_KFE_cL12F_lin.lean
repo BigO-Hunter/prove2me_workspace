@@ -292,4 +292,4 @@ end NLogN.KFE
 
 end
 
-theorem solution : type_of% @NLogN.KFE.cL12F_lin_sol_aux := @NLogN.KFE.cL12F_lin_sol_aux
+theorem NLogN.KFE.cL12F_lin : type_of% @NLogN.KFE.cL12F_lin_sol_aux := @NLogN.KFE.cL12F_lin_sol_aux

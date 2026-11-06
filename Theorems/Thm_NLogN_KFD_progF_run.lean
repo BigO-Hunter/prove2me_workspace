@@ -2250,7 +2250,7 @@ open NLogN.KFD
 open KIL AModel AModelL12
 variable {m W : ℕ} [NeZero W] (C : Circuit (ZMod 2) m W) (tpl : IMat m → List (TStep m))
 set_option maxRecDepth 20000
-theorem solution (hm : 1 ≤ m) (q : ℕ) (hq : 2 ≤ q) (Bb : ℕ) (I : List NLogN.Sym) :
+theorem NLogN.KFD.progF_run (hm : 1 ≤ m) (q : ℕ) (hq : 2 ≤ q) (Bb : ℕ) (I : List NLogN.Sym) :
     ∀ k : ℕ, (∀ j < k, NLogN.KIL.LvOK C tpl (q ^ m ^ j) Bb) → NLogN.zsz (k : ℤ) ≤ Bb →
     ∀ (P L : ℕ) (A B Cs : AModel.Shape), 1 ≤ P → W ^ k ∣ L → 1 ≤ L →
       (∀ a ∈ A, 1 ≤ a) → (∀ a ∈ B, 1 ≤ a) → (∀ a ∈ Cs, 1 ≤ a) →

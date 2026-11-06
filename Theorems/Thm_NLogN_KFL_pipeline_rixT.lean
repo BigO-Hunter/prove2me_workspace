@@ -419,7 +419,7 @@ set_option maxRecDepth 20000
 open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD Butterfly AModel
-theorem solution {K ρ f : ℕ} (hK : 1 ≤ K) (hρK : ρ < K) (hf : 1 ≤ f) (g : NLogN.KFL.Geo) (hg : g.Pos)
+theorem NLogN.KFL.pipeline_rixT {K ρ f : ℕ} (hK : 1 ≤ K) (hρK : ρ < K) (hf : 1 ≤ f) (g : NLogN.KFL.Geo) (hg : g.Pos)
     (hQe : g.Q = 2 ^ (f * K)) (zs : List ℤ) :
     NLogN.KFL.rixT g (NLogN.KFL.XLc K ρ f) (NLogN.KFL.rixT g (NLogN.KFL.corrc K ρ f) (NLogN.KFL.rixT g (NLogN.KFL.FSc K ρ f) zs)) = NLogN.KFL.rixT g (NLogN.KFL.RAc K ρ f) zs := by
   have TF : ∀ c, NLogN.KFL.TV g.Q c → NLogN.KFL.TV g.Q (NLogN.KFL.FSc K ρ f c) := fun c hc => hQe ▸ NLogN.KFL.TV_FSc c (hQe ▸ hc)

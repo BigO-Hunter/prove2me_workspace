@@ -700,7 +700,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution (pD : Fin P) (hP : iprog pD = NLogN.difBody pD) (n : ℕ) (hn : 1 ≤ n) :
+theorem NLogN.dif_runs (pD : Fin P) (hP : iprog pD = NLogN.difBody pD) (n : ℕ) (hn : 1 ≤ n) :
     ∀ j (s : NLogN.IState NLogN.NS) (A : List ℤ) (R LL LE LN LF : List NLogN.Item) (E : ℕ),
       A.length = 2 ^ j → (j = 0 ∨ 2 ^ j * E = 2 * n) → NLogN.Canon (2 ^ n + 1) A →
       s.G NLogN.DX = NLogN.ints A ++ R → s.G NLogN.DL = .int (2 ^ j) :: LL → s.G NLogN.DE = .int (2 ^ E) :: LE →

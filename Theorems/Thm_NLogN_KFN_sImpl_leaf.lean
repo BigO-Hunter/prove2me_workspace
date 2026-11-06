@@ -1530,7 +1530,7 @@ open NLogN
 open NLogN.KFN
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 variable {P K D S ρ : ℕ}
-theorem solution (pos : Fin 1 → ℕ) (t S0 B : ℕ) (hpos : pos 0 < t) (hS : 1 ≤ S0) (hB : 1 ≤ B)
+theorem NLogN.KFN.sImpl_leaf (pos : Fin 1 → ℕ) (t S0 B : ℕ) (hpos : pos 0 < t) (hS : 1 ≤ S0) (hB : 1 ≤ B)
     {r : ℕ} (hr : 1 ≤ r) (Z : ℕ) (hZ : NLogN.zsz ((12 * (B * 2 ^ t * S0 * r)) : ℕ) ≤ Z) :
     NLogN.KFN.SImpl r (fun i => 2 ^ pos i * S0) (B * 2 ^ t * S0) (Butterfly.tens Butterfly.Cm : Butterfly.Op (Fin 1))
       (NLogN.KFH.kerP t 1 S0 (pos 0) B r 0 NLogN.KFH.MC) 1 2 (NLogN.KFH.ck (B * 2 ^ t * S0 * r) Z) := by

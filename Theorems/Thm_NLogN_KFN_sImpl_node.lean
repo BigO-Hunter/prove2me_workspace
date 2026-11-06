@@ -487,7 +487,7 @@ open NLogN.KFN
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 variable {Pp : ℕ} {Isym : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
-theorem solution {s : ℕ} (J : P8Lift.Prop8IfaceR W m s) (hW : 0 < W) {r n : ℕ} (hr : 0 < r)
+theorem NLogN.KFN.sImpl_node {s : ℕ} (J : P8Lift.Prop8IfaceR W m s) (hW : 0 < W) {r n : ℕ} (hr : 0 < r)
     {st : Fin m × κ → ℕ} (hs : NLogN.KFN.SLaws st n) (ha : ∀ i, 2 * st i ∣ n)
     (code : P8Lift.RStep (Fin W) m → ℕ → NLogN.IStmt NLogN.HS Pp) (e dw : P8Lift.RStep (Fin W) m → ℕ)
     (cost : P8Lift.RStep (Fin W) m → ℕ → ℕ)

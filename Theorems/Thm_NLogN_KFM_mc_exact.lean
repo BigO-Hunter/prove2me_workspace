@@ -44,7 +44,7 @@ open NLogN.KFM
 open Complex IntMul.OpenAI.RT IntMul.OpenAI.RC
 variable {d : ℕ}
 variable {D : ℕ}
-theorem solution (t : Fin (D + 1) → ℕ) [∀ i, NeZero (t i)] (ζ : ℂ)
+theorem NLogN.KFM.mc_exact (t : Fin (D + 1) → ℕ) [∀ i, NeZero (t i)] (ζ : ℂ)
     (hζ : ζ ^ t (Fin.last D) = -1) (f g : ((i : Fin (D + 1)) → ZMod (t i)) → ℂ) :
     (fun j => (NLogN.KFM.twX t ζ j)⁻¹) * NLogN.KFM.mrX t (NLogN.KFM.twX t ζ * f) (NLogN.KFM.twX t ζ * g) =
       fun j => (∏ i, (t i : ℂ))⁻¹ * IntMul.OpenAI.RC.cconv t f g j := by

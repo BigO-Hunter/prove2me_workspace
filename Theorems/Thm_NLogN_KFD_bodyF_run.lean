@@ -3928,7 +3928,7 @@ open NLogN.KFD
 open KIL AModel AModelL12
 variable {m W : ℕ} [NeZero W] (C : Circuit (ZMod 2) m W) {Pp : ℕ} {I : List Sym}
   {iprog : Fin Pp → IStmt HS Pp}
-theorem solution {N : ℕ} [NeZero N] (hN : 1 < N) (P L' : ℕ) (A B Cs : AModel.Shape)
+theorem NLogN.KFD.bodyF_run {N : ℕ} [NeZero N] (hN : 1 < N) (P L' : ℕ) (A B Cs : AModel.Shape)
     (hpos : ∀ a ∈ P :: L' :: AModel.hdShape A B Cs m N, 1 ≤ a)
     (tpl : AModel.IMat m → List (NLogN.KIL.TStep m)) (Pr : AModel.IMat m → Prop) (hfr : AModel.FramesOK Pr C.gates C.Min C.Mout)
     (hT : ∀ X, Pr X → AModel.edgeSteps C N X = (tpl X).map (NLogN.KIL.TStep.eval N))

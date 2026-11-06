@@ -292,7 +292,7 @@ lemma rassoc3 {α β γ ε : Type*} {δ : Type} [Fintype β] [Fintype γ] [Finty
 end CornerAux
 
 open CornerAux in
-theorem solution {m k : ℕ} {K : Type*} [Field K] (hk : 2 * k ≤ m)
+theorem IntMul.OpenAI.idempotent_corner_profile {m k : ℕ} {K : Type*} [Field K] (hk : 2 * k ≤ m)
     (p : Matrix (Fin m) (Fin m) K) (hp : p * p = p) (hrank : p.rank = m - k)
     (hC : (p.submatrix (fun l : Fin k => (⟨l.val, by omega⟩ : Fin m))
         (fun r : Fin k => (⟨m - k + r.val, by omega⟩ : Fin m))).det ≠ 0)

@@ -11,7 +11,7 @@ section
 open AModelL12
 open AModel
 variable {α : Type*}
-theorem solution {S T : AModel.Shape} (h : AModelL12.ShapeLE S T) {a : List ℕ} (ha : AModel.Valid S a) :
+theorem AModelL12.ShapeLE_valid {S T : AModel.Shape} (h : AModelL12.ShapeLE S T) {a : List ℕ} (ha : AModel.Valid S a) :
     AModel.Valid T a := by
   obtain ⟨hl, hlt⟩ := (AModel.valid_iff S a).1 ha
   refine (AModel.valid_iff T a).2 ⟨by rw [hl, h.1], fun k h₁ h₂ => ?_⟩

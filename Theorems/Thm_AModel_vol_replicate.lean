@@ -10,5 +10,5 @@ set_option maxHeartbeats 1000000
 section
 open AModel
 open Matrix
-theorem solution (m N : ℕ) : AModel.vol (List.replicate m N) = N ^ m := List.prod_replicate m N
+theorem AModel.vol_replicate (m N : ℕ) : AModel.vol (List.replicate m N) = N ^ m := List.prod_replicate m N
 end

@@ -1279,7 +1279,7 @@ open NLogN
 open NLogN.KFW
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 variable {Pp : ℕ} {Isym : List Sym} {tbl : Fin Pp → IStmt HS Pp}
-theorem solution {σ : Fin NLogN.HS → Option ℤ} {K S r H P D ρ k q0 Bp Z : ℕ} (lo hi : ℕ)
+theorem NLogN.KFW.sdQ {σ : Fin NLogN.HS → Option ℤ} {K S r H P D ρ k q0 Bp Z : ℕ} (lo hi : ℕ)
     (hC : NLogN.KFW.CoreR σ K S r H P D ρ k q0 Bp) (hρ : ρ < K) (hS : 1 ≤ S) (hP : 1 ≤ P) (hr : 1 ≤ r)
     (hD : 1 ≤ D) (hZ16 : NLogN.zsz ((16 * (P * 2 ^ (K * D) * S * r) : ℕ) : ℤ) ≤ Z) :
     NLogN.KFW.SImplQ Isym tbl (fun s => NLogN.KFW.Agree σ s) lo hi r (fun x : Fin D => NLogN.KFH.stT K D S ρ x)

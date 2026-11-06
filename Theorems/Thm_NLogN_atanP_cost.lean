@@ -407,7 +407,7 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS
 set_option maxHeartbeats 1000000
-theorem solution (x N K : ℕ) (σ : ℤ) (hx : 0 < x) (hσ : |σ| = 1) (s : NLogN.IState NLogN.HS)
+theorem NLogN.atanP_cost (x N K : ℕ) (σ : ℤ) (hx : 0 < x) (hσ : |σ| = 1) (s : NLogN.IState NLogN.HS)
     (L0 L1 : List NLogN.Item) (h0 : s.G 0 = .int N :: L0) (h1 : s.G 1 = .int K :: L1) :
     (NLogN.atanP x σ).cost s ≤ (K + 2) * 10 ^ 9 * (NLogN.atanB x N K + 2) ^ 2 := by
   set t0 := (NLogN.RS.seq NLogN.atanPre (NLogN.RS.asg 41 (.lit x))).run s with ht0

@@ -137,4 +137,4 @@ end NLogN.KFM
 
 end
 
-theorem solution : type_of% @NLogN.KFM.mvNU_runs_sol_aux := @NLogN.KFM.mvNU_runs_sol_aux
+theorem NLogN.KFM.mvNU_runs : type_of% @NLogN.KFM.mvNU_runs_sol_aux := @NLogN.KFM.mvNU_runs_sol_aux

@@ -201,7 +201,7 @@ section
 set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS IntMul.HvdH
-theorem solution (n : ℕ) (x y : ℤ) (s : NLogN.IState NLogN.HS) (L5 L6 L7 : List NLogN.Item)
+theorem NLogN.expP_spec (n : ℕ) (x y : ℤ) (s : NLogN.IState NLogN.HS) (L5 L6 L7 : List NLogN.Item)
     (h5 : s.G 5 = .int n :: L5) (h6 : s.G 6 = .int x :: L6) (h7 : s.G 7 = .int y :: L7) :
     NLogN.expP.ok s ∧ NLogN.expP.run s = (s.upd 8 (.int (expBits n x y).1 :: s.G 8)).upd 9
       (.int (expBits n x y).2 :: s.G 9) := by

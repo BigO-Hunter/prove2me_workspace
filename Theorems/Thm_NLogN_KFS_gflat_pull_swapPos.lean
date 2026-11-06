@@ -190,7 +190,7 @@ open NLogN
 open NLogN.KFS
 open IntMul KIL KFB KFL AModel AModelL12
 variable {α β : Type*}
-theorem solution (sh : AModel.Shape) {p q : ℕ} (hp : p < sh.length) (hq : q < sh.length)
+theorem NLogN.KFS.gflat_pull_swapPos (sh : AModel.Shape) {p q : ℕ} (hp : p < sh.length) (hq : q < sh.length)
     (hs : sh.getD p 0 = sh.getD q 0) (d : NLogN.KFB.GI) (zs : List NLogN.KFB.GI) (hzs : zs.length = AModel.vol sh) :
     NLogN.KFB.gflat (AModel.pull sh sh (AModel.swapPos p q) d zs) =
       AModel.pull (sh ++ [2]) (sh ++ [2]) (AModel.swapPos p q) 0 (NLogN.KFB.gflat zs) :=

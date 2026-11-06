@@ -205,4 +205,4 @@ end NLogN
 
 end
 
-theorem solution : type_of% @NLogN.KFD.FSp.dupK_sol_aux := @NLogN.KFD.FSp.dupK_sol_aux
+theorem NLogN.KFD.FSp_dupK : type_of% @NLogN.KFD.FSp.dupK_sol_aux := @NLogN.KFD.FSp.dupK_sol_aux

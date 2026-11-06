@@ -14,7 +14,7 @@ set_option linter.unusedSectionVars false
 open NLogN
 open NLogN.KFR
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly KFN
-theorem solution {m r : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ] (st : Fin m × κ → ℕ) (n : ℕ)
+theorem NLogN.KFR.selOpF_Pm {m r : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ] (st : Fin m × κ → ℕ) (n : ℕ)
     (i j : Fin m) (xs : List (Fin r → ℂ)) :
     NLogN.KFN.selOpF st n (P8Lift.Pm i j : Butterfly.Op (Fin m × κ)) xs =
       (List.range n).map fun q => xs.getD (NLogN.KFN.fset st q (P8Lift.rowAddr i j (NLogN.KFN.fbit st q))) 0 := by

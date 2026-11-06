@@ -2859,7 +2859,7 @@ open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 variable {Pp : ℕ} {Isym : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 variable {K : ℕ}
 variable {W m s : ℕ} (J : Prop8IfaceR W m s) {A r Z : ℕ} {Ψ : ℕ → ℕ} {CR τ : ℝ}
-theorem solution (hGc : NLogN.KFN.GClass J A) (hrow : NLogN.KFN.RowHyp Isym iprog K m r Z Ψ CR τ) (hCR : 0 ≤ CR) (hτ : 0 ≤ τ)
+theorem NLogN.KFN.lv_succ (hGc : NLogN.KFN.GClass J A) (hrow : NLogN.KFN.RowHyp Isym iprog K m r Z Ψ CR τ) (hCR : 0 ≤ CR) (hτ : 0 ≤ τ)
     (hW : 1 ≤ W) (hr : 1 ≤ r) (hΨm : Monotone Ψ) (hZΨ : ∀ v, Z + 2 ≤ Ψ v)
     {k Ek DWk Wk : ℕ} {ck : ℝ} (hck : 0 ≤ ck) (IH : NLogN.KFN.Lv Isym iprog K W m r Z Ψ k Ek DWk Wk ck) :
     NLogN.KFN.Lv Isym iprog K W m r Z Ψ (k + 1) (J.net.length + s * Ek)

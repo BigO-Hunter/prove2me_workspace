@@ -317,4 +317,4 @@ end NLogN.KFM
 
 end
 
-theorem solution : type_of% @NLogN.KFM.final_call3_sol_aux := @NLogN.KFM.final_call3_sol_aux
+theorem NLogN.KFM.final_call3 : type_of% @NLogN.KFM.final_call3_sol_aux := @NLogN.KFM.final_call3_sol_aux

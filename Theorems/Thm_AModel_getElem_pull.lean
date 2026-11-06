@@ -11,7 +11,7 @@ section
 open AModel
 open Matrix
 variable {α : Type*}
-theorem solution (sh sh' : AModel.Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) (j : ℕ)
+theorem AModel.getElem_pull (sh sh' : AModel.Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) (j : ℕ)
     (hj : j < (AModel.pull sh sh' g d xs).length) :
     (AModel.pull sh sh' g d xs)[j] = xs.getD (AModel.encode sh (g (AModel.decode sh' j))) d := by
   simp [AModel.pull]

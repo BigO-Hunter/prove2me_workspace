@@ -1420,7 +1420,7 @@ theorem code_runs_aux : ∀ (e : Ex HS) (s : IState HS), e.Clean → e.ok s →
       simp only [NLogN.moveCost]; omega
     omega
 
-theorem solution : ∀ (e : Ex HS) (s : IState HS), e.Clean → e.ok s →
+theorem NLogN.Ex.code_runs : ∀ (e : Ex HS) (s : IState HS), e.Clean → e.ok s →
     IRuns I iprog (e.code zX) s (s.upd 56 (.int (e.eval s) :: s.G 56)) (e.cost s) :=
   code_runs_aux
 end

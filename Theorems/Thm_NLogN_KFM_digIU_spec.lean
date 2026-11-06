@@ -402,7 +402,7 @@ open NLogN
 open NLogN.KFM
 open IntMul KFC KFB KFT
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-theorem solution (b e M S x : ℕ) (hx : x < 2 ^ (b * M)) (s : NLogN.IState NLogN.HS) (LX L1 L2 L3 L4 : List NLogN.Item)
+theorem NLogN.KFM.digIU_spec (b e M S x : ℕ) (hx : x < 2 ^ (b * M)) (s : NLogN.IState NLogN.HS) (LX L1 L2 L3 L4 : List NLogN.Item)
     (hX : s.G NLogN.KFT.tX = .int (x : ℤ) :: LX) (hB2 : s.G NLogN.KFM.uB2 = .int ((2 : ℤ) ^ b) :: L1)
     (hM : s.G NLogN.KFM.uM = .int (M : ℤ) :: L2) (hZ : s.G NLogN.KFM.uZ = .int ((2 * (S - M) : ℕ) : ℤ) :: L3)
     (hE : s.G NLogN.KFM.uE = .int ((2 : ℤ) ^ e) :: L4) :

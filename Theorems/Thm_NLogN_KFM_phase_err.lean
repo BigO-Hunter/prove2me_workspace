@@ -135,7 +135,7 @@ open NLogN
 open NLogN.KFM
 open Complex
 variable {ι : Type*} [Fintype ι]
-theorem solution (p : ℕ) (e et x : ι → ℂ) (he : ∀ i, ‖e i‖ ≤ 1)
+theorem NLogN.KFM.phase_err (p : ℕ) (e et x : ι → ℂ) (he : ∀ i, ‖e i‖ ≤ 1)
     (het : ∀ i, ‖et i - e i‖ ≤ 2 * NLogN.KFM.hp p) (het1 : ∀ i, ‖et i‖ ≤ 1) (hx : ‖x‖ ≤ 1) :
     ‖NLogN.KFM.QA p (et * x) - e * x‖ ≤ 4 * NLogN.KFM.hp p ∧ ‖NLogN.KFM.QA p (et * x)‖ ≤ ‖x‖ := by
   have h0 := NLogN.KFM.hp_pos p

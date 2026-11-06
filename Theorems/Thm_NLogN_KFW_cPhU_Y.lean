@@ -190,4 +190,4 @@ end NLogN.KFW
 
 end
 
-theorem solution : type_of% @NLogN.KFW.cPhU_Y_sol_aux := @NLogN.KFW.cPhU_Y_sol_aux
+theorem NLogN.KFW.cPhU_Y : type_of% @NLogN.KFW.cPhU_Y_sol_aux := @NLogN.KFW.cPhU_Y_sol_aux

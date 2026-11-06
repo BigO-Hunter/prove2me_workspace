@@ -53,7 +53,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFE
 open IntMul RS AModel AModelL12 Finset KIL KFD
-theorem solution {m n : ℕ} (S : ℕ) (hm : 2 ≤ m) (hn : 1 ≤ n) :
+theorem NLogN.KFE.calls_le {m n : ℕ} (S : ℕ) (hm : 2 ≤ m) (hn : 1 ≤ n) :
     ∑ j ∈ range (Nat.digits m n).length, n / m ^ j % m * (S + 1) ^ j ≤
       m * n ^ (Nat.clog m (S + 1) + 1) := by
   set c := Nat.clog m (S + 1)

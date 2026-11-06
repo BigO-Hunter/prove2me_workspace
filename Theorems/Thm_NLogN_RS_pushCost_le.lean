@@ -15,7 +15,7 @@ open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 open NLogN.RS
-theorem solution (e : NLogN.Ex NLogN.HS) (s : NLogN.IState NLogN.HS) (B : ℕ) (h : e.Bnd s B) :
+theorem NLogN.RS.pushCost_le (e : NLogN.Ex NLogN.HS) (s : NLogN.IState NLogN.HS) (B : ℕ) (h : e.Bnd s B) :
     e.cost s + (2 * NLogN.moveCost (NLogN.zsz (e.eval s)) + 19) ≤ (e.size + 1) * 10 ^ 7 * (B + 2) ^ 2 := by
   have h1 := NLogN.Ex.cost_le s B e h
   have h2 := NLogN.Ex.zsz_eval_le s B e h

@@ -25,4 +25,4 @@ end R6Chk.Bit.Dim2
 
 end
 
-theorem solution : type_of% @R6Chk.Bit.Dim2.c13_ok_sol_aux := @R6Chk.Bit.Dim2.c13_ok_sol_aux
+theorem R6Chk.Bit.Dim2.c13_ok : type_of% @R6Chk.Bit.Dim2.c13_ok_sol_aux := @R6Chk.Bit.Dim2.c13_ok_sol_aux

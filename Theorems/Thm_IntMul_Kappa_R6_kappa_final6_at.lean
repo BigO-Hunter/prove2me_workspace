@@ -3074,4 +3074,4 @@ end IntMul.Kappa.R6
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.kappa_final6_at_sol_aux := @IntMul.Kappa.R6.kappa_final6_at_sol_aux
+theorem IntMul.Kappa.R6.kappa_final6_at : type_of% @IntMul.Kappa.R6.kappa_final6_at_sol_aux := @IntMul.Kappa.R6.kappa_final6_at_sol_aux

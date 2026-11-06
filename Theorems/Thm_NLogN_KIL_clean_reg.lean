@@ -55,5 +55,5 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS
 open NLogN.KIL
-theorem solution {i : Fin NLogN.HS} (hi : i.val < 56) : (NLogN.Ex.reg i).Clean := NLogN.RS.clean_of_lt hi
+theorem NLogN.KIL.clean_reg {i : Fin NLogN.HS} (hi : i.val < 56) : (NLogN.Ex.reg i).Clean := NLogN.RS.clean_of_lt hi
 end

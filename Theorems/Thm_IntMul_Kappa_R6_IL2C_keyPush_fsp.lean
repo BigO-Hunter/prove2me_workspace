@@ -604,4 +604,4 @@ end IntMul.Kappa.R6.IL2C
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2C.keyPush_fsp_sol_aux := @IntMul.Kappa.R6.IL2C.keyPush_fsp_sol_aux
+theorem IntMul.Kappa.R6.IL2C.keyPush_fsp : type_of% @IntMul.Kappa.R6.IL2C.keyPush_fsp_sol_aux := @IntMul.Kappa.R6.IL2C.keyPush_fsp_sol_aux

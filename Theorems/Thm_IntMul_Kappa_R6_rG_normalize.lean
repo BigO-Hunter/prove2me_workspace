@@ -127,4 +127,4 @@ theorem rG_normalize_sol_aux (mc sc : ℕ) (ab ac ε x C₁ κ : ℝ)
 
 end IntMul.Kappa.R6
 
-theorem solution : type_of% @IntMul.Kappa.R6.rG_normalize_sol_aux := @IntMul.Kappa.R6.rG_normalize_sol_aux
+theorem IntMul.Kappa.R6.rG_normalize : type_of% @IntMul.Kappa.R6.rG_normalize_sol_aux := @IntMul.Kappa.R6.rG_normalize_sol_aux

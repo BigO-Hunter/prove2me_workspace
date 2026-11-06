@@ -306,7 +306,7 @@ section
 open NLogN
 open IntMul
 variable (n : ℕ)
-theorem solution (j E : ℕ) (hjE : j = 0 ∨ 2 ^ j * E = 2 * n) (A B : List ℤ)
+theorem NLogN.pmul_difZ (j E : ℕ) (hjE : j = 0 ∨ 2 ^ j * E = 2 * n) (A B : List ℤ)
     (hA : A.length = 2 ^ j) (hB : B.length = 2 ^ j) :
     NLogN.pmulZ (2 ^ n + 1) (NLogN.difZ (2 ^ n + 1) E j A) (NLogN.difZ (2 ^ n + 1) E j B) =
       NLogN.difZ (2 ^ n + 1) E j (NLogN.cycZ (2 ^ n + 1) (2 ^ j) A B) := by

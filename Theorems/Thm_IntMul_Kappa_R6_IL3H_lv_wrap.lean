@@ -1356,4 +1356,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution.{u_1} : type_of% @IntMul.Kappa.R6.IL3H.lv_wrap_sol_aux.{u_1} := @IntMul.Kappa.R6.IL3H.lv_wrap_sol_aux.{u_1}
+theorem IntMul.Kappa.R6.IL3H.lv_wrap.{u_1} : type_of% @IntMul.Kappa.R6.IL3H.lv_wrap_sol_aux.{u_1} := @IntMul.Kappa.R6.IL3H.lv_wrap_sol_aux.{u_1}

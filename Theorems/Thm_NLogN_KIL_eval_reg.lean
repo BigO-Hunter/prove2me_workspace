@@ -13,6 +13,6 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS
 open NLogN.KIL
-theorem solution {s : NLogN.IState NLogN.HS} {f : Fin NLogN.HS → List ℤ} {i : Fin NLogN.HS} {a : ℤ} {l : List ℤ}
+theorem NLogN.KIL.eval_reg {s : NLogN.IState NLogN.HS} {f : Fin NLogN.HS → List ℤ} {i : Fin NLogN.HS} {a : ℤ} {l : List ℤ}
     (h : f i = a :: l) : (NLogN.Ex.reg i).eval (NLogN.KIL.encK s f) = a := NLogN.KIL.top_encK h
 end

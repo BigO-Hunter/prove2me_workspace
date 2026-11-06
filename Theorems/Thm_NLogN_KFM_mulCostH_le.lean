@@ -322,7 +322,7 @@ open NLogN
 open NLogN.KFM
 open IntMul NLogN
 attribute [local irreducible] fmA
-theorem solution (n : ℕ) :
+theorem NLogN.KFM.mulCostH_le (n : ℕ) :
     NLogN.KFM.mulCostH n ≤ (8 * NLogN.fmA + 10 ^ 7 + 10 ^ 5) * (n + 1) * (NLogN.zsz ((n + 1 : ℕ) : ℤ) + 2) *
       (NLogN.zsz (((NLogN.zsz ((n + 1 : ℕ) : ℤ) + 2) ^ 4 : ℕ) : ℤ) + 1) := by
   have hM := NLogN.mainCost_le n

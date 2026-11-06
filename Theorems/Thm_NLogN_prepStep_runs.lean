@@ -330,7 +330,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution (s : NLogN.IState NLogN.NS) (n M Q e : ℕ) (y c : ℤ) (LX LW LC LM LQ LN LF : List NLogN.Item)
+theorem NLogN.prepStep_runs (s : NLogN.IState NLogN.NS) (n M Q e : ℕ) (y c : ℤ) (LX LW LC LM LQ LN LF : List NLogN.Item)
     (hM : M ≤ n) (he : e ≤ n) (hQ : Q ≤ n) (hc : NLogN.zsz c ≤ n)
     (hX : s.G NLogN.XA = .int y :: LX) (hW : s.G NLogN.W = .int (2 ^ e) :: LW) (hC : s.G NLogN.CC = .int c :: LC)
     (hRM : s.G NLogN.RMs = .int (2 ^ M) :: LM) (hRQ : s.G NLogN.RQ = .int (2 ^ Q) :: LQ)

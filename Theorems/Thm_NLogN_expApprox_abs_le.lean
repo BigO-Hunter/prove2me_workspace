@@ -68,7 +68,7 @@ section
 set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS IntMul.HvdH
-theorem solution (N : ℕ) (X Y W : ℤ) (hW : |X| + |Y| ≤ W) (hW1 : 1 ≤ W) (k : ℕ) :
+theorem NLogN.expApprox_abs_le (N : ℕ) (X Y W : ℤ) (hW : |X| + |Y| ≤ W) (hW1 : 1 ≤ W) (k : ℕ) :
     |(expApprox N k X Y).1| ≤ k * (2 ^ N * W ^ k) ∧ |(expApprox N k X Y).2| ≤ k * (2 ^ N * W ^ k) := by
   induction k with
   | zero => simp [expApprox]

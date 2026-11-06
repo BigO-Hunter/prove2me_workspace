@@ -936,4 +936,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.Hyp14.VbH_mid_sol_aux := @IntMul.Kappa.R6.IL3H.Hyp14.VbH_mid_sol_aux
+theorem IntMul.Kappa.R6.IL3H.Hyp14_VbH_mid : type_of% @IntMul.Kappa.R6.IL3H.Hyp14.VbH_mid_sol_aux := @IntMul.Kappa.R6.IL3H.Hyp14.VbH_mid_sol_aux

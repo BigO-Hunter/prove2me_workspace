@@ -772,4 +772,4 @@ end NLogN.KFM
 
 end
 
-theorem solution : type_of% @NLogN.KFM.desc18P_cost_g_sol_aux := @NLogN.KFM.desc18P_cost_g_sol_aux
+theorem NLogN.KFM.desc18P_cost_g : type_of% @NLogN.KFM.desc18P_cost_g_sol_aux := @NLogN.KFM.desc18P_cost_g_sol_aux

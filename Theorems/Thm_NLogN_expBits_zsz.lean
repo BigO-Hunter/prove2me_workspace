@@ -103,7 +103,7 @@ section
 set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS IntMul.HvdH
-theorem solution (n : ℕ) (x y : ℤ) :
+theorem NLogN.expBits_zsz (n : ℕ) (x y : ℤ) :
     NLogN.zsz (expBits n x y).1 ≤ NLogN.expB n (NLogN.zsz x + NLogN.zsz y) + 1 ∧
     NLogN.zsz (expBits n x y).2 ≤ NLogN.expB n (NLogN.zsz x + NLogN.zsz y) + 1 :=
   ⟨NLogN.zsz_le_of_abs (NLogN.expBits_abs_lt n x y).1, NLogN.zsz_le_of_abs (NLogN.expBits_abs_lt n x y).2⟩

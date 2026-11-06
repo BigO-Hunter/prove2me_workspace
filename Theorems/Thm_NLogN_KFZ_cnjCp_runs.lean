@@ -573,4 +573,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution : type_of% @NLogN.KFZ.cnjCp_runs_sol_aux := @NLogN.KFZ.cnjCp_runs_sol_aux
+theorem NLogN.KFZ.cnjCp_runs : type_of% @NLogN.KFZ.cnjCp_runs_sol_aux := @NLogN.KFZ.cnjCp_runs_sol_aux

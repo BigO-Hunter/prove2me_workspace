@@ -49,4 +49,4 @@ end R6Chk
 
 end
 
-theorem solution : type_of% @R6Chk.allL_spec_sol_aux := @R6Chk.allL_spec_sol_aux
+theorem R6Chk.allL_spec : type_of% @R6Chk.allL_spec_sol_aux := @R6Chk.allL_spec_sol_aux

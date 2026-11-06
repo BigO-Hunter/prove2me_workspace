@@ -1425,4 +1425,4 @@ end NLogN.KFW
 
 end
 
-theorem solution.{u_1} : type_of% @NLogN.KFW.sImplQ_padU_sol_aux.{u_1} := @NLogN.KFW.sImplQ_padU_sol_aux.{u_1}
+theorem NLogN.KFW.sImplQ_padU.{u_1} : type_of% @NLogN.KFW.sImplQ_padU_sol_aux.{u_1} := @NLogN.KFW.sImplQ_padU_sol_aux.{u_1}

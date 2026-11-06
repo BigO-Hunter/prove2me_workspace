@@ -734,4 +734,4 @@ end IntMul.Kappa.R6.IL
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL.gen_level_sol_aux := @IntMul.Kappa.R6.IL.gen_level_sol_aux
+theorem IntMul.Kappa.R6.IL.gen_level : type_of% @IntMul.Kappa.R6.IL.gen_level_sol_aux := @IntMul.Kappa.R6.IL.gen_level_sol_aux

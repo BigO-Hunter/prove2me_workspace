@@ -14,7 +14,7 @@ set_option linter.unusedSectionVars false
 open NLogN
 open NLogN.KFR
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly KFN
-theorem solution {sh : AModel.Shape} {π : List ℕ → List ℕ} {r w : ℕ} {zs : List NLogN.KFB.GI} (h : NLogN.KFB.GB w zs) :
+theorem NLogN.KFR.permRecs_GB {sh : AModel.Shape} {π : List ℕ → List ℕ} {r w : ℕ} {zs : List NLogN.KFB.GI} (h : NLogN.KFB.GB w zs) :
     NLogN.KFB.GB w (NLogN.KFH.permRecs sh π r zs) := fun z hz => by
   simp only [NLogN.KFH.permRecs, List.mem_flatMap] at hz
   obtain ⟨q, _, hq⟩ := hz

@@ -105,7 +105,7 @@ open NLogN.KFM
 open Complex IntMul.OpenAI.RT IntMul.OpenAI.RC
 variable {d : ℕ}
 variable {D : ℕ}
-theorem solution (s t : Fin d → ℕ) [∀ i, NeZero (t i)] (ht : ∀ i, Even (t i))
+theorem NLogN.KFM.chirp_exact (s t : Fin d → ℕ) [∀ i, NeZero (t i)] (ht : ∀ i, Even (t i))
     (x : ((i : Fin d) → ZMod (t i)) → ℂ) :
     (fun j => (starRingEnd ℂ) (IntMul.OpenAI.RC.chirp s t j)) *
       (fun j => (∏ i, (t i : ℂ))⁻¹ * IntMul.OpenAI.RC.cconv t (IntMul.OpenAI.RC.chirp s t)

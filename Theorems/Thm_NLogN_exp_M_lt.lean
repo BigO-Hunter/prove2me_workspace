@@ -92,7 +92,7 @@ section
 set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS IntMul.HvdH
-theorem solution (n : ℕ) (x y : ℤ) :
+theorem NLogN.exp_M_lt (n : ℕ) (x y : ℤ) :
     ((2 * n + 13 : ℕ) + 1 : ℤ) * (2 ^ (2 * n + 9) *
       (|x * 2 ^ (n + 9)| + |y * 2 ^ (n + 9)| + 1) ^ (2 * n + 13)) <
       2 ^ NLogN.expB n (NLogN.zsz x + NLogN.zsz y) := by

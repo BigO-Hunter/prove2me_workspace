@@ -12,5 +12,5 @@ open NLogN
 open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 open NLogN.IRuns
-theorem solution (s : NLogN.IState S) : NLogN.IRuns I iprog .skip s s 1 := ⟨1, le_rfl, .skip s⟩
+theorem NLogN.IRuns.skip (s : NLogN.IState S) : NLogN.IRuns I iprog .skip s s 1 := ⟨1, le_rfl, .skip s⟩
 end

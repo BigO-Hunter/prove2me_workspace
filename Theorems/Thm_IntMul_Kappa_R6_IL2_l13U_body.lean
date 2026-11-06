@@ -323,4 +323,4 @@ end IntMul.Kappa.R6.IL2
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2.l13U_body_sol_aux := @IntMul.Kappa.R6.IL2.l13U_body_sol_aux
+theorem IntMul.Kappa.R6.IL2.l13U_body : type_of% @IntMul.Kappa.R6.IL2.l13U_body_sol_aux := @IntMul.Kappa.R6.IL2.l13U_body_sol_aux

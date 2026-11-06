@@ -35,57 +35,6 @@ open Finset
 
 /-! ## Digits -/
 
-theorem dgt_zero (W x : ℕ) : dgt W 0 x = x % W := by simp [dgt]
-
-theorem dgt_succ (W s x : ℕ) : dgt W (s + 1) x = dgt W s (x / W) := by
-  simp only [dgt, pow_succ, Nat.div_div_eq_div_mul, mul_comm]
-
-/-- **Digit-wise addition without carries.** -/
-theorem digits_add (W : ℕ) (hW : 0 < W) : ∀ (n x : ℕ) (δ : ℕ → ℤ),
-    (∀ s < n, 0 ≤ (dgt W s x : ℤ) + δ s ∧ (dgt W s x : ℤ) + δ s < W) →
-    ∃ x' : ℕ, (x' : ℤ) = x + ∑ s ∈ range n, δ s * (W : ℤ) ^ s ∧
-      (∀ s < n, (dgt W s x' : ℤ) = dgt W s x + δ s) ∧ x' / W ^ n = x / W ^ n
-  | 0, x, δ, _ => ⟨x, by simp, fun s hs => absurd hs (by omega), rfl⟩
-  | n + 1, x, δ, h => by
-    obtain ⟨y', e1, e2, e3⟩ := digits_add W hW n (x / W) (fun s => δ (s + 1)) (fun s hs => by
-      have := h (s + 1) (by omega); rwa [dgt_succ] at this)
-    have h0 := h 0 (by omega)
-    rw [dgt_zero] at h0
-    set d0 : ℤ := ((x % W : ℕ) : ℤ) + δ 0
-    have hd0 : 0 ≤ d0 := h0.1
-    refine ⟨d0.toNat + W * y', ?_, ?_, ?_⟩
-    · push_cast
-      rw [Int.toNat_of_nonneg hd0, e1, sum_range_succ']
-      have hx : (x : ℤ) = ((x % W : ℕ) : ℤ) + (W : ℤ) * ((x / W : ℕ) : ℤ) := by
-        exact_mod_cast (Nat.mod_add_div x W).symm
-      simp only [d0, pow_zero, mul_one, pow_succ]
-      rw [hx, mul_add, mul_sum]
-      have : ∀ s ∈ range n, (W : ℤ) * (δ (s + 1) * (W : ℤ) ^ s) = δ (s + 1) * ((W : ℤ) ^ s * W) :=
-        fun s _ => by ring
-      rw [sum_congr rfl this]
-      ring
-    · intro s hs
-      have hlt : d0.toNat < W := by
-        have := h0.2; omega
-      have hdiv : (d0.toNat + W * y') / W = y' := by
-        rw [Nat.add_mul_div_left _ _ hW, Nat.div_eq_of_lt hlt, zero_add]
-      rcases s with _ | s
-      · rw [dgt_zero, dgt_zero, Nat.add_mul_mod_self_left, Nat.mod_eq_of_lt hlt,
-          Int.toNat_of_nonneg hd0]
-      · rw [dgt_succ, dgt_succ, hdiv, e2 s (by omega)]
-    · have hlt : d0.toNat < W := by
-        have := h0.2; omega
-      have hdiv : (d0.toNat + W * y') / W = y' := by
-        rw [Nat.add_mul_div_left _ _ hW, Nat.div_eq_of_lt hlt, zero_add]
-      have k : ∀ a, a / W ^ (n + 1) = a / W / W ^ n := fun a => by
-        rw [pow_succ, mul_comm, Nat.div_div_eq_div_mul]
-      rw [k, k, hdiv, e3]
-
-/-- A number with the same high part as one below `W^n (q+1)`. -/
-theorem lt_of_hi {W n x : ℕ} (hW : 0 < W) : x < W ^ n * (x / W ^ n + 1) := by
-  have h := Nat.lt_mul_div_succ x (pow_pos hW n)
-  linarith [Nat.mul_comm (W ^ n) (x / W ^ n + 1)]
-
 /-! ## The register-loop sum -/
 
 /-- For an even radix, the parity of `u / W^s` is that of its digit. -/
@@ -288,4 +237,4 @@ end IntMul.Kappa.R6.IL2C
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2C.phInv_spec_sol_aux := @IntMul.Kappa.R6.IL2C.phInv_spec_sol_aux
+theorem IntMul.Kappa.R6.IL2C.phInv_spec : type_of% @IntMul.Kappa.R6.IL2C.phInv_spec_sol_aux := @IntMul.Kappa.R6.IL2C.phInv_spec_sol_aux

@@ -450,7 +450,7 @@ open Matrix
 variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q)
 variable {E : Matrix (Fin n) (Fin n) (ZMod Q)}
 variable [NeZero Q]
-theorem solution {E₁ E₂ : Matrix (Fin n) (Fin n) (ZMod Q)}
+theorem AModel.linear_via_bruhat_array {E₁ E₂ : Matrix (Fin n) (Fin n) (ZMod Q)}
     (hE₁ : ∀ i j, i < j → E₁ i j = 0) (hE₂ : ∀ i j, i < j → E₂ i j = 0)
     (hd₁ : ∀ i, IsUnit (E₁ i i)) (hd₂ : ∀ i, IsUnit (E₂ i i))
     (σ : Equiv.Perm (Fin n)) (ts : List (Fin n × Fin n))

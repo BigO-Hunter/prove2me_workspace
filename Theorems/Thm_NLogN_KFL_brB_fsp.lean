@@ -793,4 +793,4 @@ end NLogN.KFL
 
 end
 
-theorem solution : type_of% @NLogN.KFL.brB_fsp_sol_aux := @NLogN.KFL.brB_fsp_sol_aux
+theorem NLogN.KFL.brB_fsp : type_of% @NLogN.KFL.brB_fsp_sol_aux := @NLogN.KFL.brB_fsp_sol_aux

@@ -79,7 +79,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFM
 open Complex KFB
-theorem solution (P s t : ℕ) (hst : s ≤ t) (ht : 0 < t)
+theorem NLogN.KFM.axTab_err (P s t : ℕ) (hst : s ≤ t) (ht : 0 < t)
     (hu : (4 * (t : ℝ) ^ 2 + 1) * (2 : ℝ)⁻¹ ^ P ≤ 1) (k : ℕ) (hk : k < t) :
     ‖NLogN.KFM.vP P ((NLogN.KFM.axTab P s t)[k]'(by rw [NLogN.KFM.length_axTab]; exact hk)) -
       IntMul.OpenAI.RC.gZ s t (k : ℤ)‖ ≤ 4 * (t : ℝ) ^ 2 * (2 : ℝ)⁻¹ ^ P := by

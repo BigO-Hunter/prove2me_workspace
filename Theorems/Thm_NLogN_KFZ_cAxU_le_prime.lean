@@ -294,4 +294,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution : type_of% @NLogN.KFZ.cAxU_le'_sol_aux := @NLogN.KFZ.cAxU_le'_sol_aux
+theorem NLogN.KFZ.cAxU_le_prime : type_of% @NLogN.KFZ.cAxU_le'_sol_aux := @NLogN.KFZ.cAxU_le'_sol_aux

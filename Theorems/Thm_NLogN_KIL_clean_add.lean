@@ -12,7 +12,7 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS
 open NLogN.KIL
-theorem solution {a b : NLogN.Ex NLogN.HS} (ha : a.Clean) (hb : b.Clean) : (NLogN.Ex.add a b).Clean := by
+theorem NLogN.KIL.clean_add {a b : NLogN.Ex NLogN.HS} (ha : a.Clean) (hb : b.Clean) : (NLogN.Ex.add a b).Clean := by
   intro j hj
   simp only [NLogN.Ex.regs, List.mem_append] at hj
   rcases hj with hj | hj

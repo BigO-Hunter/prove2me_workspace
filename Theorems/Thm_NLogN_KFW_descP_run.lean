@@ -924,7 +924,7 @@ open NLogN
 open NLogN.KFW
 open IntMul RS KIL KFD KFB KFS AModel
 set_option maxHeartbeats 2000000
-theorem solution (s : NLogN.IState NLogN.HS) (f : Fin NLogN.HS → List ℤ) (w u p q : ℕ) (sh : List ℕ) (rest : List ℤ)
+theorem NLogN.KFW.descP_run (s : NLogN.IState NLogN.HS) (f : Fin NLogN.HS → List ℤ) (w u p q : ℕ) (sh : List ℕ) (rest : List ℤ)
     (hsh : ∀ a ∈ sh, 1 ≤ a) (hpq : p < q) (hq : q < sh.length)
     (hpu : sh.getD p 0 = 2 ^ u) (hqu : sh.getD q 0 = 2 ^ u)
     (hfD : f NLogN.KFW.dS = (w : ℤ) :: (u : ℤ) :: (p : ℤ) :: (q : ℤ) :: (sh.length : ℤ) ::

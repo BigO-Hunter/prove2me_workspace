@@ -44,7 +44,7 @@ section
 open NLogN
 open NLogN.KFM
 open IntMul.OpenAI.Glue IntMul.OpenAI.RCost
-theorem solution (n : ℕ) : IntMul.OpenAI.Glue.dP n ^ (2 ^ 75) ≤ IntMul.OpenAI.Glue.bP n ∧ IntMul.OpenAI.Glue.bP n < (IntMul.OpenAI.Glue.dP n + 1) ^ (2 ^ 75) := by
+theorem NLogN.KFM.dP_spec (n : ℕ) : IntMul.OpenAI.Glue.dP n ^ (2 ^ 75) ≤ IntMul.OpenAI.Glue.bP n ∧ IntMul.OpenAI.Glue.bP n < (IntMul.OpenAI.Glue.dP n + 1) ^ (2 ^ 75) := by
   have := NLogN.KFM.floor_root_spec (IntMul.OpenAI.Glue.bP n) (2 ^ 75) Nat.one_le_two_pow
   unfold IntMul.OpenAI.Glue.dP; rw [NLogN.KFM.eps_eq]; exact this
 end

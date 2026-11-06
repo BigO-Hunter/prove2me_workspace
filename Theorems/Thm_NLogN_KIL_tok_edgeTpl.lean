@@ -71,11 +71,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
 theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
   induction m using Nat.strong_induction_on with
   | _ m ih =>
@@ -343,7 +338,7 @@ open NLogN
 open NLogN.KIL
 open IntMul RS AModel AModelL12 AModelFac AModelRat Finset
 variable {m : ℕ}
-theorem solution {R : Type*} [CommRing R] {W : ℕ} (Qc : AModelRat.QCircuit R m W) (X : AModel.IMat m)
+theorem NLogN.KIL.tok_edgeTpl {R : Type*} [CommRing R] {W : ℕ} (Qc : AModelRat.QCircuit R m W) (X : AModel.IMat m)
     {q e Bb : ℕ} (hq : q.Prime) (he : 1 ≤ e)
     (hg : AModelRat.GoodAtQ q ((Qc.den : ℚ)⁻¹ • AModelFac.ratM X)) (hlt : NLogN.KIL.tokBnd ((Qc.den : ℚ)⁻¹ • AModelFac.ratM X) < q)
     (hBb : NLogN.zsz ((NLogN.KIL.tokBnd ((Qc.den : ℚ)⁻¹ • AModelFac.ratM X) * (q ^ e + 1) ^ 2 : ℕ) : ℤ) ≤ Bb) :

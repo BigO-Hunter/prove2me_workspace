@@ -150,4 +150,4 @@ end R6.MomentRec
 
 end
 
-theorem solution : type_of% @R6.MomentRec.moment_recurrence_bound_sol_aux := @R6.MomentRec.moment_recurrence_bound_sol_aux
+theorem R6.MomentRec.moment_recurrence_bound : type_of% @R6.MomentRec.moment_recurrence_bound_sol_aux := @R6.MomentRec.moment_recurrence_bound_sol_aux

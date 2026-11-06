@@ -193,7 +193,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFM
 open Complex KFB
-theorem solution (P : ℕ) (z w : NLogN.KFB.GI) (Z W : ℂ) (hZ : ‖Z‖ ≤ 1) (hW : ‖W‖ ≤ 1) {a b : ℝ}
+theorem NLogN.KFM.step_err (P : ℕ) (z w : NLogN.KFB.GI) (Z W : ℂ) (hZ : ‖Z‖ ≤ 1) (hW : ‖W‖ ≤ 1) {a b : ℝ}
     (ha : ‖NLogN.KFM.vP P z - Z‖ ≤ a) (ha1 : a ≤ 1) (hb : ‖NLogN.KFM.vP P w - W‖ ≤ b) :
     ‖NLogN.KFM.vP P (NLogN.KFM.gmulT P z w) - Z * W‖ ≤ a + 2 * b + 2 * (2 : ℝ)⁻¹ ^ P := by
   rw [NLogN.KFM.vP_gmulT]

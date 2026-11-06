@@ -256,4 +256,4 @@ end NLogN.KFL
 
 end
 
-theorem solution : type_of% @NLogN.KFL.T0n_eq_sol_aux := @NLogN.KFL.T0n_eq_sol_aux
+theorem NLogN.KFL.T0n_eq : type_of% @NLogN.KFL.T0n_eq_sol_aux := @NLogN.KFL.T0n_eq_sol_aux

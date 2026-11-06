@@ -647,7 +647,7 @@ open NLogN.KFM
 open IntMul KFC KFB KFT KIL
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 set_option maxHeartbeats 4000000
-theorem solution {M : NLogN.MulSpec} {pM : Fin P} (hM : NLogN.MulOK I iprog pM M)
+theorem NLogN.KFM.chirpB_runs {M : NLogN.MulSpec} {pM : Fin P} (hM : NLogN.MulOK I iprog pM M)
     (hdom : ∀ x y, M.dom x y) {w φ : ℕ} (hΦ : ∀ x y : ℤ, NLogN.zsz x ≤ w → NLogN.zsz y ≤ w → M.Φ x y ≤ φ)
     (Δ : ℕ) (s : NLogN.IState NLogN.HS) (h g c : NLogN.KFB.GI) (R0 RH RK LR : List NLogN.Item)
     (h0 : s.G 0 = .int g.1 :: .int g.2 :: R0) (hH : s.G NLogN.KFM.pH = .int h.1 :: .int h.2 :: RH)

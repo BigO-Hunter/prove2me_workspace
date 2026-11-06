@@ -1256,4 +1256,4 @@ end NLogN.KIL
 
 end
 
-theorem solution.{u_1} : type_of% @NLogN.KIL.l12v_correct_sol_aux.{u_1} := @NLogN.KIL.l12v_correct_sol_aux.{u_1}
+theorem NLogN.KIL.l12v_correct.{u_1} : type_of% @NLogN.KIL.l12v_correct_sol_aux.{u_1} := @NLogN.KIL.l12v_correct_sol_aux.{u_1}

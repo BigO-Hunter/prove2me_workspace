@@ -32,25 +32,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-theorem yu_z (r Z H : ℕ) : (Z + 2) ^ 3 ≤ Yu r Z H := Nat.le_add_left _ _
-
-theorem yu_z2 (r Z H : ℕ) : (Z + 2) ^ 2 ≤ Yu r Z H := by
-  have : (Z + 2) ^ 2 ≤ (Z + 2) ^ 3 := Nat.pow_le_pow_right (by omega) (by omega)
-  exact this.trans (yu_z r Z H)
-
-theorem yu_z1 (r Z H : ℕ) : Z + 2 ≤ Yu r Z H := by
-  have : Z + 2 ≤ (Z + 2) ^ 2 := by nlinarith
-  exact this.trans (yu_z2 r Z H)
-
-theorem yu_8 (r Z H : ℕ) : 8 ≤ Yu r Z H := by
-  have : 2 ^ 3 ≤ (Z + 2) ^ 3 := Nat.pow_le_pow_left (by omega) 3
-  exact le_trans (by simpa using this) (yu_z r Z H)
-
-theorem moveCost_Y (Z r H : ℕ) : moveCost Z ≤ 50 * Yu r Z H := by
-  unfold moveCost
-  have := yu_z1 r Z H
-  omega
-
 end NLogN.KFW
 
 end
@@ -75,20 +56,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem cFrame_Y (N sz r Z H : ℕ) : cFrame N sz Z ≤ N * (sz + 1) * 10 ^ 8 * Yu r Z H + 1 := by
-  unfold cFrame
-  have h1 := yu_z2 r Z H
-  have h2 := moveCost_Y Z r H
-  set Y := Yu r Z H
-  have : sz * 10 ^ 7 * (Z + 2) ^ 2 + (2 * moveCost Z + 19) ≤ (sz + 1) * 10 ^ 8 * Y := by
-    have a : sz * 10 ^ 7 * (Z + 2) ^ 2 ≤ sz * 10 ^ 7 * Y := Nat.mul_le_mul_left _ h1
-    have hY8 := yu_8 r Z H
-    have e : (sz + 1) * 10 ^ 8 * Y = sz * 10 ^ 7 * Y + (9 * sz * 10 ^ 7 * Y + 10 ^ 8 * Y) := by ring
-    omega
-  have := Nat.mul_le_mul_left N this
-  have e : N * ((sz + 1) * 10 ^ 8 * Y) = N * (sz + 1) * 10 ^ 8 * Y := by ring
-  omega
 
 end NLogN.KFW
 
@@ -127,11 +94,6 @@ section Step
 variable {Pp : ℕ} {Isym : List Sym} {tbl : Fin Pp → IStmt HS Pp}
 variable {σ : Fin HS → Option ℤ} {K t S0 r H Z k e B Bn : ℕ}
 
-theorem yu_monoZ {r Z Z' H : ℕ} (h : Z ≤ Z') : Yu r Z H ≤ Yu r Z' H := by
-  unfold Yu
-  have : (Z + 2) ^ 3 ≤ (Z' + 2) ^ 3 := Nat.pow_le_pow_left (by omega) 3
-  omega
-
 end Step
 
 end NLogN.KFW
@@ -158,16 +120,6 @@ open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 section Pieces
 
 variable {r Zr H : ℕ}
-
-theorem frame_U (N sz : ℕ) {B : ℕ} (hB : B ≤ Zr) :
-    cFrame N sz B ≤ N * (sz + 1) * 100000000 * Yu r Zr H + 1 := by
-  have h1 := cFrame_Y N sz r B H
-  have h2 : Yu r B H ≤ Yu r Zr H := yu_monoZ hB
-  have h3 : N * (sz + 1) * 10 ^ 8 * Yu r B H ≤ N * (sz + 1) * 10 ^ 8 * Yu r Zr H :=
-    Nat.mul_le_mul_left _ h2
-  have e : (10 : ℕ) ^ 8 = 100000000 := by norm_num
-  rw [e] at h1 h3
-  omega
 
 end Pieces
 
@@ -199,24 +151,6 @@ open IntMul AModel NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN
 section Pieces
 
 variable {r Zr H S1 : ℕ}
-
-theorem frX (N sz : ℕ) {B : ℕ} (hs : sz ≤ S1) (hB : B ≤ Zr) :
-    cFrame N sz B ≤ N * (100000000 * ((S1 + 1) * Yu r Zr H)) + 1 := by
-  have h1 := frame_U (r := r) (H := H) N sz hB
-  have h2 : (sz + 1) * Yu r Zr H ≤ (S1 + 1) * Yu r Zr H := Nat.mul_le_mul_right _ (by omega)
-  have h3 : N * (sz + 1) * 100000000 * Yu r Zr H = N * (100000000 * ((sz + 1) * Yu r Zr H)) := by
-    ring
-  have h4 : N * (100000000 * ((sz + 1) * Yu r Zr H)) ≤ N * (100000000 * ((S1 + 1) * Yu r Zr H)) :=
-    Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ h2)
-  omega
-
-theorem uX : Yu r Zr H ≤ (S1 + 1) * Yu r Zr H := Nat.le_mul_of_pos_left _ (by omega)
-
-theorem bzU {B : ℕ} (hB : B ≤ Zr) : 2 * B + 2 ≤ Yu r Zr H := by
-  have := yu_z1 r Zr H
-  have h2 : 2 * (Zr + 2) ≤ (Zr + 2) ^ 2 := by nlinarith
-  have := yu_z2 r Zr H
-  omega
 
 theorem cLoopS_X {sz L B : ℕ} (hs : sz ≤ S1) (h12 : 12 ≤ S1) (hL : L ≤ 3) (hB : B ≤ Zr) :
     cLoopS sz L B ≤ 1000000000 * ((S1 + 1) * Yu r Zr H) := by
@@ -356,4 +290,4 @@ end IntMul.Kappa.R6.IL3H
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL3H.cChainH_le_sol_aux := @IntMul.Kappa.R6.IL3H.cChainH_le_sol_aux
+theorem IntMul.Kappa.R6.IL3H.cChainH_le : type_of% @IntMul.Kappa.R6.IL3H.cChainH_le_sol_aux := @IntMul.Kappa.R6.IL3H.cChainH_le_sol_aux

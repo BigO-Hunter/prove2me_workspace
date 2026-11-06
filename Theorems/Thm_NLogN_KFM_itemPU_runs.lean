@@ -141,7 +141,7 @@ open NLogN
 open NLogN.KFM
 open IntMul KFC KFB KFT KIL
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-theorem solution (body : NLogN.IStmt NLogN.HS P) (f : ℤ → ℤ) (c B : ℕ) (s : NLogN.IState NLogN.HS) (L : List ℤ)
+theorem NLogN.KFM.itemPU_runs (body : NLogN.IStmt NLogN.HS P) (f : ℤ → ℤ) (c B : ℕ) (s : NLogN.IState NLogN.HS) (L : List ℤ)
     (R0 : List NLogN.Item) (h0 : s.G 0 = NLogN.ints L ++ R0) (hB : ∀ x ∈ L, NLogN.zsz (f x) ≤ B)
     (hb : ∀ (st : NLogN.IState NLogN.HS) (x : ℤ) (L0 : List NLogN.Item), NLogN.KFM.Fixd s st → st.G 0 = .int x :: L0 →
       x ∈ L → NLogN.IRuns I iprog body st ((st.upd 0 L0).upd NLogN.KFM.pO (.int (f x) :: st.G NLogN.KFM.pO)) c)

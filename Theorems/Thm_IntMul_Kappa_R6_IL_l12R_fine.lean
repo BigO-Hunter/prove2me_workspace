@@ -1571,4 +1571,4 @@ end IntMul.Kappa.R6.IL
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL.l12R_fine_sol_aux := @IntMul.Kappa.R6.IL.l12R_fine_sol_aux
+theorem IntMul.Kappa.R6.IL.l12R_fine : type_of% @IntMul.Kappa.R6.IL.l12R_fine_sol_aux := @IntMul.Kappa.R6.IL.l12R_fine_sol_aux

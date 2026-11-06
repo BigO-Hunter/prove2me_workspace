@@ -24,17 +24,6 @@ lemma decode_encode {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) : decode
       Nat.add_mul_div_left _ _ hV, Nat.div_eq_of_lt he, Nat.add_mul_mod_self_left,
       Nat.mod_eq_of_lt he, ih, zero_add, Nat.mod_eq_of_lt hx]
 
-lemma encode_decode {sh : Shape} {m : ℕ} (h : m < AModel.vol sh) : encode sh (decode sh m) = m := by
-  induction sh generalizing m with
-  | nil => simp at h; subst h; rfl
-  | cons q sh ih =>
-    simp only [vol_cons] at h
-    have hV : 0 < AModel.vol sh := Nat.pos_of_ne_zero (by rintro h'; simp [h'] at h)
-    have hq : m / AModel.vol sh < q := (Nat.div_lt_iff_lt_mul hV).2 h
-    simp only [decode, encode, List.headD_cons, List.tail_cons, Nat.mod_eq_of_lt hq,
-      ih (Nat.mod_lt m hV)]
-    exact Nat.div_add_mod' m (AModel.vol sh)
-
 section Pull
 variable {α : Type*}
 
@@ -318,11 +307,6 @@ open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
 
-theorem layerShape_drop (P K D S i : ℕ) (hi : i < D) :
-    (Butterfly.layerShape P K D S).drop (i + 2) = List.replicate (D - (i + 1)) (2 ^ K) ++ [S] := by
-  simp only [Butterfly.layerShape, List.cons_append, List.drop_succ_cons]
-  rw [List.drop_append_of_le_length (by simp; omega), List.drop_replicate]
-
 theorem stS_eq (K D S i : ℕ) (hi : i < D) : stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S := by
   simp [stS, layerShape_drop 1 K D S i hi, vol]
 
@@ -357,7 +341,7 @@ open NLogN
 open NLogN.KFH
 open IntMul RS AModel KIL KFD KFB Complex
 variable {P K D S ρ : ℕ}
-theorem solution (hρ : ρ < K) (i : Fin D) {M : NLogN.KFB.M2G} {A : Butterfly.M2} {e : ℕ} (hA : NLogN.KFH.KerOk M A e)
+theorem NLogN.KFH.ker_rep (hρ : ρ < K) (i : Fin D) {M : NLogN.KFB.M2G} {A : Butterfly.M2} {e : ℕ} (hA : NLogN.KFH.KerOk M A e)
     {r F : ℕ} {zs : List NLogN.KFB.GI} {xs : List (Fin r → ℂ)} (hx : NLogN.KFH.RecRep r F zs xs)
     (hl : xs.length = AModel.vol (Butterfly.layerShape P K D S)) :
     NLogN.KFH.RecRep r (F + e) (NLogN.KFB.qopL [M] (NLogN.KFH.stT K D S ρ i * r) (NLogN.KFH.grpG P K ρ i) zs)

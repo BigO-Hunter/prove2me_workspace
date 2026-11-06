@@ -187,7 +187,7 @@ section
 set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS IntMul.HvdH
-theorem solution (n : ℕ) (x y : ℤ) (s : NLogN.IState NLogN.HS) (L5 L6 L7 : List NLogN.Item)
+theorem NLogN.exp_inv_all (n : ℕ) (x y : ℤ) (s : NLogN.IState NLogN.HS) (L5 L6 L7 : List NLogN.Item)
     (h5 : s.G 5 = .int n :: L5) (h6 : s.G 6 = .int x :: L6) (h7 : s.G 7 = .int y :: L7) :
     ∀ k ≤ 2 * n + 13, NLogN.expInv (2 * n + 9) (2 * n + 13) (x * 2 ^ (n + 9)) (y * 2 ^ (n + 9)) s k
       (NLogN.RS.repSt 39 NLogN.eKE NLogN.expBody (NLogN.expPre.run s) k) := by

@@ -967,4 +967,4 @@ end IntMul.Kappa.R6.Bit
 
 end
 
-theorem solution.{u_1} : type_of% @IntMul.Kappa.R6.Bit.progH_correct_sol_aux.{u_1} := @IntMul.Kappa.R6.Bit.progH_correct_sol_aux.{u_1}
+theorem IntMul.Kappa.R6.Bit.progH_correct.{u_1} : type_of% @IntMul.Kappa.R6.Bit.progH_correct_sol_aux.{u_1} := @IntMul.Kappa.R6.Bit.progH_correct_sol_aux.{u_1}

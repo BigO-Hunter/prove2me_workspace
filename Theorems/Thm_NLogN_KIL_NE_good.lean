@@ -214,4 +214,4 @@ end NLogN.KIL
 
 end
 
-theorem solution : type_of% @NLogN.KIL.NE.good_sol_aux := @NLogN.KIL.NE.good_sol_aux
+theorem NLogN.KIL.NE_good : type_of% @NLogN.KIL.NE.good_sol_aux := @NLogN.KIL.NE.good_sol_aux

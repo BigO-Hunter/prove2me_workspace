@@ -383,7 +383,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFL
 open IntMul RS KIL KFD KFE KFB AModel AModelL12 NetProp7
-theorem solution :
+theorem NLogN.KFL.swI_geo :
     ∃ T q₀ : ℕ, ∀ q, q.Prime → q₀ < q → ∃ K : ℝ, 0 ≤ K ∧
       ∀ (g : NLogN.KFL.Geo), g.Pos → ∀ u : ℕ, 1 ≤ u → g.Q = 2 ^ u →
       ∀ (I : List NLogN.Sym) (t : NLogN.IState NLogN.HS) (zs : List ℤ) (R : List NLogN.Item),

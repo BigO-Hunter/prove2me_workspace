@@ -15,7 +15,7 @@ open NLogN
 open NLogN.KFR
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly KFN
 variable {m f : ℕ}
-theorem solution (st : Fin m × Fin f → ℕ) (q : ℕ) (i j : Fin m) (hij : i ≠ j) :
+theorem NLogN.KFR.fsetZ_rowAddr (st : Fin m × Fin f → ℕ) (q : ℕ) (i j : Fin m) (hij : i ≠ j) :
     NLogN.KFN.fsetZ st q (P8Lift.rowAddr i j (NLogN.KFN.fbit st q)) =
       (q : ℤ) + ∑ u ∈ Finset.range f, NLogN.KFR.rowTerm st q i j (f - 1 - u) := by
   unfold NLogN.KFN.fsetZ

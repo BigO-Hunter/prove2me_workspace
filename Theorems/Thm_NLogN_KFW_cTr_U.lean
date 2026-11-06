@@ -209,4 +209,4 @@ end NLogN.KFW
 
 end
 
-theorem solution : type_of% @NLogN.KFW.cTr_U_sol_aux := @NLogN.KFW.cTr_U_sol_aux
+theorem NLogN.KFW.cTr_U : type_of% @NLogN.KFW.cTr_U_sol_aux := @NLogN.KFW.cTr_U_sol_aux

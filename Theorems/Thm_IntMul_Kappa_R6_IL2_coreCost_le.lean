@@ -674,4 +674,4 @@ end IntMul.Kappa.R6.IL2
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2.coreCost_le_sol_aux := @IntMul.Kappa.R6.IL2.coreCost_le_sol_aux
+theorem IntMul.Kappa.R6.IL2.coreCost_le : type_of% @IntMul.Kappa.R6.IL2.coreCost_le_sol_aux := @IntMul.Kappa.R6.IL2.coreCost_le_sol_aux

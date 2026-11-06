@@ -76,7 +76,7 @@ theorem exSm_abs_aux (A : ℕ) (s : NLogN.IState NLogN.HS) (hA : 2 ≤ A) :
     linarith
   | .shl _ _, h | .quo _ _, h | .rem _ _, h | .sel _ _ _, h => h.elim
 
-theorem solution (A : ℕ) (s : NLogN.IState NLogN.HS) (hA : 2 ≤ A) :
+theorem NLogN.KFM.exSm_abs (A : ℕ) (s : NLogN.IState NLogN.HS) (hA : 2 ≤ A) :
     ∀ e : NLogN.Ex NLogN.HS, NLogN.KFM.exSm A s e → |e.eval s| ≤ (A : ℤ) ^ NLogN.KFM.exDg e := by
   first
   | exact exSm_abs_aux

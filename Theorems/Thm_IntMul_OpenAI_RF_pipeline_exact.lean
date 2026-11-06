@@ -134,7 +134,7 @@ open IntMul
 open IntMul.OpenAI
 open IntMul.OpenAI.RT IntMul.OpenAI.RC
 variable {d : ℕ}
-theorem solution (s t : Fin d → ℕ) [∀ i, NeZero (s i)]
+theorem IntMul.OpenAI.RF_pipeline_exact (s t : Fin d → ℕ) [∀ i, NeZero (s i)]
     (hcop : ∀ i, Nat.Coprime (s i) (t i)) (b : ℕ) (ubar vbar : ((i : Fin d) → ZMod (s i)) → ℂ) :
     let S : ℂ := ∏ i, (s i : ℂ)
     let u := fun k => (2 : ℂ)⁻¹ ^ (b + 2) * ubar k

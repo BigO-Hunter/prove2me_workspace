@@ -72,7 +72,7 @@ theorem chirpArr_get_aux (Δ : ℕ) : ∀ (d : ℕ) (s t : Fin d → ℕ) [∀ i
     simp only [Option.map_some, NLogN.KFM.chirpEnt, NLogN.KFM.prodF]
     rw [List.getD_eq_getElem _ _ hl]
 
-theorem solution (Δ : ℕ) : ∀ (d : ℕ) (s t : Fin d → ℕ) [∀ i, NeZero (t i)]
+theorem NLogN.KFM.chirpArr_get (Δ : ℕ) : ∀ (d : ℕ) (s t : Fin d → ℕ) [∀ i, NeZero (t i)]
     (j : (i : Fin d) → ZMod (t i)),
     (NLogN.KFM.chirpArr Δ d s t)[NLogN.KFM.flatIx d t j]? = some (NLogN.KFM.chirpEnt Δ s t j) := by
   first

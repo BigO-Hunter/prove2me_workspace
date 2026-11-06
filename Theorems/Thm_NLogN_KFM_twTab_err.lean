@@ -37,7 +37,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFM
 open Complex KFB
-theorem solution (P k j n : ℕ) (hk : 0 < k) (hu : n * (4 * (2 : ℝ)⁻¹ ^ P) ≤ 1) (m : ℕ)
+theorem NLogN.KFM.twTab_err (P k j n : ℕ) (hk : 0 < k) (hu : n * (4 * (2 : ℝ)⁻¹ ^ P) ≤ 1) (m : ℕ)
     (hm : m < n) :
     ‖NLogN.KFM.vP P ((NLogN.KFM.twTab P k j n)[m]'(by rw [NLogN.KFM.length_twTab]; exact hm)) -
       exp (2 * Real.pi * I * j / k) ^ m‖ ≤ 4 * n * (2 : ℝ)⁻¹ ^ P := by

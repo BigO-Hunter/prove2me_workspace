@@ -1891,4 +1891,4 @@ end NLogN.KFX
 
 end
 
-theorem solution : type_of% @NLogN.KFX.rowCodeU_runs_sol_aux := @NLogN.KFX.rowCodeU_runs_sol_aux
+theorem NLogN.KFX.rowCodeU_runs : type_of% @NLogN.KFX.rowCodeU_runs_sol_aux := @NLogN.KFX.rowCodeU_runs_sol_aux

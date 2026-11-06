@@ -74,11 +74,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
 theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
   induction m using Nat.strong_induction_on with
   | _ m ih =>
@@ -891,7 +886,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFE
 open IntMul RS AModel AModelL12 KIL KFD
-theorem solution (s : NLogN.IState NLogN.HS) (f : Fin NLogN.HS → List ℤ) {X F F' Y : ℕ} (ys rest : List ℤ)
+theorem NLogN.KFE.unpadP_fsp (s : NLogN.IState NLogN.HS) (f : Fin NLogN.HS → List ℤ) {X F F' Y : ℕ} (ys rest : List ℤ)
     (hF : F ≤ F') (hF1 : 1 ≤ F') (hY : 1 ≤ Y)
     (hys : ys.length = X * (F' * Y)) (Bb : ℕ) (hb : NLogN.Bnd 1 ys)
     (hV : NLogN.zsz ((X * (F' * Y) : ℕ) : ℤ) ≤ Bb)

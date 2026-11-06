@@ -13,6 +13,6 @@ open NLogN
 open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 open NLogN.IState
-theorem solution {s : NLogN.IState S} {i : Fin S} {a : ℤ} {L : List NLogN.Item}
+theorem NLogN.IState.isInt_of {s : NLogN.IState S} {i : Fin S} {a : ℤ} {L : List NLogN.Item}
     (h : s.G i = .int a :: L) : s.IsInt i := ⟨L, by rw [NLogN.IState.top_eq h, h]⟩
 end

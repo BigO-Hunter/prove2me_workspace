@@ -222,7 +222,7 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS IntMul.HvdH
 set_option maxHeartbeats 4000000
-theorem solution (n : ℕ) (x y : ℤ) (s : NLogN.IState NLogN.HS) (L5 L6 L7 : List NLogN.Item)
+theorem NLogN.expP_cost (n : ℕ) (x y : ℤ) (s : NLogN.IState NLogN.HS) (L5 L6 L7 : List NLogN.Item)
     (h5 : s.G 5 = .int n :: L5) (h6 : s.G 6 = .int x :: L6) (h7 : s.G 7 = .int y :: L7) :
     NLogN.expP.cost s ≤ NLogN.expCost n (NLogN.zsz x) (NLogN.zsz y) := by
   obtain ⟨-, -, -, -, -, -, -, -, -, -, gj⟩ := NLogN.exp_pre n x y s L5 L6 L7 h5 h6 h7

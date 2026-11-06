@@ -12,7 +12,7 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS
 open NLogN.KIL
-theorem solution {a b : NLogN.RS} {s t u : NLogN.IState NLogN.HS} {c1 c2 : ℕ} (ha : NLogN.KIL.Sp a s t c1) (hb : NLogN.KIL.Sp b t u c2) :
+theorem NLogN.KIL.Sp_seq {a b : NLogN.RS} {s t u : NLogN.IState NLogN.HS} {c1 c2 : ℕ} (ha : NLogN.KIL.Sp a s t c1) (hb : NLogN.KIL.Sp b t u c2) :
     NLogN.KIL.Sp (.seq a b) s u (c1 + c2) := by
   refine ⟨⟨ha.1, ?_⟩, ?_, ?_⟩
   · rw [ha.2.1]; exact hb.1

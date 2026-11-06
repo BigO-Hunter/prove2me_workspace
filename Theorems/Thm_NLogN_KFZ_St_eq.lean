@@ -100,4 +100,4 @@ end NLogN.KFZ
 
 end
 
-theorem solution : type_of% @NLogN.KFZ.St_eq_sol_aux := @NLogN.KFZ.St_eq_sol_aux
+theorem NLogN.KFZ.St_eq : type_of% @NLogN.KFZ.St_eq_sol_aux := @NLogN.KFZ.St_eq_sol_aux

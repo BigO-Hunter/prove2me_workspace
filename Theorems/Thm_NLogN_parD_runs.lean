@@ -439,7 +439,7 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution (pP : Fin P) (hP : iprog pP = NLogN.pow2Body pP) (s : NLogN.IState NLogN.NS) (n : ℕ)
+theorem NLogN.parD_runs (pP : Fin P) (hP : iprog pP = NLogN.pow2Body pP) (s : NLogN.IState NLogN.NS) (n : ℕ)
     (L3 : List NLogN.Item) (hT3 : s.G NLogN.T3 = .int n :: L3) :
     NLogN.IRuns I iprog (NLogN.parD pP) s
       ((s.upd NLogN.RN (.int (2 ^ n) :: s.G NLogN.RN)).upd NLogN.RF (.int (2 ^ n + 1) :: s.G NLogN.RF))

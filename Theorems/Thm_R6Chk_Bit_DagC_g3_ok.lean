@@ -25,4 +25,4 @@ end R6Chk.Bit.DagC
 
 end
 
-theorem solution : type_of% @R6Chk.Bit.DagC.g3_ok_sol_aux := @R6Chk.Bit.DagC.g3_ok_sol_aux
+theorem R6Chk.Bit.DagC.g3_ok : type_of% @R6Chk.Bit.DagC.g3_ok_sol_aux := @R6Chk.Bit.DagC.g3_ok_sol_aux

@@ -140,7 +140,7 @@ open NLogN
 open IntMul RS
 open NLogN.KIL
 variable (s : IState HS) (f : Fin HS → List ℤ)
-theorem solution {i : Fin NLogN.HS} {e : NLogN.Ex NLogN.HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56)
+theorem NLogN.KIL.Sp_asg {i : Fin NLogN.HS} {e : NLogN.Ex NLogN.HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56)
     (hf : f i = a :: l) (ha : NLogN.zsz a ≤ B) (hc : e.Clean) (hok : e.ok (NLogN.KIL.encK s f)) (hl : e.Lin)
     (hB : e.Bnd (NLogN.KIL.encK s f) B) :
     NLogN.KIL.Sp (.asg i e) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i (e.eval (NLogN.KIL.encK s f) :: l)))

@@ -79,7 +79,7 @@ theorem cost_le_aux (s : NLogN.IState S) (B : ℕ) : ∀ e : NLogN.Ex S, e.Bnd s
     · have hy := cost_le_aux s B y (by simpa [hn] using h.2)
       (simp only [NLogN.dupCost, NLogN.moveCost, NLogN.zipCost, NLogN.addIntCost, NLogN.addMagCost, NLogN.subMagCost, NLogN.smulCost, NLogN.shlCost, NLogN.splitCost, NLogN.takeCost, NLogN.ldivCost, NLogN.pow2Cost] at *); nlinarith
 
-theorem solution (s : NLogN.IState S) (B : ℕ) : ∀ e : NLogN.Ex S, e.Bnd s B →
+theorem NLogN.Ex.cost_le (s : NLogN.IState S) (B : ℕ) : ∀ e : NLogN.Ex S, e.Bnd s B →
     e.cost s ≤ e.size * 10 ^ 7 * (B + 2) ^ 2 := by
   first
   | exact cost_le_aux

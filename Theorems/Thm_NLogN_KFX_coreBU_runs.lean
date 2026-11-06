@@ -1072,4 +1072,4 @@ end NLogN.KFX
 
 end
 
-theorem solution : type_of% @NLogN.KFX.coreBU_runs_sol_aux := @NLogN.KFX.coreBU_runs_sol_aux
+theorem NLogN.KFX.coreBU_runs : type_of% @NLogN.KFX.coreBU_runs_sol_aux := @NLogN.KFX.coreBU_runs_sol_aux

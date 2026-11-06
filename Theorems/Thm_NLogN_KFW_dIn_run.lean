@@ -340,4 +340,4 @@ end NLogN.KFW
 
 end
 
-theorem solution : type_of% @NLogN.KFW.dIn_run_sol_aux := @NLogN.KFW.dIn_run_sol_aux
+theorem NLogN.KFW.dIn_run : type_of% @NLogN.KFW.dIn_run_sol_aux := @NLogN.KFW.dIn_run_sol_aux

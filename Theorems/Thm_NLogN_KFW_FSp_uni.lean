@@ -69,7 +69,7 @@ open NLogN
 open NLogN.KFW
 open IntMul RS KFD KIL
 open NLogN.KFW.FSp
-theorem solution {σ : Fin NLogN.HS → Option ℤ} (hσ : NLogN.KFW.SClean σ) {U O : NLogN.RS} (hw : NLogN.KFW.NoW σ U) {X : ℕ}
+theorem NLogN.KFW.FSp.uni {σ : Fin NLogN.HS → Option ℤ} (hσ : NLogN.KFW.SClean σ) {U O : NLogN.RS} (hw : NLogN.KFW.NoW σ U) {X : ℕ}
     (hO : NLogN.KFW.HRef O (NLogN.KFW.RS.sub σ U) X) {s t : NLogN.IState NLogN.HS} (hs : NLogN.KFW.Agree σ s) {c : ℕ} (H : NLogN.KFD.FSp O s t c) :
     NLogN.KFD.FSp U s t (400 * (c + X)) :=
   NLogN.KFW.FSp.of_sub hσ hw hs (NLogN.KFW.FSp.of_href hO H)

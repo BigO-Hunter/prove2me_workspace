@@ -622,4 +622,4 @@ end NLogN.KFM
 
 end
 
-theorem solution : type_of% @NLogN.KFM.desc18P_run_g_sol_aux := @NLogN.KFM.desc18P_run_g_sol_aux
+theorem NLogN.KFM.desc18P_run_g : type_of% @NLogN.KFM.desc18P_run_g_sol_aux := @NLogN.KFM.desc18P_run_g_sol_aux

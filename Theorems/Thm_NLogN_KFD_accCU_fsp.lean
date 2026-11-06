@@ -793,4 +793,4 @@ end NLogN
 
 end
 
-theorem solution : type_of% @NLogN.KFD.accCU_fsp_sol_aux := @NLogN.KFD.accCU_fsp_sol_aux
+theorem NLogN.KFD.accCU_fsp : type_of% @NLogN.KFD.accCU_fsp_sol_aux := @NLogN.KFD.accCU_fsp_sol_aux

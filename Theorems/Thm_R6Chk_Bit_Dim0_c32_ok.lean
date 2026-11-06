@@ -25,4 +25,4 @@ end R6Chk.Bit.Dim0
 
 end
 
-theorem solution : type_of% @R6Chk.Bit.Dim0.c32_ok_sol_aux := @R6Chk.Bit.Dim0.c32_ok_sol_aux
+theorem R6Chk.Bit.Dim0.c32_ok : type_of% @R6Chk.Bit.Dim0.c32_ok_sol_aux := @R6Chk.Bit.Dim0.c32_ok_sol_aux

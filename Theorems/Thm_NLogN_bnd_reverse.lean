@@ -11,6 +11,6 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution {m : ℕ} {A : List ℤ} (h : NLogN.Bnd m A) : NLogN.Bnd m A.reverse := by
+theorem NLogN.bnd_reverse {m : ℕ} {A : List ℤ} (h : NLogN.Bnd m A) : NLogN.Bnd m A.reverse := by
   intro a ha; exact h a (List.mem_reverse.mp ha)
 end

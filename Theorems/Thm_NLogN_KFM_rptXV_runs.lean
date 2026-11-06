@@ -372,7 +372,7 @@ open NLogN
 open NLogN.KFM
 open IntMul KFC KFB KFT KIL
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-theorem solution {X A C D : Fin NLogN.HS} (hXA : X ≠ A) (hAC : A ≠ C) (hAD : A ≠ D) (hCD : C ≠ D) (hAK : A ≠ NLogN.KFC.sK)
+theorem NLogN.KFM.rptXV_runs {X A C D : Fin NLogN.HS} (hXA : X ≠ A) (hAC : A ≠ C) (hAD : A ≠ D) (hCD : C ≠ D) (hAK : A ≠ NLogN.KFC.sK)
     (hCK : C ≠ NLogN.KFC.sK) (hCK2 : C ≠ NLogN.KFC.sK2) (hCY : C ≠ NLogN.KFC.uY) (hCB : C ≠ NLogN.KFC.uB)
     (n : ℕ) (T : ℕ → NLogN.IState NLogN.HS)
     (hTA : ∀ k, (T k).G A = (T 0).G A) (hTC : ∀ k, (T k).G C = (T 0).G C)

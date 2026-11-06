@@ -430,4 +430,4 @@ end NLogN
 
 end
 
-theorem solution : type_of% @NLogN.KFD.withSplitF_runs_sol_aux := @NLogN.KFD.withSplitF_runs_sol_aux
+theorem NLogN.KFD.withSplitF_runs : type_of% @NLogN.KFD.withSplitF_runs_sol_aux := @NLogN.KFD.withSplitF_runs_sol_aux

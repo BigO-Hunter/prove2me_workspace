@@ -52,7 +52,7 @@ open NLogN.KFM
 open Complex IntMul.OpenAI.RT IntMul.OpenAI.RC
 variable {d : ℕ}
 variable {D : ℕ}
-theorem solution (s t : Fin d → ℕ) [∀ i, NeZero (s i)] (hcop : ∀ i, Nat.Coprime (s i) (t i))
+theorem NLogN.KFM.final_exact (s t : Fin d → ℕ) [∀ i, NeZero (s i)] (hcop : ∀ i, Nat.Coprime (s i) (t i))
     (b : ℕ) (ubar vbar : ((i : Fin d) → ZMod (s i)) → ℂ) (j : (i : Fin d) → ZMod (s i)) :
     (2 : ℂ) ^ (2 * b + 4) * (∏ i, (s i : ℂ)) * ((∏ i, (s i : ℂ)) *
       NLogN.KFM.cnj (IntMul.OpenAI.RT.Rperm s t (IntMul.OpenAI.RT.dftM s (NLogN.KFM.cnj (IntMul.OpenAI.RT.Rperm s t (IntMul.OpenAI.RT.dftM s (fun k => (2 : ℂ)⁻¹ ^ (b + 2) * ubar k)) *

@@ -124,4 +124,4 @@ end R6Chk.Bit
 
 end
 
-theorem solution : type_of% @R6Chk.Bit.leaf_sound_sol_aux := @R6Chk.Bit.leaf_sound_sol_aux
+theorem R6Chk.Bit.leaf_sound : type_of% @R6Chk.Bit.leaf_sound_sol_aux := @R6Chk.Bit.leaf_sound_sol_aux

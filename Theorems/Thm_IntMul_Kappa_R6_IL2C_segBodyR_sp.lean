@@ -565,4 +565,4 @@ end IntMul.Kappa.R6.IL2C
 
 end
 
-theorem solution : type_of% @IntMul.Kappa.R6.IL2C.segBodyR_sp_sol_aux := @IntMul.Kappa.R6.IL2C.segBodyR_sp_sol_aux
+theorem IntMul.Kappa.R6.IL2C.segBodyR_sp : type_of% @IntMul.Kappa.R6.IL2C.segBodyR_sp_sol_aux := @IntMul.Kappa.R6.IL2C.segBodyR_sp_sol_aux

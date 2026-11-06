@@ -241,7 +241,7 @@ set_option linter.unusedSimpArgs false
 open NLogN
 open IntMul RS IntMul.HvdH
 set_option maxHeartbeats 2000000
-theorem solution (n : ℕ) (u : NLogN.IState NLogN.HS) (L5 : List NLogN.Item) (h5 : u.G 5 = .int n :: L5)
+theorem NLogN.exp_post_cost (n : ℕ) (u : NLogN.IState NLogN.HS) (L5 : List NLogN.Item) (h5 : u.G 5 = .int n :: L5)
     (v30 v31 v32 v33 v34 v35 v36 v37 v38 : ℤ)
     (L30 L31 L32 L33 L34 L35 L36 L37 L38 : List NLogN.Item)
     (h30 : u.G 30 = .int v30 :: L30) (h31 : u.G 31 = .int v31 :: L31)

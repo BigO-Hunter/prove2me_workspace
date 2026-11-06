@@ -179,26 +179,6 @@ section Rows
 
 variable {K m k e : ℕ} {pos : Fin m × Fin (m ^ k) → ℕ}
 
-theorem rowE_le (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) :
-    K * (m ^ k * (r.val + 1) - 1) ≤ e := by
-  have hf : 1 ≤ m ^ k := Nat.one_le_pow _ _ (by have := r.isLt; omega)
-  have := he (r, ⟨m ^ k - 1, by omega⟩)
-  simp only at this
-  have e1 : m ^ k - 1 + m ^ k * r.val = m ^ k * (r.val + 1) - 1 := by
-    rw [Nat.mul_succ]; omega
-  rw [e1] at this
-  omega
-
-theorem sR_add (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) :
-    sR K (m ^ k) e r + e % K = e - K * (m ^ k * (r.val + 1) - 1) := by
-  have h1 := rowE_le he r
-  set E := K * (m ^ k * (r.val + 1) - 1)
-  have h2 : (e - E) % K = e % K := by
-    simp only [E]; rw [Nat.sub_mul_mod h1]
-  have h3 : (e - E) % K ≤ e - E := Nat.mod_le _ _
-  unfold sR
-  omega
-
 /-- Rows further down start lower by `fK` per row. -/
 theorem sR_lt (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) {r r' : Fin m}
     (h : r < r') : sR K (m ^ k) e r' + m ^ k * K * (r'.val - r.val) = sR K (m ^ k) e r := by
@@ -315,7 +295,7 @@ variable {t S0 B : ℕ} {σ : Fin 3 → Fin m}
   (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (htop : e - e % K + K ≤ t)
   (hσ : σ 0 < σ 1 ∧ σ 1 < σ 2)
 include he htop hσ
-theorem solution (hK : 1 ≤ K) {q : ℕ} (hq : q < B * 2 ^ t * S0) {px py : Fin 3}
+theorem NLogN.KFR.encode_rowAddAddr (hK : 1 ≤ K) {q : ℕ} (hq : q < B * 2 ^ t * S0) {px py : Fin 3}
     {i j : Fin m} (hi : σ px = i) (hj : σ py = j) (hij : i ≠ j) :
     ((AModel.encode (NLogN.KFR.shR K (m ^ k) e t S0 B σ)
         (NLogN.KFH.rowAddAddr K (e % K) (m ^ k) px py (AModel.decode (NLogN.KFR.shR K (m ^ k) e t S0 B σ) q)) : ℕ) : ℤ) =

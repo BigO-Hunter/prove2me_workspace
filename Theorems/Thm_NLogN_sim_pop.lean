@@ -251,4 +251,4 @@ end NLogN
 
 end
 
-theorem solution : type_of% @NLogN.sim_pop_sol_aux := @NLogN.sim_pop_sol_aux
+theorem NLogN.sim_pop : type_of% @NLogN.sim_pop_sol_aux := @NLogN.sim_pop_sol_aux

@@ -41,7 +41,7 @@ theorem geoL_err_aux (P : ℕ) (c : NLogN.KFB.GI) (C : ℂ) (hC : ‖C‖ ≤ 1)
       push_cast at ih ⊢
       linarith
 
-theorem solution (P : ℕ) (c : NLogN.KFB.GI) (C : ℂ) (hC : ‖C‖ ≤ 1) {ec : ℝ}
+theorem NLogN.KFM.geoL_err (P : ℕ) (c : NLogN.KFB.GI) (C : ℂ) (hC : ‖C‖ ≤ 1) {ec : ℝ}
     (hc : ‖NLogN.KFM.vP P c - C‖ ≤ ec) :
     ∀ (n : ℕ) (x : NLogN.KFB.GI) (X : ℂ) (e0 : ℝ), ‖X‖ ≤ 1 → ‖NLogN.KFM.vP P x - X‖ ≤ e0 →
       e0 + n * (2 * ec + 2 * (2 : ℝ)⁻¹ ^ P) ≤ 1 →

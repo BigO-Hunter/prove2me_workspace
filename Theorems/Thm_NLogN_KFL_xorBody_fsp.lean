@@ -495,4 +495,4 @@ end NLogN.KFL
 
 end
 
-theorem solution : type_of% @NLogN.KFL.xorBody_fsp_sol_aux := @NLogN.KFL.xorBody_fsp_sol_aux
+theorem NLogN.KFL.xorBody_fsp : type_of% @NLogN.KFL.xorBody_fsp_sol_aux := @NLogN.KFL.xorBody_fsp_sol_aux

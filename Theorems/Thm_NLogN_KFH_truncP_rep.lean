@@ -87,7 +87,7 @@ set_option linter.unusedVariables false
 open NLogN
 open NLogN.KFH
 open IntMul RS AModel KIL KFD KFB Complex
-theorem solution {r p Δ : ℕ} {zs : List NLogN.KFB.GI} {xs : List (Fin r → ℂ)}
+theorem NLogN.KFH.truncP_rep {r p Δ : ℕ} {zs : List NLogN.KFB.GI} {xs : List (Fin r → ℂ)}
     (h : NLogN.KFH.RecRep r (p + Δ) zs xs) : NLogN.KFH.RecRep r p (zs.map (NLogN.KFH.gtr Δ)) (Butterfly.QpArr p xs) := by
   refine ⟨by simp [Butterfly.QpArr, h.1], fun j c hj => ?_⟩
   simp only [Butterfly.QpArr, List.length_map] at hj

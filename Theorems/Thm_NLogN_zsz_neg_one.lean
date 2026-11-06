@@ -13,5 +13,5 @@ section
 open NLogN
 open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-theorem solution : NLogN.zsz (-1) = 1 := by rw [NLogN.zsz_neg, NLogN.zsz_one]
+theorem NLogN.zsz_neg_one : NLogN.zsz (-1) = 1 := by rw [NLogN.zsz_neg, NLogN.zsz_one]
 end

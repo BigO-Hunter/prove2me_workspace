@@ -13,7 +13,7 @@ section
 open NLogN
 open NLogN.KFR
 open IntMul RS KIL KFH KFN
-theorem solution :
+theorem NLogN.KFR.closedHyps_uncond :
     ∃ Kc : ℝ, 0 < Kc ∧ ∀ (Isym : List NLogN.Sym) {K r Z : ℕ}, 6 ≤ K → 1 ≤ r →
       80 * Z * (Z + 2) ≤ 2 ^ K →
       NLogN.KFN.RowHyp Isym NLogN.KFL.l12prog K (100 ^ 3) r Z (NLogN.KFR.PsiR r Z) (Kc * (K + 2) + 1) NLogN.KFN.τ50 ∧

@@ -3163,7 +3163,7 @@ open NLogN
 open NLogN.KFE
 open IntMul RS AModel AModelL12 AModelRat AModelFac Finset KIL KFD
 variable {m W : ℕ} [NeZero W]
-theorem solution (Qc : AModelRat.QCircuit (ZMod 2) m W) (hm : 2 ≤ m)
+theorem NLogN.KFE.lemma12_fine_rat (Qc : AModelRat.QCircuit (ZMod 2) m W) (hm : 2 ≤ m)
     (gatesOK : ∀ g ∈ Qc.gates, g.OK)
     (route : ∀ (v : Fin W → ZMod 2) w, AModel.scalarRun Qc.gates v (Qc.ρ w) = v w)
     (unit : ∀ w, Qc.Mout (Qc.ρ w) - Qc.Min w = 1) {τ : ℝ} (hτ : 0 < τ ∧ τ < 1)
