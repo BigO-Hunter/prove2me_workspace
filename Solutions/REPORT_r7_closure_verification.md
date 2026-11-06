@@ -41,12 +41,14 @@ outside. So the failures are not incidental; they are exactly the blockers.
 
 ### Two defect classes, one root cause
 
-| class | count | example |
+| class | exact count | example |
 |---|---|---|
 | `X has already been declared` | 115 (16 of them `solution`) | `NLogN.IRuns.seq`, `NLogN.KFW.Agree.congr`, `IL3H.Zc_ge` |
-| `Unknown identifier X` (X exists as `solution` in its own module) | 10 | `zsz_le_of_lt`, `toUL_runs`, `KFH.layer_partner`, `sc_div_Wc_le`, `slot_add` |
+| `environment already contains 'solution' from …` (import clash) | 8 | `Thm_NLogN_KFE_cL12F_le` ← `KFD_ilCostF_le` |
+| `Unknown identifier X`, where X *is* that module's platform theorem | 10 sites / 5 lemma names | `zsz_le_of_lt`, `toUL_runs`, `KFH.layer_partner`, `sc_div_Wc_le`, `slot_add` |
+| fallout (`unsolved goals`, `rcases failed`) | 6 | `KFM_lam_complex_eq:51` |
 
-Root cause of **both**: the skeleton-subtraction recovery did not run, so each
+Root cause of **all four** classes: the skeleton-subtraction recovery did not run, so each
 `Theorems/Thm_*.lean` is a *whole source module* (helpers copied in, colliding
 with the `Definitions/` module it now imports) and each names its platform
 theorem **`solution`** at root level instead of the theorem's real name.
