@@ -1,0 +1,78 @@
+PASS E01-empty-n2 n=2 t=0 py_got=True py_want=True lean=(true,true) steps=26
+PASS E02-single-n2 n=2 t=3 py_got=True py_want=True lean=(true,true) steps=29
+PASS E03-all-n2 n=2 t=8 py_got=True py_want=True lean=(true,true) steps=31
+PASS E04-gap-n2 n=2 t=4 py_got=False py_want=False lean=(false,false) steps=32
+PASS E05-gap-n3 n=3 t=5 py_got=False py_want=False lean=(false,false) steps=46
+PASS E06-part-n3 n=3 t=6 py_got=True py_want=True lean=(true,true) steps=35
+PASS E07-all-n3 n=3 t=13 py_got=True py_want=True lean=(true,true) steps=42
+PASS E08-huget-n4 n=4 t=1152921504606846976 py_got=False py_want=False lean=(false,false) steps=495
+PASS E09-hit-n4 n=4 t=6 py_got=True py_want=True lean=(true,true) steps=480
+PASS E10-dupmin-n7 n=7 t=3 py_got=True py_want=True lean=(true,true) steps=963
+PASS E11-dupmin-over-n7 n=7 t=8 py_got=False py_want=False lean=(false,false) steps=1010
+PASS E12-dupmin-n8 n=8 t=5 py_got=True py_want=True lean=(true,true) steps=1128
+PASS E13-dupmin-empty-n8 n=8 t=0 py_got=True py_want=True lean=(true,true) steps=1270
+PASS E14-dup-gap-n8 n=8 t=7 py_got=False py_want=False lean=(false,false) steps=1391
+PASS E15-dup-all-n8 n=8 t=16 py_got=True py_want=True lean=(true,true) steps=1240
+PASS D1-dup8-t0 n=8 t=0 py_got=True py_want=True lean=(true,true) steps=1270
+PASS D2-dup8-t5 n=8 t=5 py_got=True py_want=True lean=(true,true) steps=1230
+PASS D3-dup8-t15 n=8 t=15 py_got=True py_want=True lean=(true,true) steps=1130
+PASS D4-dup8-t20 n=8 t=20 py_got=True py_want=True lean=(true,true) steps=1120
+PASS D5-dup8-t25 n=8 t=25 py_got=True py_want=True lean=(true,true) steps=1128
+PASS D6-dup8-t35 n=8 t=35 py_got=True py_want=True lean=(true,true) steps=1208
+PASS D7-dup8-t40 n=8 t=40 py_got=True py_want=True lean=(true,true) steps=1240
+PASS D8-dup8-t41-miss n=8 t=41 py_got=False py_want=False lean=(false,false) steps=1241
+PASS HB1-hugeb-hit-n6 n=6 t=3298534883343 py_got=True py_want=True lean=(true,true) steps=787
+PASS HB2-hugeb-miss-n6 n=6 t=4398046511104 py_got=False py_want=False lean=(false,false) steps=870
+PASS HB3-hugeb-hit-n4 n=4 t=1152921504606846979 py_got=True py_want=True lean=(true,true) steps=524
+PASS P12a-hit n=12 t=24 py_got=True py_want=True lean=(true,true) steps=4326
+PASS P12b-all n=12 t=150 py_got=True py_want=True lean=(true,true) steps=4242
+PASS P12c-miss n=12 t=151 py_got=False py_want=False lean=(false,false) steps=4243
+PASS O01-n5-empty n=5 t=0 py_got=True py_want=True lean=(true,true) steps=650
+PASS O02-n5-single n=5 t=5 py_got=True py_want=True lean=(true,true) steps=640
+PASS O03-n5-gap n=5 t=4 py_got=False py_want=False lean=(false,false) steps=675
+PASS O04-n5-pair n=5 t=13 py_got=True py_want=True lean=(true,true) steps=628
+PASS O05-n5-all n=5 t=28 py_got=True py_want=True lean=(true,true) steps=604
+PASS O06-n5-over n=5 t=29 py_got=False py_want=False lean=(false,false) steps=605
+PASS O07-n6-empty n=6 t=0 py_got=True py_want=True lean=(true,true) steps=825
+PASS O08-n6-hit n=6 t=7 py_got=True py_want=True lean=(true,true) steps=785
+PASS O09-n6-all n=6 t=28 py_got=True py_want=True lean=(true,true) steps=811
+PASS O10-n6-over n=6 t=29 py_got=False py_want=False lean=(false,false) steps=812
+PASS L1-lcg n=4 t=1953 py_got=False py_want=False lean=(false,false) steps=511
+PASS L2-lcg n=2 t=1478 py_got=False py_want=False lean=(false,false) steps=31
+PASS L3-lcg n=6 t=455 py_got=False py_want=False lean=(false,false) steps=828
+PASS L4-lcg n=2 t=980 py_got=False py_want=False lean=(false,false) steps=31
+PASS L5-lcg n=2 t=662 py_got=False py_want=False lean=(false,false) steps=32
+PASS L6-lcg n=2 t=287 py_got=False py_want=False lean=(false,false) steps=32
+PASS L7-lcg n=4 t=1827 py_got=False py_want=False lean=(false,false) steps=521
+PASS L8-lcg n=6 t=1441 py_got=False py_want=False lean=(false,false) steps=870
+PASS L9-lcg n=6 t=735 py_got=False py_want=False lean=(false,false) steps=848
+PASS L10-lcg n=2 t=811 py_got=False py_want=False lean=(false,false) steps=32
+PASS L11-lcg n=4 t=225 py_got=False py_want=False lean=(false,false) steps=523
+PASS L12-lcg n=2 t=96 py_got=False py_want=False lean=(false,false) steps=32
+PASS L13-lcg n=2 t=469 py_got=False py_want=False lean=(false,false) steps=32
+PASS L14-lcg n=2 t=167 py_got=False py_want=False lean=(false,false) steps=32
+PASS L15-lcg n=6 t=660 py_got=False py_want=False lean=(false,false) steps=854
+PASS L16-lcg n=4 t=335 py_got=False py_want=False lean=(false,false) steps=525
+PASS L17-lcg n=4 t=1033 py_got=False py_want=False lean=(false,false) steps=531
+PASS L18-lcg n=2 t=833 py_got=False py_want=False lean=(false,false) steps=31
+PASS L19-lcg n=4 t=951 py_got=False py_want=False lean=(false,false) steps=523
+PASS L20-lcg n=4 t=849 py_got=False py_want=False lean=(false,false) steps=527
+PASS O11-lcgodd n=3 t=948 py_got=False py_want=False lean=(false,false) steps=44
+PASS O12-lcgodd n=5 t=1930 py_got=False py_want=False lean=(false,false) steps=675
+PASS O13-lcgodd n=5 t=1026 py_got=False py_want=False lean=(false,false) steps=675
+PASS O14-lcgodd n=3 t=731 py_got=False py_want=False lean=(false,false) steps=48
+PASS O15-lcgodd n=6 t=2183 py_got=False py_want=False lean=(false,false) steps=830
+PASS O16-lcgodd n=6 t=219 py_got=False py_want=False lean=(false,false) steps=836
+PASS O17-lcgodd n=6 t=175 py_got=False py_want=False lean=(false,false) steps=824
+PASS O18-lcgodd n=4 t=2001 py_got=False py_want=False lean=(false,false) steps=521
+PASS O19-lcgodd n=7 t=2363 py_got=False py_want=False lean=(false,false) steps=1068
+PASS O20-lcgodd n=6 t=150 py_got=False py_want=False lean=(false,false) steps=828
+PASS P16a-hit n=16 t=24 got=True want=True steps=16900
+PASS P16b-all n=16 t=232 got=True want=True steps=16412
+PASS P16c-miss n=16 t=233 got=False want=False steps=16413
+PASS P16d-half n=16 t=116 got=True want=True steps=14472
+PASS P20a-hit n=20 t=24 got=True want=True steps=67346
+PASS P20b-all n=20 t=330 got=True want=True steps=65380
+PASS P20c-miss n=20 t=331 got=False want=False steps=65381
+PASS P20d-half n=20 t=165 got=True want=True steps=57736
+PY ROCKS TOTAL: pass=77 fail=0 of 77

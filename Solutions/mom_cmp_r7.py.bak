@@ -1,0 +1,49 @@
+#!/usr/bin/env python3
+"""Compare histMoment(Jain.bitR7) vs histMoment(Jain.bitR7plain) vs bitR8
+at m=529 across tau in (0,1]. Decides whether a padding/reduction route is viable."""
+from decimal import Decimal, getcontext
+
+getcontext().prec = 60
+
+bitR7 = [(1,1690297301),(3,1356586),(5,354200),(7,3580962),(9,1526602),(11,5093396),
+ (13,2164162),(15,7948248),(17,8476006),(18,6272882),(19,1639946),(21,6906900),
+ (23,61280142),(439,6272882),(483,61280142),(485,545468),(487,173558),(489,293986),
+ (491,580888),(493,14168),(495,322322),(497,17710),(499,1129898),(501,127512),
+ (503,410872),(505,99176),(507,1186570),(509,340032),(511,322322),(513,106260),
+ (515,1583274),(517,626934),(519,2854852),(521,13711082),(523,4629394),
+ (525,5653032),(527,6233920)]
+
+bitR7plain = [(1,1792923209),(3,1438052),(5,842996),(7,3357816),(9,4200812),(11,2160620),
+ (13,570262),(15,13622532),(17,1009470),(19,1944558),(21,6843144),(23,59760624),
+ (439,6272882),(483,59760624),(485,453376),(487,173558),(489,421498),(491,233772),
+ (493,205436),(495,226688),(497,340032),(499,602140),(501,173558),(503,357742),
+ (505,283360),(507,690690),(509,389620),(511,102718),(513,184184),(515,584430),
+ (517,350658),(519,3021326),(521,13448974),(523,4558554),(525,5649490),(527,6233920)]
+
+m = 529
+
+
+def moment(h, tau):
+    return sum(Decimal(n) * (Decimal(w) / m) ** tau for w, n in h)
+
+
+print(f"{'tau':>10} {'bitR7':>26} {'bitR7plain':>26} {'plain<=r7?':>11}")
+for tau in [0, 0.001, 0.01, 0.1, 0.25, 0.5, 0.75, 0.9, 0.99, 0.999, 0.99994, 1]:
+    a, b = moment(bitR7, tau), moment(bitR7plain, tau)
+    print(f"{tau:>10} {a:>26.6f} {b:>26.6f} {str(b <= a):>11}")
+
+# where does the ordering flip?
+lo, hi = 0.0, 1.0
+for _ in range(80):
+    mid = (lo + hi) / 2
+    if moment(bitR7plain, mid) <= moment(bitR7, mid):
+        lo = mid
+    else:
+        hi = mid
+print(f"\ncrossing tau ~ {lo:.9f}  (plain<=r7 below it, plain>r7 above it)")
+print("sum n_w:  bitR7 =", sum(n for _, n in bitR7),
+      " bitR7plain =", sum(n for _, n in bitR7plain))
+print("rankSum:  bitR7 =", sum(w * n for w, n in bitR7),
+      " bitR7plain =", sum(w * n for w, n in bitR7plain))
+
+# R1674 .bak created_at=2026-11-06T01:52:36.376835+00:00

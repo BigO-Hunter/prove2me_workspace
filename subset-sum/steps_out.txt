@@ -1,0 +1,19 @@
+n | prog2 miss-steps  C2=steps/2^(n//2) | seg: phaseA canon phaseA2 scanB | prog(old) miss-steps  C1=steps/2^(n//2)  C1/n
+ 8 |         1241      77.56 |     432      6     436     134 |         2336     146.00   18.250
+10 |         2428      75.88 |     865    198     870     262 |         5073     158.53   15.853
+12 |         4243      66.30 |    1740      6    1746     518 |        11196     174.94   14.578
+14 |         9054      70.73 |    3505    774    3512    1030 |        24737     193.26   13.804
+16 |        16413      64.11 |    7056      6    7064    2054 |        54400     212.50   13.281
+18 |        35786      69.89 |   14179   3078   14194    4102 |       118867     232.16   12.898
+20 |        65381      63.85 |   28458      6   28486    8198 |       258074     252.03   12.601
+22 |       143086      69.87 |   57055  12294   57108   16390 |       557013     271.98   12.363
+24 |       261733      63.90 |  114306      6  114396   32774 |      1195908     291.97   12.165
+
+report points (prog2): n, miss / all-hit / early-hit steps
+n=12: miss=4243 all=4242 earlyhit=4326  C(miss)=66.30 C(all)=66.28 C(hit)=67.59
+n=16: miss=16413 all=16412 earlyhit=16900  C(miss)=64.11 C(all)=64.11 C(hit)=66.02
+n=20: miss=65381 all=65380 earlyhit=67346  C(miss)=63.85 C(all)=63.85 C(hit)=65.77
+
+FIT: max_n steps(prog2)/2^(floor(n/2)) = 77.56 over n=8..24 (worst-case miss path)
+propose T(n) = ceil(Cmax)*2^(n/2) + D*n with Cmax >= above, D covering the O(n) prologue;
+growth check: prog2 ratio flat (2^(n/2)), old prog ratio grows ~linearly in n (n*2^(n/2)).

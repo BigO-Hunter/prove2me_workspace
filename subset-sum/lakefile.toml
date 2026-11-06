@@ -1,0 +1,9 @@
+name = "subsetsum"
+version = "0.1.0"
+
+# The challenge statement imports nothing; core Lean (Nat/List/BitVec) suffices
+# for the MITM development. Add Mathlib only if a lemma demands it — skipping
+# the dependency keeps builds minutes-scale under memory pressure (R2125607375).
+[[lean_lib]]
+name = "Submission"
+globs = ["Submission", "Submission.+"]

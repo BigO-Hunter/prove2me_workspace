@@ -1,0 +1,249 @@
+0 add 0 0 0
+1 store 0 1
+2 one 1
+3 add 0 0 1
+4 store 0 2
+5 sub 2 2 2
+6 add 0 0 1
+7 store 0 3
+8 add 3 1 1
+9 add 3 3 3
+10 add 3 3 3
+11 add 3 3 1
+12 blt 0 3 192
+13 add 0 0 1
+14 store 0 4
+15 add 0 0 1
+16 store 0 5
+17 add 0 0 1
+18 store 0 6
+19 add 0 0 1
+20 store 0 7
+21 add 0 0 1
+22 store 0 8
+23 add 0 0 1
+24 store 0 9
+25 add 0 0 1
+26 store 0 10
+27 add 0 0 1
+28 store 0 11
+29 add 0 0 1
+30 store 0 12
+31 add 0 0 1
+32 store 0 13
+33 add 0 0 1
+34 store 0 14
+35 add 0 0 1
+36 store 0 15
+37 add 0 0 1
+38 store 0 16
+39 add 0 0 1
+40 store 0 17
+41 add 0 0 1
+42 store 0 18
+43 add 0 0 1
+44 store 0 19
+45 add 0 0 1
+46 store 0 20
+47 add 0 0 1
+48 store 0 21
+49 add 0 0 1
+50 store 0 22
+51 add 3 1 1
+52 add 3 3 3
+53 add 3 3 3
+54 add 3 3 3
+55 add 4 1 1
+56 add 4 4 4
+57 add 4 4 4
+58 sub 4 4 1
+59 add 3 3 4
+60 add 0 0 1
+61 add 0 0 1
+62 sub 4 0 3
+63 sub 5 5 5
+64 sub 3 3 1
+65 add 6 4 5
+66 load 7 6
+67 add 6 0 5
+68 add 6 6 1
+69 store 6 7
+70 add 5 5 1
+71 blt 5 3 65
+72 add 5 3 2
+73 sub 4 0 3
+74 shr 4 4 1
+75 add 4 4 1
+76 add 4 4 1
+77 add 20 5 2
+78 load 6 20
+79 add 21 0 5
+80 store 21 6
+81 add 5 5 1
+82 blt 5 4 77
+83 sub 7 4 1
+84 sub 7 7 1
+85 add 8 0 2
+86 shr 9 7 1
+87 add 18 8 7
+88 add 18 18 1
+89 add 18 18 1
+90 add 20 1 2
+91 shl 20 20 9
+92 add 19 18 20
+93 add 19 19 1
+94 add 11 1 2
+95 add 20 18 2
+96 store 20 2
+97 add 10 1 2
+98 add 20 8 10
+99 load 17 20
+100 sub 12 12 12
+101 sub 13 13 13
+102 sub 14 14 14
+103 blt 13 11 105
+104 blt 2 1 123
+105 blt 12 11 107
+106 blt 2 1 133
+107 add 20 18 12
+108 load 15 20
+109 add 21 18 13
+110 load 16 21
+111 add 16 16 17
+112 blt 16 15 114
+113 blt 2 1 118
+114 add 20 19 14
+115 store 20 16
+116 add 13 13 1
+117 blt 2 1 121
+118 add 20 19 14
+119 store 20 15
+120 add 12 12 1
+121 add 14 14 1
+122 blt 2 1 103
+123 blt 12 11 125
+124 blt 2 1 141
+125 add 20 18 12
+126 load 15 20
+127 add 21 19 14
+128 store 21 15
+129 add 12 12 1
+130 add 14 14 1
+131 blt 12 11 125
+132 blt 2 1 141
+133 add 21 18 13
+134 load 16 21
+135 add 16 16 17
+136 add 20 19 14
+137 store 20 16
+138 add 13 13 1
+139 add 14 14 1
+140 blt 13 11 133
+141 add 11 11 11
+142 add 20 18 2
+143 add 18 19 2
+144 add 19 20 2
+145 add 10 10 1
+146 add 21 9 1
+147 blt 10 21 98
+148 add 11 1 2
+149 shl 11 11 9
+150 sub 19 7 9
+151 add 22 1 2
+152 shl 22 22 19
+153 sub 10 10 10
+154 sub 14 14 14
+155 sub 13 13 13
+156 blt 13 19 158
+157 blt 2 1 169
+158 add 20 8 9
+159 add 20 20 1
+160 add 20 20 13
+161 load 17 20
+162 shr 21 10 13
+163 and 21 21 1
+164 blt 2 21 166
+165 blt 2 1 167
+166 add 14 14 17
+167 add 13 13 1
+168 blt 2 1 156
+169 add 20 8 7
+170 add 20 20 1
+171 load 21 20
+172 sub 16 21 14
+173 sub 12 12 12
+174 sub 13 11 1
+175 add 20 13 1
+176 blt 12 20 178
+177 blt 2 1 189
+178 add 20 12 13
+179 shr 20 20 1
+180 add 21 18 20
+181 load 15 21
+182 blt 15 16 187
+183 blt 16 15 185
+184 accept
+185 sub 13 20 1
+186 blt 2 1 175
+187 add 12 20 1
+188 blt 2 1 175
+189 add 10 10 1
+190 blt 10 22 154
+191 reject
+192 sub 20 0 1
+193 sub 20 20 1
+194 load 15 20
+195 add 20 20 1
+196 load 16 20
+197 add 20 20 1
+198 load 17 20
+199 sub 21 3 1
+200 sub 21 21 1
+201 blt 0 21 207
+202 add 21 1 1
+203 add 21 21 1
+204 add 21 21 1
+205 load 14 21
+206 blt 2 1 221
+207 add 14 17 2
+208 blt 14 1 220
+209 add 21 15 16
+210 blt 15 14 213
+211 blt 14 15 213
+212 accept
+213 blt 16 14 216
+214 blt 14 16 216
+215 accept
+216 blt 21 14 219
+217 blt 14 21 219
+218 accept
+219 reject
+220 accept
+221 blt 14 1 248
+222 add 21 15 16
+223 blt 15 14 226
+224 blt 14 15 226
+225 accept
+226 blt 16 14 229
+227 blt 14 16 229
+228 accept
+229 blt 21 14 232
+230 blt 14 21 232
+231 accept
+232 blt 17 14 235
+233 blt 14 17 235
+234 accept
+235 add 20 17 15
+236 blt 20 14 239
+237 blt 14 20 239
+238 accept
+239 add 20 17 16
+240 blt 20 14 243
+241 blt 14 20 243
+242 accept
+243 add 20 17 21
+244 blt 20 14 247
+245 blt 14 20 247
+246 accept
+247 reject
+248 accept

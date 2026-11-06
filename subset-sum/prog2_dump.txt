@@ -1,0 +1,352 @@
+# prog2 length: 301
+# label LCOPY=65
+# label LCOPY2=77
+# label LSMALL=244
+# label LROUND=98
+# label LMERGE=103
+# label LHAVEJ=105
+# label LBOTH=107
+# label LTAKEJ=114
+# label LTAKEL=118
+# label LSTEP=121
+# label LDRAINI=123
+# label LDILOOP=125
+# label LDRAINJ=133
+# label LDJLOOP=133
+# label LSWAP=141
+# label LCANCH=154
+# label LCANLOOP=155
+# label LPHASEA2=161
+# label LROUND2=173
+# label LMERGE2=179
+# label LHAVEJ2=181
+# label LBOTH2=183
+# label LTAKEJ2=190
+# label LTAKEL2=194
+# label LSTEP2=197
+# label LDRAINI2=199
+# label LDILOOP2=201
+# label LDRAINJ2=209
+# label LDJLOOP2=209
+# label LSWAP2=217
+# label LSCAN=229
+# label LSCANLESS=237
+# label LSCANGTR=240
+# label LSCANDEC=242
+0 add 0 0 0
+1 store 0 1
+2 one 1
+3 add 0 0 1
+4 store 0 2
+5 sub 2 2 2
+6 add 0 0 1
+7 store 0 3
+8 add 3 1 1
+9 add 3 3 3
+10 add 3 3 3
+11 add 3 3 1
+12 blt 0 3 244
+13 add 0 0 1
+14 store 0 4
+15 add 0 0 1
+16 store 0 5
+17 add 0 0 1
+18 store 0 6
+19 add 0 0 1
+20 store 0 7
+21 add 0 0 1
+22 store 0 8
+23 add 0 0 1
+24 store 0 9
+25 add 0 0 1
+26 store 0 10
+27 add 0 0 1
+28 store 0 11
+29 add 0 0 1
+30 store 0 12
+31 add 0 0 1
+32 store 0 13
+33 add 0 0 1
+34 store 0 14
+35 add 0 0 1
+36 store 0 15
+37 add 0 0 1
+38 store 0 16
+39 add 0 0 1
+40 store 0 17
+41 add 0 0 1
+42 store 0 18
+43 add 0 0 1
+44 store 0 19
+45 add 0 0 1
+46 store 0 20
+47 add 0 0 1
+48 store 0 21
+49 add 0 0 1
+50 store 0 22
+51 add 3 1 1
+52 add 3 3 3
+53 add 3 3 3
+54 add 3 3 3
+55 add 4 1 1
+56 add 4 4 4
+57 add 4 4 4
+58 sub 4 4 1
+59 add 3 3 4
+60 add 0 0 1
+61 add 0 0 1
+62 sub 4 0 3
+63 sub 5 5 5
+64 sub 3 3 1
+65 add 6 4 5
+66 load 7 6
+67 add 6 0 5
+68 add 6 6 1
+69 store 6 7
+70 add 5 5 1
+71 blt 5 3 65
+72 add 5 3 2
+73 sub 4 0 3
+74 shr 4 4 1
+75 add 4 4 1
+76 add 4 4 1
+77 add 20 5 2
+78 load 6 20
+79 add 21 0 5
+80 store 21 6
+81 add 5 5 1
+82 blt 5 4 77
+83 sub 7 4 1
+84 sub 7 7 1
+85 add 8 0 2
+86 shr 9 7 1
+87 add 18 8 7
+88 add 18 18 1
+89 add 18 18 1
+90 add 20 1 2
+91 shl 20 20 9
+92 add 19 18 20
+93 add 19 19 1
+94 add 11 1 2
+95 add 20 18 2
+96 store 20 2
+97 add 10 1 2
+98 add 20 8 10
+99 load 17 20
+100 sub 12 12 12
+101 sub 13 13 13
+102 sub 14 14 14
+103 blt 13 11 105
+104 blt 2 1 123
+105 blt 12 11 107
+106 blt 2 1 133
+107 add 20 18 12
+108 load 15 20
+109 add 21 18 13
+110 load 16 21
+111 add 16 16 17
+112 blt 16 15 114
+113 blt 2 1 118
+114 add 20 19 14
+115 store 20 16
+116 add 13 13 1
+117 blt 2 1 121
+118 add 20 19 14
+119 store 20 15
+120 add 12 12 1
+121 add 14 14 1
+122 blt 2 1 103
+123 blt 12 11 125
+124 blt 2 1 141
+125 add 20 18 12
+126 load 15 20
+127 add 21 19 14
+128 store 21 15
+129 add 12 12 1
+130 add 14 14 1
+131 blt 12 11 125
+132 blt 2 1 141
+133 add 21 18 13
+134 load 16 21
+135 add 16 16 17
+136 add 20 19 14
+137 store 20 16
+138 add 13 13 1
+139 add 14 14 1
+140 blt 13 11 133
+141 add 11 11 11
+142 add 20 18 2
+143 add 18 19 2
+144 add 19 20 2
+145 add 10 10 1
+146 add 21 9 1
+147 blt 10 21 98
+148 add 20 8 7
+149 add 20 20 1
+150 add 20 20 1
+151 add 22 20 2
+152 blt 20 18 154
+153 blt 2 1 161
+154 sub 12 12 12
+155 add 21 18 12
+156 load 15 21
+157 add 21 20 12
+158 store 21 15
+159 add 12 12 1
+160 blt 12 11 155
+161 add 5 11 2
+162 sub 4 7 9
+163 add 20 1 2
+164 shl 20 20 4
+165 add 18 22 11
+166 add 18 18 1
+167 add 19 18 20
+168 add 19 19 1
+169 add 11 1 2
+170 add 20 18 2
+171 store 20 2
+172 add 10 1 2
+173 add 20 8 9
+174 add 20 20 10
+175 load 17 20
+176 sub 12 12 12
+177 sub 13 13 13
+178 sub 14 14 14
+179 blt 13 11 181
+180 blt 2 1 199
+181 blt 12 11 183
+182 blt 2 1 209
+183 add 20 18 12
+184 load 15 20
+185 add 21 18 13
+186 load 16 21
+187 add 16 16 17
+188 blt 16 15 190
+189 blt 2 1 194
+190 add 20 19 14
+191 store 20 16
+192 add 13 13 1
+193 blt 2 1 197
+194 add 20 19 14
+195 store 20 15
+196 add 12 12 1
+197 add 14 14 1
+198 blt 2 1 179
+199 blt 12 11 201
+200 blt 2 1 217
+201 add 20 18 12
+202 load 15 20
+203 add 21 19 14
+204 store 21 15
+205 add 12 12 1
+206 add 14 14 1
+207 blt 12 11 201
+208 blt 2 1 217
+209 add 21 18 13
+210 load 16 21
+211 add 16 16 17
+212 add 20 19 14
+213 store 20 16
+214 add 13 13 1
+215 add 14 14 1
+216 blt 13 11 209
+217 add 11 11 11
+218 add 20 18 2
+219 add 18 19 2
+220 add 19 20 2
+221 add 10 10 1
+222 add 21 4 1
+223 blt 10 21 173
+224 add 20 8 7
+225 add 20 20 1
+226 load 17 20
+227 sub 12 12 12
+228 sub 13 11 1
+229 add 20 22 12
+230 load 15 20
+231 add 21 18 13
+232 load 16 21
+233 add 14 15 16
+234 blt 14 17 237
+235 blt 17 14 240
+236 accept
+237 add 12 12 1
+238 blt 12 5 229
+239 reject
+240 blt 2 13 242
+241 reject
+242 sub 13 13 1
+243 blt 2 1 229
+244 sub 20 0 1
+245 sub 20 20 1
+246 load 15 20
+247 add 20 20 1
+248 load 16 20
+249 add 20 20 1
+250 load 17 20
+251 sub 21 3 1
+252 sub 21 21 1
+253 blt 0 21 259
+254 add 21 1 1
+255 add 21 21 1
+256 add 21 21 1
+257 load 14 21
+258 blt 2 1 273
+259 add 14 17 2
+260 blt 14 1 272
+261 add 21 15 16
+262 blt 15 14 265
+263 blt 14 15 265
+264 accept
+265 blt 16 14 268
+266 blt 14 16 268
+267 accept
+268 blt 21 14 271
+269 blt 14 21 271
+270 accept
+271 reject
+272 accept
+273 blt 14 1 300
+274 add 21 15 16
+275 blt 15 14 278
+276 blt 14 15 278
+277 accept
+278 blt 16 14 281
+279 blt 14 16 281
+280 accept
+281 blt 21 14 284
+282 blt 14 21 284
+283 accept
+284 blt 17 14 287
+285 blt 14 17 287
+286 accept
+287 add 20 17 15
+288 blt 20 14 291
+289 blt 14 20 291
+290 accept
+291 add 20 17 16
+292 blt 20 14 295
+293 blt 14 20 295
+294 accept
+295 add 20 17 21
+296 blt 20 14 299
+297 blt 14 20 299
+298 accept
+299 reject
+300 accept
+SMOKE n=4 [3,4,5,6] t=6 verdict=(some true)
+SMOKE n=4 [3,4,5,6] t=2 verdict=(some false)
+SMOKE n=4 [3,4,5,6] t=0 verdict=(some true)
+SMOKE n=4 [3,4,5,6] t=18 verdict=(some true)
+SMOKE n=4 [3,4,5,6] t=7 verdict=(some true)
+SMOKE n=4 [3,4,5,6] t=19 verdict=(some false)
+SMOKE n=6 [2,9,4,7,1,5] t=0 verdict=(some true)
+SMOKE n=6 [2,9,4,7,1,5] t=2 verdict=(some true)
+SMOKE n=6 [2,9,4,7,1,5] t=7 verdict=(some true)
+SMOKE n=6 [2,9,4,7,1,5] t=28 verdict=(some true)
+SMOKE n=6 [2,9,4,7,1,5] t=29 verdict=(some false)
+SMOKE n=6 [2,9,4,7,1,5] t=11 verdict=(some true)
+SMOKE n=6 [2,9,4,7,1,5] t=12 verdict=(some true)
+LAYOUT n=4 ARR1=37 S1 mem[37..40]=[0, 3, 4, 7] (expect [0,3,4,7])
+LAYOUT n=4 regs [4]=2 [5]=4 [9]=2 [11]=4 [18]=42 [22]=37
+LAYOUT n=4 S2 at [18]=42: next4=[0, 5, 6, 11] (expect sorted sums of 5,6 = [0,5,6,11])

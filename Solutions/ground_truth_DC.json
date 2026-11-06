@@ -1,0 +1,17 @@
+{
+  "note": "Ground-truth rank histograms of NB.cs1 / NB.cs2 (net0P's chunk programs), replicated exactly from the frozen Lean data. Anchors matched to Lean #eval: recs=54290, W1F.length=237921, W1F touch total=536840.",
+  "method": "Solutions/genf_ranks.py parses packL tables (GREC, TPTS, INJ, RETS, RETN, SRC, DIMT, SG1_0, SG2_0) from Definitions/, rebuilds W1F/W2F, runs the genF fold with dicts, histograms rkC(old,new) over all chunk moves.",
+  "DC1_equals_DC2": { "0": 13016, "1": 25510, "2": 25258, "3": 2987, "4": 10042, "5": 3871, "6": 2463, "7": 2257, "8": 1427, "9": 5371, "10": 1114, "11": 1660, "12": 941, "13": 482, "14": 715, "15": 296, "16": 331, "17": 347, "18": 851, "19": 512, "20": 7, "21": 4915, "22": 4184, "23": 10705 },
+  "moves_per_pass": 119262,
+  "chunk_runs_per_pass": 337239,
+  "chunk_rank_per_pass": 774109,
+  "packed_cn_true": "3869576887132482480909113261898765399593348497125049105689257924138680144851814376929238860559618482144717595358624851022729090448652506768089296560477617337817774826921376387026489692870978104713318133799421115860938156683992",
+  "warning": "The platform MomPack CN1_*/CN2_* constants DO NOT decode to these values (their 32-bit-field sum gives billions at r=4..14). Do not trust DC1/DC2 from MomPack; reprove cntF cs against this pack.",
+  "net0P_hist_counts": {
+    "1": 1265498157, "3": 1707244, "5": 2532530, "7": 1048432, "9": 1172402,
+    "11": 1229074, "13": 3014242, "15": 1813504, "17": 24794, "19": 17408930,
+    "21": 21092610, "23": 136363458, "439": 6272882, "483": 98446348
+  },
+  "net0P_total_children": 1557624607,
+  "net0P_rank_sum": 55594957495
+}

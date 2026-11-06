@@ -1,0 +1,58 @@
+{
+  "schema": "round8-oppbank-full-gate-receipt-v1",
+  "upstream_commit": "d48a892d1ef0a194f9643142172e17bb0881b63f",
+  "parallelism": 4,
+  "status": "ALL PASS",
+  "small_zero_candidates_rechecked": 4535,
+  "recheck_nonzero": 4535,
+  "recheck_failures": 0,
+  "dense_agreement": "24/24",
+  "bruhat_reversed_one_run": "12/12",
+  "ordinary_orientation_negative_control": "6/10 rank>=2 edges were not one child",
+  "negative_controls": {
+    "NEG5": "40/40",
+    "NEG3": "1/1",
+    "NEG8": "0 (one reversed run at planted basis)",
+    "NEG4": "1 (perturbed residual fails)",
+    "negI": "10447206 failures, expected because X=I is the negative control"
+  },
+  "wrapper_and_accounting": "PASS",
+  "histogram": {
+    "widths": 46,
+    "children": 749446467,
+    "rank_sum": 55395128481,
+    "W": 104719230
+  },
+  "scope": "External all-edges certificate. Lean GateOK/EdgesOK/FormalOK are not asserted by this receipt.",
+  "receipt_log": {
+    "path": "round8_full_gate_receipt.log",
+    "bytes": 10923,
+    "sha256": "83fa598dd458998c5f215b91d81a650162079bfce74947cda9a157439c89090a"
+  },
+  "result_files": {
+    "recheck_all.txt": {
+      "bytes": 72,
+      "sha256": "a31251b948f1c643e5c7105317cacdf64513f30e677614cda8a5bb72784fe52d"
+    },
+    "bruhat.txt": {
+      "bytes": 18,
+      "sha256": "bdb69a2280f7df2822ee7cff22205da1e2bab1201928758b076f909e4976711b"
+    },
+    "neg.txt": {
+      "bytes": 71,
+      "sha256": "2427fd66db8fd2994f698998012c969dc2082b7d8ca2340b539257f4b9faa011"
+    },
+    "gate_data.bin": {
+      "bytes": 102028328,
+      "sha256": "885690f2f83eece047d57815f1c31508239e46172ec74808667cb0b60e187353"
+    },
+    "hist_gate.pkl": {
+      "bytes": 659,
+      "sha256": "aceac1a7420c49c05a0dbd0831ea09150ae3d3c5c45c22bd8418b10d7c82150e"
+    },
+    "basis_X.bin": {
+      "bytes": 4477456,
+      "sha256": "5392d5c196286e2c9cbaf1597e68f62c9f8f0fedabd55b3cd42e7e292b4e26e0"
+    }
+  }
+}

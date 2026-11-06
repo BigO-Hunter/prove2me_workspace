@@ -1,0 +1,85 @@
+{
+  "schema": "round8-oppbank-frame-artifacts-v1",
+  "upstream": {
+    "repository": "https://github.com/Swapnil-jain/integer-mult-kappa",
+    "commit": "d48a892d1ef0a194f9643142172e17bb0881b63f",
+    "export": "independent/round8-oppbank/export.py",
+    "slot_export": "scratch export_slots.py with identical gate_data.bin hash"
+  },
+  "network": {
+    "h": 23,
+    "v": 1771,
+    "R": 27794,
+    "m": 529,
+    "W": 104719230,
+    "rank_sum": 55395128481,
+    "child_count": 749446467,
+    "width_count": 46,
+    "charged_steps": 122504,
+    "unique_frames": 41942,
+    "unique_sigma_frames": 4231,
+    "selected_slots": 10922,
+    "sigma_sentinel": {
+      "frame_id": 0,
+      "unselected_slots": 16872,
+      "note": "The empty sigma frame is the uniform sentinel for unselected slots; exclude it when measuring genuine sharing."
+    },
+    "selected_nonempty_sharing": {
+      "selected_slots": 10922,
+      "nonempty_sigma_frames": 4230,
+      "slots_per_nonempty_frame": 2.582033096926714
+    }
+  },
+  "basis": {
+    "algorithm": "SplitMix64",
+    "initial_state_hex": "0x9e3779b97f4a7c15",
+    "entry_formula": "(next64() >> 4) % (2^61 - 1)",
+    "shape": [
+      529,
+      529
+    ],
+    "layout": "row-major little-endian uint64 X, followed by row-major little-endian uint64 Xi",
+    "seed_zero_reference_vector": [
+      "0xe220a8397b1dcdaf",
+      "0x6e789e6aa1b965f4",
+      "0x06c45d188009454f"
+    ],
+    "independent_entries_cross_checked": 279841,
+    "prime": 2305843009213693951,
+    "prime_formula": "2^61 - 1",
+    "full_inverse_check": "X * Xi = I (mod 2^61 - 1), all 529^2 entries, verified by scratch gate_p61_dump.c",
+    "rational_consequence": "det(X) != 0 over Q because the integer matrix is invertible modulo the prime"
+  },
+  "files": {
+    "gate_data.bin": {
+      "bytes": 102028328,
+      "sha256": "885690f2f83eece047d57815f1c31508239e46172ec74808667cb0b60e187353",
+      "scratch_path": "/tmp/r2125607035/round8-bitgate/gate_data.bin"
+    },
+    "hist_gate.pkl": {
+      "bytes": 659,
+      "sha256": "aceac1a7420c49c05a0dbd0831ea09150ae3d3c5c45c22bd8418b10d7c82150e",
+      "scratch_path": "/tmp/r2125607035/round8-bitgate/hist_gate.pkl"
+    },
+    "slot_sigma.json": {
+      "bytes": 194450,
+      "sha256": "919412b10f398951fbd61ec64afc2df1259996461be0171c6e8210ff76ee1acd",
+      "scratch_path": "/tmp/r2125607035/round8-slots/slot_sigma.json"
+    },
+    "basis_X.bin": {
+      "bytes": 4477456,
+      "sha256": "5392d5c196286e2c9cbaf1597e68f62c9f8f0fedabd55b3cd42e7e292b4e26e0",
+      "scratch_path": "/tmp/r2125607035/round8-bitgate/basis_X.bin"
+    },
+    "basis_X_only.bin": {
+      "bytes": 2238728,
+      "sha256": "8f039e589ce06ddd9091dce404ba8e1f88aa1f0b1e6a0ecd161146dbb76df206",
+      "scratch_path": "/tmp/r2125607035/round8-bitgate/basis_X_only.bin"
+    },
+    "basis_Xi.bin": {
+      "bytes": 2238728,
+      "sha256": "ea732bcc71fdd8aa35bd4ff00a3b5aa735924e25d4a0b8ae00fc0cc7db179f63",
+      "scratch_path": "/tmp/r2125607035/round8-bitgate/basis_Xi.bin"
+    }
+  }
+}

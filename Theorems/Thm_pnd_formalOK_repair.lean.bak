@@ -1,0 +1,37 @@
+import Theorems.Thm_pnd_obstruction
+import Mathlib
+
+set_option autoImplicit false
+set_option relaxedAutoImplicit false
+set_option maxHeartbeats 8000000
+set_option maxRecDepth 100000
+set_option linter.unusedSectionVars false
+
+namespace IntMul.Kappa.R8.Bit.Oppbank.Net0Pnd
+
+open IntMul.Kappa.R6.Bit
+open IntMul.Kappa.R8.Bit.Oppbank
+open IntMul.Kappa.R8.Bit.Oppbank.Pnd
+open IntMul.Kappa.R8.Bit.Oppbank.SupG
+open Matrix Module
+
+/-- The old-code/new-code moves executed by one stage's chunks. -/
+def chunkMoves (cs : List NB.LChunk) : List (ℕ × ℕ) :=
+  cs.flatMap fun ch => ch.2.1.map fun mv => (mv.2, ch.1)
+
+/-- The moves used by the actual two-stage program, before the aux/correction edges. -/
+def programMoves : List (ℕ × ℕ) := chunkMoves NB.cs1 ++ chunkMoves NB.cs2
+
+theorem stage2_requires_1773_1774 : (1773, 1774) ∈ chunkMoves NB.cs2 := by
+  native_decide
+
+theorem stage1_requires_1774_1773 : (1774, 1773) ∈ chunkMoves NB.cs1 := by
+  native_decide
+
+theorem program_requires_1773_1774 : (1773, 1774) ∈ programMoves := by
+  exact List.mem_append.2 (Or.inr stage2_requires_1773_1774)
+
+theorem program_requires_1774_1773 : (1774, 1773) ∈ programMoves := by
+  exact List.mem_append.2 (Or.inl stage1_requires_1774_1773)
+
+end IntMul.Kappa.R8.Bit.Oppbank.Net0Pnd

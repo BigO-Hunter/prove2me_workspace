@@ -1,0 +1,132 @@
+import Theorems.Thm_net0Pnd_RunsOK
+import Mathlib
+
+set_option autoImplicit false
+set_option relaxedAutoImplicit false
+set_option maxHeartbeats 4000000
+set_option maxRecDepth 10000
+set_option linter.unusedSectionVars false
+
+/-!
+# Uniform good-prime clearance for the honest densified `Pnd` network
+
+A finite collection of rational Bruhat factors has finitely many numerator and
+denominator prime factors.  The explicit bound below is simply the sum of all
+numerator and denominator sizes.  Above it, a prime divides none of them;
+coprimality then persists at every power of that prime.
+-/
+
+namespace IntMul.Kappa.R8.Bit.Oppbank.Net0Pnd
+
+open IntMul.Kappa.R6.Bit
+open IntMul.Kappa.R6.Bit.NB
+open IntMul.Kappa.R6.Bit.QHNet (EdgesOK)
+open AModelFac
+open Matrix Finset
+
+/-- A finite size bound for all numerators and denominators in a rational matrix. -/
+noncomputable def edgeQMatBound {m : ℕ} (A : Matrix (Fin m) (Fin m) ℚ) : ℕ :=
+  ∑ i, ∑ j, ((A i j).den + (A i j).num.natAbs)
+
+/-- A finite good-prime clearance bound for the two Bruhat factors of an edge. -/
+noncomputable def edgeQClearBound {m : ℕ} (e : Edge m) : ℕ :=
+  edgeQMatBound e.E₁ + edgeQMatBound e.E₂
+
+lemma den_le_edgeQMatBound {m : ℕ} (A : Matrix (Fin m) (Fin m) ℚ) (i j : Fin m) :
+    (A i j).den ≤ edgeQMatBound A := by
+  calc
+    (A i j).den ≤ (A i j).den + (A i j).num.natAbs := Nat.le_add_right _ _
+    _ ≤ ∑ j, ((A i j).den + (A i j).num.natAbs) :=
+      Finset.single_le_sum (fun j _ => Nat.zero_le _) (Finset.mem_univ j)
+    _ ≤ ∑ i, ∑ j, ((A i j).den + (A i j).num.natAbs) :=
+      Finset.single_le_sum (f := fun i : Fin m => ∑ j, ((A i j).den + (A i j).num.natAbs))
+        (fun i _ => Nat.zero_le _) (Finset.mem_univ i)
+
+lemma num_le_edgeQMatBound {m : ℕ} (A : Matrix (Fin m) (Fin m) ℚ) (i j : Fin m) :
+    (A i j).num.natAbs ≤ edgeQMatBound A := by
+  calc
+    (A i j).num.natAbs ≤ (A i j).den + (A i j).num.natAbs := Nat.le_add_left _ _
+    _ ≤ ∑ j, ((A i j).den + (A i j).num.natAbs) :=
+      Finset.single_le_sum (fun j _ => Nat.zero_le _) (Finset.mem_univ j)
+    _ ≤ ∑ i, ∑ j, ((A i j).den + (A i j).num.natAbs) :=
+      Finset.single_le_sum (f := fun i : Fin m => ∑ j, ((A i j).den + (A i j).num.natAbs))
+        (fun i _ => Nat.zero_le _) (Finset.mem_univ i)
+
+/-- A nonzero rational whose numerator and denominator are coprime to `N`
+reduces to a unit modulo `N`. -/
+lemma isUnit_redQ_of_coprime {N : ℕ} {r : ℚ} (hr : r ≠ 0)
+    (hd : Nat.Coprime r.den N) (hn : Nat.Coprime r.num.natAbs N) :
+    IsUnit (redQ N r) := by
+  have hinv : Nat.Coprime (r⁻¹).den N := by
+    rw [Rat.den_inv, if_neg (Rat.num_ne_zero.mpr hr)]
+    exact hn
+  let x : goodSub N := ⟨r, hd⟩
+  let y : goodSub N := ⟨r⁻¹, hinv⟩
+  have hxy : x * y = 1 := by
+    ext
+    simp [x, y, hr]
+  have hyx : y * x = 1 := by
+    ext
+    simp [x, y, hr]
+  have hx : IsUnit x := ⟨⟨x, y, hxy, hyx⟩, rfl⟩
+  have hm := hx.map (redHom N)
+  simpa only [redQ, toGood, dif_pos hd, x] using hm
+
+/-- One edge with rational Bruhat data is admissible at every sufficiently
+large prime power. -/
+theorem edgeOK_large_of_edgeQ {m : ℕ} (e : Edge m)
+    (h : ∃ Q : Matrix (Fin m) (Fin m) ℚ, NB.EdgeQ e Q) :
+    ∃ q₀ : ℕ, ∀ q, q.Prime → q₀ < q → ∀ f : ℕ, EdgeOK (q ^ f) e := by
+  obtain ⟨Q, hQ⟩ := h
+  refine ⟨edgeQClearBound e, ?_⟩
+  intro q hq hqb f
+  have unit_of_bound : ∀ r : ℚ, r ≠ 0 → r.den ≤ edgeQClearBound e →
+      r.num.natAbs ≤ edgeQClearBound e → IsUnit (redQ (q ^ f) r) := by
+    intro r hr hd hn
+    apply isUnit_redQ_of_coprime hr
+    · exact (((hq.coprime_iff_not_dvd).2
+        (Nat.not_dvd_of_pos_of_lt (Nat.pos_of_ne_zero r.den_nz)
+          (lt_of_le_of_lt hd hqb))).symm.pow_right f)
+    · exact (((hq.coprime_iff_not_dvd).2
+        (Nat.not_dvd_of_pos_of_lt (Int.natAbs_pos.mpr (Rat.num_ne_zero.mpr hr))
+          (lt_of_le_of_lt hn hqb))).symm.pow_right f)
+  refine ⟨hQ.2.1, hQ.2.2.2.1, ?_, ?_⟩
+  · intro i
+    apply unit_of_bound _ (hQ.2.2.1 i)
+    · exact (den_le_edgeQMatBound e.E₁ i i).trans (Nat.le_add_right _ _)
+    · exact (num_le_edgeQMatBound e.E₁ i i).trans (Nat.le_add_right _ _)
+  · intro i
+    apply unit_of_bound _ (hQ.2.2.2.2.1 i)
+    · exact (den_le_edgeQMatBound e.E₂ i i).trans (Nat.le_add_left _ _)
+    · exact (num_le_edgeQMatBound e.E₂ i i).trans (Nat.le_add_left _ _)
+
+/-- Uniform good-prime clearance over any finite list of program edges. -/
+theorem edgesOK_large_of_edgeQ (es : List (Edge 529))
+    (h : ∀ e ∈ es, ∃ q : Matrix (Fin 529) (Fin 529) ℚ, NB.EdgeQ e q) :
+    ∃ q₀ : ℕ, ∀ q, q.Prime → q₀ < q → ∀ f : ℕ, ∀ e ∈ es, EdgeOK (q ^ f) e := by
+  induction es with
+  | nil =>
+      exact ⟨0, by intro q hq hq₀ f e he; simp at he⟩
+  | cons a s ih =>
+      have haQ : ∃ Q : Matrix (Fin 529) (Fin 529) ℚ, NB.EdgeQ a Q :=
+        h a (by simp)
+      have hsQ : ∀ e ∈ s, ∃ Q : Matrix (Fin 529) (Fin 529) ℚ, NB.EdgeQ e Q :=
+        fun e he => h e (by simp [he])
+      obtain ⟨qa, ha⟩ := edgeOK_large_of_edgeQ a haQ
+      obtain ⟨qs, hs⟩ := ih hsQ
+      refine ⟨max qa qs, ?_⟩
+      intro q hq hmax f e he
+      have hqa : qa < q := lt_of_le_of_lt (Nat.le_max_left _ _) hmax
+      have hqs : qs < q := lt_of_le_of_lt (Nat.le_max_right _ _) hmax
+      rcases List.mem_cons.mp he with rfl | he
+      · exact ha q hq hqa f
+      · exact hs q hq hqs f e he
+
+/-- All edges of the honest densified `Pnd` network are admissible at every
+prime power whose prime exceeds one uniform finite bound. -/
+theorem net0Pnd_EdgesOK_large :
+    ∃ q₀ : ℕ, ∀ q, q.Prime → q₀ < q → ∀ f : ℕ, net0Pnd.EdgesOK (q ^ f) := by
+  obtain ⟨q₀, h⟩ := edgesOK_large_of_edgeQ net0Pnd.edges net0Pnd_edgeQ
+  exact ⟨q₀, fun q hq hq₀ f e he => h q hq hq₀ f e he⟩
+
+end IntMul.Kappa.R8.Bit.Oppbank.Net0Pnd

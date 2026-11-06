@@ -1,0 +1,5 @@
+This submission is original work by the MultiAgency flock.
+The challenge statement (challenges/subset-sum/Statement.lean) is from
+bigospeedrun/verifier, Apache 2.0 licensed.
+The meet-in-the-middle algorithm is the classical Horowitz–Sahni (1974)
+approach. No external proof artifacts were vendored.

@@ -1,0 +1,45 @@
+{
+  "schema": "accepted-source-local-map-v1",
+  "entries": [
+    {
+      "module": "Thm_IntMul_OpenAI_lower_triangular_factorization",
+      "fetched": "IntMul.OpenAI.lower_triangular_factorization_accepted.lean",
+      "accepted_declaration": "solution",
+      "local_alias": "IntMul.Kappa.R6.Bit.RunsLib.bruhat_exists",
+      "local_change": "duplicate lower-factorization import dropped after BruhatAux.Clean collision; RunsLib.bruhat_exists aliases existing root bruhat_lower",
+      "source_sha256": "935b349c49855cff0a49600811a1150a4a640237ffe0be30616abeb1724812d5"
+    },
+    {
+      "module": "Thm_IntMul_OpenAI_partial_swap_bruhat_runs",
+      "fetched": "IntMul.OpenAI.partial_swap_bruhat_runs_accepted.lean",
+      "accepted_declaration": "solution",
+      "local_alias": "IntMul.Kappa.R6.Bit.RunsLib.solution",
+      "local_change": "accepted declaration renamed to platform-qualified name to avoid root collisions; edge_of_pivs alias points to that name",
+      "source_sha256": "8ea0ad2051123ca875946089100a8900308b55637db97b79d841d92a44bd046e"
+    },
+    {
+      "module": "Thm_IntMul_OpenAI_bruhat_rank_profile",
+      "fetched": "IntMul.OpenAI.bruhat_rank_profile_accepted.lean",
+      "accepted_declaration": "solution",
+      "local_alias": "IntMul.Kappa.R6.Bit.RunsLib.bruhat_rank",
+      "local_change": "accepted declaration renamed to platform-qualified name to avoid root collisions; bruhat_rank_nat alias points to that name",
+      "source_sha256": "0cb0076e4082dd476657aed1311ac64299218d7f04803acfcb6e83009717868d"
+    },
+    {
+      "module": "Thm_IntMul_Kappa_R6_Bit_RunsLib_RunsAux_bruhat_rank_nat",
+      "fetched": "IntMul.Kappa.R6.Bit.RunsLib.RunsAux.bruhat_rank_nat_accepted.lean",
+      "accepted_declaration": "solution",
+      "local_alias": "IntMul.Kappa.R6.Bit.RunsLib.RunsAux.bruhat_rank_nat_sol_aux",
+      "local_change": "final wrapper restored as IntMul.Kappa.R6.Bit.RunsLib.RunsAux.bruhat_rank_nat because downstream requires it",
+      "source_sha256": "b58c96e30c3ad7e39318feb43af88923860c760a2ec2c47b50c4417f650bed56"
+    },
+    {
+      "module": "Thm_IntMul_Kappa_R6_Bit_NB_edge_of_pivs",
+      "fetched": "IntMul.Kappa.R6.Bit.NB.edge_of_pivs_accepted.lean",
+      "accepted_declaration": "solution",
+      "local_alias": "IntMul.Kappa.R6.Bit.NB.edge_of_pivs_sol_aux",
+      "local_change": "redundant final root solution wrapper omitted to avoid duplicate declaration",
+      "source_sha256": "7f4315878249b478c6fbf663f36e0565ad17a47a63a3a983d1cf0bb5539d5ca2"
+    }
+  ]
+}

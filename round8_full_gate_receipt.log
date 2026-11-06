@@ -1,0 +1,113 @@
+small DONE steps [0,5104): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 1
+small DONE steps [5104,10208): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [51043,56147): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [56147,61252): edges 18081910, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [61252,66356): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [66356,71460): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [71460,76565): edges 18081910, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [76565,81669): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [81669,86773): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 1
+small DONE steps [86773,91878): edges 18081910, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [91878,96982): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [96982,102086): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 1
+small DONE steps [10208,15313): edges 18081910, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [102086,107191): edges 18081910, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [107191,112295): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [112295,117399): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [117399,122504): edges 18081910, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [15313,20417): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [20417,25521): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 1
+small DONE steps [25521,30626): edges 18081910, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [30626,35730): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [35730,40834): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [40834,45939): edges 18081910, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+small DONE steps [45939,51043): edges 18078368, rank mismatches 0, idempotency failures 0, factor failures 0, gram failures 0, failures 0
+copy DONE pairs 3136441, failures 0
+aux DONE sigmas [0,176): edges 623392, idempotency failures 0, gram failures 0, zero candidates 158
+aux DONE sigmas [176,352): edges 623392, idempotency failures 0, gram failures 0, zero candidates 161
+aux DONE sigmas [1762,1939): edges 626934, idempotency failures 0, gram failures 0, zero candidates 175
+aux DONE sigmas [1939,2115): edges 623392, idempotency failures 0, gram failures 0, zero candidates 168
+aux DONE sigmas [2115,2291): edges 623392, idempotency failures 0, gram failures 0, zero candidates 158
+aux DONE sigmas [2291,2468): edges 626934, idempotency failures 0, gram failures 0, zero candidates 133
+aux DONE sigmas [2468,2644): edges 623392, idempotency failures 0, gram failures 0, zero candidates 156
+aux DONE sigmas [2644,2820): edges 623392, idempotency failures 0, gram failures 0, zero candidates 144
+aux DONE sigmas [2820,2996): edges 623392, idempotency failures 0, gram failures 0, zero candidates 142
+aux DONE sigmas [2996,3173): edges 626934, idempotency failures 0, gram failures 0, zero candidates 144
+aux DONE sigmas [3173,3349): edges 623392, idempotency failures 0, gram failures 0, zero candidates 163
+aux DONE sigmas [3349,3525): edges 623392, idempotency failures 0, gram failures 0, zero candidates 153
+aux DONE sigmas [352,528): edges 623392, idempotency failures 0, gram failures 0, zero candidates 153
+aux DONE sigmas [3525,3702): edges 626934, idempotency failures 0, gram failures 0, zero candidates 145
+aux DONE sigmas [3702,3878): edges 623392, idempotency failures 0, gram failures 0, zero candidates 159
+aux DONE sigmas [3878,4054): edges 623392, idempotency failures 0, gram failures 0, zero candidates 153
+aux DONE sigmas [4054,4231): edges 626934, idempotency failures 0, gram failures 0, zero candidates 172
+aux DONE sigmas [528,705): edges 626934, idempotency failures 0, gram failures 0, zero candidates 173
+aux DONE sigmas [705,881): edges 623392, idempotency failures 0, gram failures 0, zero candidates 168
+aux DONE sigmas [881,1057): edges 623392, idempotency failures 0, gram failures 0, zero candidates 171
+aux DONE sigmas [1057,1234): edges 626934, idempotency failures 0, gram failures 0, zero candidates 151
+aux DONE sigmas [1234,1410): edges 623392, idempotency failures 0, gram failures 0, zero candidates 184
+aux DONE sigmas [1410,1586): edges 623392, idempotency failures 0, gram failures 0, zero candidates 162
+aux DONE sigmas [1586,1762): edges 623392, idempotency failures 0, gram failures 0, zero candidates 166
+entrance DONE a in [0,73): pairs 129283, zero candidates 28
+entrance DONE a in [73,147): pairs 131054, zero candidates 37
+entrance DONE a in [737,811): pairs 131054, zero candidates 27
+entrance DONE a in [811,885): pairs 131054, zero candidates 34
+entrance DONE a in [885,959): pairs 131054, zero candidates 38
+entrance DONE a in [959,1033): pairs 131054, zero candidates 28
+entrance DONE a in [1033,1106): pairs 129283, zero candidates 33
+entrance DONE a in [1106,1180): pairs 131054, zero candidates 36
+entrance DONE a in [1180,1254): pairs 131054, zero candidates 31
+entrance DONE a in [1254,1328): pairs 131054, zero candidates 18
+entrance DONE a in [1328,1402): pairs 131054, zero candidates 29
+entrance DONE a in [1402,1475): pairs 129283, zero candidates 28
+entrance DONE a in [147,221): pairs 131054, zero candidates 29
+entrance DONE a in [1475,1549): pairs 131054, zero candidates 27
+entrance DONE a in [1549,1623): pairs 131054, zero candidates 19
+entrance DONE a in [1623,1697): pairs 131054, zero candidates 27
+entrance DONE a in [1697,1771): pairs 131054, zero candidates 36
+entrance DONE a in [221,295): pairs 131054, zero candidates 33
+entrance DONE a in [295,368): pairs 129283, zero candidates 23
+entrance DONE a in [368,442): pairs 131054, zero candidates 29
+entrance DONE a in [442,516): pairs 131054, zero candidates 43
+entrance DONE a in [516,590): pairs 131054, zero candidates 22
+entrance DONE a in [590,664): pairs 131054, zero candidates 37
+entrance DONE a in [664,737): pairs 129283, zero candidates 27
+RECHECK cand_all.txt 4535 4535
+RESULT recheck [0,1073741824) failures 0
+[    5.4s] dense DONE 24/24 agree (full rank-r profile incl. vanishing tail)
+[    5.0s] C2 sample: 12/12 one reversed run; N1: ordinary orientation not one child on 6/10 rank>=2 edges
+NEG5 40 40
+NEG3 1 1
+NEG8 0
+NEG4 1
+RESULT neg [0,1073741824) failures 0
+RESULT small [0,3000) failures 10447206
+O6/O7 wrapper and remainder pairing exact PASS
+A1. independent one-run histogram == audited onerun histogram (46 widths)                            PASS
+A2. W, s unchanged vs audited (W=104719230, s=55395128481)                                           PASS
+A3. D = W m - s = N - L = 1344189                                                                    PASS
+A4. rank sum exact, max child 528 < m, min child 1 >= 1                                              PASS
+A5. old compile rebuilt from the same steps reproduces round-7.1 plain a_b = 12899/200000000         PASS
+A6. moment.certify (their code) on the one-run histogram: a* = 25367/200000000 (1.268350e-04), root 1.268695e-04 PASS
+A7. independent Decimal bound: F(a*) = 1 - 6.607e-09 < 1 rigorously                                  PASS
+A7b. a* is the 1e-9 floor of the certifier: F_upper(a*) < 1 <= F_upper(a* + 1e-9)                    PASS
+  (the Decimal bound alone would admit 34 more 1e-9 steps, to a* + 34e-9: the rational majorant is the conservative one)
+A8. mu_1 = s/(W m) = 1 - 2.426e-05 < 1 (linear toll absorbable)                                      PASS
+S1. stopped a_b = (1-theta) a* + theta a_old = 6338633/50000000000 = 1.2677266000e-04                PASS
+S2. theta = 1/1000 > a_b (adapter toll e^(1-theta) subordinate to e^(1-a_b))                         PASS
+S3. a_b > 2^-13 = 1.2207031e-04                                                                      PASS
+S4. exponent identity: (1-theta)(1-a*) + theta(1-a_old) == 1 - a_b, and > 1 - theta                  PASS
+S5. (side) smaller theta = 127e-6 > a_b(theta) gives a_b = 1.2682708282e-04 (bit not binding, kappa unaffected) PASS
+kappa(beta=1/1000) = 184432317329/2500000000000000 = 7.3772926932e-05 binding simultaneous butterflies ok True bad [] log2 -13.7265
+K1. kappa = 184432317329/(2.5e15) exactly, ok                                                        PASS
+  reference: w2 plain a_b -> kappa 6.4490840663e-05 (binding simultaneous butterflies)
+K2. kappa is complex-bound: raising a_b x10 does not change kappa                                    PASS
+  beta=1/10000: kappa 7.3839384120e-05 ok=True bad=[] binding=simultaneous butterflies | same beta with w2 plain a_b: 6.4490840663e-05
+  beta=1/100000: kappa 7.3846029839e-05 ok=True bad=[] binding=simultaneous butterflies | same beta with w2 plain a_b: 6.4490840663e-05
+  beta=1/1000000: kappa 7.3846694411e-05 ok=True bad=[] binding=simultaneous butterflies | same beta with w2 plain a_b: 6.4490840663e-05
+  beta=1/1000000000: kappa 7.3846768178e-05 ok=True bad=[] binding=simultaneous butterflies | same beta with w2 plain a_b: 6.4490840663e-05
+N-A1. perturbed histogram breaks the rank sum                                                        PASS
+N-A2. a width-m child (r_u = 0) is rejected by the certifier                                         PASS
+N-A3. theta = 1e-5 < a_b: toll e^(1-theta) dominates, stopped saving collapses to theta              PASS
+N-A4. beta = 1 is rejected by the assembly constraints                                               PASS
+N-A5. same generic basis, ordinary bank order (longest cell) certifies only a = 5.069e-05 < a_old    PASS
+ALL PASS

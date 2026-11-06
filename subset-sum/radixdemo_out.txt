@@ -1,0 +1,7 @@
+n=8, digit=4 bits, 2-pass LSD radix on values >= 2^n=256:
+  input : [300, 44, 700, 128, 300, 5, 699, 1024]
+  output: [1024, 5, 300, 44, 300, 128, 699, 700]
+  sorted? False  <-- 2^(n/2)-bucket 2-pass radix only sorts mod 2^n;
+  300 vs 44: 300 % 256 = 44 -> digit-equal, full-value order NOT established.
+  Covering w = 4(n+b+log2(n+2)) bits needs ceil(w/d) = Theta(b/n) passes ->
+  Theta((b/n)*2^(n/2)) steps, b-dependent: WORSE than the merge for alpha=1/2.

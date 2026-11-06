@@ -1,0 +1,13 @@
+namespace Scratch
+
+-- core Lean only. Probe: how to prove 0 < 2 ^ w for arbitrary w?
+example (w : Nat) : 0 < 2 ^ w := by
+  induction w with
+  | zero => decide
+  | succ k ih => rw [Nat.pow_succ]; omega
+
+example (w : Nat) : 0 < 2 ^ w := by
+  rw [Nat.pow_pos (by decide) (by omega)]  -- try 2-arg
+  sorry
+
+end Scratch
