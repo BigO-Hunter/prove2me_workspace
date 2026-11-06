@@ -18,6 +18,7 @@ import Definitions.Def_IntMul_MultitapeModel
 import Definitions.Def_IntMul_KappaFramework
 import Definitions.Def_IntMul_KappaJainData
 import Definitions.Def_IntMul_Kappa_RG_Defs
+import Theorems.Thm_IntMul_Kappa_R6_rG_normalize
 
 set_option autoImplicit false
 
@@ -86,7 +87,8 @@ theorem r7_normalize (ab ac ε x C₁ κ : ℝ) (hab : 0 ≤ ab) (hac : 0 ≤ ac
     (hasm : CrudeAssembly ab ac (1 / 1000) ε x C₁ κ 576 (histRankSum Jain.cxR6)) :
     ∃ P : R6.Prm, R6.Prm.Ok P ∧ κ < R6.Prm.gap P ∧ P.τ = 1 - ab ∧ P.σ = 1 - ac ∧
       2 + 576 * Real.log (histRankSum Jain.cxR6) ≤ (P.C1 : ℝ) := by
-  sorry
+  exact R6.rG_normalize_sol_aux 576 (histRankSum Jain.cxR6) ab ac ε x C₁ κ
+    hτ hσ hab hac hasm
 
 /-- **(B) The round-seven staircase bit network** (witness 1: PR #62 producer, lifted frames,
 late copies, deferred readouts, V leaves, staircase entrance corner): an explicit
