@@ -91,11 +91,13 @@ theorem no_bitR8_dominated_witness_at_r7W
     (hframe : 529 * 108516254 ≤ histRankSum C.hist) :
     histMoment Jain.bitR8 529 1 < histMoment C.hist 529 1 := by
   rw [bitR8_tau1_mom_eq, hid]
-  have hc : ((529 * 108516254 : ℕ) : ℝ) = (529 : ℝ) * ((108516254 : ℕ) : ℝ) := by
-    push_cast; ring
-  have hcast : (529 : ℝ) * ((108516254 : ℕ) : ℝ) ≤ ((histRankSum C.hist : ℕ) : ℝ) := by
-    rw [hc]; exact_mod_cast hframe
-  exact lt_of_lt_of_le (by norm_num) (div_le_iff₀ (show (0 : ℝ) < 529 by norm_num)).mp hcast
+  have hnum : (55395128481 : ℝ) / 529 < 108516254 := by norm_num
+  have h1 : ((108516254 : ℕ) : ℝ) ≤ ((histRankSum C.hist : ℕ) : ℝ) / 529 := by
+    rw [le_div_iff₀ (show (0 : ℝ) < 529 by norm_num)]
+    have hc : (108516254 : ℕ) * 529 ≤ histRankSum C.hist := by
+      rw [Nat.mul_comm]; exact hframe
+    exact_mod_cast hc
+  linarith
 
 /-- Corollary: the τ = 1 domination conjunct of `bitR8_dom_witness` is unsatisfiable
 under the frame budget. -/
