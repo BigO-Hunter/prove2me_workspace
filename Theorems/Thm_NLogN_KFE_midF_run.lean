@@ -17,6 +17,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs12
 import Definitions.Def_IntMul_Kappa_R6_Defs14
 import Definitions.Def_IntMul_Kappa_R6_Defs16
 import Definitions.Def_IntMul_Kappa_R6_Defs20
+import Theorems.Thm_NLogN_KFE_preB_fsp
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -354,38 +355,6 @@ open AModel AModelL12
 section Chunks
 
 variable {α : Type*}
-
-/-- Element `i` of a concatenation of `X` blocks of uniform length `L`. -/
-theorem getElem_flatMap_range {f : ℕ → List α} {L : ℕ} :
-    ∀ (X : ℕ) (hf : ∀ x < X, (f x).length = L) (i : ℕ) (hi : i < X * L),
-      ((List.range X).flatMap f)[i]'(by rw [length_flatMap_range X hf]; exact hi) =
-        (f (i / L))[i % L]'(by
-          have hL : 0 < L := by
-            rcases Nat.eq_zero_or_pos L with h | h
-            · rw [h, Nat.mul_zero] at hi; omega
-            · exact h
-          have : i / L < X := (Nat.div_lt_iff_lt_mul hL).2 hi
-          rw [hf _ this]; exact Nat.mod_lt _ hL)
-  | 0, _, i, hi => by simp at hi
-  | X + 1, hf, i, hi => by
-    have hL : 0 < L := by
-      rcases Nat.eq_zero_or_pos L with h | h
-      · rw [h, Nat.mul_zero] at hi; omega
-      · exact h
-    have hf' : ∀ x < X, (f x).length = L := fun x hx => hf x (by omega)
-    have hlen := length_flatMap_range X hf'
-    simp only [List.range_succ, List.flatMap_append, List.flatMap_singleton]
-    by_cases h : i < X * L
-    · rw [List.getElem_append_left (by rw [hlen]; exact h)]
-      exact getElem_flatMap_range X hf' i h
-    · have hq : i / L = X := by
-        apply le_antisymm
-        · exact Nat.lt_succ_iff.1 ((Nat.div_lt_iff_lt_mul hL).2 hi)
-        · exact (Nat.le_div_iff_mul_le hL).2 (by omega)
-      rw [List.getElem_append_right (by rw [hlen]; omega)]
-      simp only [hlen, hq]
-      congr 1
-      rw [Nat.mod_eq_sub_mul_div, hq, Nat.mul_comm]
 
 end Chunks
 

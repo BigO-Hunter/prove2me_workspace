@@ -9,6 +9,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs11
 import Definitions.Def_IntMul_Kappa_R6_Defs12
 import Definitions.Def_IntMul_Kappa_R6_Defs14
 import Definitions.Def_IntMul_Kappa_R6_Defs16
+import Theorems.Thm_NLogN_KIL_Sp_pop
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -351,14 +352,6 @@ theorem top_encK {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ
 
 section
 variable (s : IState HS) (f : Fin HS → List ℤ)
-
-theorem Sp.pop {i : Fin HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l)
-    (ha : zsz a ≤ B) :
-    Sp (.pop i) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i l)) (2 * B + 2) := by
-  refine ⟨⟨hi, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [NLogN.RS.run]
-    rw [← encK_upd]; simp [hf]
-  · simp only [NLogN.RS.cost, top_encK hf]; omega
 
 theorem Sp.asg {i : Fin HS} {e : Ex HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56)
     (hf : f i = a :: l) (ha : zsz a ≤ B) (hc : e.Clean) (hok : e.ok (NLogN.KIL.encK s f)) (hl : e.Lin)
