@@ -43,8 +43,6 @@ open AModel Butterfly
 namespace Geo
 variable (g : Geo)
 
-theorem V_rec : g.V = g.recG.V * g.B := by simp only [V, S0, S1, S2, Geo.recG]; ring
-theorem Pos.recG {g : Geo} (h : g.Pos) : g.recG.Pos := ⟨h.q, h.n0, h.n1, h.n2, h.n3, Nat.one_pos⟩
 end Geo
 
 /-! ## Record arrays -/
@@ -140,16 +138,6 @@ section Geom
 
 variable {N0 N1 N2 N3 L R w : ℕ}
 
-theorem geoB_pos (h0 : 1 ≤ N0) (h1 : 1 ≤ N1) (h2 : 1 ≤ N2) (h3 : 1 ≤ N3) (hR : 1 ≤ R) :
-    (geoB N0 N1 N2 N3 L R w).Pos :=
-  ⟨by simp [geoB], h0, h1, h2, h3, by simp only [geoB]; positivity⟩
-
-theorem vol_rect : vol (rect N0 N1 N2 N3 L) = (geoB N0 N1 N2 N3 L R w).recG.V := by
-  simp [rect, vol, geoB, Geo.recG, Geo.V, Geo.S0, Geo.S1, Geo.S2]; ring
-
-theorem geoB_V : (geoB N0 N1 N2 N3 L R w).V = vol (rect N0 N1 N2 N3 L) * R * (2 * (w + 1)) := by
-  rw [Geo.V_rec, ← vol_rect (R := R) (w := w)]; simp [geoB]; ring
-
 end Geom
 
 /-! ## The slot row addition as a triple map -/
@@ -192,9 +180,6 @@ open IntMul RS KIL KFD KFE KFB KFL KFW KFH AModel Butterfly
 section Vals
 
 variable {N0 N1 N2 N3 K f ρ R w : ℕ} {px py : Fin 3} {t : IState HS}
-
-theorem PPos.geo (h : PPos N0 N1 N2 N3 K f ρ R) : (gB N0 N1 N2 N3 K f R w).Pos :=
-  geoB_pos h.n0 h.n1 h.n2 h.n3 h.r
 
 variable (hp : PPos N0 N1 N2 N3 K f ρ R) (hA : Agree (σMR N0 N1 N2 N3 K f ρ R w px py) t)
 include hp hA

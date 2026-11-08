@@ -374,11 +374,6 @@ open AModel AModelFac Matrix
 
 variable {R : Type*} [CommRing R] {W T m : ℕ} [NeZero W]
 
-lemma width_lt {m e w : ℕ} (he : m ≤ e) (hw : w < m) : w * (e / m) < e := by
-  have h1 : 1 ≤ e / m := (Nat.le_div_iff_mul_le (by omega)).2 (by omega)
-  have h2 : e / m * m ≤ e := Nat.div_mul_le_self e m
-  nlinarith
-
 lemma cH_lt (C : QHNet R W T m) {e : ℕ} (he : ¬ m ≤ e) : cH C e = e := by
   rw [cH, costH, if_neg he]; ring
 

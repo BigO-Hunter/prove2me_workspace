@@ -53,20 +53,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-/-! ## Frame -/
-
-/-! ## Compilation -/
-
-/-! ## Sequences and reasoning lemmas -/
-
-/-! ## Cost bounds -/
-
-theorem asgCost_le (i : Fin HS) (e : Ex HS) (s : IState HS) (B : ℕ) (h : e.Bnd s B)
-    (hi : zsz (s.top i) ≤ B) : asgCost i e s ≤ (e.size + 1) * 10 ^ 7 * (B + 2) ^ 2 := by
-  have h1 := Ex.cost_le s B e h
-  have h2 := Ex.zsz_eval_le s B e h
-  simp only [asgCost, moveCost]; nlinarith
-
 end RS
 
 end NLogN
@@ -86,44 +72,10 @@ namespace AModel
 
 open Matrix
 
-/-! ## 1. Mixed-radix basics -/
-
-lemma encode_decode {sh : Shape} {m : ℕ} (h : m < vol sh) : encode sh (decode sh m) = m := by
-  induction sh generalizing m with
-  | nil => simp at h; subst h; rfl
-  | cons q sh ih =>
-    simp only [vol_cons] at h
-    have hV : 0 < vol sh := Nat.pos_of_ne_zero (by rintro h'; simp [h'] at h)
-    have hq : m / vol sh < q := (Nat.div_lt_iff_lt_mul hV).2 h
-    simp only [decode, encode, List.headD_cons, List.tail_cons, Nat.mod_eq_of_lt hq,
-      ih (Nat.mod_lt m hV)]
-    exact Nat.div_add_mod' m (vol sh)
-
 /-! ## 2. Pull maps -/
 
 section Pull
 variable {α : Type*}
-
-/-- `pull` only depends on `g` at valid output addresses. -/
-lemma pull_congr {sh sh' : Shape} {g g' : List ℕ → List ℕ}
-    (h : ∀ a, Valid sh' a → g a = g' a) (d : α) (xs : List α) :
-    pull sh sh' g d xs = pull sh sh' g' d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  rw [getElem_pull, getElem_pull, h _ (valid_decode h₁)]
-
-/-- Composition of pulls. -/
-theorem pull_comp {sh sh' sh'' : Shape} (g g' : List ℕ → List ℕ)
-    (hg' : ∀ a, Valid sh'' a → Valid sh' (g' a)) (d : α) (xs : List α) :
-    pull sh' sh'' g' d (pull sh sh' g d xs) = pull sh sh'' (g ∘ g') d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  have hv := hg' _ (valid_decode h₁)
-  have hlt := encode_lt hv
-  rw [getElem_pull, getElem_pull, List.getD_eq_getElem _ _ (by simpa using hlt), getElem_pull,
-    decode_encode hv, Function.comp_apply]
 
 theorem pull_id {sh : Shape} (d : α) {xs : List α} (h : xs.length = vol sh) :
     pull sh sh id d xs = xs := by
@@ -451,16 +403,6 @@ namespace NLogN
 open IntMul RS
 
 namespace KIL
-
-/-! ## Elementary statements -/
-
-/-! ## Moving integers between stacks -/
-
-/-! ## Counted loops through a family of managed states -/
-
-/-! ## Expression side conditions on managed states -/
-
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
 
 end KIL
 
@@ -847,13 +789,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-/-! ## Push-list hygiene -/
-
-theorem RdOK.lt {r : Fin HS} (h : RdOK r) : r.val < 56 := by
-  rcases h with h | h
-  · rw [h]; decide
-  · exact h.2
-
 /-! ## Templates -/
 
 variable {m : ℕ}
@@ -883,17 +818,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-/-- An assignment of an arbitrary expression on a managed state (quadratic cost). -/
-theorem Sp.asgQ (s : IState HS) (f : Fin HS → List ℤ) {i : Fin HS} {e : Ex HS} {a : ℤ}
-    {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l) (ha : zsz a ≤ B) (hc : e.Clean)
-    (hok : e.ok (encK s f)) (hB : e.Bnd (encK s f) B) :
-    Sp (.asg i e) (encK s f) (encK s (Function.update f i (e.eval (encK s f) :: l)))
-      ((e.size + 1) * 10 ^ 7 * (B + 2) ^ 2) := by
-  refine ⟨⟨hi, hc, hok, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [RS.run]
-    rw [← encK_upd]; simp [hf, ints]
-  · exact asgCost_le i e _ B hB (by rw [top_encK hf]; exact ha)
-
 end NLogN.KIL
 
 end
@@ -919,49 +843,7 @@ open IntMul RS AModel AModelL12
 
 namespace NE
 
-theorem size_toEx : ∀ e : NE, e.toEx.size = e.size
-  | reg _ | lit _ => rfl
-  | add a b | mul a b | div a b | mod a b => by
-      simp only [toEx, Ex.size, size, size_toEx a, size_toEx b]
-  | sub a b => by simp only [toEx, Ex.size, size, size_toEx a, size_toEx b]; ring
-  | lt a b x y => by
-      simp only [toEx, Ex.size, size, size_toEx a, size_toEx b, size_toEx x, size_toEx y]; ring
-
-theorem regs_toEx : ∀ e : NE, e.toEx.regs = e.regs
-  | reg _ | lit _ => rfl
-  | add a b | mul a b | div a b | mod a b => by
-      simp only [toEx, Ex.regs, regs, regs_toEx a, regs_toEx b]
-  | sub a b => by simp only [toEx, Ex.regs, regs, regs_toEx a, regs_toEx b]
-  | lt a b x y => by
-      simp only [toEx, Ex.regs, regs, regs_toEx a, regs_toEx b, regs_toEx x, regs_toEx y,
-        List.append_assoc]
-
-theorem clean {e : NE} (h : e.RegsLt) : e.toEx.Clean := by
-  intro i hi
-  rw [regs_toEx] at hi
-  exact clean_of_lt (h i hi) i (by simp [Ex.regs])
-
 end NE
-
-/-! ## Managed-state statements -/
-
-/-- The registers of `e` hold naturals in the managed state. -/
-theorem NE.holds_encK {s : IState HS} {f : Fin HS → List ℤ} {v : Fin HS → ℕ} {e : NE}
-    (h : ∀ i ∈ e.regs, ∃ L, f i = (v i : ℤ) :: L) : NE.Holds (encK s f) v e := by
-  intro i hi
-  obtain ⟨L, hL⟩ := h i hi
-  exact ⟨ints L ++ s.G i, by simp [hL, ints]⟩
-
-theorem Sp.asgN (s : IState HS) (f : Fin HS → List ℤ) {i : Fin HS} (e : NE) (v : Fin HS → ℕ)
-    {a : ℤ} {l : List ℤ} {M B : ℕ} (hi : i.val < 56) (hf : f i = a :: l) (ha : zsz a ≤ B)
-    (hM : zsz (M : ℤ) ≤ B) (hr : e.RegsLt) (hh : ∀ j ∈ e.regs, ∃ L, f j = (v j : ℤ) :: L)
-    (hok : e.OK v M) :
-    Sp (.asg i e.toEx) (encK s f) (encK s (Function.update f i ((e.val v : ℤ) :: l)))
-      ((e.size + 1) * 10 ^ 7 * (B + 2) ^ 2) := by
-  obtain ⟨o, b, ev⟩ := NE.good hM e (NE.holds_encK hh) hok
-  have H := Sp.asgQ s f (i := i) (e := e.toEx) (B := B) hi hf ha (NE.clean hr) o b
-  rw [ev, NE.size_toEx] at H
-  exact H
 
 end NLogN.KIL
 
@@ -984,48 +866,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-theorem regState_mem {F : Fin HS → List ℤ} {v : Fin HS → ℕ} {D : List (Fin HS)} {i : Fin HS}
-    (h : i ∈ D) : regState F v D i = (v i : ℤ) :: F i := by simp [regState, h]
-
-theorem regState_nmem {F : Fin HS → List ℤ} {v : Fin HS → ℕ} {D : List (Fin HS)} {i : Fin HS}
-    (h : i ∉ D) : regState F v D i = F i := by simp [regState, h]
-
-theorem regState_upd_mem (F : Fin HS → List ℤ) (v : Fin HS → ℕ) {D : List (Fin HS)} {i : Fin HS}
-    (h : i ∈ D) (x : ℕ) :
-    Function.update (regState F v D) i ((x : ℤ) :: F i) = regState F (Function.update v i x) D := by
-  funext j
-  by_cases hj : j = i
-  · subst hj; simp [regState, h]
-  · simp [regState, Function.update_apply, hj]
-
-theorem RegsIn.holds {F : Fin HS → List ℤ} {v : Fin HS → ℕ} {D : List (Fin HS)} {e : NE}
-    (h : RegsIn F v D e) : ∀ j ∈ e.regs, ∃ L, regState F v D j = (v j : ℤ) :: L := by
-  intro j hj
-  rcases (h j hj).2 with hd | ⟨L, hL⟩
-  · exact ⟨F j, regState_mem hd⟩
-  · by_cases hd : j ∈ D
-    · exact ⟨F j, regState_mem hd⟩
-    · exact ⟨L, by rw [regState_nmem hd, hL]⟩
-
-theorem RegsIn.lt {F : Fin HS → List ℤ} {v : Fin HS → ℕ} {D : List (Fin HS)} {e : NE}
-    (h : RegsIn F v D e) : e.RegsLt := fun j hj => (h j hj).1
-
-/-! ## Assignment lists -/
-
-theorem Sp.asgs (s : IState HS) (F : Fin HS → List ℤ) (D : List (Fin HS)) {M B : ℕ}
-    (hM : zsz (M : ℤ) ≤ B) :
-    ∀ (L : List (Fin HS × NE)) (v : Fin HS → ℕ), OKA F D M L v →
-      Sp (asgL L) (encK s (regState F v D)) (encK s (regState F (evalA L v) D))
-        (szA L * 10 ^ 7 * (B + 2) ^ 2)
-  | [], v, _ => (Sp.skip _).mono (by simp only [szA]; have := Nat.one_le_two_pow (n := 0); nlinarith)
-  | (i, e) :: L, v, ⟨hD, hi, hvi, hr, hok, hL⟩ => by
-      have h1 := Sp.asgN s (regState F v D) e v hi (regState_mem hD)
-        (le_trans (zsz_nat_le hvi) hM) hM hr.lt hr.holds hok
-      rw [regState_upd_mem F v hD] at h1
-      have h2 := Sp.asgs s F D hM L _ hL
-      refine (h1.seq h2).mono ?_
-      simp only [szA, evalA]; ring_nf; rfl
 
 /-! ## Creating and removing the file -/
 
@@ -1108,15 +948,6 @@ open IntMul AModel
 namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-/-! ## Prologue / epilogue of a unary counter pair -/
-
-/-! ## The core: blocks, then copy the output back -/
-
-/-! ## The program -/
-
-theorem zsz_nat_le (n : ℕ) : zsz (n : ℤ) ≤ n :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
 
 end KFC
 

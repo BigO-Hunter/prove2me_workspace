@@ -62,10 +62,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
 
-/-! ## The table loop -/
-
-theorem zb {v M : ℤ} {Bb : ℕ} (h0 : 0 ≤ v) (h : v ≤ M) (hM : zsz M ≤ Bb) : zsz v ≤ Bb :=
-  le_trans (zsz_mono (by omega)) hM
 end NLogN.KFL
 
 end
@@ -89,13 +85,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -137,11 +126,6 @@ namespace NLogN.KFW
 
 open IntMul NLogN.RS KFD
 
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
-
 end NLogN.KFW
 
 end
@@ -172,8 +156,6 @@ open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 namespace ExV
 
 variable {σ : Fin HS → Option ℤ} {B : ℕ}
-
-theorem congr {e : Ex HS} {x y : ℤ} (h : ExV σ e x B) (hxy : x = y) : ExV σ e y B := hxy ▸ h
 
 end ExV
 
@@ -206,40 +188,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-/-! ## Reading pushed assignments -/
-
-theorem σPush_ne : ∀ (l : List (Fin HS × ℤ)) (σ : Fin HS → Option ℤ) (i : Fin HS),
-    (∀ p ∈ l, p.1 ≠ i) → σPush σ l i = σ i
-  | [], _, _, _ => rfl
-  | (j, v) :: l, σ, i, h => by
-    simp only [σPush]
-    rw [σPush_ne l _ i (fun p hp => h p (List.mem_cons_of_mem _ hp)),
-      Function.update_of_ne (fun e => h (j, v) List.mem_cons_self e.symm)]
-
-theorem σPush_cases : ∀ (l : List (Fin HS × ℤ)) (σ : Fin HS → Option ℤ) (i : Fin HS) (v : ℤ),
-    σPush σ l i = some v → (∃ p ∈ l, p.1 = i) ∨ σ i = some v
-  | [], _, _, _, h => Or.inr h
-  | (j, u) :: l, σ, i, v, h => by
-    simp only [σPush] at h
-    rcases σPush_cases l _ i v h with ⟨p, hp, hpi⟩ | h'
-    · exact Or.inl ⟨p, List.mem_cons_of_mem _ hp, hpi⟩
-    · by_cases hij : i = j
-      · exact Or.inl ⟨(j, u), List.mem_cons_self, hij.symm⟩
-      · rw [Function.update_of_ne hij] at h'; exact Or.inr h'
-
-theorem σPush_mem : ∀ (l : List (Fin HS × ℤ)) (σ : Fin HS → Option ℤ) (i : Fin HS) (v : ℤ),
-    (l.map Prod.fst).Nodup → (i, v) ∈ l → σPush σ l i = some v
-  | [], _, _, _, _, h => absurd h (by simp)
-  | (j, u) :: l, σ, i, v, hnd, h => by
-    simp only [List.map_cons, List.nodup_cons] at hnd
-    simp only [σPush]
-    rcases List.mem_cons.1 h with e | h'
-    · simp only [Prod.mk.injEq] at e
-      obtain ⟨rfl, rfl⟩ := e
-      rw [σPush_ne l _ i (fun p hp e => hnd.1 (by rw [← e]; exact List.mem_map_of_mem hp)),
-        Function.update_self]
-    · exact σPush_mem l _ i v hnd.2 h'
-
 /-! ## Level registers -/
 
 /-! ## Phase-pass registers and the `ZD` pass -/
@@ -266,11 +214,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-/-! ## The node frame -/
-
-theorem ExC.congr {σ : Fin HS → Option ℤ} {e : Ex HS} {x y : ℤ} {c : ℕ} (h : ExC σ e x c)
-    (hxy : x = y) : ExC σ e y c := hxy ▸ h
 
 end NLogN.KFW
 
@@ -343,9 +286,6 @@ variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
 variable {σ : Fin HS → Option ℤ} {U V : IStmt HS Pp} {f g h : Fin HS → List ℤ} {c c' : ℕ}
 
-theorem RunQ.congr {g' : Fin HS → List ℤ} (H : RunQ I iprog σ U f g c) (he : g = g') :
-    RunQ I iprog σ U f g' c := he ▸ H
-
 end Run
 
 /-! ## From `SImplQ` to a fixed run -/
@@ -381,17 +321,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-/-! ## Register facts -/
-
-theorem BaseR.push {σ : Fin HS → Option ℤ} (h : BaseR σ) (vl : List (Fin HS × ℤ))
-    (hv : ∀ p ∈ vl, p.1.val < 56 ∧ p.1 ∉ gT ∧ p.1 ∉ pT) : BaseR (σPush σ vl) := by
-  refine ⟨fun i hi => ?_, fun i hi => ?_, fun i v hiv => ?_⟩
-  · rw [σPush_ne vl σ i (fun p hp e => (hv p hp).2.1 (e ▸ hi))]; exact h.off i hi
-  · rw [σPush_ne vl σ i (fun p hp e => (hv p hp).2.2 (e ▸ hi))]; exact h.offp i hi
-  · rcases σPush_cases vl σ i v hiv with ⟨p, hp, rfl⟩ | h'
-    · exact (hv p hp).1
-    · exact h.lt i v h'
-
 end NLogN.KFW
 
 namespace NLogN.KFW
@@ -421,37 +350,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-/-! ## Expression frames -/
-
-/-! ## The phase `S_D` -/
-
-/-- Size bounds of the layer. -/
-theorem layer_bounds {K S r P D : ℕ} (hS : 1 ≤ S) (hP : 1 ≤ P) (hr : 1 ≤ r) :
-    1 ≤ P * 2 ^ (K * D) * S * r ∧ S * r ≤ P * 2 ^ (K * D) * S * r ∧
-    P ≤ P * 2 ^ (K * D) * S * r ∧ 2 ^ (K * D) ≤ P * 2 ^ (K * D) * S * r ∧
-    K * D < 2 ^ (K * D) := by
-  have h2 : 1 ≤ 2 ^ (K * D) := Nat.one_le_two_pow
-  have hKD : K * D < 2 ^ (K * D) := Nat.lt_two_pow_self
-  have a1 : 1 ≤ P * 2 ^ (K * D) := Nat.mul_le_mul hP h2
-  refine ⟨?_, ?_, ?_, ?_, hKD⟩
-  · have := Nat.mul_le_mul (Nat.mul_le_mul a1 hS) hr; simpa using this
-  · have := Nat.mul_le_mul_right (S * r) a1
-    calc S * r = 1 * (S * r) := (one_mul _).symm
-      _ ≤ P * 2 ^ (K * D) * (S * r) := this
-      _ = _ := by ring
-  · have : 1 ≤ 2 ^ (K * D) * S * r := by
-      have := Nat.mul_le_mul (Nat.mul_le_mul h2 hS) hr; simpa using this
-    have := Nat.mul_le_mul_left P this
-    calc P = P * 1 := (mul_one _).symm
-      _ ≤ P * (2 ^ (K * D) * S * r) := this
-      _ = _ := by ring
-  · have : 1 ≤ P * S * r := by
-      have := Nat.mul_le_mul (Nat.mul_le_mul hP hS) hr; simpa using this
-    have := Nat.mul_le_mul_left (2 ^ (K * D)) this
-    calc 2 ^ (K * D) = 2 ^ (K * D) * 1 := (mul_one _).symm
-      _ ≤ 2 ^ (K * D) * (P * S * r) := this
-      _ = _ := by ring
 
 end NLogN.KFW
 

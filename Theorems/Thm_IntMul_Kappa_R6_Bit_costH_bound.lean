@@ -103,44 +103,6 @@ open AModel AModelFac Matrix
 
 variable {R : Type*} [CommRing R] {W T m : ℕ} [NeZero W]
 
-lemma instrCost_lin {Wr : Type*} (child : ℕ × ℕ × ℕ → ℝ → ℝ)
-    (hc : ∀ ρ v, child ρ v = v * child ρ 1) (V : ℝ) (i : Instr Wr R m) :
-    instrCost child (V / W) i = V * instrCost child (1 / W) i := by
-  cases i with
-  | gate g S => simp only [instrCost]; ring
-  | edge w e =>
-    simp only [instrCost]
-    rw [List.map_congr_left (fun ρ _ => hc ρ (V / W)), List.sum_map_mul_left,
-      List.map_congr_left (l := e.runs) (fun ρ _ => hc ρ (1 / W)), List.sum_map_mul_left]
-    ring
-
-lemma sum_map_mul {α : Type*} (l : List α) (f : α → ℝ) (V : ℝ) :
-    (l.map fun a => V * f a).sum = V * (l.map f).sum := List.sum_map_mul_left _ _ _
-
-/-- The cost is linear in the volume. -/
-theorem costH_lin (C : QHNet R W T m) : ∀ e V, costH C e V = V * costH C e 1 := by
-  intro e
-  induction e using Nat.strong_induction_on with
-  | _ e ih =>
-  intro V
-  rw [costH, costH]
-  split_ifs with he
-  · have hc : ∀ (ρ : ℕ × ℕ × ℕ) (v : ℝ),
-        (if ρ.2.2 * (e / m) < e then costH C (ρ.2.2 * (e / m)) v else 0) =
-          v * (if ρ.2.2 * (e / m) < e then costH C (ρ.2.2 * (e / m)) 1 else 0) := by
-      intro ρ v
-      split_ifs with h
-      · exact ih _ h v
-      · ring
-    rw [List.map_congr_left (fun i _ => instrCost_lin _ hc V i), sum_map_mul]
-    ring
-  · ring
-
-lemma width_lt {m e w : ℕ} (he : m ≤ e) (hw : w < m) : w * (e / m) < e := by
-  have h1 : 1 ≤ e / m := (Nat.le_div_iff_mul_le (by omega)).2 (by omega)
-  have h2 : e / m * m ≤ e := Nat.div_mul_le_self e m
-  nlinarith
-
 lemma cH_lt (C : QHNet R W T m) {e : ℕ} (he : ¬ m ≤ e) : cH C e = e := by
   rw [cH, costH, if_neg he]; ring
 

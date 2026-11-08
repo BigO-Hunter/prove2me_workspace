@@ -36,19 +36,6 @@ namespace AModel
 
 open Matrix
 
-/-! ## 1. Mixed-radix basics -/
-
-lemma encode_decode {sh : Shape} {m : ℕ} (h : m < vol sh) : encode sh (decode sh m) = m := by
-  induction sh generalizing m with
-  | nil => simp at h; subst h; rfl
-  | cons q sh ih =>
-    simp only [vol_cons] at h
-    have hV : 0 < vol sh := Nat.pos_of_ne_zero (by rintro h'; simp [h'] at h)
-    have hq : m / vol sh < q := (Nat.div_lt_iff_lt_mul hV).2 h
-    simp only [decode, encode, List.headD_cons, List.tail_cons, Nat.mod_eq_of_lt hq,
-      ih (Nat.mod_lt m hV)]
-    exact Nat.div_add_mod' m (vol sh)
-
 /-! ## 2. Pull maps -/
 
 /-! ## 3. Active fields -/
@@ -102,11 +89,6 @@ namespace AModel
 
 section Reshape
 
-lemma length_decode (sh : Shape) (m : ℕ) : (decode sh m).length = sh.length := by
-  induction sh generalizing m with
-  | nil => rfl
-  | cons q sh ih => simp [decode, ih]
-
 end Reshape
 
 /-! ## 2. Block swaps -/
@@ -152,16 +134,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-/-! ## Bits as integers -/
-
-theorem bits_enc2 (ys : List (ZMod 2)) : Bits (enc2 ys) := by
-  intro x hx
-  simp only [enc2, List.mem_map] at hx
-  obtain ⟨a, -, rfl⟩ := hx
-  fin_cases a
-  · left; rfl
-  · right; rfl
 
 /-! ## Sequences of statements -/
 
@@ -219,19 +191,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Ghost stacks -/
-
-/-! ## The simulation -/
-
-/-! ## Top level -/
-
-/-! ## Coarse transfer: `fcost ≤ 100 · cost` -/
-
-/-! ## Fine specifications -/
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
-
 /-! ## Loops -/
 
 /-! ## Literal-to-register simulation -/
@@ -269,17 +228,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD
 
-/-! ## Pushing a linear combination -/
-
-/-! ## The zip loop -/
-
-/-! ## One block -/
-
-theorem Cnt.congr {s : IState HS} {f g : Fin HS → List ℤ} {B1 : ℕ} (h : Cnt s f B1)
-    (h1 : g rB = f rB) (h2 : g rB2 = f rB2) (h3 : g rB4 = f rB4) : Cnt s g B1 :=
-  ⟨by simp only [encK_G, h1]; exact h.b, by simp only [encK_G, h2]; exact h.b2,
-    by simp only [encK_G, h3]; exact h.b4⟩
-
 /-! ## A group of blocks, and the whole pass -/
 
 /-! ## Fine compilability -/
@@ -315,66 +263,9 @@ namespace NLogN.KFH
 
 open IntMul RS AModel KIL KFD KFB Complex
 
-/-! ## Mixed-radix arithmetic -/
-
-theorem encode_set : ∀ (sh : Shape) (a : List ℕ) (k v : ℕ), k < a.length → a.length ≤ sh.length →
-    ((encode sh (a.set k v) : ℕ) : ℤ) = encode sh a + ((v : ℤ) - a.getD k 0) * vol (sh.drop (k + 1))
-  | [], a, k, v, h, h' => by simp only [List.length_nil] at h'; omega
-  | q :: sh, [], k, v, h, _ => by simp at h
-  | q :: sh, x :: a, 0, v, _, _ => by
-    simp only [List.set_cons_zero, encode, List.headD_cons, List.tail_cons, List.getD_cons_zero,
-      List.drop_succ_cons, List.drop_zero]
-    push_cast; ring
-  | q :: sh, x :: a, k + 1, v, h, h' => by
-    simp only [List.length_cons] at h h'
-    simp only [List.set_cons_succ, encode, List.headD_cons, List.tail_cons, List.getD_cons_succ,
-      List.drop_succ_cons]
-    push_cast
-    rw [encode_set sh a k v (by omega) (by omega)]; ring
-
-theorem vol_pos_of_valid {sh : Shape} {a : List ℕ} (h : Valid sh a) : 0 < vol sh := by
-  have := encode_lt h; omega
-
-theorem getD_digit : ∀ (sh : Shape) (a : List ℕ) (k : ℕ), Valid sh a → k < a.length →
-    a.getD k 0 = encode sh a / vol (sh.drop (k + 1)) % sh.getD k 0
-  | [], a, k, h, hk => by cases h; simp at hk
-  | q :: sh, [], k, h, hk => by simp at hk
-  | q :: sh, x :: a, 0, h, _ => by
-    obtain ⟨hx, hr⟩ := List.forall₂_cons.1 h
-    have he := encode_lt hr
-    have hV : 0 < vol sh := by omega
-    simp only [List.getD_cons_zero, encode, List.headD_cons, List.tail_cons, List.drop_succ_cons,
-      List.drop_zero, List.getD_cons_zero]
-    rw [show x * vol sh + encode sh a = encode sh a + vol sh * x by ring,
-      Nat.add_mul_div_left _ _ hV, Nat.div_eq_of_lt he, zero_add, Nat.mod_eq_of_lt hx]
-  | q :: sh, x :: a, k + 1, h, hk => by
-    obtain ⟨hx, hr⟩ := List.forall₂_cons.1 h
-    simp only [List.length_cons] at hk
-    have ih := getD_digit sh a k hr (by omega)
-    simp only [List.getD_cons_succ, encode, List.headD_cons, List.tail_cons, List.drop_succ_cons]
-    rw [ih]
-    have hsl : k < sh.length := by rw [← hr.length_eq]; omega
-    have hV' : 0 < vol (sh.drop (k + 1)) :=
-      vol_pos_of_valid (List.forall₂_drop (k + 1) hr)
-    have hT : vol sh = vol (sh.take (k + 1)) * vol (sh.drop (k + 1)) := by
-      simp only [vol]; rw [List.prod_take_mul_prod_drop]
-    obtain ⟨u, hu⟩ : sh.getD k 0 ∣ vol (sh.take (k + 1)) := by
-      rw [show sh.take (k + 1) = sh.take k ++ [sh[k]] from (List.take_concat_get' sh k hsl).symm]
-      simp only [vol, List.prod_append, List.prod_singleton]
-      rw [List.getD_eq_getElem _ _ hsl]; exact Dvd.intro_left _ rfl
-    rw [hT, hu, show x * (sh.getD k 0 * u * vol (sh.drop (k + 1))) + encode sh a =
-      encode sh a + vol (sh.drop (k + 1)) * (x * u * sh.getD k 0) by ring,
-      Nat.add_mul_div_left _ _ hV', Nat.add_mul_mod_self_right]
-
 /-! ## The layer layout -/
 
 variable {P K D S ρ : ℕ}
-
-/-! ## The kernel pass on records -/
-
-theorem RecRep.getD {r F : ℕ} {zs : List GI} {xs : List (Fin r → ℂ)} (h : RecRep r F zs xs)
-    {j : ℕ} (hj : j < xs.length) (c : Fin r) :
-    toC (zs.getD (j * r + c) 0) = 2 ^ F * xs.getD j 0 c := h.2 j c hj
 
 /-! ## The self-contained pass -/
 
@@ -409,48 +300,6 @@ namespace NLogN.KFL
 
 open AModel
 
-/-! ## Chunk get / set -/
-
-theorem decomp (Q S n : ℕ) : n = n / (Q * S) * (Q * S) + gc Q S n * S + n % S := by
-  unfold gc
-  have h1 := Nat.div_add_mod n S
-  have h2 := Nat.div_add_mod (n / S) Q
-  rw [Nat.div_div_eq_div_mul] at h2
-  rw [mul_comm Q S]
-  nlinarith [h1, h2]
-
-theorem sc_int (Q S v n : ℕ) : (sc Q S v n : ℤ) = n + ((v : ℤ) - gc Q S n) * S := by
-  have h := decomp Q S n
-  unfold sc
-  have h' : (n : ℤ) = (n / (Q * S) * (Q * S) : ℕ) + (gc Q S n * S : ℕ) + (n % S : ℕ) := by
-    exact_mod_cast h
-  push_cast at h' ⊢
-  linarith
-
-theorem gc_lt {Q S : ℕ} (hQ : 0 < Q) (n : ℕ) : gc Q S n < Q := Nat.mod_lt _ hQ
-
-theorem div_sc {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
-    sc Q S v n / (Q * S) = n / (Q * S) := by
-  unfold sc
-  have hQS : 0 < Q * S := Nat.mul_pos (by omega) hS
-  have hr : v * S + n % S < Q * S := by
-    have := Nat.mod_lt n hS
-    have : v * S + S ≤ Q * S := by nlinarith
-    omega
-  rw [add_assoc, Nat.add_comm, Nat.add_mul_div_right _ _ hQS, Nat.div_eq_of_lt hr, zero_add]
-
-/-- A chunk at a higher stride `S' = Q S m` is unchanged. -/
-theorem gc_sc_hi {Q S Q' S' m : ℕ} (hS : 0 < S) (hm : 0 < m) (hS' : S' = Q * S * m) {v : ℕ}
-    (hv : v < Q) (n : ℕ) : gc Q' S' (sc Q S v n) = gc Q' S' n := by
-  unfold gc
-  subst hS'
-  rw [← Nat.div_div_eq_div_mul (sc Q S v n), ← Nat.div_div_eq_div_mul n, div_sc hS hv]
-
-/-! ## Reindexing -/
-
-@[simp] theorem length_rix {α : Type*} (V : ℕ) (φ : ℕ → ℕ) (d : α) (xs : List α) :
-    (rix V φ d xs).length = V := by simp [rix]
-
 /-! ## Geometry and triple maps -/
 
 namespace Geo
@@ -459,128 +308,14 @@ variable (g : Geo)
 
 variable {g}
 
-theorem vol_sh8 : vol g.sh8 = g.V := by
-  simp [sh8, V, S0, S1, S2, vol]; ring
-
 end Geo
-
-theorem TV_trOf {g : Geo} (hg : g.Pos) (n : ℕ) : TV g.Q (trOf g n) :=
-  ⟨gc_lt hg.q _, gc_lt hg.q _, gc_lt hg.q _⟩
 
 section Phi
 
 variable {g : Geo} (hg : g.Pos)
 include hg
 
-theorem gc1_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S1 (sc g.Q g.S2 v n) = gc g.Q g.S1 n :=
-  gc_sc_hi hg.s2 hg.n2 rfl hv n
-
-theorem gc0_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (sc g.Q g.S2 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s2 (Nat.mul_pos hg.n2 (Nat.mul_pos hg.q hg.n1))
-    (by simp only [Geo.S0, Geo.S1]; ring) hv n
-
-theorem gc0_sc1 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (sc g.Q g.S1 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s1 hg.n1 rfl hv n
-
-/-- Integer formula of `phi`. -/
-theorem phi_int {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) (n : ℕ) :
-    (phi g F n : ℤ) = n + (((F (trOf g n)).1 : ℤ) - (trOf g n).1) * g.S0 +
-      (((F (trOf g n)).2.1 : ℤ) - (trOf g n).2.1) * g.S1 +
-      (((F (trOf g n)).2.2 : ℤ) - (trOf g n).2.2) * g.S2 := by
-  obtain ⟨h0, h1, h2⟩ := hF _ (TV_trOf hg n)
-  show ((sc g.Q g.S0 (F (trOf g n)).1 (sc g.Q g.S1 (F (trOf g n)).2.1
-    (sc g.Q g.S2 (F (trOf g n)).2.2 n)) : ℕ) : ℤ) = _
-  generalize F (trOf g n) = c at h0 h1 h2 ⊢
-  rw [sc_int, sc_int, sc_int, gc0_sc1 hg _ _ h1, gc0_sc2 hg _ _ h2, gc1_sc2 hg _ _ h2]
-  simp only [trOf]; ring
-
 end Phi
-
-/-! ## Lemma 12 swaps as triple maps -/
-
-/-- Digits of `decode sh8`. -/
-theorem decode_getD (g : Geo) (hg : g.Pos) {j : ℕ} (hj : j < g.V) (k : ℕ) (hk : k < 8) :
-    (decode g.sh8 j).getD k 0 = j / vol (g.sh8.drop (k + 1)) % g.sh8.getD k 0 := by
-  have hj' : j < vol g.sh8 := by rw [Geo.vol_sh8]; exact hj
-  have hv := valid_decode hj'
-  have := KFH.getD_digit g.sh8 (decode g.sh8 j) k hv (by rw [length_decode]; simp [Geo.sh8]; omega)
-  rwa [encode_decode hj'] at this
-
-theorem vol_drop2 (g : Geo) : vol (g.sh8.drop 2) = g.S0 := by
-  simp [Geo.sh8, Geo.S0, Geo.S1, Geo.S2, vol]; ring
-theorem vol_drop4 (g : Geo) : vol (g.sh8.drop 4) = g.S1 := by
-  simp [Geo.sh8, Geo.S1, Geo.S2, vol]; ring
-theorem vol_drop6 (g : Geo) : vol (g.sh8.drop 6) = g.S2 := by
-  simp [Geo.sh8, Geo.S2, vol]
-
-theorem dig1 (g : Geo) (hg : g.Pos) {j : ℕ} (hj : j < g.V) :
-    (decode g.sh8 j).getD 1 0 = gc g.Q g.S0 j := by
-  rw [decode_getD g hg hj 1 (by norm_num), vol_drop2]; rfl
-theorem dig3 (g : Geo) (hg : g.Pos) {j : ℕ} (hj : j < g.V) :
-    (decode g.sh8 j).getD 3 0 = gc g.Q g.S1 j := by
-  rw [decode_getD g hg hj 3 (by norm_num), vol_drop4]; rfl
-theorem dig5 (g : Geo) (hg : g.Pos) {j : ℕ} (hj : j < g.V) :
-    (decode g.sh8 j).getD 5 0 = gc g.Q g.S2 j := by
-  rw [decode_getD g hg hj 5 (by norm_num), vol_drop6]; rfl
-
-/-- `encode` of a two-digit swap. -/
-theorem encode_swapPos (sh : Shape) (a : List ℕ) {p q : ℕ} (hpq : p ≠ q) (hp : p < a.length)
-    (hq : q < a.length) (hl : a.length ≤ sh.length) :
-    (encode sh (swapPos p q a) : ℤ) = encode sh a +
-      ((a.getD q 0 : ℤ) - a.getD p 0) * vol (sh.drop (p + 1)) +
-      ((a.getD p 0 : ℤ) - a.getD q 0) * vol (sh.drop (q + 1)) := by
-  unfold swapPos
-  rw [KFH.encode_set sh _ q _ (by simpa using hq) (by simpa using hl),
-    KFH.encode_set sh a p _ hp hl]
-  have : (a.set p (a.getD q 0)).getD q 0 = a.getD q 0 := by
-    simp [List.getD_eq_getElem?_getD, List.getElem?_set, hpq]
-  rw [this]
-
-theorem TV_sw01 {Q : ℕ} (c : Tr) (h : TV Q c) : TV Q (sw01 c) := ⟨h.2.1, h.1, h.2.2⟩
-theorem TV_sw12 {Q : ℕ} (c : Tr) (h : TV Q c) : TV Q (sw12 c) := ⟨h.1, h.2.2, h.2.1⟩
-theorem TV_sw02 {Q : ℕ} (c : Tr) (h : TV Q c) : TV Q (sw02 c) := ⟨h.2.2, h.2.1, h.1⟩
-
-theorem pull_swap_gen (g : Geo) (hg : g.Pos) {p q : ℕ} (F : Tr → Tr)
-    (hF : ∀ c, TV g.Q c → TV g.Q (F c)) (hpq : p ≠ q) (hp : p < 8) (hq : q < 8)
-    (h : ∀ j < g.V, (encode g.sh8 (swapPos p q (decode g.sh8 j)) : ℤ) = phi g F j)
-    (xs : List ℤ) : pull g.sh8 g.sh8 (swapPos p q) 0 xs = rixT g F xs := by
-  apply List.ext_getElem (by simp [rixT, Geo.vol_sh8])
-  intro j h1 h2
-  simp only [length_pull, Geo.vol_sh8] at h1
-  rw [getElem_pull]
-  simp only [rixT, rix, List.getElem_map, List.getElem_range]
-  congr 1
-  exact_mod_cast h j h1
-
-theorem swap_int (g : Geo) (hg : g.Pos) {j : ℕ} (hj : j < g.V) {p q : ℕ} (hpq : p ≠ q)
-    (hp : p < 8) (hq : q < 8) :
-    (encode g.sh8 (swapPos p q (decode g.sh8 j)) : ℤ) = j +
-      (((decode g.sh8 j).getD q 0 : ℤ) - (decode g.sh8 j).getD p 0) * vol (g.sh8.drop (p + 1)) +
-      (((decode g.sh8 j).getD p 0 : ℤ) - (decode g.sh8 j).getD q 0) * vol (g.sh8.drop (q + 1)) := by
-  have hj' : j < vol g.sh8 := by rw [Geo.vol_sh8]; exact hj
-  have hl : (decode g.sh8 j).length = 8 := by rw [length_decode]; rfl
-  rw [encode_swapPos g.sh8 _ hpq (by omega) (by omega) (by rw [hl]; rfl), encode_decode hj']
-
-theorem pull_swap13 (g : Geo) (hg : g.Pos) (xs : List ℤ) :
-    pull g.sh8 g.sh8 (swapPos 1 3) 0 xs = rixT g sw01 xs := by
-  refine pull_swap_gen g hg sw01 TV_sw01 (by norm_num) (by norm_num) (by norm_num) (fun j hj => ?_) xs
-  rw [swap_int g hg hj (by norm_num) (by norm_num) (by norm_num), phi_int hg TV_sw01,
-    dig1 g hg hj, dig3 g hg hj, vol_drop2, vol_drop4]
-  simp only [trOf, sw01]; ring
-
-theorem pull_swap35 (g : Geo) (hg : g.Pos) (xs : List ℤ) :
-    pull g.sh8 g.sh8 (swapPos 3 5) 0 xs = rixT g sw12 xs := by
-  refine pull_swap_gen g hg sw12 TV_sw12 (by norm_num) (by norm_num) (by norm_num) (fun j hj => ?_) xs
-  rw [swap_int g hg hj (by norm_num) (by norm_num) (by norm_num), phi_int hg TV_sw12,
-    dig3 g hg hj, dig5 g hg hj, vol_drop4, vol_drop6]
-  simp only [trOf, sw12]; ring
-
-theorem pull_swap15 (g : Geo) (hg : g.Pos) (xs : List ℤ) :
-    pull g.sh8 g.sh8 (swapPos 1 5) 0 xs = rixT g sw02 xs := by
-  refine pull_swap_gen g hg sw02 TV_sw02 (by norm_num) (by norm_num) (by norm_num) (fun j hj => ?_) xs
-  rw [swap_int g hg hj (by norm_num) (by norm_num) (by norm_num), phi_int hg TV_sw02,
-    dig1 g hg hj, dig5 g hg hj, vol_drop2, vol_drop6]
-  simp only [trOf, sw02]; ring
 
 /-! ## Block rotations (`rotF` views) -/
 
@@ -611,13 +346,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD KFE KFB AModel AModelL12 NetProp7
 
-/-! ## Bit lists and the three geometry swaps -/
-
-theorem bits_enc2 (zs : List ℤ) (h : Bits zs) : enc2 (zs.map fun z : ℤ => (Int.cast z : ZMod 2)) = zs := by
-  simp only [enc2, List.map_map]
-  conv_rhs => rw [← List.map_id zs]
-  refine List.map_congr_left (fun z hz => ?_)
-  rcases h z hz with rfl | rfl <;> rfl
 end NLogN.KFL
 
 end

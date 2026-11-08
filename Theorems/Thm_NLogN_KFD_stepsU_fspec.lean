@@ -16,9 +16,6 @@ open Matrix
 section Pull
 variable {α : Type*}
 
-@[simp] lemma length_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) :
-    (AModel.pull sh sh' g d xs).length = AModel.vol sh' := by simp [AModel.pull]
-
 end Pull
 
 variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q)
@@ -64,8 +61,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
 end NLogN
 
 namespace NLogN
@@ -90,13 +85,6 @@ namespace IRuns
 
 end IRuns
 
-@[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
-    (s.upd i L).upd i L' = s.upd i L' := by
-  simp [IState.upd]
-
-@[simp] theorem IState.upd_self (s : IState S) (i : Fin S) : s.upd i (s.G i) = s := by
-  simp [IState.upd]
-
 end NLogN
 
 end
@@ -104,8 +92,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
 
 end NLogN
 
@@ -121,15 +107,6 @@ open IntMul AModel
 
 variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q) {Pp : ℕ} {I : List Sym}
   {iprog : Fin Pp → IStmt HS Pp}
-
-theorem bnd_pull {sh' : Shape} {g : List ℕ → List ℕ} {Bb : ℕ} {xs : List ℤ} (h : Bnd Bb xs) :
-    Bnd Bb (AModel.pull sh' sh g 0 xs) := by
-  intro a ha
-  simp only [AModel.pull, List.mem_map] at ha
-  obtain ⟨j, -, rfl⟩ := ha
-  by_cases hj : encode sh' (g (decode sh j)) < xs.length
-  · rw [List.getD_eq_getElem _ _ hj]; exact h _ (List.getElem_mem hj)
-  · rw [List.getD_eq_default _ _ (by omega), zsz_zero]; exact Nat.zero_le _
 
 end NLogN.KIL
 
@@ -149,18 +126,6 @@ namespace KFD
 open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-theorem FSp.mono {p : RS} {s t : IState HS} {c c' : ℕ} (h : FSp p s t c) (hc : c ≤ c') :
-    FSp p s t c' := ⟨h.1, h.2.1, le_trans h.2.2 hc⟩
-
-theorem FSp.seq {a b : RS} {s t u : IState HS} {c1 c2 : ℕ} (ha : FSp a s t c1) (hb : FSp b t u c2) :
-    FSp (.seq a b) s u (c1 + c2) := by
-  refine ⟨⟨ha.1, ?_⟩, ?_, ?_⟩
-  · rw [ha.2.1]; exact hb.1
-  · simp only [RS.run, ha.2.1, hb.2.1]
-  · simp only [fcost]; rw [ha.2.1]; have := ha.2.2; have := hb.2.2; omega
-
-theorem FSp.skip (s : IState HS) : FSp .skip s s 1 := ⟨trivial, rfl, le_rfl⟩
 
 end KFD
 

@@ -321,9 +321,7 @@ namespace R6Chk
 
 theorem nxor (x y : ℕ) : Nat.xor x y = x ^^^ y := rfl
 
-theorem nshl (x y : ℕ) : Nat.shiftLeft x y = x <<< y := rfl
 theorem nmul (x y : ℕ) : Nat.mul x y = x * y := rfl
-theorem nadd (x y : ℕ) : Nat.add x y = x + y := rfl
 theorem nsub (x y : ℕ) : Nat.sub x y = x - y := rfl
 theorem nmod (x y : ℕ) : Nat.mod x y = x % y := rfl
 theorem ndiv (x y : ℕ) : Nat.div x y = x / y := rfl
@@ -703,10 +701,6 @@ namespace R6Chk.Bit
 
 open R6Chk
 
-theorem tb_eq (x i : ℕ) : tb x i = x.testBit i := by
-  rw [tb, nland, nshr, Nat.and_one_is_mod, Nat.testBit_eq_decide_div_mod_eq, Nat.shiftRight_eq_div_pow]
-  rcases Nat.mod_two_eq_zero_or_one (x / 2 ^ i) with h | h <;> rw [h] <;> rfl
-
 theorem testBit_fieldOf (X w i t : ℕ) :
     (fieldOf X w i).testBit t = (decide (t < w) && X.testBit (w * i + t)) := by
   rw [fieldOf, nland, nshr, nmul, nsub, nshl, Nat.one_shiftLeft, Nat.testBit_and,
@@ -819,8 +813,6 @@ theorem linIndep_of_modDual {d n q : ℕ} (hq : (1 : ZMod q) ≠ 0) (v y : Fin d
 /-! ## Bit helpers -/
 
 theorem nlor' (x y : ℕ) : Nat.lor x y = x ||| y := rfl
-
-theorem mem_F {m : ℕ} {p : Fin 23} : p ∈ F m ↔ m.testBit p = true := by simp [F]
 
 /-! ## Table facts -/
 
@@ -1993,29 +1985,6 @@ theorem genF_congr {W : List LInstr} {P : ℕ → Prop} (hW : ∀ i ∈ W, ∀ w
   obtain ⟨e1, e2⟩ := genF_congr_aux W P hW f g [] hfg
   exact ⟨by simp only [genF, e1], e2⟩
 
-theorem foldl_genStepF_acc : ∀ (W : List LInstr) (f : ℕ → ℕ) (acc : List LChunk),
-    W.foldl genStepF (f, acc) = ((W.foldl genStepF (f, [])).1, (W.foldl genStepF (f, [])).2 ++ acc)
-  | [], f, acc => rfl
-  | i :: W, f, acc => by
-    simp only [List.foldl_cons, genStepF]
-    rw [foldl_genStepF_acc W _ ((i.1, _, i.2.2) :: acc), foldl_genStepF_acc W _ [(i.1, _, i.2.2)]]
-    simp
-
-theorem genF_append (f : ℕ → ℕ) (W W' : List LInstr) :
-    genF f (W ++ W') = ((genF (genF f W).1 W').1, (genF f W).2 ++ (genF (genF f W).1 W').2) := by
-  simp only [genF, List.foldl_append]
-  rw [foldl_genStepF_acc W' _ (W.foldl genStepF (f, [])).2]
-  simp
-
-theorem genF_cons (f : ℕ → ℕ) (i : LInstr) (W : List LInstr) :
-    genF f (i :: W) = ((genF (i.2.1.foldl (mvF i.1) (f, [])).1 W).1,
-      (i.1, (i.2.1.foldl (mvF i.1) (f, [])).2.reverse, i.2.2) ::
-        (genF (i.2.1.foldl (mvF i.1) (f, [])).1 W).2) := by
-  have := genF_append f [i] W
-  simp only [List.singleton_append] at this
-  rw [this]
-  simp [genF, genStepF]
-
 theorem genF_nil (f : ℕ → ℕ) : genF f [] = (f, []) := rfl
 
 /-- A segment whose touched wires are all at the instruction codes emits no moves. -/
@@ -2062,59 +2031,6 @@ open R6Chk.Bit.Loc Matrix
 section LabGen
 
 variable {Wr : Type*} [Fintype Wr] [DecidableEq Wr] {R : Type*} [CommRing R] {m N : ℕ}
-
-theorem labGates_append (p q : List (Instr Wr R m)) (L : Wr → FMat m N) :
-    LabGates N (p ++ q) L ↔ LabGates N p L ∧ LabGates N q (p.foldl (labStepH N) L) := by
-  induction p generalizing L with
-  | nil => simp [LabGates]
-  | cons i p ih =>
-    simp only [List.cons_append, LabGates, List.foldl_cons]
-    rw [ih]; tauto
-
-theorem foldl_mvF_acc (c : ℕ) : ∀ (ts : List ℕ) (g : ℕ → ℕ) (acc : List (ℕ × ℕ)),
-    ts.foldl (mvF c) (g, acc) = ((ts.foldl (mvF c) (g, [])).1, (ts.foldl (mvF c) (g, [])).2 ++ acc)
-  | [], g, acc => rfl
-  | w :: ts, g, acc => by
-    simp only [List.foldl_cons, mvF]
-    split_ifs
-    · exact foldl_mvF_acc c ts g acc
-    · rw [foldl_mvF_acc c ts _ ((w, g w) :: acc), foldl_mvF_acc c ts _ [(w, g w)]]; simp
-
-theorem foldl_mvF_cons (c : ℕ) (w : ℕ) (ts : List ℕ) (g : ℕ → ℕ) :
-    (w :: ts).foldl (mvF c) (g, []) =
-      if g w = c then ts.foldl (mvF c) (g, [])
-      else ((ts.foldl (mvF c) (Function.update g w c, [])).1,
-        (ts.foldl (mvF c) (Function.update g w c, [])).2 ++ [(w, g w)]) := by
-  simp only [List.foldl_cons, mvF]
-  split_ifs
-  · rfl
-  · exact foldl_mvF_acc c ts _ _
-
-/-- The moved state: touched wires end at `c`, others keep their code. -/
-theorem foldl_mvF_state (c : ℕ) : ∀ (ts : List ℕ) (g : ℕ → ℕ),
-    (∀ w ∈ ts, (ts.foldl (mvF c) (g, [])).1 w = c) ∧
-      ∀ w, w ∉ ts → (ts.foldl (mvF c) (g, [])).1 w = g w
-  | [], g => ⟨by simp, fun _ _ => rfl⟩
-  | w :: ts, g => by
-    rw [foldl_mvF_cons]
-    split_ifs with h
-    · obtain ⟨h1, h2⟩ := foldl_mvF_state c ts g
-      refine ⟨fun x hx => ?_, fun x hx => h2 x (fun h' => hx (by simp [h']))⟩
-      rcases List.mem_cons.1 hx with rfl | hx
-      · by_cases hxt : x ∈ ts
-        · exact h1 x hxt
-        · rw [h2 x hxt, h]
-      · exact h1 x hx
-    · obtain ⟨h1, h2⟩ := foldl_mvF_state c ts (Function.update g w c)
-      refine ⟨fun x hx => ?_, fun x hx => ?_⟩
-      · rcases List.mem_cons.1 hx with rfl | hx
-        · by_cases hxt : x ∈ ts
-          · exact h1 x hxt
-          · rw [h2 x hxt]; simp
-        · exact h1 x hx
-      · have hx' : x ∉ ts := fun h' => hx (by simp [h'])
-        have hxw : x ≠ w := fun h' => hx (by simp [h'])
-        rw [h2 x hx', Function.update_of_ne hxw]
 
 variable (ι : ℕ → Wr) (D : ℕ → Prop) (lab : ℕ → FMat m N) (E : ℕ → ℕ → Edge m)
 

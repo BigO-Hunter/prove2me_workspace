@@ -37,9 +37,6 @@ namespace IntMul.Kappa.R6
 
 namespace Prm
 
-theorem gap_le_one_sub (P : Prm) : P.gap ≤ 1 - P.ε := by
-  unfold gap; simp only [min_le_iff, le_refl, true_or]
-
 end Prm
 
 end IntMul.Kappa.R6

@@ -23,10 +23,6 @@ namespace IRuns
 
 end IRuns
 
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
 end NLogN
 
 end
@@ -44,31 +40,6 @@ section Inj
 variable {f : Fin S → Fin S'} (hf : Function.Injective f)
 include hf
 
-theorem IState.embed_G (s : IState S) (t : IState S') (x : Fin S) :
-    (IState.embed f s t).G (f x) = s.G x := hf.extend_apply _ _ _
-
-omit hf in
-theorem IState.embed_G_of_not (s : IState S) (t : IState S') (y : Fin S') (hy : ∀ x, f x ≠ y) :
-    (IState.embed f s t).G y = t.G y :=
-  Function.extend_apply' _ _ _ (by rintro ⟨x, hx⟩; exact hy x hx)
-
-theorem IState.embed_upd (s : IState S) (t : IState S') (i : Fin S) (L : List Item) :
-    IState.embed f (s.upd i L) t = (IState.embed f s t).upd (f i) L := by
-  refine IState.ext' (fun y => ?_) rfl rfl
-  by_cases hy : ∃ x, f x = y
-  · obtain ⟨x, rfl⟩ := hy
-    rw [IState.embed_G hf, IState.upd_G, IState.upd_G, IState.embed_G hf]
-    by_cases h : x = i
-    · simp [h]
-    · simp [h, hf.ne h]
-  · push Not at hy
-    rw [IState.embed_G_of_not _ _ _ hy, IState.upd_G, if_neg (hy i).symm,
-      IState.embed_G_of_not _ _ _ hy]
-
-theorem IState.embed_cl (s : IState S) (t : IState S') (i : Fin S) :
-    (IState.embed f s t).cl (f i) = s.cl i := by
-  simp only [IState.cl, IState.embed_G hf]
-
 theorem IState.embed_pull (t : IState S') : IState.embed f (IState.pull f t) t = t := by
   refine IState.ext' (fun y => ?_) rfl rfl
   by_cases hy : ∃ x, f x = y
@@ -84,95 +55,6 @@ theorem IState.embed_eq_self (s : IState S) (t : IState S') (hG : ∀ x, t.G (f 
   subst this; exact IState.embed_pull hf t
 
 variable {I : List Sym}
-
-theorem IOp.Step.ren {o : IOp S} {s s' : IState S} {c : ℕ} (h : o.Step I s s' c)
-    (t : IState S') : (o.ren f).Step I (IState.embed f s t) (IState.embed f s' t) c := by
-  cases h with
-  | add hij hi hj =>
-    rename_i i j k a b Li Lj
-    have := IOp.Step.add (I := I) (s := IState.embed f s t) (k := f k) (hf.ne hij)
-      (by rw [IState.embed_G hf, hi]) (by rw [IState.embed_G hf, hj])
-    simp only [← IState.embed_upd hf, IState.embed_G hf] at this
-    exact this
-  | neg hi =>
-    have := IOp.Step.neg (I := I) (s := IState.embed f s t) (by rw [IState.embed_G hf, hi])
-    simp only [← IState.embed_upd hf] at this
-    exact this
-  | dup hij hi =>
-    have := IOp.Step.dup (I := I) (s := IState.embed f s t) (hf.ne hij)
-      (by rw [IState.embed_G hf, hi])
-    simp only [← IState.embed_upd hf, IState.embed_G hf] at this
-    exact this
-  | drop hi =>
-    have := IOp.Step.drop (I := I) (s := IState.embed f s t) (by rw [IState.embed_G hf, hi])
-    simp only [← IState.embed_upd hf] at this
-    exact this
-  | mv hij hi =>
-    have := IOp.Step.mv (I := I) (s := IState.embed f s t) (hf.ne hij)
-      (by rw [IState.embed_G hf, hi])
-    simp only [← IState.embed_upd hf, IState.embed_G hf] at this
-    exact this
-  | const c =>
-    rename_i i
-    have := IOp.Step.const (I := I) (s := IState.embed f s t) (i := f i) c
-    simp only [← IState.embed_upd hf, IState.embed_G hf] at this
-    exact this
-  | mark =>
-    rename_i i
-    have := IOp.Step.mark (I := I) (s := IState.embed f s t) (i := f i)
-    simp only [← IState.embed_upd hf, IState.embed_G hf] at this
-    exact this
-  | unmark hi =>
-    have := IOp.Step.unmark (I := I) (s := IState.embed f s t) (by rw [IState.embed_G hf, hi])
-    simp only [← IState.embed_upd hf] at this
-    exact this
-  | shl hij hi hj =>
-    have := IOp.Step.shl (I := I) (s := IState.embed f s t) (hf.ne hij)
-      (by rw [IState.embed_G hf, hi]) (by rw [IState.embed_G hf, hj])
-    simp only [← IState.embed_upd hf] at this
-    exact this
-  | split hij hik hjk hi hj =>
-    have := IOp.Step.split (I := I) (s := IState.embed f s t) (hf.ne hij) (hf.ne hik)
-      (hf.ne hjk) (by rw [IState.embed_G hf, hi]) (by rw [IState.embed_G hf, hj])
-    simp only [← IState.embed_upd hf, IState.embed_G hf] at this
-    exact this
-  | read W hij hs0 hs1 hk hstop =>
-    have := IOp.Step.read (I := I) (s := IState.embed f s t) W (hf.ne hij) hs0 hs1 hk hstop
-    simp only [← IState.embed_upd hf, IState.embed_G hf] at this
-    exact this
-  | write hij hn hi hj =>
-    have := IOp.Step.write (I := I) (s := IState.embed f s t) (hf.ne hij) hn
-      (by rw [IState.embed_G hf, hi]) (by rw [IState.embed_G hf, hj])
-    simp only [← IState.embed_upd hf] at this
-    exact this
-  | cat hij hik hjk ha hb hi hj hk =>
-    have := IOp.Step.cat (I := I) (s := IState.embed f s t) (hf.ne hij) (hf.ne hik) (hf.ne hjk)
-      ha hb (by rw [IState.embed_G hf, hi]) (by rw [IState.embed_G hf, hj])
-      (by rw [IState.embed_G hf, hk])
-    simp only [← IState.embed_upd hf] at this
-    exact this
-
-/-- **Simulation**: a renamed program runs on the embedded states, with the same cost. -/
-theorem IExec.ren {iprog : Fin P → IStmt S P} {iprog' : Fin P' → IStmt S' P'} {g : Fin P → Fin P'}
-    (hprog : ∀ j, iprog' (g j) = (iprog j).ren f g) {p : IStmt S P} {s s' : IState S} {c : ℕ}
-    (h : IExec I iprog p s s' c) (t : IState S') :
-    IExec I iprog' (p.ren f g) (IState.embed f s t) (IState.embed f s' t) c := by
-  induction h with
-  | skip s => exact .skip _
-  | op h => exact .op (h.ren hf t)
-  | seq _ _ ih₁ ih₂ => exact .seq ih₁ ih₂
-  | iteT hc _ ih => exact .iteT (by rw [IState.embed_cl hf]; exact hc) ih
-  | iteF hc _ ih => exact .iteF (by rw [IState.embed_cl hf]; exact hc) ih
-  | loopT hc _ _ ih₁ ih₂ => exact .loopT (by rw [IState.embed_cl hf]; exact hc) ih₁ ih₂
-  | loopF hc => exact .loopF (by rw [IState.embed_cl hf]; exact hc)
-  | call _ ih => exact .call (by rw [hprog]; exact ih)
-
-theorem IRuns.ren {iprog : Fin P → IStmt S P} {iprog' : Fin P' → IStmt S' P'} {g : Fin P → Fin P'}
-    (hprog : ∀ j, iprog' (g j) = (iprog j).ren f g) {p : IStmt S P} {s s' : IState S} {c : ℕ}
-    (h : IRuns I iprog p s s' c) (t : IState S') :
-    IRuns I iprog' (p.ren f g) (IState.embed f s t) (IState.embed f s' t) c := by
-  obtain ⟨c', hc, h⟩ := h
-  exact ⟨c', hc, IExec.ren hf hprog h t⟩
 
 /-- Simulation started from a state `t` that agrees with `s` through `f`. -/
 theorem IRuns.ren' {iprog : Fin P → IStmt S P} {iprog' : Fin P' → IStmt S' P'}

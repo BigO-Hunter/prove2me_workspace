@@ -52,32 +52,6 @@ namespace AModel
 
 section BlockSwap
 
-lemma getElem_permIdx (f : ℕ → ℕ) (a : List ℕ) (k : ℕ) (hk : k < (permIdx f a).length) :
-    (permIdx f a)[k] = a.getD (f k) 0 := by simp [permIdx]
-
-lemma valid_permIdx {sh : Shape} {f : ℕ → ℕ} {a : List ℕ} (ha : Valid sh a)
-    (hf : ∀ k < sh.length, f k < sh.length ∧ sh.getD (f k) 0 = sh.getD k 0) :
-    Valid sh (permIdx f a) := by
-  obtain ⟨hl, hlt⟩ := (valid_iff sh a).1 ha
-  refine (valid_iff _ _).2 ⟨by simp [hl], fun k h₁ h₂ => ?_⟩
-  obtain ⟨hf1, hf2⟩ := hf k h₂
-  rw [getElem_permIdx, List.getD_eq_getElem _ _ (by omega), ← List.getD_eq_getElem sh 0 h₂,
-    ← hf2, List.getD_eq_getElem _ _ hf1]
-  exact hlt _ _ _
-
-lemma swapPos_eq_permIdx {p q : ℕ} {a : List ℕ} (hp : p < a.length) (hq : q < a.length) :
-    swapPos p q a = permIdx (swapIdx p q) a := by
-  apply List.ext_getElem (by simp [swapPos])
-  intro k h₁ h₂
-  simp only [length_permIdx] at h₂
-  rw [getElem_permIdx]
-  simp only [swapPos, List.getElem_set, swapIdx]
-  by_cases hkq : k = q
-  · subst hkq; simp
-  · by_cases hkp : k = p
-    · subst hkp; simp [hkq, Ne.symm hkq]
-    · simp [hkq, hkp, Ne.symm hkq, Ne.symm hkp, List.getElem?_eq_getElem h₂]
-
 /-! ### Segments of a block-swapped address -/
 
 /-! ### Merging both runs -/
@@ -89,17 +63,6 @@ end BlockSwap
 /-! ## 4. Counting runs -/
 
 section Runs
-
-lemma valid_swapPos {sh : Shape} {p q : ℕ} (hp : p < sh.length) (hq : q < sh.length)
-    (hs : sh.getD p 0 = sh.getD q 0) {a : List ℕ} (ha : Valid sh a) :
-    Valid sh (swapPos p q a) := by
-  rw [swapPos_eq_permIdx (by rw [ha.length_eq]; exact hp) (by rw [ha.length_eq]; exact hq)]
-  refine valid_permIdx ha fun k hk => ?_
-  unfold swapIdx
-  split_ifs with h1 h2
-  · subst h1; exact ⟨hp, hs⟩
-  · subst h2; exact ⟨hq, hs.symm⟩
-  · exact ⟨hk, rfl⟩
 
 variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q) [NeZero Q]
 
@@ -215,28 +178,6 @@ variable {Q c}
 
 end Arith
 
-/-! ## Conditionals and the `c`-way branch -/
-
-theorem Sp.iteT {e : Ex HS} {a b : RS} {s t : IState HS} {ca Bb : ℕ} (hc : e.Clean)
-    (ho : e.ok s) (hl : e.Lin) (hB : e.Bnd s Bb) (hneg : e.eval s < 0) (ha : Sp a s t ca) :
-    Sp (.ite e a b) s t ((e.size + 1) * 2000 * (Bb + 2) + (2 * Bb + 2) + 25 + ca) := by
-  refine ⟨⟨hc, ho, by rw [if_pos hneg]; exact ha.1⟩, by simp [RS.run, hneg, ha.2.1], ?_⟩
-  have h1 := pushCost_le_lin e s Bb hl hB
-  have h2 := Ex.zsz_eval_le s Bb e hB
-  simp only [RS.cost, if_pos hneg]
-  have := ha.2.2
-  omega
-
-theorem Sp.iteF {e : Ex HS} {a b : RS} {s t : IState HS} {cb Bb : ℕ} (hc : e.Clean)
-    (ho : e.ok s) (hl : e.Lin) (hB : e.Bnd s Bb) (hpos : ¬ e.eval s < 0) (hb : Sp b s t cb) :
-    Sp (.ite e a b) s t ((e.size + 1) * 2000 * (Bb + 2) + (2 * Bb + 2) + 25 + cb) := by
-  refine ⟨⟨hc, ho, by rw [if_neg hpos]; exact hb.1⟩, by simp [RS.run, hpos, hb.2.1], ?_⟩
-  have h1 := pushCost_le_lin e s Bb hl hB
-  have h2 := Ex.zsz_eval_le s Bb e hB
-  simp only [RS.cost, if_neg hpos]
-  have := hb.2.2
-  omega
-
 /-! ## Stream stacks `35, …, 35 + c − 1` -/
 
 /-! ## The merge by residue (multiplication by `c`) -/
@@ -317,11 +258,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS
-
-theorem PV.of_G {π : PMap} {s t : IState HS} (hs : PV π s)
-    (h : ∀ i v, π i = some v → t.G i = s.G i) : PV π t := by
-  intro i v hi
-  rw [h i v hi]; exact hs i v hi
 
 /-! ## Parameter maps and states -/
 
@@ -430,31 +366,6 @@ namespace NLogN.KFL
 open IntMul KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-/-! ## The encoding -/
-
-theorem length_encW (w : ℕ) (z : ℤ) : (encW w z).length = w + 1 := by simp [encW]
-
-theorem length_bitsL (w : ℕ) (xs : List ℤ) : (bitsL w xs).length = xs.length * (w + 1) := by
-  induction xs with
-  | nil => simp [bitsL]
-  | cons x xs ih =>
-    simp only [bitsL, List.flatMap_cons, List.length_append, length_encW] at ih ⊢
-    rw [ih, List.length_cons]; ring
-
-theorem bits_encW (w : ℕ) (z : ℤ) : ∀ x ∈ encW w z, x = 0 ∨ x = 1 := by
-  intro x hx
-  simp only [encW, List.mem_cons, List.mem_map, List.mem_range] at hx
-  rcases hx with rfl | ⟨i, -, rfl⟩
-  · unfold sgnB; split_ifs <;> simp
-  · unfold bitN
-    rcases Nat.mod_two_eq_zero_or_one (z.natAbs / 2 ^ i) with h | h <;> rw [h] <;> simp
-
-theorem bits_bitsL (w : ℕ) (xs : List ℤ) : ∀ x ∈ bitsL w xs, x = 0 ∨ x = 1 := by
-  intro x hx
-  simp only [bitsL, List.mem_flatMap] at hx
-  obtain ⟨z, -, hz⟩ := hx
-  exact bits_encW w z x hz
 
 /-! ## Peeling `w` bits -/
 
@@ -574,25 +485,6 @@ namespace NLogN.KFV
 open IntMul KIL
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-theorem op_frame {o : IOp HS} {s t : IState HS} {c : ℕ} (h : o.Step I s t c) (j : Fin HS)
-    (hj : j ∉ opW o) : t.G j = s.G j := by
-  cases h <;> simp_all [opW, IState.upd_G]
-
-theorem exec_PV {π : PMap} {c : IStmt HS Pp} {s t : IState HS} {n : ℕ}
-    (h : IExec I iprog c s t n) (hw : NW π c) (hs : PV π s) : PV π t := by
-  induction h with
-  | skip => exact hs
-  | op hst =>
-    rename_i o s1 t1 c1
-    refine hs.of_G fun i v hv => op_frame hst i fun hm => ?_
-    have := hw i hm; rw [hv] at this; exact absurd this (by simp)
-  | seq _ _ ih1 ih2 => exact ih2 hw.2 (ih1 hw.1 hs)
-  | iteT _ _ ih => exact ih hw.1 hs
-  | iteF _ _ ih => exact ih hw.2 hs
-  | loopT _ _ _ ih1 ih2 => exact ih2 hw (ih1 hw hs)
-  | loopF _ => exact hs
-  | call _ _ => exact absurd hw id
 
 /-- **Simulation of runs.** -/
 theorem ISim.runs {π : PMap} {c c' : IStmt HS Pp} (hc : ISim I iprog π c c') (hw : NW π c)

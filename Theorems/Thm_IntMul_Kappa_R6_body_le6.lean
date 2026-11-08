@@ -141,18 +141,6 @@ open Finset
 
 namespace IntMul.OpenAI.RP
 
-/-! ### (38) and (45) -/
-
-/-! ### Axis lengths of the padded box -/
-
-lemma ell_spec (L d : ℕ) (hd : 0 < d) : L ≤ d * ell L d ∧ d * ell L d ≤ L + d - 1 := by
-  unfold ell
-  constructor
-  · have := Nat.lt_div_mul_add (a := L + d - 1) hd
-    rw [mul_comm]; omega
-  · have := Nat.div_mul_le_self (L + d - 1) d
-    rw [mul_comm]; exact this
-
 lemma mcnt_lt (L d : ℕ) (hd : 0 < d) : mcnt L d < d := by
   have := ell_spec L d hd; unfold mcnt; omega
 

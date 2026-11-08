@@ -21,13 +21,6 @@ namespace NLogN.KFN
 
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 
-theorem Xf_mono {r : ℕ} {Ψ : ℕ → ℕ} (hΨ : Monotone Ψ) : Monotone (Xf r Ψ) := by
-  intro a b h
-  unfold Xf
-  have := hΨ h
-  have : r * (a + 1) ≤ r * (b + 1) := Nat.mul_le_mul_left _ (by omega)
-  omega
-
 section LocalBounds
 
 variable {r Z : ℕ} {Ψ : ℕ → ℕ}
@@ -51,14 +44,6 @@ open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 section Mono
 
 variable {L s W A m : ℕ} {CR τ : ℝ}
-
-theorem cb_nonneg (hCR : 0 ≤ CR) (k : ℕ) : 0 ≤ cb L s W A m CR τ k := by
-  induction k with
-  | zero => simp [cb]
-  | succ k ih =>
-    simp only [cb]
-    have : (0 : ℝ) ≤ CR * ((m : ℝ) ^ k + 1) ^ τ := mul_nonneg hCR (by positivity)
-    positivity
 
 end Mono
 
@@ -89,65 +74,9 @@ variable {Pp : ℕ} {Isym : List Sym} {iprog : Fin Pp → IStmt HS Pp} {P K D S 
 
 end Wrap
 
-theorem gclass_of {W m s : ℕ} (J : Prop8IfaceR W m s)
-    (h : ∀ G, RStep.gate G ∈ J.net →
-      (∃ as : List KFG.Atom, (∀ a ∈ as, a.Ok W ∧ a.h ≤ 1) ∧ KFG.NoTS as ∧
-        G = KFG.gateMat W as) ∨
-      (∃ U : Finset (Fin W), G = Matrix.diagonal fun w => if w ∈ U then -1 else 1)) :
-    ∃ A, GClass J A := by
-  suffices H : ∀ l : List (RStep (Fin W) m), (∀ G, RStep.gate G ∈ l → RStep.gate G ∈ J.net) →
-      ∃ A, ∀ G, RStep.gate G ∈ l →
-        (∃ as : List KFG.Atom, as.length ≤ A ∧ (∀ a ∈ as, a.Ok W ∧ a.h ≤ 1) ∧ KFG.NoTS as ∧
-            G = KFG.gateMat W as) ∨
-          (∃ U : Finset (Fin W), G = Matrix.diagonal fun w => if w ∈ U then -1 else 1) by
-    obtain ⟨A, hA⟩ := H J.net (fun G hG => hG)
-    exact ⟨A, hA⟩
-  intro l
-  induction l with
-  | nil => exact fun _ => ⟨0, fun G hG => by simp at hG⟩
-  | cons a l ih =>
-    intro hl
-    obtain ⟨A, hA⟩ := ih fun G hG => hl G (List.mem_cons_of_mem _ hG)
-    have mono : ∀ A' G, A ≤ A' →
-        ((∃ as : List KFG.Atom, as.length ≤ A ∧ (∀ a ∈ as, a.Ok W ∧ a.h ≤ 1) ∧ KFG.NoTS as ∧
-            G = KFG.gateMat W as) ∨
-          (∃ U : Finset (Fin W), G = Matrix.diagonal fun w => if w ∈ U then -1 else 1)) →
-        ((∃ as : List KFG.Atom, as.length ≤ A' ∧ (∀ a ∈ as, a.Ok W ∧ a.h ≤ 1) ∧ KFG.NoTS as ∧
-            G = KFG.gateMat W as) ∨
-          (∃ U : Finset (Fin W), G = Matrix.diagonal fun w => if w ∈ U then -1 else 1)) := by
-      intro A' G hA' hG
-      rcases hG with ⟨as, h1, h2⟩ | h3
-      · exact Or.inl ⟨as, h1.trans hA', h2⟩
-      · exact Or.inr h3
-    cases a with
-    | gate G0 =>
-      rcases h G0 (hl G0 List.mem_cons_self) with ⟨as, h1, h2, h3⟩ | hU
-      · refine ⟨max A as.length, fun G hG => ?_⟩
-        rcases List.mem_cons.1 hG with he | hG'
-        · injection he with he; subst he
-          exact Or.inl ⟨as, le_max_right _ _, h1, h2, h3⟩
-        · exact mono _ G (le_max_left _ _) (hA G hG')
-      · refine ⟨A, fun G hG => ?_⟩
-        rcases List.mem_cons.1 hG with he | hG'
-        · injection he with he; subst he; exact Or.inr hU
-        · exact hA G hG'
-    | _ =>
-      refine ⟨A, fun G hG => ?_⟩
-      rcases List.mem_cons.1 hG with he | hG'
-      · cases he
-      · exact hA G hG'
-
-theorem complexIface_gclass : ∃ A, GClass P8Lift.complexIface A :=
-  gclass_of _ complexIface_gate_class
-
 section Main
 
 variable {Pp : ℕ} {Isym : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-theorem τ50_nonneg : 0 ≤ τ50 := by
-  unfold τ50
-  have : (2 : ℝ)⁻¹ ^ 50 ≤ 1 := pow_le_one₀ (by norm_num) (by norm_num)
-  linarith
 
 end Main
 

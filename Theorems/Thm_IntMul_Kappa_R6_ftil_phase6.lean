@@ -407,18 +407,6 @@ open Finset
 
 namespace IntMul.OpenAI.RP
 
-/-! ### (38) and (45) -/
-
-/-! ### Axis lengths of the padded box -/
-
-lemma ell_spec (L d : ℕ) (hd : 0 < d) : L ≤ d * ell L d ∧ d * ell L d ≤ L + d - 1 := by
-  unfold ell
-  constructor
-  · have := Nat.lt_div_mul_add (a := L + d - 1) hd
-    rw [mul_comm]; omega
-  · have := Nat.div_mul_le_self (L + d - 1) d
-    rw [mul_comm]; exact this
-
 lemma mcnt_lt (L d : ℕ) (hd : 0 < d) : mcnt L d < d := by
   have := ell_spec L d hd; unfold mcnt; omega
 
@@ -687,37 +675,9 @@ open Complex
 
 noncomputable section
 
-lemma hp_pos (p : ℕ) : 0 < hp p := by unfold hp; positivity
-
 section Arr
 
 variable {ι : Type*} [Fintype ι]
-
-lemma pi_le {f : ι → ℂ} {C : ℝ} (hC : 0 ≤ C) (h : ∀ i, ‖f i‖ ≤ C) : ‖f‖ ≤ C :=
-  (pi_norm_le_iff_of_nonneg hC).2 h
-
-lemma truncNum_grid (p : ℕ) (n : ℤ) : Butterfly.truncNum p ((n : ℝ) / 2 ^ p) = n := by
-  have h2 : (0 : ℝ) < 2 ^ p := by positivity
-  have e : (n : ℝ) / 2 ^ p * 2 ^ p = n := by field_simp
-  unfold Butterfly.truncNum
-  rw [e]
-  split_ifs <;> simp
-
-lemma truncR_idem (p : ℕ) (x : ℝ) : Butterfly.truncR p (Butterfly.truncR p x) = Butterfly.truncR p x := by
-  conv_lhs => rw [Butterfly.truncR]
-  unfold Butterfly.truncR
-  rw [truncNum_grid]
-
-lemma Qp_idem (p : ℕ) (z : ℂ) : Butterfly.Qp p (Butterfly.Qp p z) = Butterfly.Qp p z := by
-  apply Complex.ext <;> simp [Butterfly.Qp, truncR_idem]
-
-lemma QA_grid (p : ℕ) (f : ι → ℂ) : Grid p (QA p f) := by
-  funext i; exact Qp_idem p (f i)
-
-lemma norm_mul_le' (a b : ι → ℂ) : ‖a * b‖ ≤ ‖a‖ * ‖b‖ :=
-  pi_le (by positivity) fun i => by
-    rw [Pi.mul_apply, norm_mul]
-    exact mul_le_mul (norm_le_pi_norm a i) (norm_le_pi_norm b i) (norm_nonneg _) (norm_nonneg _)
 
 end Arr
 
@@ -728,28 +688,6 @@ end Arr
 section MC
 
 variable {ι : Type*} [Fintype ι]
-
-/-- The exact twisted convolution `θ⁻ · Mr(θ f, θ g)` is a bilinear contraction. -/
-lemma bilC_twist {Mr : (ι → ℂ) → (ι → ℂ) → (ι → ℂ)} (hMr : BilC Mr) {θ θi : ι → ℂ}
-    (hθ : ∀ i, ‖θ i‖ ≤ 1) (hθi : ∀ i, ‖θi i‖ ≤ 1) :
-    BilC fun f g => θi * Mr (θ * f) (θ * g) := by
-  have n1 : ‖θ‖ ≤ 1 := pi_le zero_le_one hθ
-  have n2 : ‖θi‖ ≤ 1 := pi_le zero_le_one hθi
-  refine ⟨fun a a' b b' => ?_, fun a b => ?_⟩
-  · have := hMr.sub (θ * a) (θ * a') (θ * b) (θ * b')
-    rw [show θ * a' - θ * a = θ * (a' - a) by ring, show θ * b' - θ * b = θ * (b' - b) by ring]
-      at this
-    rw [← mul_add, ← this]; ring
-  · refine (norm_mul_le' _ _).trans ?_
-    have h := hMr.le (θ * a) (θ * b)
-    have ha := norm_mul_le' θ a
-    have hb := norm_mul_le' θ b
-    have ha' : ‖θ * a‖ ≤ ‖a‖ := ha.trans (by nlinarith [norm_nonneg a])
-    have hb' : ‖θ * b‖ ≤ ‖b‖ := hb.trans (by nlinarith [norm_nonneg b])
-    calc ‖θi‖ * ‖Mr (θ * a) (θ * b)‖ ≤ 1 * (‖a‖ * ‖b‖) := by
-          apply mul_le_mul n2 (h.trans (mul_le_mul ha' hb' (norm_nonneg _) (norm_nonneg _)))
-            (norm_nonneg _) zero_le_one
-      _ = _ := one_mul _
 
 end MC
 
@@ -789,13 +727,6 @@ namespace NLogN.KFM
 open Complex IntMul.OpenAI.RT IntMul.OpenAI.RC
 
 noncomputable section
-
-/-! ## Averages -/
-
-lemma linC_clm {ι κ : Type*} [Fintype ι] [Fintype κ]
-    (L : (κ → ℂ) →L[ℂ] (ι → ℂ)) (h : ‖L‖ ≤ 1) : LinC (fun u => L u) :=
-  ⟨fun a b => (map_sub L a b).symm, fun a => (L.le_opNorm a).trans (by
-    nlinarith [norm_nonneg a])⟩
 
 variable {d : ℕ}
 
@@ -961,44 +892,6 @@ open IntMul KIL KFB IntMul.HvdH IntMul.OpenAI.RT IntMul.OpenAI.RC IntMul.OpenAI.
 noncomputable section
 
 variable {D : ℕ}
-
-/-- **One chirp call**: any `M̃r` within `Er · hp` of `mrX` on grid inputs, with the fixed phase
-tables, gives the chirp-step guarantee of `chain_close` (`hCt`). -/
-theorem chirp_call_err (p : ℕ) (s t : Fin (D + 1) → ℕ) [∀ i, NeZero (t i)]
-    (ht : ∀ i, Even (t i)) (ζ : ℂ) (hζ : ζ ^ t (Fin.last D) = -1)
-    {Mrt : (((i : Fin (D + 1)) → ZMod (t i)) → ℂ) → (((i : Fin (D + 1)) → ZMod (t i)) → ℂ) →
-      (((i : Fin (D + 1)) → ZMod (t i)) → ℂ)}
-    {θt θit at' bt : ((i : Fin (D + 1)) → ZMod (t i)) → ℂ} (Er : ℝ)
-    (hMrt : ∀ f g, Grid p f → Grid p g → ‖f‖ ≤ 1 → ‖g‖ ≤ 1 → ‖Mrt f g - mrX t f g‖ ≤ Er * hp p)
-    (hθ : Phases p (twX t ζ) θt) (hθi : Phases p (fun j => (twX t ζ j)⁻¹) θit)
-    (ha : Phases p (fun j => (starRingEnd ℂ) (chirp s t j)) at') (hb' : Phases p (chirp s t) bt)
-    (hbg : Grid p bt) (hEr : Er * hp p ≤ 1 / 10)
-    {x : ((i : Fin (D + 1)) → ZMod (t i)) → ℂ} (hx : ‖x‖ ≤ 6 / 10) :
-    ‖chirpT p (mcT p Mrt θt θit) bt at' x - Qperm s t (dftM t x)‖ ≤ (Er + 22) * hp p ∧
-      ‖chirpT p (mcT p Mrt θt θit) bt at' x‖ ≤ 1 ∧
-      Grid p (chirpT p (mcT p Mrt θt θit) bt at' x) := by
-  have h0 := hp_pos p
-  set MC : (((i : Fin (D + 1)) → ZMod (t i)) → ℂ) → (((i : Fin (D + 1)) → ZMod (t i)) → ℂ) →
-      (((i : Fin (D + 1)) → ZMod (t i)) → ℂ) :=
-    fun f g => (fun j => (twX t ζ j)⁻¹) * mrX t (twX t ζ * f) (twX t ζ * g) with hMC
-  have hMCb : BilC MC := bilC_twist (bilC_mrX t) hθ.e hθi.e
-  have hMCt : ∀ f g, Grid p f → Grid p g → ‖f‖ ≤ 1 → ‖g‖ ≤ 7 / 10 →
-      ‖mcT p Mrt θt θit f g - MC f g‖ ≤ (Er + 12) * hp p ∧ ‖mcT p Mrt θt θit f g‖ ≤ 1 := by
-    intro f g _ _ hf hg
-    obtain ⟨e1, e2⟩ := mc_err p (bilC_mrX t) Er hMrt hθ hθi hf hg (hEr.trans (by norm_num))
-    exact ⟨e1, e2.trans (by linarith)⟩
-  obtain ⟨e1, e2⟩ := chirp_err p hMCb (Er + 12) hMCt ha hb' hbg hx
-  refine ⟨?_, e2, QA_grid _ _⟩
-  have hQ : (fun j => (starRingEnd ℂ) (chirp s t j)) *
-      MC (chirp s t) ((fun j => (starRingEnd ℂ) (chirp s t j)) * x) = Qperm s t (dftM t x) := by
-    show (fun j => (starRingEnd ℂ) (chirp s t j)) *
-      ((fun j => (twX t ζ j)⁻¹) * mrX t (twX t ζ * chirp s t)
-        (twX t ζ * ((fun j => (starRingEnd ℂ) (chirp s t j)) * x))) = Qperm s t (dftM t x)
-    rw [mc_exact t ζ hζ]
-    exact chirp_exact s t ht x
-  rw [← hQ]
-  calc _ ≤ (Er + 12 + 10) * hp p := e1
-    _ = _ := by ring
 
 end
 
@@ -1257,9 +1150,6 @@ theorem QRegs.upd {t : IState HS} {n S : ℕ} (h : QRegs t n S) (j : Fin HS)
     QRegs (t.upd j L) n S :=
   ⟨h.hL.upd j hj.1 L, h.hN.upd j hj.2.1 L, h.hB.upd j hj.2.2.1 L, h.hD.upd j hj.2.2.2.1 L,
     h.hA.upd j hj.2.2.2.2.1 L, h.hS.upd j hj.2.2.2.2.2 L⟩
-
-theorem Hold.top {t : IState HS} {r : Fin HS} {a : ℤ} (h : Hold t r a) : t.top r = a := by
-  obtain ⟨L, hL⟩ := h; exact IState.top_eq hL
 
 end NLogN.KFM
 
@@ -1969,15 +1859,6 @@ noncomputable section
 section Chain
 
 variable {D : ℕ}
-
-theorem lemma20_6 {α : ℕ} {s t : Fin (D + 1) → ℕ} [∀ i, NeZero (s i)] [∀ i, NeZero (t i)]
-    (M : AxisMaps6 α s t) :
-    ‖tensCLM (kerA M.A)‖ ≤ 1 ∧ ‖tensCLM (kerB M.B)‖ ≤ 1 ∧
-      ∀ u, Rperm s t (dftM s u) = (2 : ℂ) ^ (2 * (D + 1) * α ^ 2) •
-        tensCLM (kerB M.B) (Qperm s t (dftM t (tensCLM (kerA M.A) u))) := by
-  obtain ⟨h1, h2, h3⟩ := tensor_of_lines_expl s t ((2 : ℂ) ^ (2 * α ^ 2)) M.A M.B M.hA M.hB M.hid
-  refine ⟨h1, h2, fun u => ?_⟩
-  rw [h3, ← pow_mul, show 2 * α ^ 2 * (D + 1) = 2 * (D + 1) * α ^ 2 by ring]
 
 theorem w_small6 (p α : ℕ) (s t : Fin (D + 1) → ℕ) [∀ i, NeZero (s i)] [∀ i, NeZero (t i)]
     (M : AxisMaps6 α s t) (εA : ℝ) (hεA : εA * hp p ≤ 1 / 10)

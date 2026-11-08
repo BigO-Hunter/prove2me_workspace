@@ -33,6 +33,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs2
 import Definitions.Def_IntMul_Kappa_K_Defs3
 import Definitions.Def_IntMul_Kappa_K_Defs17
 import Definitions.Def_IntMul_Kappa_K_Defs13
+import Definitions.Def_IntMul_Kappa_R6_Defs16
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -175,40 +176,6 @@ open IntMul RS AModel AModelL12
 
 namespace NE
 
-theorem size_toEx : ∀ e : NE, e.toEx.size = e.size
-  | reg _ | lit _ => rfl
-  | add a b | mul a b | div a b | mod a b => by
-      simp only [toEx, Ex.size, size, size_toEx a, size_toEx b]
-  | sub a b => by simp only [toEx, Ex.size, size, size_toEx a, size_toEx b]; ring
-  | lt a b x y => by
-      simp only [toEx, Ex.size, size, size_toEx a, size_toEx b, size_toEx x, size_toEx y]; ring
-
-theorem le_of_OK {v : Fin HS → ℕ} {M : ℕ} : ∀ e : NE, e.OK v M → e.val v ≤ M
-  | reg _, h | lit _, h => h
-  | add a b, h | mul a b, h => h.2.2
-  | sub a b, h => le_trans (Nat.sub_le _ _) (le_of_OK a h.1)
-  | div a b, h => le_trans (Nat.div_le_self _ _) (le_of_OK a h.1)
-  | mod a b, h => le_trans (Nat.mod_le _ _) (le_of_OK a h.1)
-  | lt a b x y, h => by
-      simp only [OK] at h; simp only [val]
-      split_ifs at h ⊢ with hc
-      · exact le_of_OK x h.2.2
-      · exact le_of_OK y h.2.2
-
-theorem regs_toEx : ∀ e : NE, e.toEx.regs = e.regs
-  | reg _ | lit _ => rfl
-  | add a b | mul a b | div a b | mod a b => by
-      simp only [toEx, Ex.regs, regs, regs_toEx a, regs_toEx b]
-  | sub a b => by simp only [toEx, Ex.regs, regs, regs_toEx a, regs_toEx b]
-  | lt a b x y => by
-      simp only [toEx, Ex.regs, regs, regs_toEx a, regs_toEx b, regs_toEx x, regs_toEx y,
-        List.append_assoc]
-
-theorem clean {e : NE} (h : e.RegsLt) : e.toEx.Clean := by
-  intro i hi
-  rw [regs_toEx] at hi
-  exact clean_of_lt (h i hi) i (by simp [Ex.regs])
-
 end NE
 
 /-! ## Managed-state statements -/
@@ -284,23 +251,9 @@ open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
 
-theorem layerShape_drop (P K D S i : ℕ) (hi : i < D) :
-    (Butterfly.layerShape P K D S).drop (i + 2) = List.replicate (D - (i + 1)) (2 ^ K) ++ [S] := by
-  simp only [Butterfly.layerShape, List.cons_append, List.drop_succ_cons]
-  rw [List.drop_append_of_le_length (by simp; omega), List.drop_replicate]
-
-theorem stS_eq (K D S i : ℕ) (hi : i < D) : stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S := by
-  simp [stS, layerShape_drop 1 K D S i hi, vol]
-
 theorem vol_layer (P K D S : ℕ) :
     vol (Butterfly.layerShape P K D S) = P * (2 ^ K) ^ D * S := by
   simp [Butterfly.layerShape, vol]; ring
-
-/-! ## The kernel pass on records -/
-
-theorem RecRep.getD {r F : ℕ} {zs : List GI} {xs : List (Fin r → ℂ)} (h : RecRep r F zs xs)
-    {j : ℕ} (hj : j < xs.length) (c : Fin r) :
-    toC (zs.getD (j * r + c) 0) = 2 ^ F * xs.getD j 0 c := h.2 j c hj
 
 /-! ## The self-contained pass -/
 
@@ -465,9 +418,6 @@ theorem SLaws.set_set {st : ι → ℕ} {n : ℕ} (h : SLaws st n) {j : ℕ} (hj
   rw [e]
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
-
-@[simp] theorem length_selOpF (st : ι → ℕ) (n : ℕ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
-    (xs : List M) : (selOpF st n T xs).length = n := by simp [selOpF]
 
 theorem getD_selOpF (st : ι → ℕ) (n : ℕ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
     (xs : List M) {j : ℕ} (hj : j < n) :

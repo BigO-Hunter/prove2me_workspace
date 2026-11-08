@@ -40,12 +40,6 @@ namespace NLogN.KFM
 
 open IntMul KFC KFB KFT KIL
 
-theorem norm_mul_le_one {X Y : ℂ} (hX : ‖X‖ ≤ 1) (hY : ‖Y‖ ≤ 1) : ‖X * Y‖ ≤ 1 := by
-  rw [norm_mul]; nlinarith [norm_nonneg X, norm_nonneg Y]
-
-theorem norm_pow_le_one {X : ℂ} (hX : ‖X‖ ≤ 1) (k : ℕ) : ‖X ^ k‖ ≤ 1 := by
-  rw [norm_pow]; exact pow_le_one₀ (norm_nonneg _) hX
-
 /-- A numerator within `1` of a point of the unit disc has `Δ + 2`-bit components. -/
 theorem zsz_of_near (Δ : ℕ) (z : GI) (Z : ℂ) (hZ : ‖Z‖ ≤ 1) (h : ‖vP Δ z - Z‖ ≤ 1) :
     zsz z.1 ≤ Δ + 2 ∧ zsz z.2 ≤ Δ + 2 := by

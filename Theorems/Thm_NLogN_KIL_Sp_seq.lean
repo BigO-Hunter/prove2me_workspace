@@ -19,3 +19,10 @@ theorem NLogN.KIL.Sp_seq {a b : NLogN.RS} {s t u : NLogN.IState NLogN.HS} {c1 c2
   · simp only [NLogN.RS.run, ha.2.1, hb.2.1]
   · simp only [NLogN.RS.cost]; rw [ha.2.1]; have := ha.2.2; have := hb.2.2; omega
 end
+
+-- Dotted alias restored by repair: downstream proofs use `S1.seq` dot notation on
+-- `NLogN.KIL.Sp` values; the bound itself is `NLogN.KIL.Sp_seq`.
+theorem NLogN.KIL.Sp.seq {a b : NLogN.RS} {s t u : NLogN.IState NLogN.HS} {c1 c2 : ℕ}
+    (ha : NLogN.KIL.Sp a s t c1) (hb : NLogN.KIL.Sp b t u c2) :
+    NLogN.KIL.Sp (.seq a b) s u (c1 + c2) :=
+  NLogN.KIL.Sp_seq ha hb

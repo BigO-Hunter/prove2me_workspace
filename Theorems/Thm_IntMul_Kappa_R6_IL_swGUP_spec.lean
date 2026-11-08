@@ -42,8 +42,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem ints_append (A B : List ℤ) : ints (A ++ B) = ints A ++ ints B := by simp [ints]
-
 end NLogN
 
 end
@@ -72,9 +70,6 @@ namespace AModel
 /-! ## 1. Reshape -/
 
 section Reshape
-
-lemma Valid.drop {sh : Shape} {a : List ℕ} (h : Valid sh a) (k : ℕ) :
-    Valid (sh.drop k) (a.drop k) := List.forall₂_drop k h
 
 end Reshape
 
@@ -141,19 +136,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 /-! ## The fine compilation and its cost -/
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-/-! ## Ghost stacks -/
-
-/-! ## The simulation -/
-
-/-! ## Top level -/
-
-/-! ## Coarse transfer: `fcost ≤ 100 · cost` -/
-
-/-! ## Fine specifications -/
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
 
 /-! ## Loops -/
 
@@ -230,17 +212,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD
-
-/-! ## Pushing a linear combination -/
-
-/-! ## The zip loop -/
-
-/-! ## One block -/
-
-theorem Cnt.congr {s : IState HS} {f g : Fin HS → List ℤ} {B1 : ℕ} (h : Cnt s f B1)
-    (h1 : g rB = f rB) (h2 : g rB2 = f rB2) (h3 : g rB4 = f rB4) : Cnt s g B1 :=
-  ⟨by simp only [encK_G, h1]; exact h.b, by simp only [encK_G, h2]; exact h.b2,
-    by simp only [encK_G, h3]; exact h.b4⟩
 
 /-! ## A group of blocks, and the whole pass -/
 
@@ -615,52 +586,7 @@ open IntMul RS KIL KFD KFB KFS AModel
 section StD
 variable (f : Fin HS → List ℤ) (D T W U P G S N X Y Lr A : List ℤ) (v : List ℤ)
 
-@[simp] theorem stD_upd_sW : Function.update (stD f D T W U P G S N X Y Lr A) sW v = stD f D T v U P G S N X Y Lr A := by
-  funext j; by_cases h : j = sW
-  · subst h; rw [Function.update_self]; rfl
-  · rw [Function.update_of_ne h]; simp only [stD, h, ↓reduceIte]
-
-@[simp] theorem stD_upd_sU : Function.update (stD f D T W U P G S N X Y Lr A) sU v = stD f D T W v P G S N X Y Lr A := by
-  funext j; by_cases h : j = sU
-  · subst h; rw [Function.update_self]; rfl
-  · rw [Function.update_of_ne h]; simp only [stD, h, ↓reduceIte]
-
-@[simp] theorem stD_upd_sP : Function.update (stD f D T W U P G S N X Y Lr A) sP v = stD f D T W U v G S N X Y Lr A := by
-  funext j; by_cases h : j = sP
-  · subst h; rw [Function.update_self]; rfl
-  · rw [Function.update_of_ne h]; simp only [stD, h, ↓reduceIte]
-
-@[simp] theorem stD_upd_sG : Function.update (stD f D T W U P G S N X Y Lr A) sG v = stD f D T W U P v S N X Y Lr A := by
-  funext j; by_cases h : j = sG
-  · subst h; rw [Function.update_self]; rfl
-  · rw [Function.update_of_ne h]; simp only [stD, h, ↓reduceIte]
-
-@[simp] theorem stD_upd_sS : Function.update (stD f D T W U P G S N X Y Lr A) sS v = stD f D T W U P G v N X Y Lr A := by
-  funext j; by_cases h : j = sS
-  · subst h; rw [Function.update_self]; rfl
-  · rw [Function.update_of_ne h]; simp only [stD, h, ↓reduceIte]
-
-@[simp] theorem stD_upd_sN : Function.update (stD f D T W U P G S N X Y Lr A) sN v = stD f D T W U P G S v X Y Lr A := by
-  funext j; by_cases h : j = sN
-  · subst h; rw [Function.update_self]; rfl
-  · rw [Function.update_of_ne h]; simp only [stD, h, ↓reduceIte]
-
-theorem stD_other {j : Fin HS} (hj : j ∉ [dS, sT, sW, sU, sP, sG, sS, sN, xp, xq, xL, aS]) :
-    stD f D T W U P G S N X Y Lr A j = f j := by
-  simp only [List.mem_cons, List.not_mem_nil, or_false, not_or] at hj
-  simp [stD, hj.1, hj.2.1, hj.2.2.1, hj.2.2.2.1, hj.2.2.2.2.1, hj.2.2.2.2.2.1, hj.2.2.2.2.2.2.1,
-    hj.2.2.2.2.2.2.2.1, hj.2.2.2.2.2.2.2.2.1, hj.2.2.2.2.2.2.2.2.2.1, hj.2.2.2.2.2.2.2.2.2.2.1,
-    hj.2.2.2.2.2.2.2.2.2.2.2]
-
-@[simp] theorem stD_zero : stD f D T W U P G S N X Y Lr A 0 = f 0 := stD_other f D T W U P G S N X Y Lr A (by decide)
-
 end StD
-
-theorem prod_take_le {sh : List ℕ} (hsh : ∀ a ∈ sh, 1 ≤ a) (k : ℕ) : (sh.take k).prod ≤ sh.prod :=
-  (List.take_sublist k sh).prod_le_prod' hsh
-
-theorem prod_drop_le {sh : List ℕ} (hsh : ∀ a ∈ sh, 1 ≤ a) (k : ℕ) : (sh.drop k).prod ≤ sh.prod :=
-  (List.drop_sublist k sh).prod_le_prod' hsh
 
 end NLogN.KFW
 

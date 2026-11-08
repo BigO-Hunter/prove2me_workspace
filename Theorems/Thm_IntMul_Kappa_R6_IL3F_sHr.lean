@@ -370,15 +370,21 @@ namespace IntMul.Kappa.R6.IL3F
 open IntMul.Kappa.R6.IL2 IntMul.Kappa.R6.IL
 open IntMul NLogN RS NLogN.KIL NLogN.KFD NLogN.KFE NLogN.KFB NLogN.KFL NLogN.KFW NLogN.KFH
   NLogN.KFX AModel Butterfly
-
-/-! ## The row-addition parameters for label dimension `m` -/
-
-theorem rowσ_at {m : ℕ} (F K e t S0 B r H : ℕ) (i j : Fin m) (q : Fin 10) :
+theorem rowσ_atM {m : ℕ} (F K e t S0 B r H : ℕ) (i j : Fin m) (q : Fin 10) :
     rowσ m F K e t S0 B r H i j (KFW.rowR q) = some (rowVals m F K e t S0 B r H i j q) := by
   have hq := q.isLt
   unfold rowσ KFW.rowR
   rw [dif_pos (by simp only; omega)]
   congr 2; ext; simp
+
+/-! ## The shape factors -/
+
+/-! ## Specifications of the parameter expressions -/
+
+/-! ## The shape factors -/
+
+/-! ## Specifications of the parameter expressions -/
+
 
 /-! ## The shape factors -/
 
@@ -459,7 +465,7 @@ include hp hA hBb
 omit hp hBb in
 theorem sPr (q : Fin 10) (hb : zsz (rowVals m F K e T S0 B r H i j q) ≤ Bb) :
     ESp (pr q) u Bb (rowVals m F K e T S0 B r H i j q) :=
-  ESp.ofAgree hA (rowσ_at F K e T S0 B r H i j q)
+  ESp.ofAgree hA (rowσ_atM F K e T S0 B r H i j q)
     (by have := q.isLt; simp only [KFW.rowR]; omega) hb
 
 omit hp hBb in

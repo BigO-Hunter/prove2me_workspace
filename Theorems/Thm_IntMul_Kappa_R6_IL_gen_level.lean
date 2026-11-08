@@ -103,16 +103,6 @@ open IntMul RS
 
 namespace KIL
 
-/-! ## Elementary statements -/
-
-/-! ## Moving integers between stacks -/
-
-/-! ## Counted loops through a family of managed states -/
-
-/-! ## Expression side conditions on managed states -/
-
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
-
 end KIL
 
 end NLogN
@@ -152,13 +142,6 @@ section Proofs
 
 variable (s : IState HS) {Q Bb : ℕ}
 
-theorem vol_le_of_pos : ∀ (A : Shape), (∀ a ∈ A, 1 ≤ a) → 1 ≤ vol A
-  | [], _ => le_rfl
-  | a :: A, h => by
-    rw [vol_cons]
-    exact Nat.one_le_iff_ne_zero.2 (Nat.mul_ne_zero (by have := h a (by simp); omega)
-      (by have := vol_le_of_pos A (fun b hb => h b (by simp [hb])); omega))
-
 end Proofs
 
 /-! ## Stack form -/
@@ -194,10 +177,6 @@ open IntMul AModel
 variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q) {Pp : ℕ} {I : List Sym}
   {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## The unit-coefficient instance -/
-
-theorem vol_pos_of {A : Shape} (h : ∀ a ∈ A, 1 ≤ a) : 1 ≤ vol A := vol_le_of_pos A h
-
 /-! ## Coefficients `±1` -/
 
 end NLogN.KIL
@@ -221,12 +200,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-theorem regState_mem {F : Fin HS → List ℤ} {v : Fin HS → ℕ} {D : List (Fin HS)} {i : Fin HS}
-    (h : i ∈ D) : regState F v D i = (v i : ℤ) :: F i := by simp [regState, h]
-
-theorem regState_nmem {F : Fin HS → List ℤ} {v : Fin HS → ℕ} {D : List (Fin HS)} {i : Fin HS}
-    (h : i ∉ D) : regState F v D i = F i := by simp [regState, h]
 
 /-! ## Assignment lists -/
 
@@ -259,15 +232,6 @@ namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Prologue / epilogue of a unary counter pair -/
-
-/-! ## The core: blocks, then copy the output back -/
-
-/-! ## The program -/
-
-theorem zsz_nat_le (n : ℕ) : zsz (n : ℤ) ≤ n :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
-
 end KFC
 
 end NLogN
@@ -296,16 +260,6 @@ namespace IntMul.Kappa.R6.IL
 open IntMul NLogN RS NLogN.KIL NLogN.KFD AModel AModelL12 Finset
 
 noncomputable section
-
-/-! ## Table lemmas -/
-
-/-! ## The level registers -/
-
-theorem inv_reg {G0 : Fin HS → List Item} {t : IState HS} (ht : Inv G0 t) {r : Fin HS}
-    (h1 : 22 ≤ r.val) (h2 : r.val ≠ 44) {x : ℤ} (hx : ∃ L, G0 r = .int x :: L) :
-    ∃ L, t.G r = .int x :: L := by
-  obtain ⟨L, hL⟩ := hx
-  exact ⟨L, by rw [ht r ⟨h1, h2⟩, hL]⟩
 
 /-! ## The body -/
 

@@ -28,6 +28,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs15
 import Definitions.Def_IntMul_Kappa_K_Defs13
 import Definitions.Def_IntMul_Kappa_K_Defs3
 import Definitions.Def_IntMul_Kappa_K_Defs17
+import Theorems.Thm_NLogN_KFB_qop_fsp
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false

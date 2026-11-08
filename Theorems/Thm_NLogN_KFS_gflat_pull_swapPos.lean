@@ -16,14 +16,6 @@ open Matrix
 section Pull
 variable {α : Type*}
 
-@[simp] lemma length_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) :
-    (AModel.pull sh sh' g d xs).length = AModel.vol sh' := by simp [AModel.pull]
-
-lemma getElem_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) (j : ℕ)
-    (hj : j < (AModel.pull sh sh' g d xs).length) :
-    (AModel.pull sh sh' g d xs)[j] = xs.getD (encode sh (g (decode sh' j))) d := by
-  simp [AModel.pull]
-
 /-- `pull` only depends on `g` at valid output addresses. -/
 lemma pull_congr {sh sh' : Shape} {g g' : List ℕ → List ℕ}
     (h : ∀ a, AModel.Valid sh' a → g a = g' a) (d : α) (xs : List α) :

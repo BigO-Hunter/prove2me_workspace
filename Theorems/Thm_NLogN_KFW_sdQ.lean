@@ -26,27 +26,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -78,8 +60,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -107,17 +87,6 @@ namespace IRuns
 
 end IRuns
 
-@[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
-    (s.upd i L).upd i L' = s.upd i L' := by
-  simp [IState.upd]
-
-@[simp] theorem IState.upd_self (s : IState S) (i : Fin S) : s.upd i (s.G i) = s := by
-  simp [IState.upd]
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
 end NLogN
 
 end
@@ -125,13 +94,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_le_iff {z : ℤ} {m : ℕ} : zsz z ≤ m ↔ z.natAbs < 2 ^ m :=
-  ⟨fun h => lt_of_lt_of_le (natAbs_lt_zsz z) (Nat.pow_le_pow_right (by norm_num) h),
-    zsz_le_of_lt⟩
 
 end NLogN
 
@@ -149,9 +111,6 @@ variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
-theorem lt_two_pow_zsz (a : ℕ) : a < 2 ^ zsz (a : ℤ) := by
-  have := (zsz_le_iff (z := (a : ℤ)) (m := zsz (a : ℤ))).1 le_rfl; simpa using this
-
 end NLogN
 
 end
@@ -165,8 +124,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-theorem zX_all : NLogN.zX.all = [56, 57, 58, 59, 60, 61, 62, 63] := rfl
 
 namespace Ex
 
@@ -186,21 +143,10 @@ open IntMul RS
 
 namespace KIL
 
-theorem isInt_encK {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (NLogN.KIL.encK s f).IsInt i :=
-  IState.isInt_of (L := ints l ++ s.G i) (a := a) (by simp [h])
-
-theorem Sp.mono {p : RS} {s t : IState HS} {c c' : ℕ} (h : Sp p s t c) (hc : c ≤ c') :
-    Sp p s t c' := ⟨h.1, h.2.1, le_trans h.2.2 hc⟩
-
-theorem Sp.skip (s : IState HS) : Sp .skip s s 1 := ⟨trivial, rfl, le_rfl⟩
-
 section
 variable (s : IState HS) (f : Fin HS → List ℤ)
 
 end
-
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
 
 end KIL
 
@@ -215,12 +161,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-theorem Sp.popI (u : IState HS) {i : Fin HS} (hi : i.val < 56) {a : ℤ} {L : List Item}
-    (h : u.G i = .int a :: L) {Bb : ℕ} (ha : zsz a ≤ Bb) :
-    Sp (.pop i) u (u.upd i L) (2 * Bb + 2) :=
-  ⟨⟨hi, IState.isInt_of h⟩, by simp [RS.run, h], by
-    simp only [RS.cost, IState.top_eq h]; omega⟩
 
 section
 
@@ -240,11 +180,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-theorem Sp.toIRuns {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp} {p : RS}
-    {s t : IState HS} {c : ℕ} (h : Sp p s t c) : IRuns I iprog p.code s t c := by
-  obtain ⟨c', hc', H⟩ := h.irun (I := I) (iprog := iprog)
-  exact H.mono hc'
-
 end NLogN.KIL
 
 end
@@ -257,57 +192,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-theorem top_congr {s s' : IState HS} {i : Fin HS} (h : s.G i = s'.G i) : s.top i = s'.top i := by
-  simp only [IState.top, h]
-
-theorem isInt_congr {s s' : IState HS} {i : Fin HS} (h : s.G i = s'.G i) :
-    s.IsInt i ↔ s'.IsInt i := by
-  simp only [IState.IsInt, h, NLogN.KIL.top_congr h]
-
-theorem Ex.congrG {s s' : IState HS} : ∀ (e : Ex HS), (∀ r ∈ e.regs, s.G r = s'.G r) →
-    e.eval s = e.eval s' ∧ (e.ok s ↔ e.ok s') ∧ (∀ B, e.Bnd s B ↔ e.Bnd s' B) ∧
-      e.cost s = e.cost s'
-  | .reg i, h => by
-    have hi := h i (by simp [Ex.regs])
-    refine ⟨NLogN.KIL.top_congr hi, NLogN.KIL.isInt_congr hi, fun B => by simp only [Ex.Bnd, NLogN.KIL.top_congr hi], ?_⟩
-    simp only [Ex.cost, NLogN.KIL.top_congr hi]
-  | .lit c, _ => ⟨rfl, Iff.rfl, fun _ => Iff.rfl, rfl⟩
-  | .add a b, h | .mul a b, h | .shl a b, h | .quo a b, h | .rem a b, h | .ndiv a b, h
-  | .nmod a b, h => by
-    have ha := Ex.congrG a (fun r hr => h r (by simp [Ex.regs, hr]))
-    have hb := Ex.congrG b (fun r hr => h r (by simp [Ex.regs, hr]))
-    refine ⟨by simp only [Ex.eval, ha.1, hb.1], ?_, fun B => ?_, ?_⟩
-    · simp only [Ex.ok, ha.1, hb.1, ha.2.1, hb.2.1]
-    · simp only [Ex.Bnd, ha.1, hb.1, ha.2.2.1 B, hb.2.2.1 B]
-    · simp only [Ex.cost, ha.1, hb.1, ha.2.2.2, hb.2.2.2]
-  | .neg a, h | .pow2 a, h => by
-    have ha := Ex.congrG a (fun r hr => h r (by simp [Ex.regs, hr]))
-    refine ⟨by simp only [Ex.eval, ha.1], ?_, fun B => ?_, ?_⟩
-    · simp only [Ex.ok, ha.1, ha.2.1]
-    · simp only [Ex.Bnd, ha.1, ha.2.2.1 B]
-    · simp only [Ex.cost, ha.1, ha.2.2.2]
-  | .sel c a b, h => by
-    have hc := Ex.congrG c (fun r hr => h r (by simp [Ex.regs, hr]))
-    have ha := Ex.congrG a (fun r hr => h r (by simp [Ex.regs, hr]))
-    have hb := Ex.congrG b (fun r hr => h r (by simp [Ex.regs, hr]))
-    refine ⟨by simp only [Ex.eval, ha.1, hb.1, hc.1], ?_, fun B => ?_, ?_⟩
-    · simp only [Ex.ok, hc.1, hc.2.1, ha.2.1, hb.2.1]
-    · simp only [Ex.Bnd, hc.1, hc.2.2.1 B, ha.2.2.1 B, hb.2.2.1 B]
-    · simp only [Ex.cost, hc.1, hc.2.2.2, ha.2.2.2, hb.2.2.2]
-
-theorem Sp.popsR (Bb : ℕ) : ∀ (l : List (Fin HS × ℤ)) (t : IState HS),
-    (∀ p ∈ l, p.1.val < 56 ∧ zsz p.2 ≤ Bb) →
-    Sp (popsR (l.map Prod.fst)) (pushSt t l) t (l.length * (2 * Bb + 2) + 1)
-  | [], t, _ => (Sp.skip t).mono (by simp)
-  | (i, v) :: l, t, h => by
-    have IH := Sp.popsR Bb l (t.upd i (.int v :: t.G i))
-      (fun p hp => h p (List.mem_cons_of_mem _ hp))
-    obtain ⟨hi, hv⟩ := h (i, v) List.mem_cons_self
-    have S2 := Sp.popI (t.upd i (.int v :: t.G i)) hi (a := v) (L := t.G i) (by simp) hv
-    rw [IState.upd_upd_same, IState.upd_self] at S2
-    refine (IH.seq S2).mono (le_of_eq ?_)
-    simp only [List.length_cons]; ring
 
 end NLogN.KIL
 
@@ -344,14 +228,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFW
 
 open IntMul NLogN.RS KFD
-
-theorem Agree.top {σ : Fin HS → Option ℤ} {s : IState HS} (h : Agree σ s) {i : Fin HS} {v : ℤ}
-    (hi : σ i = some v) : s.top i = v := by
-  obtain ⟨L, hL⟩ := h i v hi; exact IState.top_eq hL
-
-theorem Agree.isInt {σ : Fin HS → Option ℤ} {s : IState HS} (h : Agree σ s) {i : Fin HS} {v : ℤ}
-    (hi : σ i = some v) : s.IsInt i := by
-  obtain ⟨L, hL⟩ := h i v hi; exact ⟨L, by rw [hL, IState.top_eq hL]⟩
 
 section ExLemmas
 
@@ -406,13 +282,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex P8Lift Butterfly
-
-theorem agree_encK {σ : Fin HS → Option ℤ} {s : IState HS} (hs : Agree σ s)
-    {f : Fin HS → List ℤ} (hf : ∀ j, (σ j).isSome → f j = []) : Agree σ (NLogN.KIL.encK s f) := by
-  intro i v hv
-  obtain ⟨L, hL⟩ := hs i v hv
-  refine ⟨L, ?_⟩
-  rw [encK_G, hf i (by simp [hv]), hL]; rfl
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
@@ -764,17 +633,6 @@ theorem PushSeq.fst : ∀ {σ : Fin HS → Option ℤ} {pl : List (Fin HS × Ex 
     simp only [List.map_cons]
     rw [PushSeq.fst hrest]
 
-theorem PushSeq.lt : ∀ {σ : Fin HS → Option ℤ} {pl : List (Fin HS × Ex HS)}
-    {vl : List (Fin HS × ℤ)} {c : ℕ}, PushSeq σ pl vl c → ∀ p ∈ vl, p.1.val < 56
-  | _, [], [], _, _, _, hp => by simp at hp
-  | _, [], _ :: _, _, h, _, _ => absurd h (by simp [PushSeq])
-  | _, _ :: _, [], _, h, _, _ => absurd h (by simp [PushSeq])
-  | _, (i, e) :: l, (j, v) :: vl, _, h, p, hp => by
-    obtain ⟨rfl, hi, _, _, _, _, _, hrest⟩ := h
-    rcases List.mem_cons.1 hp with rfl | hp
-    · exact hi
-    · exact PushSeq.lt hrest p hp
-
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
@@ -823,14 +681,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-theorem sclean_of_lt {σ : Fin HS → Option ℤ} (h : ∀ i v, σ i = some v → i.val < 56) :
-    SClean σ := by
-  intro i hi hz
-  obtain ⟨v, hv⟩ := Option.isSome_iff_exists.1 hi
-  have := h i v hv
-  simp only [NLogN.zX, ExSt.all, List.mem_cons, List.not_mem_nil, or_false] at hz
-  rcases hz with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> exact absurd this (by decide)
-
 section Steps
 
 variable {Pp : ℕ} {Isym : List Sym} {tbl : Fin Pp → IStmt HS Pp} {Q : IState HS → Prop}
@@ -856,27 +706,6 @@ open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 namespace ExV
 
 variable {σ : Fin HS → Option ℤ} {B : ℕ}
-
-theorem reg {i : Fin HS} {v : ℤ} (h : σ i = some v) (hB : zsz v ≤ B) : ExV σ (.reg i) v B :=
-  fun t ht => ⟨ht.isInt h, ht.top h, by simp only [Ex.Bnd]; rw [ht.top h]; exact hB⟩
-
-theorem lit {c : ℤ} (hB : zsz c ≤ B) : ExV σ (.lit c) c B := fun t _ => ⟨trivial, rfl, hB⟩
-
-theorem add {a b : Ex HS} {x y : ℤ} (ha : ExV σ a x B) (hb : ExV σ b y B)
-    (h : zsz (x + y) ≤ B) : ExV σ (.add a b) (x + y) B := fun t ht => by
-  obtain ⟨a1, a2, a3⟩ := ha t ht
-  obtain ⟨b1, b2, b3⟩ := hb t ht
-  exact ⟨⟨a1, b1⟩, by simp only [Ex.eval, a2, b2], a3, b3, by rw [a2, b2]; exact h⟩
-
-theorem mul {a b : Ex HS} {x y : ℤ} (ha : ExV σ a x B) (hb : ExV σ b y B)
-    (h : zsz (x * y) ≤ B) : ExV σ (.mul a b) (x * y) B := fun t ht => by
-  obtain ⟨a1, a2, a3⟩ := ha t ht
-  obtain ⟨b1, b2, b3⟩ := hb t ht
-  exact ⟨⟨a1, b1⟩, by simp only [Ex.eval, a2, b2], a3, b3, by rw [a2, b2]; exact h⟩
-
-theorem neg {a : Ex HS} {x : ℤ} (ha : ExV σ a x B) : ExV σ (.neg a) (-x) B := fun t ht => by
-  obtain ⟨a1, a2, a3⟩ := ha t ht
-  exact ⟨a1, by simp only [Ex.eval, a2], a3⟩
 
 theorem congr {e : Ex HS} {x y : ℤ} (h : ExV σ e x B) (hxy : x = y) : ExV σ e y B := hxy ▸ h
 
@@ -1011,11 +840,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem ExV.pow2 {σ : Fin HS → Option ℤ} {a : Ex HS} {x : ℤ} {B : ℕ} (ha : ExV σ a x B)
-    (hx : 0 ≤ x) (hB : x.toNat + 1 ≤ B) : ExV σ (.pow2 a) (2 ^ x.toNat) B := fun t ht => by
-  obtain ⟨a1, a2, a3⟩ := ha t ht
-  exact ⟨⟨a1, by rw [a2]; exact hx⟩, by simp only [Ex.eval, a2], a3, by rw [a2]; exact hB⟩
 
 section Steps
 

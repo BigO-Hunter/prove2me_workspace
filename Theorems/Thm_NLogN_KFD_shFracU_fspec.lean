@@ -8,6 +8,10 @@ import Theorems.Thm_NLogN_KFD_negP_fspec
 import Theorems.Thm_NLogN_KFD_rotP_fspec
 import Theorems.Thm_NLogN_Ex_zsz_eval_le
 import Theorems.Thm_NLogN_zsz_le_of_lt
+import Definitions.Def_IntMul_Kappa_R6_Defs10
+import Definitions.Def_IntMul_Kappa_R6_Defs11
+import Definitions.Def_IntMul_Kappa_R6_Defs12
+import Definitions.Def_IntMul_Kappa_R6_Defs14
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -18,17 +22,6 @@ section
 namespace AModel
 
 open Matrix
-
-lemma decode_encode {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) : decode sh (encode sh a) = a := by
-  induction h with
-  | nil => rfl
-  | @cons x q as sh hx hr ih =>
-    have he := encode_lt hr
-    have hV : 0 < AModel.vol sh := by omega
-    simp only [encode, List.headD_cons, List.tail_cons, decode]
-    rw [show x * AModel.vol sh + encode sh as = encode sh as + AModel.vol sh * x by ring,
-      Nat.add_mul_div_left _ _ hV, Nat.div_eq_of_lt he, Nat.add_mul_mod_self_left,
-      Nat.mod_eq_of_lt he, ih, zero_add, Nat.mod_eq_of_lt hx]
 
 lemma encode_decode {sh : Shape} {m : ℕ} (h : m < AModel.vol sh) : encode sh (decode sh m) = m := by
   induction sh generalizing m with
@@ -43,9 +36,6 @@ lemma encode_decode {sh : Shape} {m : ℕ} (h : m < AModel.vol sh) : encode sh (
 
 section Pull
 variable {α : Type*}
-
-@[simp] lemma length_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) :
-    (AModel.pull sh sh' g d xs).length = AModel.vol sh' := by simp [AModel.pull]
 
 lemma getElem_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) (j : ℕ)
     (hj : j < (AModel.pull sh sh' g d xs).length) :
@@ -270,27 +260,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -322,8 +294,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -351,17 +321,6 @@ namespace IRuns
 
 end IRuns
 
-@[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
-    (s.upd i L).upd i L' = s.upd i L' := by
-  simp [IState.upd]
-
-@[simp] theorem IState.upd_self (s : IState S) (i : Fin S) : s.upd i (s.G i) = s := by
-  simp [IState.upd]
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
 end NLogN
 
 end
@@ -369,18 +328,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_le_iff {z : ℤ} {m : ℕ} : zsz z ≤ m ↔ z.natAbs < 2 ^ m :=
-  ⟨fun h => lt_of_lt_of_le (natAbs_lt_zsz z) (Nat.pow_le_pow_right (by norm_num) h),
-    zsz_le_of_lt⟩
-
-theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
 
 end NLogN
 
@@ -393,9 +340,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-
-theorem IState.top_eq {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (h : s.G i = .int a :: L) :
-    s.top i = a := by simp [IState.top, h]
 
 namespace Ex
 
@@ -421,9 +365,6 @@ open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
-theorem IState.isInt_of {s : IState S} {i : Fin S} {a : ℤ} {L : List Item}
-    (h : s.G i = .int a :: L) : s.IsInt i := ⟨L, by rw [IState.top_eq h, h]⟩
-
 namespace Ex
 
 end Ex
@@ -441,8 +382,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-theorem zX_all : zX.all = [56, 57, 58, 59, 60, 61, 62, 63] := rfl
 
 namespace Ex
 
@@ -464,12 +403,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-theorem clean_of_lt {i : Fin HS} (hi : i.val < 56) : (Ex.reg i).Clean := by
-  intro j hj
-  simp only [Ex.regs, List.mem_singleton] at hj
-  subst hj; simp only [zX_all, List.mem_cons, List.not_mem_nil, or_false]
-  intro h; rcases h with h | h | h | h | h | h | h | h <;> (subst h; exact absurd hi (by decide))
-
 end RS
 
 end NLogN
@@ -486,38 +419,6 @@ variable {S : ℕ}
 
 namespace Ex
 
-theorem cost_le_lin (s : IState S) (B : ℕ) : ∀ e : Ex S, e.Lin → e.Bnd s B →
-    e.cost s ≤ e.size * 2000 * (B + 2)
-  | reg i, _, h => by
-    simp only [NLogN.Ex.cost, NLogN.Ex.size, NLogN.Ex.Bnd] at h ⊢; (simp only [dupCost, moveCost, zipCost, addIntCost, addMagCost, subMagCost, smulCost, shlCost, splitCost, takeCost, ldivCost, pow2Cost] at *); nlinarith
-  | lit c, _, h => by
-    simp only [NLogN.Ex.cost, NLogN.Ex.size, NLogN.Ex.Bnd] at h ⊢; nlinarith
-  | add a b, hl, h => by
-    have ha := cost_le_lin s B a hl.1 h.1; have hb := cost_le_lin s B b hl.2 h.2.1
-    have za := zsz_eval_le s B a h.1; have zb := zsz_eval_le s B b h.2.1
-    simp only [NLogN.Ex.cost, NLogN.Ex.size]; (simp only [dupCost, moveCost, zipCost, addIntCost, addMagCost, subMagCost, smulCost, shlCost, splitCost, takeCost, ldivCost, pow2Cost] at *); nlinarith
-  | shl a b, hl, h => by
-    have ha := cost_le_lin s B a hl.1 h.1; have hb := cost_le_lin s B b hl.2 h.2.1
-    have za := zsz_eval_le s B a h.1; have zb := zsz_eval_le s B b h.2.1
-    simp only [NLogN.Ex.cost, NLogN.Ex.size]; (simp only [dupCost, moveCost, zipCost, addIntCost, addMagCost, subMagCost, smulCost, shlCost, splitCost, takeCost, ldivCost, pow2Cost] at *); nlinarith
-  | quo a b, hl, h | rem a b, hl, h => by
-    have ha := cost_le_lin s B a hl.1 h.1; have hb := cost_le_lin s B b hl.2 h.2
-    have za := zsz_eval_le s B a h.1; have zb := zsz_eval_le s B b h.2
-    simp only [NLogN.Ex.cost, NLogN.Ex.size]; (simp only [dupCost, moveCost, zipCost, addIntCost, addMagCost, subMagCost, smulCost, shlCost, splitCost, takeCost, ldivCost, pow2Cost] at *); nlinarith
-  | neg a, hl, h => by
-    have ha := cost_le_lin s B a hl h
-    simp only [NLogN.Ex.cost, NLogN.Ex.size]; nlinarith
-  | sel c x y, hl, h => by
-    have hc := cost_le_lin s B c hl.1 h.1
-    have zc := zsz_eval_le s B c h.1
-    simp only [NLogN.Ex.cost, NLogN.Ex.size]
-    split_ifs with hn
-    · have hx := cost_le_lin s B x hl.2.1 (by simpa [hn] using h.2)
-      (simp only [dupCost, moveCost, zipCost, addIntCost, addMagCost, subMagCost, smulCost, shlCost, splitCost, takeCost, ldivCost, pow2Cost] at *); nlinarith
-    · have hy := cost_le_lin s B y hl.2.2 (by simpa [hn] using h.2)
-      (simp only [dupCost, moveCost, zipCost, addIntCost, addMagCost, subMagCost, smulCost, shlCost, splitCost, takeCost, ldivCost, pow2Cost] at *); nlinarith
-  | mul _ _, hl, _ | pow2 _, hl, _ | ndiv _ _, hl, _ | nmod _ _, hl, _ => hl.elim
-
 end Ex
 
 end NLogN
@@ -532,12 +433,6 @@ open IntMul
 
 namespace RS
 
-theorem pushCost_le_lin (e : Ex HS) (s : IState HS) (B : ℕ) (hl : e.Lin) (h : e.Bnd s B) :
-    e.cost s + (2 * moveCost (zsz (e.eval s)) + 19) ≤ (e.size + 1) * 2000 * (B + 2) := by
-  have h1 := Ex.cost_le_lin s B e hl h
-  have h2 := Ex.zsz_eval_le s B e h
-  simp only [moveCost]; nlinarith
-
 end RS
 
 end NLogN
@@ -551,9 +446,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-
-theorem zsz_natCast_le {j k : ℕ} (h : j ≤ k) : zsz (j : ℤ) ≤ zsz (k : ℤ) :=
-  zsz_mono (by simpa using h)
 
 end NLogN
 
@@ -574,10 +466,6 @@ variable (s : IState HS) (f : Fin HS → List ℤ)
 
 end
 
-theorem clean_reg {i : Fin HS} (hi : i.val < 56) : (Ex.reg i).Clean := clean_of_lt hi
-
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
-
 end KIL
 
 end NLogN
@@ -589,22 +477,6 @@ section
 namespace NLogN.KIL
 
 open AModel
-
-theorem fm_congr {α β : Type*} {l : List α} {f g : α → List β} (h : ∀ x ∈ l, f x = g x) :
-    l.flatMap f = l.flatMap g := by
-  induction l with
-  | nil => rfl
-  | cons a l ih =>
-    simp only [List.flatMap_cons]
-    rw [h a (by simp), ih (fun x hx => h x (by simp [hx]))]
-
-theorem range_mul (m n : ℕ) :
-    List.range (m * n) = (List.range m).flatMap fun i => (List.range n).map fun j => i * n + j := by
-  induction m with
-  | zero => simp
-  | succ m ih =>
-    rw [Nat.succ_mul, List.range_add, ih, List.range_succ, List.flatMap_append]
-    simp
 
 end NLogN.KIL
 
@@ -806,12 +678,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-theorem Sp.popI (u : IState HS) {i : Fin HS} (hi : i.val < 56) {a : ℤ} {L : List Item}
-    (h : u.G i = .int a :: L) {Bb : ℕ} (ha : zsz a ≤ Bb) :
-    Sp (.pop i) u (u.upd i L) (2 * Bb + 2) :=
-  ⟨⟨hi, IState.isInt_of h⟩, by simp [RS.run, h], by
-    simp only [RS.cost, IState.top_eq h]; omega⟩
-
 section
 
 variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q)
@@ -934,20 +800,6 @@ variable {Q c}
 variable (Q c)
 
 variable {Q c}
-
-theorem sig_lt (hc : 0 < c) (v : ℕ) : sig Q c v < c := by
-  have : NeZero c := ⟨by omega⟩
-  exact ZMod.val_lt _
-
-theorem sig_spec (hc : 0 < c) (hQ : Nat.Coprime Q c) (z : ℕ) :
-    (sig Q c (z % c) * Q + z) % c = 0 := by
-  have : NeZero c := ⟨by omega⟩
-  have hu : IsUnit (Q : ZMod c) := (ZMod.isUnit_iff_coprime Q c).2 hQ
-  rw [← Nat.dvd_iff_mod_eq_zero, ← ZMod.natCast_eq_zero_iff]
-  push_cast
-  rw [sig, ZMod.natCast_val, ZMod.cast_id', id, ZMod.natCast_mod, mul_assoc,
-    ZMod.inv_mul_of_unit _ hu]
-  ring
 
 theorem yOf_lt (hc : 0 < c) (z : ℕ) (hz : z < Q) : NLogN.KIL.yOf Q c z < Q := by
   unfold NLogN.KIL.yOf
@@ -1308,38 +1160,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-theorem FSp.mono {p : RS} {s t : IState HS} {c c' : ℕ} (h : FSp p s t c) (hc : c ≤ c') :
-    FSp p s t c' := ⟨h.1, h.2.1, le_trans h.2.2 hc⟩
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
-
-theorem FSp.seq {a b : RS} {s t u : IState HS} {c1 c2 : ℕ} (ha : FSp a s t c1) (hb : FSp b t u c2) :
-    FSp (.seq a b) s u (c1 + c2) := by
-  refine ⟨⟨ha.1, ?_⟩, ?_, ?_⟩
-  · rw [ha.2.1]; exact hb.1
-  · simp only [RS.run, ha.2.1, hb.2.1]
-  · simp only [fcost]; rw [ha.2.1]; have := ha.2.2; have := hb.2.2; omega
-
-theorem FSp.skip (s : IState HS) : FSp .skip s s 1 := ⟨trivial, rfl, le_rfl⟩
-
-theorem fcost_norep : ∀ (p : RS), norep p = true → ∀ s, fcost p s = p.cost s
-  | .skip, _, _ => rfl
-  | .asg _ _, _, _ => rfl
-  | .push _ _, _, _ => rfl
-  | .pop _, _, _ => rfl
-  | .seq a b, h, s => by
-    simp only [norep, Bool.and_eq_true] at h
-    simp only [fcost, RS.cost, fcost_norep a h.1, fcost_norep b h.2]
-  | .ite c a b, h, s => by
-    simp only [norep, Bool.and_eq_true] at h
-    simp only [fcost, RS.cost, fcost_norep a h.1, fcost_norep b h.2]
-  | .rep _ _ _, h, _ => by simp [norep] at h
-
-theorem FSp.of_norep {p : RS} {s t : IState HS} {c : ℕ} (hr : norep p = true)
-    (h : KIL.Sp p s t c) : FSp p s t c :=
-  ⟨h.1, h.2.1, by rw [fcost_norep p hr]; exact h.2.2⟩
-
 end KFD
 
 end NLogN
@@ -1358,9 +1178,6 @@ open IntMul RS
 namespace KFD
 
 open KIL AModel
-
-theorem zszN (n : ℕ) : zsz (n : ℤ) ≤ n :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
 
 section Proofs
 

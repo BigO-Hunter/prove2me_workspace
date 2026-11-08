@@ -45,19 +45,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-/-! ## Tables -/
-
-/-! ## Moves with literal counts -/
-
-/-! ## Applying a stream code in place -/
-
-/-! ## Cost unit -/
-
-/-! ## Copying a stream -/
-
-theorem TabB.le {W v Bb : ℕ} (h : TabB W v Bb) {n : ℕ} (hn : n ≤ W * v) : zsz (n : ℤ) ≤ Bb :=
-  le_trans (zsz_natCast_le' hn) h.vol
-
 /-! ## Accumulating a stream on stack `20` -/
 
 /-! ## Building a summed stream, rebuilding the table -/
@@ -85,13 +72,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -133,11 +113,6 @@ namespace NLogN.KFW
 
 open IntMul NLogN.RS KFD
 
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
-
 end NLogN.KFW
 
 end
@@ -169,8 +144,6 @@ namespace ExV
 
 variable {σ : Fin HS → Option ℤ} {B : ℕ}
 
-theorem congr {e : Ex HS} {x y : ℤ} (h : ExV σ e x B) (hxy : x = y) : ExV σ e y B := hxy ▸ h
-
 end ExV
 
 /-! ## The phase step -/
@@ -197,11 +170,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-/-! ## The node frame -/
-
-theorem ExC.congr {σ : Fin HS → Option ℤ} {e : Ex HS} {x y : ℤ} {c : ℕ} (h : ExC σ e x c)
-    (hxy : x = y) : ExC σ e y c := hxy ▸ h
 
 end NLogN.KFW
 
@@ -239,9 +207,6 @@ variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
 variable {σ : Fin HS → Option ℤ} {U V : IStmt HS Pp} {f g h : Fin HS → List ℤ} {c c' : ℕ}
 
-theorem RunQ.congr {g' : Fin HS → List ℤ} (H : RunQ I iprog σ U f g c) (he : g = g') :
-    RunQ I iprog σ U f g' c := he ▸ H
-
 end Run
 
 /-! ## From `SImplQ` to a fixed run -/
@@ -267,37 +232,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-/-! ## Expression frames -/
-
-/-! ## The phase `S_D` -/
-
-/-- Size bounds of the layer. -/
-theorem layer_bounds {K S r P D : ℕ} (hS : 1 ≤ S) (hP : 1 ≤ P) (hr : 1 ≤ r) :
-    1 ≤ P * 2 ^ (K * D) * S * r ∧ S * r ≤ P * 2 ^ (K * D) * S * r ∧
-    P ≤ P * 2 ^ (K * D) * S * r ∧ 2 ^ (K * D) ≤ P * 2 ^ (K * D) * S * r ∧
-    K * D < 2 ^ (K * D) := by
-  have h2 : 1 ≤ 2 ^ (K * D) := Nat.one_le_two_pow
-  have hKD : K * D < 2 ^ (K * D) := Nat.lt_two_pow_self
-  have a1 : 1 ≤ P * 2 ^ (K * D) := Nat.mul_le_mul hP h2
-  refine ⟨?_, ?_, ?_, ?_, hKD⟩
-  · have := Nat.mul_le_mul (Nat.mul_le_mul a1 hS) hr; simpa using this
-  · have := Nat.mul_le_mul_right (S * r) a1
-    calc S * r = 1 * (S * r) := (one_mul _).symm
-      _ ≤ P * 2 ^ (K * D) * (S * r) := this
-      _ = _ := by ring
-  · have : 1 ≤ 2 ^ (K * D) * S * r := by
-      have := Nat.mul_le_mul (Nat.mul_le_mul h2 hS) hr; simpa using this
-    have := Nat.mul_le_mul_left P this
-    calc P = P * 1 := (mul_one _).symm
-      _ ≤ P * (2 ^ (K * D) * S * r) := this
-      _ = _ := by ring
-  · have : 1 ≤ P * S * r := by
-      have := Nat.mul_le_mul (Nat.mul_le_mul hP hS) hr; simpa using this
-    have := Nat.mul_le_mul_left (2 ^ (K * D)) this
-    calc 2 ^ (K * D) = 2 ^ (K * D) * 1 := (mul_one _).symm
-      _ ≤ 2 ^ (K * D) * (P * S * r) := this
-      _ = _ := by ring
 
 end NLogN.KFW
 
@@ -325,23 +259,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem Wc_le_pow : P8Lift.Wc ≤ 2 ^ 71 := by norm_num
-
-theorem padB_le (B Wk : ℕ) (hW : 1 ≤ Wk) : B ≤ padB B Wk ∧ padB B Wk ≤ B + Wk ∧ Wk ∣ padB B Wk := by
-  unfold padB
-  have h1 := Nat.div_add_mod (B + Wk - 1) Wk
-  have h2 := Nat.mod_lt (B + Wk - 1) (show 0 < Wk by omega)
-  exact ⟨by omega, by omega, Dvd.intro _ rfl⟩
-
-/-- `W^k ≤ 2^{K q₀}` when `q₀ < D` (`q₀ = 71 k`). -/
-theorem Wk_le {K D k : ℕ} (hK : 1 ≤ K) (hq : q0f D k < D) :
-    P8Lift.Wc ^ k ≤ 2 ^ (K * q0f D k) := by
-  have hq' : q0f D k = 71 * k := by unfold q0f at hq ⊢; split_ifs at hq ⊢ <;> omega
-  rw [hq']
-  calc P8Lift.Wc ^ k ≤ (2 ^ 71) ^ k := Nat.pow_le_pow_left Wc_le_pow k
-    _ = 2 ^ (71 * k) := by rw [← pow_mul]
-    _ ≤ 2 ^ (K * (71 * k)) := Nat.pow_le_pow_right (by norm_num) (Nat.le_mul_of_pos_left _ (by omega))
 
 end NLogN.KFW
 
@@ -388,20 +305,11 @@ theorem le_Ap {A p x : ℕ} (hA : 1 ≤ A) (hp : 1 ≤ p) : x ≤ A * ((x + 1) ^
 
 theorem Gs_lt {A p m x : ℕ} (h : x < 2 * m) : Gs A p m x = x := by simp [Gs, h]
 
-theorem Gs_ge {A p m x : ℕ} (h : 2 * m ≤ x) : Gs A p m x = A * ((x + 1) ^ p - 1) := by
-  simp [Gs, show ¬ x < 2 * m by omega]
-
 end Scale
 
 /-! ## The depth -/
 
 section Dep
-
-theorem dep_lt {m x : ℕ} (h : x < 2 * m) : dep m x = 0 := by
-  rw [dep, dif_neg (by omega)]
-
-theorem dep_ge {m x : ℕ} (hm : 1 ≤ m) (h : 2 * m ≤ x) : dep m x = 1 + dep m ((m - 1) * (x / m)) := by
-  rw [dep, dif_pos ⟨h, hm⟩]
 
 theorem dep_mono {m : ℕ} (hm : 1 ≤ m) : ∀ {x y : ℕ}, x ≤ y → dep m x ≤ dep m y := by
   intro x y hxy
@@ -503,20 +411,6 @@ section DLoop
 
 variable {Pp : ℕ} {Isym : List Sym} {tbl : Fin Pp → IStmt HS Pp}
 
-theorem dep_le_self {m : ℕ} (hm : 1 ≤ m) : ∀ x, dep m x ≤ x := by
-  intro x
-  induction x using Nat.strong_induction_on with
-  | _ x ih =>
-    by_cases hx : 2 * m ≤ x
-    · rw [dep_ge hm hx]
-      have h1 : (m - 1) * (x / m) + x / m = m * (x / m) := by
-        rw [← Nat.succ_mul, Nat.succ_eq_add_one, Nat.sub_add_cancel hm, mul_comm]
-      have h2 : m * (x / m) ≤ x := Nat.mul_div_le x m
-      have h3 : 1 ≤ x / m := by rw [Nat.le_div_iff_mul_le (by omega)]; linarith
-      have := ih _ (show (m - 1) * (x / m) < x by omega)
-      omega
-    · rw [dep_lt (by omega)]; exact Nat.zero_le _
-
 end DLoop
 
 end IntMul.Kappa.R6.IL3H
@@ -546,23 +440,6 @@ namespace IntMul.Kappa.R6.IL3H
 
 open IntMul NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN.KFN NLogN.KFW
   Complex P8Lift Butterfly IntMul.Kappa.R6.Cx
-
-/-! ## Expressions and values -/
-
-/-- When `q₀ < D`, `2^{K q₀}` covers `W^d 2^{2 ⌊D/m⌋ G}`. -/
-theorem Wk_le_q0 {W m cW K D d G : ℕ} (hK : 1 ≤ K) (hW : W ≤ 2 ^ cW) :
-    WkV W m D d G ≤ 2 ^ (K * ((cW * d + 2 * (D / m * G) + K - 1) / K)) := by
-  unfold WkV
-  have h1 : W ^ d ≤ 2 ^ (cW * d) := by
-    rw [pow_mul]; exact Nat.pow_le_pow_left hW d
-  have h2 : cW * d + 2 * (D / m * G) ≤ K * ((cW * d + 2 * (D / m * G) + K - 1) / K) := by
-    have := Nat.div_add_mod (cW * d + 2 * (D / m * G) + K - 1) K
-    have := Nat.mod_lt (cW * d + 2 * (D / m * G) + K - 1) (show K > 0 by omega)
-    omega
-  calc W ^ d * 2 ^ (2 * (D / m * G)) ≤ 2 ^ (cW * d) * 2 ^ (2 * (D / m * G)) :=
-        Nat.mul_le_mul_right _ h1
-    _ = 2 ^ (cW * d + 2 * (D / m * G)) := by rw [pow_add]
-    _ ≤ _ := Nat.pow_le_pow_right (by norm_num) h2
 
 /-! ## The core stage -/
 
@@ -595,163 +472,18 @@ namespace IntMul.Kappa.R6.IL3H
 open IntMul AModel NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN.KFN NLogN.KFW
   Complex P8Lift Butterfly IntMul.Kappa.R6.Cx
 
-theorem W_le_cWc (c : Cfg) : c.W ≤ 2 ^ cWc c := Nat.le_pow_clog (by norm_num) _
-
-theorem cWc_le (c : Cfg) : cWc c ≤ c.W :=
-  Nat.clog_le_of_le_pow (Nat.lt_two_pow_self).le
-
-theorem Zc_ge (c : Cfg) : 64 ≤ Zc c := by unfold Zc; omega
-
-/-- `K₀ ≥ 2048 (Zc - 10)`. -/
-theorem K0_ge (c : Cfg) : 2048 * (Zc c - 10) ≤ K0c c := by
-  have h64 := Zc_ge c
-  have e : 2 ^ Zc c = 2048 * 2 ^ (Zc c - 11) := by
-    rw [show (2048 : ℕ) = 2 ^ 11 by norm_num, ← pow_add]; congr 1; omega
-  have l : Zc c - 11 < 2 ^ (Zc c - 11) := Nat.lt_two_pow_self
-  unfold K0c; rw [e]; omega
-
 section ChV
 
 variable (c : Cfg) (cW P K D S r w : ℕ)
 
 theorem chV_G : (chV c cW P K D S r w).G = Gv czH (Zl c P K D S r w) := rfl
 
-theorem chV_H : (chV c cW P K D S r w).H = w + EwH c D := rfl
-
-theorem chV_Bp : (chV c cW P K D S r w).Bp =
-    BpV c.W c.m K P D (dep c.m D) (Gv czH (Zl c P K D S r w)) (chV c cW P K D S r w).q0 := rfl
-
 end ChV
-
-/-- `size a + KD ≤ B` whenever `a 2^{KD} < 2^B`, `a ≥ 1`. -/
-theorem size_add_le {a t B : ℕ} (ha : 1 ≤ a) (hB : a * 2 ^ t < 2 ^ B) : Nat.size a + t ≤ B := by
-  have h1 : 1 ≤ Nat.size a := by
-    rw [Nat.one_le_iff_ne_zero]; intro h0; rw [Nat.size_eq_zero] at h0; omega
-  have h2 : 2 ^ (Nat.size a - 1) ≤ a := Nat.lt_size.1 (by omega)
-  have h3 : 2 ^ (Nat.size a - 1 + t) < 2 ^ B := by
-    rw [pow_add]; exact lt_of_le_of_lt (Nat.mul_le_mul_right _ h2) hB
-  have := (Nat.pow_lt_pow_iff_right (by norm_num)).1 h3
-  omega
 
 namespace Hyp14
 
 variable {c : Cfg} {P K D S r p w Z : ℕ} {lamp : ℝ} (h : Hyp14 c P K D S r p w Z lamp)
 include h
-
-theorem N_ge : 2 ^ (K * D) ≤ P * 2 ^ (K * D) * S * r :=
-  (layer_bounds (K := K) (D := D) h.S1 h.P1 h.r1).2.2.2.1
-
-/-- The precision bound `N + w + EwH < 2^p`. -/
-theorem P_lt : P * 2 ^ (K * D) * S * r + w + EwH c D < 2 ^ p := by
-  have := natAbs_lt_zsz ((P * 2 ^ (K * D) * S * r + w + EwH c D : ℕ) : ℤ)
-  rw [Int.natAbs_natCast] at this
-  exact lt_of_lt_of_le this (Nat.pow_le_pow_right (by norm_num) h.h1)
-
-theorem Wr1 (hc : CfgOK c) : 1 ≤ c.Wr := by have := hc.W1; simp only [Cfg.Wr]; omega
-
-theorem aV_pos (hc : CfgOK c) : 1 ≤ aV c P S r w D := by
-  unfold aV
-  have := Nat.mul_le_mul (Nat.mul_le_mul (Nat.mul_le_mul (show 1 ≤ 32 * c.Wr by
-    have := h.Wr1 hc; omega) h.P1) h.S1) h.r1
-  simp at this; omega
-
-/-- `aV · 2^{KD} = 32 W' N + (w + EwH) 2^{KD}`. -/
-theorem aV_mul : aV c P S r w D * 2 ^ (K * D) =
-    32 * c.Wr * (P * 2 ^ (K * D) * S * r) + (w + EwH c D) * 2 ^ (K * D) := by
-  unfold aV; ring
-
-theorem Zl_le_p (hc : CfgOK c) : Zl c P K D S r w ≤ 2 * p + c.Wr + 5 := by
-  unfold Zl
-  apply size_add_le (h.aV_pos hc)
-  rw [h.aV_mul]
-  have hP := h.P_lt
-  have hN2 : 2 ^ (K * D) < 2 ^ p := by have := h.N_ge; omega
-  have hw : w + EwH c D < 2 ^ p := by omega
-  have a1 : 32 * c.Wr * (P * 2 ^ (K * D) * S * r) ≤ 32 * c.Wr * 2 ^ p :=
-    Nat.mul_le_mul_left _ (by omega)
-  have a2 : (w + EwH c D) * 2 ^ (K * D) < 2 ^ p * 2 ^ p := Nat.mul_lt_mul'' hw hN2
-  have a3 : 32 * c.Wr + 1 ≤ 2 ^ (c.Wr + 5) := by
-    have := (Nat.lt_two_pow_self (n := c.Wr)); rw [pow_add]; omega
-  have a4 : 32 * c.Wr * 2 ^ p + 2 ^ p * 2 ^ p ≤ 2 ^ (c.Wr + 5) * (2 ^ p * 2 ^ p) := by
-    have : 1 ≤ 2 ^ p := Nat.one_le_two_pow
-    have : 32 * c.Wr * 2 ^ p ≤ 32 * c.Wr * (2 ^ p * 2 ^ p) := Nat.mul_le_mul_left _ (by nlinarith)
-    nlinarith
-  have e : 2 ^ (2 * p + c.Wr + 5) = 2 ^ (c.Wr + 5) * (2 ^ p * 2 ^ p) := by
-    rw [← pow_add, ← pow_add]; ring_nf
-  omega
-
-/-- The field width `G` is logarithmic in `p`. -/
-theorem G_le (hc : CfgOK c) : Gv czH (Zl c P K D S r w) ≤ 2 * zsz (p : ℤ) + 2 * c.Wr + 10 := by
-  unfold Gv
-  apply Nat.clog_le_of_le_pow
-  have hZl := h.Zl_le_p hc
-  have hps : p < 2 ^ zsz (p : ℤ) := by have := natAbs_lt_zsz (p : ℤ); simpa using this
-  have hW : c.Wr + 8 ≤ 2 ^ (c.Wr + 3) := by
-    have := (Nat.lt_two_pow_self (n := c.Wr)); rw [pow_add]; omega
-  have hs1 : 2 ^ (zsz (p : ℤ) + 1) + 2 ^ (c.Wr + 3) ≤ 2 ^ (zsz (p : ℤ) + c.Wr + 4) := by
-    have a : 2 ^ (zsz (p : ℤ) + 1) ≤ 2 ^ (zsz (p : ℤ) + c.Wr + 3) :=
-      Nat.pow_le_pow_right (by norm_num) (by omega)
-    have b : 2 ^ (c.Wr + 3) ≤ 2 ^ (zsz (p : ℤ) + c.Wr + 3) :=
-      Nat.pow_le_pow_right (by norm_num) (by omega)
-    have e : 2 ^ (zsz (p : ℤ) + c.Wr + 4) = 2 * 2 ^ (zsz (p : ℤ) + c.Wr + 3) := by
-      rw [← pow_succ']
-    omega
-  have hs2 : 2 ^ (zsz (p : ℤ) + 1) = 2 * 2 ^ zsz (p : ℤ) := by rw [pow_succ']
-  have hX : Zl c P K D S r w + 3 ≤ 2 ^ (zsz (p : ℤ) + c.Wr + 4) := by omega
-  have e : 2 ^ (2 * zsz (p : ℤ) + 2 * c.Wr + 10) =
-      4 * (2 ^ (zsz (p : ℤ) + c.Wr + 4) * 2 ^ (zsz (p : ℤ) + c.Wr + 4)) := by
-    rw [← pow_add, show (4 : ℕ) = 2 ^ 2 by norm_num, ← pow_add]; ring_nf
-  rw [e]
-  unfold gBnd czH
-  have := Nat.mul_le_mul hX hX
-  nlinarith
-
-/-- The real hypothesis (3) in `ℕ` form (with `lamp ≤ 1`). -/
-theorem h3N : K0c c * D * (zsz (p : ℤ) + 1) ≤ K * D := by
-  have hD : (1 : ℝ) ≤ D := by exact_mod_cast h.D1
-  have a : (D : ℝ) ^ lamp ≤ D := by
-    calc (D : ℝ) ^ lamp ≤ (D : ℝ) ^ (1 : ℝ) := Real.rpow_le_rpow_of_exponent_le hD h.l1
-      _ = D := Real.rpow_one _
-  have b : ((K0c c * D * (zsz (p : ℤ) + 1) : ℕ) : ℝ) ≤ ((K * D : ℕ) : ℝ) := by
-    push_cast
-    have := h.h3; push_cast at this
-    have hK : (0 : ℝ) ≤ K := Nat.cast_nonneg _
-    nlinarith
-  exact_mod_cast b
-
-/-- A configuration constant bound `cW + 3 (2 W' + 12) ≤ K₀`. -/
-theorem K0_big : cWc c + 3 * (2 * c.Wr + 12) ≤ K0c c := by
-  have := K0_ge c
-  have := Zc_ge c
-  have := cWc_le c
-  have : c.W + c.T ≤ Zc c := by unfold Zc; simp only [Cfg.Wr]; omega
-  show cWc c + 3 * (2 * (c.W + c.T) + 12) ≤ K0c c
-  omega
-
-/-- **The chunk bound** `cW d + 2 ⌊D/m⌋ G ≤ K D`. -/
-theorem hKW (hc : CfgOK c) :
-    cWc c * dep c.m D + 2 * (D / c.m * Gv czH (Zl c P K D S r w)) ≤ K * D := by
-  have hG := h.G_le hc
-  have hd := dep_le_self hc.m1 D
-  have hDm : D / c.m ≤ D := Nat.div_le_self _ _
-  have a : cWc c * dep c.m D ≤ cWc c * D := Nat.mul_le_mul_left _ hd
-  have b : D / c.m * Gv czH (Zl c P K D S r w) ≤ D * (2 * zsz (p : ℤ) + 2 * c.Wr + 10) :=
-    Nat.mul_le_mul hDm hG
-  have k := h.h3N
-  have hK := h.K0_big
-  have e : K0c c * D * (zsz (p : ℤ) + 1) ≥ (cWc c + 3 * (2 * c.Wr + 12)) * D * (zsz (p : ℤ) + 1) :=
-    Nat.mul_le_mul_right _ (Nat.mul_le_mul_right _ hK)
-  have h36 := Nat.mul_le_mul_right (zsz (p : ℤ)) (show 36 ≤ cWc c + 3 * (2 * c.Wr + 12) by omega)
-  have f1 : cWc c + 4 * zsz (p : ℤ) + 4 * c.Wr + 20 ≤
-      (cWc c + 3 * (2 * c.Wr + 12)) * (zsz (p : ℤ) + 1) := by
-    rw [Nat.mul_succ]; omega
-  calc cWc c * dep c.m D + 2 * (D / c.m * Gv czH (Zl c P K D S r w))
-      ≤ cWc c * D + 2 * (D * (2 * zsz (p : ℤ) + 2 * c.Wr + 10)) := by omega
-    _ = D * (cWc c + 4 * zsz (p : ℤ) + 4 * c.Wr + 20) := by ring
-    _ ≤ D * ((cWc c + 3 * (2 * c.Wr + 12)) * (zsz (p : ℤ) + 1)) := Nat.mul_le_mul_left _ f1
-    _ = (cWc c + 3 * (2 * c.Wr + 12)) * D * (zsz (p : ℤ) + 1) := by ring
-    _ ≤ K0c c * D * (zsz (p : ℤ) + 1) := e
-    _ ≤ K * D := k
 
 end Hyp14
 
@@ -767,42 +499,6 @@ include h
 
 theorem GE_le (hc : CfgOK c) {E : ℕ} (hE : E ≤ D) : c.G E ≤ c.G D :=
   Gs_mono hc.Aw1 hc.p1 hE
-
-/-- The padded block `B'` and the covering `W^d 2^{2 ⌊D/m⌋ G} ≤ 2^{K q₀}`. -/
-theorem Wk_le (hc : CfgOK c) :
-    WkV c.W c.m D (dep c.m D) (Gv czH (Zl c P K D S r w)) ≤
-      2 ^ (K * (chV c (cWc c) P K D S r w).q0) := by
-  have hK1 : 1 ≤ K := by have := h.K6; omega
-  show _ ≤ 2 ^ (K * q0v c.m (cWc c) K D (dep c.m D) (Gv czH (Zl c P K D S r w)))
-  unfold q0v
-  rcases min_cases D ((cWc c * dep c.m D + 2 * (D / c.m * Gv czH (Zl c P K D S r w)) + K - 1) / K)
-    with ⟨hm, -⟩ | ⟨hm, -⟩
-  · rw [hm]
-    have hk := h.hKW hc
-    unfold WkV
-    have h1 : c.W ^ dep c.m D ≤ 2 ^ (cWc c * dep c.m D) := by
-      rw [pow_mul]; exact Nat.pow_le_pow_left (W_le_cWc c) _
-    calc c.W ^ dep c.m D * 2 ^ (2 * (D / c.m * Gv czH (Zl c P K D S r w)))
-        ≤ 2 ^ (cWc c * dep c.m D) * 2 ^ (2 * (D / c.m * Gv czH (Zl c P K D S r w))) :=
-          Nat.mul_le_mul_right _ h1
-      _ = 2 ^ (cWc c * dep c.m D + 2 * (D / c.m * Gv czH (Zl c P K D S r w))) := by rw [pow_add]
-      _ ≤ 2 ^ (K * D) := Nat.pow_le_pow_right (by norm_num) hk
-  · rw [hm]; exact Wk_le_q0 hK1 (W_le_cWc c)
-
-theorem Bp_bounds (hc : CfgOK c) :
-    P * 2 ^ (K * (chV c (cWc c) P K D S r w).q0) ≤ (chV c (cWc c) P K D S r w).Bp ∧
-      (chV c (cWc c) P K D S r w).Bp ≤ 2 * (P * 2 ^ (K * (chV c (cWc c) P K D S r w).q0)) ∧
-      WkV c.W c.m D (dep c.m D) (Gv czH (Zl c P K D S r w)) ∣ (chV c (cWc c) P K D S r w).Bp := by
-  have hW := h.Wk_le hc
-  have hW1 : 1 ≤ WkV c.W c.m D (dep c.m D) (Gv czH (Zl c P K D S r w)) := by
-    unfold WkV
-    exact Nat.mul_le_mul (Nat.one_le_pow _ _ (by have := hc.W1; omega)) Nat.one_le_two_pow
-  obtain ⟨a, b, d⟩ := padB_le (P * 2 ^ (K * (chV c (cWc c) P K D S r w).q0))
-    (WkV c.W c.m D (dep c.m D) (Gv czH (Zl c P K D S r w))) hW1
-  have hP2 : 2 ^ (K * (chV c (cWc c) P K D S r w).q0) ≤ P * 2 ^ (K * (chV c (cWc c) P K D S r w).q0) :=
-    Nat.le_mul_of_pos_left _ h.P1
-  rw [chV_Bp]; unfold BpV
-  exact ⟨a, by omega, d⟩
 
 end Hyp14
 
@@ -833,6 +529,11 @@ namespace Hyp14
 
 variable {c : Cfg} {P K D S r p w Z : ℕ} {lamp : ℝ} (h : Hyp14 c P K D S r p w Z lamp)
 include h
+
+-- Derived field restored by repair: midPre_sol_aux consumes `h.VbH_mid`; the bound
+-- itself lives in the imported VbH_mid module as `VbH_mid_sol_aux`.
+def VbH_mid (hc : CfgOK c) {ρ : ℕ} (hρ : ρ < K) :=
+  h.VbH_mid_sol_aux hc hρ
 
 /-- **The middle-part preconditions.** -/
 theorem midPre_sol_aux (hc : CfgOK c) {Pp : ℕ} {Isym : List Sym} {tbl : Fin Pp → IStmt HS Pp}

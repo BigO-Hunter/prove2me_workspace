@@ -46,16 +46,6 @@ noncomputable section
 
 variable {d : ℕ}
 
-theorem prod_ofFn' (t : Fin d → ℕ) : (List.ofFn t).prod = ∏ i, t i := List.prod_ofFn
-
-/-! ## Box points of indices -/
-
-/-! ## Lists as box functions -/
-
-theorem RepFull.length {p : ℕ} {t : Fin d → ℕ} [∀ i, NeZero (t i)] {zs : List GI}
-    {w : ((i : Fin d) → ZMod (t i)) → ℂ} (h : RepFull p t zs w) : zs.length = ∏ i, t i := by
-  rw [h.1, prod_ofFn']
-
 /-! ## Pointwise operations -/
 
 end
@@ -92,8 +82,6 @@ noncomputable section
 namespace Q6
 
 variable (Q : Q6)
-
-theorem p_eq : Q.p = 6 * Q.b := rfl
 
 end Q6
 
@@ -182,8 +170,6 @@ section Facts
 
 variable {Q : Q6} (hQ : QOk Q) {D : ℕ} (hD : Q.d = D + 1)
 include hQ hD
-
-theorem p_ge6 : 384 ≤ Q.p := by have := hQ.hb; rw [Q.p_eq]; omega
 
 theorem cost_final6_sol_aux (hP : Q.P.Ok) (C18 : ℝ) (hC18 : 0 ≤ C18) (A18 c18 : ℕ)
     (hc : (c18 : ℝ) ≤ C18 * cU6 Q.P Q.n A18) :

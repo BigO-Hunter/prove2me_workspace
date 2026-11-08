@@ -109,15 +109,6 @@ reduction through the notation instances is about four times slower.
 
 namespace R6Chk
 
-/-! ## Notation bridges (all `rfl`) -/
-
-theorem nxor (x y : ℕ) : Nat.xor x y = x ^^^ y := rfl
-
-theorem nshl (x y : ℕ) : Nat.shiftLeft x y = x <<< y := rfl
-theorem nmul (x y : ℕ) : Nat.mul x y = x * y := rfl
-
-theorem nsub (x y : ℕ) : Nat.sub x y = x - y := rfl
-
 /-! ## Packed sums -/
 
 /-! ## Rows -/
@@ -153,19 +144,6 @@ namespace R6Chk.Bit
 
 open R6Chk
 
-theorem tb_eq (x i : ℕ) : tb x i = x.testBit i := by
-  rw [tb, nland, nshr, Nat.and_one_is_mod, Nat.testBit_eq_decide_div_mod_eq, Nat.shiftRight_eq_div_pow]
-  rcases Nat.mod_two_eq_zero_or_one (x / 2 ^ i) with h | h <;> rw [h] <;> rfl
-
-theorem testBit_fieldOf (X w i t : ℕ) :
-    (fieldOf X w i).testBit t = (decide (t < w) && X.testBit (w * i + t)) := by
-  rw [fieldOf, nland, nshr, nmul, nsub, nshl, Nat.one_shiftLeft, Nat.testBit_and,
-    Nat.testBit_two_pow_sub_one, Nat.testBit_shiftRight, Bool.and_comm]
-
-theorem fieldOf_lt (X w i : ℕ) : fieldOf X w i < 2 ^ w := by
-  rw [fieldOf, nland, nsub, nshl, Nat.one_shiftLeft]
-  exact Nat.and_lt_two_pow _ (Nat.sub_lt (Nat.two_pow_pos w) Nat.one_pos)
-
 end R6Chk.Bit
 
 end
@@ -188,9 +166,6 @@ theorem gs_ok : ∀ c ∈ gs, allL (gchunkChk supG) c = true :=
 theorem gates_ok : ∀ c ∈ gs, ∀ x ∈ c, ∀ g ∈ gchunkDec x, GateOK supG g :=
   fun c hc x hx => gchunk_sound (allL_spec (gs_ok c hc) x hx)
 
-/-- Leaves: node `0` is empty, node `i+1` is the input triple `i`. -/
-theorem leaves_ok : supG 0 = 0 ∧ ∀ i < 1771, supG (i + 1) = 2 ^ i := leaf_sound leaf_ok
-
 end R6Chk.Bit.DagC
 
 end
@@ -212,396 +187,6 @@ set_option maxRecDepth 100000
 namespace R6Chk.Bit.Loc
 
 open R6Chk R6Chk.Bit
-
-/-! ## Bits -/
-
-theorem testBit_ge_of_lt {x n m : ℕ} (hx : x < 2 ^ n) (hm : n ≤ m) : x.testBit m = false :=
-  Nat.testBit_eq_false_of_lt (lt_of_lt_of_le hx (Nat.pow_le_pow_right (by norm_num) hm))
-
-theorem fieldOf_fieldOf (S w b k j : ℕ) (hj : j < 2 ^ b) :
-    fieldOf (fieldOf S (w * 2 ^ b) k) w j = fieldOf S w (2 ^ b * k + j) := by
-  apply Nat.eq_of_testBit_eq
-  intro t
-  rw [testBit_fieldOf, testBit_fieldOf, testBit_fieldOf]
-  by_cases ht : t < w
-  · have h1 : w * j + t < w * 2 ^ b := by
-      have : w * j + w ≤ w * 2 ^ b := by
-        rw [← Nat.mul_succ]; exact Nat.mul_le_mul_left _ hj
-      omega
-    simp only [ht, h1, decide_true, Bool.true_and]
-    congr 1
-    rw [Nat.mul_add, ← Nat.mul_assoc, Nat.mul_comm w (2 ^ b)]
-    ring
-  · simp [ht]
-
-theorem setF_fieldOf (S i j v : ℕ) (hv : v < 2 ^ 16) :
-    fieldOf (setF S i v) 16 j = if i = j then v else fieldOf S 16 j := by
-  apply Nat.eq_of_testBit_eq
-  intro t
-  have hf : fieldOf S 16 i ^^^ v < 2 ^ 16 := Nat.xor_lt_two_pow (fieldOf_lt _ _ _) hv
-  rw [testBit_fieldOf, setF, nxor, nshl, nxor, nmul, Nat.testBit_xor, Nat.testBit_shiftLeft]
-  by_cases ht : t < 16
-  · simp only [ht, decide_true, Bool.true_and]
-    split_ifs with hij
-    · subst hij
-      have : 16 * i ≤ 16 * i + t := by omega
-      simp only [this, decide_true, Bool.true_and, Nat.add_sub_cancel_left, Nat.testBit_xor,
-        testBit_fieldOf, ht]
-      cases S.testBit (16 * i + t) <;> simp
-    · simp only [testBit_fieldOf, ht, decide_true, Bool.true_and]
-      have : (decide (16 * i ≤ 16 * j + t) && (fieldOf S 16 i ^^^ v).testBit (16 * j + t - 16 * i)) =
-          false := by
-        by_cases hle : 16 * i ≤ 16 * j + t
-        · rw [testBit_ge_of_lt hf]
-          · simp
-          · rcases Nat.lt_or_gt_of_ne hij with h | h <;> omega
-        · simp [hle]
-      rw [this, Bool.xor_false]
-  · simp only [ht, decide_false, Bool.false_and]
-    split_ifs
-    · exact (testBit_ge_of_lt hv (by omega)).symm
-    · rw [testBit_fieldOf]; simp [ht]
-
-theorem setF_lt {L i v W : ℕ} (hL : L < 2 ^ W) (hv : v < 2 ^ 16) (hi : 16 * i + 16 ≤ W) :
-    setF L i v < 2 ^ W := by
-  rw [setF, nxor, nshl, nxor, nmul]
-  apply Nat.xor_lt_two_pow hL
-  rw [Nat.shiftLeft_eq]
-  have hf : fieldOf L 16 i ^^^ v < 2 ^ 16 := Nat.xor_lt_two_pow (fieldOf_lt _ _ _) hv
-  calc (fieldOf L 16 i ^^^ v) * 2 ^ (16 * i) < 2 ^ 16 * 2 ^ (16 * i) :=
-        Nat.mul_lt_mul_of_pos_right hf (Nat.two_pow_pos _)
-    _ = 2 ^ (16 * i + 16) := by rw [← Nat.pow_add, Nat.add_comm]
-    _ ≤ 2 ^ W := Nat.pow_le_pow_right (by norm_num) hi
-
-/-! ## Trees -/
-
-theorem ltGet_leaf (x d i : ℕ) : ltGet (.leaf x) d i = x := rfl
-
-theorem ltGet_node (l r : LT) (d i : ℕ) :
-    ltGet (.node l r) (d + 1) i = if i.testBit d then ltGet r d i else ltGet l d i := by
-  show cond (tb i (Nat.sub (d + 1) 1)) _ _ = _
-  rw [show Nat.sub (d + 1) 1 = d from rfl, tb_eq]
-  cases i.testBit d <;> rfl
-
-theorem ltSet_leaf (x d i y : ℕ) : ltSet (.leaf x) d i y = .leaf y := rfl
-
-theorem ltSet_node (l r : LT) (d i y : ℕ) :
-    ltSet (.node l r) (d + 1) i y =
-      if i.testBit d then .node l (ltSet r d i y) else .node (ltSet l d i y) r := by
-  show cond (tb i (Nat.sub (d + 1) 1)) _ _ = _
-  rw [show Nat.sub (d + 1) 1 = d from rfl, tb_eq]
-  cases i.testBit d <;> rfl
-
-theorem ltGet_ltSet {W : ℕ} : ∀ (t : LT) (d : ℕ), Good W t d → ∀ i j y,
-    ltGet (ltSet t d i y) d j = if (∀ k < d, i.testBit k = j.testBit k) then y else ltGet t d j
-  | .leaf x, 0, _, i, j, y => by simp [ltSet_leaf, ltGet_leaf]
-  | .leaf _, _ + 1, h, _, _, _ => h.elim
-  | .node _ _, 0, h, _, _, _ => h.elim
-  | .node l r, d + 1, h, i, j, y => by
-    rw [ltSet_node]
-    by_cases hi : i.testBit d <;> by_cases hj : j.testBit d <;> simp only [hi, hj, ltGet_node,
-      if_true, if_false, Bool.false_eq_true]
-    · rw [ltGet_ltSet r d h.2]
-      congr 1
-      apply propext
-      constructor
-      · intro hk k hk'
-        rcases Nat.lt_or_ge k d with h' | h'
-        · exact hk k h'
-        · have : k = d := by omega
-          subst this; rw [hi, hj]
-      · intro hk k hk'; exact hk k (by omega)
-    · rw [if_neg]; intro hk; have := hk d (by omega); simp_all
-    · rw [if_neg]; intro hk; have := hk d (by omega); simp_all
-    · rw [ltGet_ltSet l d h.1]
-      congr 1
-      apply propext
-      constructor
-      · intro hk k hk'
-        rcases Nat.lt_or_ge k d with h' | h'
-        · exact hk k h'
-        · have : k = d := by omega
-          subst this; simp_all
-      · intro hk k hk'; exact hk k (by omega)
-
-theorem good_ltSet {W : ℕ} : ∀ (t : LT) (d : ℕ), Good W t d → ∀ i y, y < 2 ^ W → Good W (ltSet t d i y) d
-  | .leaf _, 0, _, _, _, hy => hy
-  | .leaf _, _ + 1, h, _, _, _ => h.elim
-  | .node _ _, 0, h, _, _, _ => h.elim
-  | .node l r, d + 1, h, i, y, hy => by
-    rw [ltSet_node]
-    split_ifs
-    · exact ⟨h.1, good_ltSet r d h.2 i y hy⟩
-    · exact ⟨good_ltSet l d h.1 i y hy, h.2⟩
-
-theorem ltGet_lt {W : ℕ} : ∀ (t : LT) (d : ℕ), Good W t d → ∀ i, ltGet t d i < 2 ^ W
-  | .leaf _, 0, h, _ => h
-  | .leaf _, _ + 1, h, _ => h.elim
-  | .node _ _, 0, h, _ => h.elim
-  | .node l r, d + 1, h, i => by
-    rw [ltGet_node]; split_ifs
-    · exact ltGet_lt r d h.2 i
-    · exact ltGet_lt l d h.1 i
-
-theorem eq_of_lowBits {i j d : ℕ} (hi : i < 2 ^ d) (hj : j < 2 ^ d) :
-    (∀ k < d, i.testBit k = j.testBit k) ↔ i = j := by
-  constructor
-  · intro h
-    apply Nat.eq_of_testBit_eq
-    intro k
-    by_cases hk : k < d
-    · exact h k hk
-    · rw [testBit_ge_of_lt hi (by omega), testBit_ge_of_lt hj (by omega)]
-  · rintro rfl _ _; rfl
-
-theorem mkTree_succ (S lw d k : ℕ) :
-    mkTree S lw (d + 1) k = .node (mkTree S lw d (2 * k)) (mkTree S lw d (2 * k + 1)) := rfl
-
-theorem good_mkTree (S lw : ℕ) : ∀ d k, Good lw (mkTree S lw d k) d
-  | 0, k => fieldOf_lt S lw k
-  | d + 1, k => by rw [mkTree_succ]; exact ⟨good_mkTree S lw d _, good_mkTree S lw d _⟩
-
-theorem mod_two_pow_succ' (i d : ℕ) :
-    i % 2 ^ (d + 1) = i % 2 ^ d + (if i.testBit d then 2 ^ d else 0) := by
-  rw [pow_succ, Nat.mod_mul, Nat.testBit_eq_decide_div_mod_eq]
-  rcases Nat.mod_two_eq_zero_or_one (i / 2 ^ d) with h | h <;> simp [h]
-
-theorem ltGet_mkTree (S lw : ℕ) : ∀ d k i,
-    ltGet (mkTree S lw d k) d i = fieldOf S lw (2 ^ d * k + i % 2 ^ d)
-  | 0, k, i => by simp [mkTree, ltGet_leaf, Nat.mod_one]
-  | d + 1, k, i => by
-    rw [mkTree_succ, ltGet_node, mod_two_pow_succ']
-    split_ifs with hb
-    · rw [ltGet_mkTree S lw d]; congr 1; rw [pow_succ]; ring
-    · rw [ltGet_mkTree S lw d]; congr 1; rw [pow_succ]; ring
-
-/-! ## Packed code states -/
-
-theorem shr12 (w : ℕ) : Nat.shiftRight w 12 = w / 4096 := by
-  rw [nshr, Nat.shiftRight_eq_div_pow]
-
-theorem land4095 (w : ℕ) : Nat.land w 4095 = w % 4096 := by
-  rw [nland, show (4095 : ℕ) = 2 ^ 12 - 1 from rfl, Nat.and_two_pow_sub_one_eq_mod]
-
-theorem pget_eq (t : LT) (w : ℕ) : pget t w = fieldOf (ltGet t 4 (w / 4096)) 16 (w % 4096) := by
-  rw [pget, shr12, land4095]
-
-theorem pget_pset {t : LT} (ht : Good 65536 t 4) {w w' v : ℕ} (hw : w < 65536) (hw' : w' < 65536)
-    (hv : v < 2 ^ 16) : pget (pset t w v) w' = if w = w' then v else pget t w' := by
-  have h16 : w / 4096 < 2 ^ 4 := by norm_num; omega
-  have h16' : w' / 4096 < 2 ^ 4 := by norm_num; omega
-  rw [pset, shr12, land4095, pget_eq, pget_eq, ltGet_ltSet t 4 ht]
-  by_cases hk : w / 4096 = w' / 4096
-  · rw [if_pos ((eq_of_lowBits h16 h16').2 hk), setF_fieldOf _ _ _ _ hv, hk]
-    by_cases hl : w % 4096 = w' % 4096
-    · rw [if_pos hl, if_pos (by omega)]
-    · rw [if_neg hl, if_neg (by omega)]
-  · rw [if_neg (fun h => hk ((eq_of_lowBits h16 h16').1 h)), if_neg (by omega)]
-
-theorem good_pset {t : LT} (ht : Good 65536 t 4) (w : ℕ) {v : ℕ} (hv : v < 2 ^ 16) :
-    Good 65536 (pset t w v) 4 := by
-  rw [pset, shr12, land4095]
-  exact good_ltSet t 4 ht _ _ (setF_lt (ltGet_lt t 4 ht _) hv (by omega))
-
-theorem pget_toLT (S : ℕ) {w : ℕ} (hw : w < 65536) : pget (toLT S) w = fieldOf S 16 w := by
-  rw [pget_eq, toLT, ltGet_mkTree, show (65536 : ℕ) = 16 * 2 ^ 12 from rfl,
-    fieldOf_fieldOf S 16 12 _ _ (show w % 4096 < 2 ^ 12 by norm_num; omega)]
-  congr 1
-  rw [Nat.mod_eq_of_lt (show w / 4096 < 2 ^ 4 by norm_num; omega)]
-  norm_num; omega
-
-theorem good_toLT (S : ℕ) : Good 65536 (toLT S) 4 := good_mkTree S 65536 4 0
-
-theorem fieldOf_catB (B : ℕ) : ∀ (l : List ℕ), (∀ x ∈ l, x < 2 ^ B) → ∀ k,
-    fieldOf (catB B l) B k = l.getD k 0
-  | [], _, k => by
-    simp only [catB, List.foldr_nil, List.getD_nil]
-    apply Nat.eq_of_testBit_eq; intro t; simp [testBit_fieldOf]
-  | x :: l, hl, k => by
-    have hx : x < 2 ^ B := hl x (by simp)
-    have ih := fieldOf_catB B l (fun y hy => hl y (by simp [hy]))
-    apply Nat.eq_of_testBit_eq
-    intro t
-    rw [testBit_fieldOf]
-    show (decide (t < B) && (x ||| (catB B l <<< B)).testBit (B * k + t)) = _
-    rw [Nat.testBit_or, Nat.testBit_shiftLeft]
-    cases k with
-    | zero =>
-      simp only [Nat.mul_zero, Nat.zero_add, List.getD_cons_zero]
-      by_cases ht : t < B
-      · simp [ht]
-      · simp only [ht, decide_false, Bool.false_and]
-        exact (testBit_ge_of_lt hx (by omega)).symm
-    | succ k =>
-      simp only [List.getD_cons_succ]
-      rw [← ih k, testBit_fieldOf, testBit_ge_of_lt hx (by nlinarith)]
-      by_cases ht : t < B
-      · have h1 : B ≤ B * (k + 1) + t := by nlinarith
-        simp only [ht, h1, decide_true, Bool.true_and, Bool.false_or]
-        congr 1
-        rw [Nat.mul_add, Nat.mul_one]; omega
-      · simp [ht]
-
-theorem ofLT_eq (t : LT) : ofLT t = catB 65536 ((List.range 16).map (ltGet t 4)) := by
-  rw [ofLT, catB, List.foldr_map]; rfl
-
-theorem fieldOf_ofLT {t : LT} (ht : Good 65536 t 4) {w : ℕ} (hw : w < 65536) :
-    fieldOf (ofLT t) 16 w = pget t w := by
-  have hq : w / 4096 < 16 := by omega
-  have h1 := fieldOf_fieldOf (ofLT t) 16 12 (w / 4096) (w % 4096) (by norm_num; omega)
-  rw [show 2 ^ 12 * (w / 4096) + w % 4096 = w by omega, show (16 * 2 ^ 12 : ℕ) = 65536 by norm_num] at h1
-  rw [← h1, pget_eq, ofLT_eq, fieldOf_catB]
-  · have hl : w / 4096 < ((List.range 16).map (ltGet t 4)).length := by simpa using hq
-    rw [List.getD_eq_getElem _ _ hl, List.getElem_map, List.getElem_range]
-  · intro x hx
-    simp only [List.mem_map] at hx
-    obtain ⟨k, -, rfl⟩ := hx
-    exact ltGet_lt t 4 ht k
-
-/-! ## The generator on code functions -/
-
-theorem foldl_mvP_eq {c : ℕ} (hc : c < 65536) : ∀ (ts : List ℕ), (∀ w ∈ ts, w < 65536) →
-    ∀ (t : LT) (f : ℕ → ℕ) (acc : List (ℕ × ℕ)), Good 65536 t 4 → (∀ w < 65536, pget t w = f w) →
-      (ts.foldl (mvP c) (t, acc)).2 = (ts.foldl (mvF c) (f, acc)).2 ∧
-        Good 65536 (ts.foldl (mvP c) (t, acc)).1 4 ∧
-        ∀ w < 65536, pget (ts.foldl (mvP c) (t, acc)).1 w = (ts.foldl (mvF c) (f, acc)).1 w
-  | [], _, t, f, acc, ht, hf => ⟨rfl, ht, hf⟩
-  | w :: ts, hts, t, f, acc, ht, hf => by
-    have hw : w < 65536 := hts w (by simp)
-    have hts' : ∀ w ∈ ts, w < 65536 := fun x hx => hts x (by simp [hx])
-    simp only [List.foldl_cons]
-    have hstep : mvP c (t, acc) w = if f w = c then (t, acc) else (pset t w c, (w, f w) :: acc) := by
-      rw [mvP, ← hf w hw, show Nat.beq (pget t w) c = decide (pget t w = c) by
-        rw [Bool.eq_iff_iff, Nat.beq_eq, decide_eq_true_iff]]
-      by_cases h : pget t w = c
-      · simp [h]
-      · simp [h]
-    rw [hstep]
-    by_cases h : f w = c
-    · rw [if_pos h, show mvF c (f, acc) w = (f, acc) by simp [mvF, h]]
-      exact foldl_mvP_eq hc ts hts' t f acc ht hf
-    · rw [if_neg h, show mvF c (f, acc) w = (Function.update f w c, (w, f w) :: acc) by simp [mvF, h]]
-      apply foldl_mvP_eq hc ts hts' _ _ _ (good_pset ht w (by omega))
-      intro x hx
-      rw [pget_pset ht hw hx (by omega)]
-      by_cases hxw : w = x
-      · subst hxw; simp
-      · rw [if_neg hxw, Function.update_of_ne (Ne.symm hxw), hf x hx]
-
-theorem foldl_genStepP_eq : ∀ (W : List LInstr), Fits W →
-    ∀ (t : LT) (f : ℕ → ℕ) (acc : List LChunk), Good 65536 t 4 → (∀ w < 65536, pget t w = f w) →
-      (W.foldl genStepP (t, acc)).2 = (W.foldl genStepF (f, acc)).2 ∧
-        Good 65536 (W.foldl genStepP (t, acc)).1 4 ∧
-        ∀ w < 65536, pget (W.foldl genStepP (t, acc)).1 w = (W.foldl genStepF (f, acc)).1 w
-  | [], _, t, f, acc, ht, hf => ⟨rfl, ht, hf⟩
-  | i :: W, hW, t, f, acc, ht, hf => by
-    have hi := hW i (by simp)
-    have hW' : Fits W := fun j hj => hW j (by simp [hj])
-    obtain ⟨e1, e2, e3⟩ := foldl_mvP_eq hi.1 i.2.1 hi.2 t f [] ht hf
-    simp only [List.foldl_cons, genStepP, genStepF]
-    rw [e1]
-    exact foldl_genStepP_eq W hW' _ _ _ e2 e3
-
-/-- **`genP` computes `genF`.** -/
-theorem genP_eq {W : List LInstr} (hW : Fits W) {t : LT} (ht : Good 65536 t 4) {f : ℕ → ℕ}
-    (hf : ∀ w < 65536, pget t w = f w) :
-    (genP t W).2 = (genF f W).2 ∧ Good 65536 (genP t W).1 4 ∧
-      ∀ w < 65536, pget (genP t W).1 w = (genF f W).1 w := by
-  obtain ⟨e1, e2, e3⟩ := foldl_genStepP_eq W hW t f [] ht hf
-  exact ⟨by simp only [genP, genF, e1], e2, e3⟩
-
-/-- **Soundness of a segment check.** -/
-theorem segChk_sound {S S' cnt : ℕ} {W : List LInstr} (hW : Fits W) (h : segChk S S' cnt W = true) :
-    (∀ w < 65536, (genF (codeOf S) W).1 w = codeOf S' w) ∧ movesOK (genF (codeOf S) W).2 = true ∧
-      cntF (genF (codeOf S) W).2 = cnt := by
-  obtain ⟨e1, e2, e3⟩ := genP_eq hW (good_toLT S) (f := codeOf S) (fun w hw => pget_toLT S hw)
-  simp only [segChk, segRes, Bool.and_eq_true, Nat.beq_eq] at h
-  obtain ⟨⟨h1, h2⟩, h3⟩ := h
-  refine ⟨fun w hw => ?_, by rw [← e1]; exact h2, by rw [← e1]; exact h3⟩
-  rw [← e3 w hw, codeOf, ← h1, fieldOf_ofLT e2 hw]
-
-theorem foldl_mvF_congr {c : ℕ} : ∀ (ts : List ℕ) (P : ℕ → Prop), (∀ w ∈ ts, P w) →
-    ∀ (f g : ℕ → ℕ) (acc : List (ℕ × ℕ)), (∀ w, P w → f w = g w) →
-      (ts.foldl (mvF c) (f, acc)).2 = (ts.foldl (mvF c) (g, acc)).2 ∧
-        ∀ w, P w → (ts.foldl (mvF c) (f, acc)).1 w = (ts.foldl (mvF c) (g, acc)).1 w
-  | [], _, _, f, g, acc, hfg => ⟨rfl, hfg⟩
-  | w :: ts, P, hts, f, g, acc, hfg => by
-    simp only [List.foldl_cons]
-    have hw := hts w (by simp)
-    have hts' : ∀ x ∈ ts, P x := fun x hx => hts x (by simp [hx])
-    simp only [mvF, hfg w hw]
-    split_ifs
-    · exact foldl_mvF_congr ts P hts' f g acc hfg
-    · apply foldl_mvF_congr ts P hts'
-      intro x hx
-      by_cases hxw : x = w
-      · subst hxw; simp
-      · rw [Function.update_of_ne hxw, Function.update_of_ne hxw, hfg x hx]
-
-/-- `genF` only reads the codes of touched wires. -/
-theorem genF_congr_aux : ∀ (W : List LInstr) (P : ℕ → Prop), (∀ i ∈ W, ∀ w ∈ i.2.1, P w) →
-    ∀ (f g : ℕ → ℕ) (acc : List LChunk), (∀ w, P w → f w = g w) →
-      (W.foldl genStepF (f, acc)).2 = (W.foldl genStepF (g, acc)).2 ∧
-        ∀ w, P w → (W.foldl genStepF (f, acc)).1 w = (W.foldl genStepF (g, acc)).1 w
-  | [], _, _, f, g, acc, hfg => ⟨rfl, hfg⟩
-  | i :: W, P, hW, f, g, acc, hfg => by
-    simp only [List.foldl_cons, genStepF]
-    obtain ⟨e1, e2⟩ := foldl_mvF_congr (c := i.1) i.2.1 P (hW i (by simp)) f g [] hfg
-    rw [e1]
-    exact genF_congr_aux W P (fun j hj => hW j (by simp [hj])) _ _ _ e2
-
-theorem genF_congr {W : List LInstr} {P : ℕ → Prop} (hW : ∀ i ∈ W, ∀ w ∈ i.2.1, P w) {f g : ℕ → ℕ}
-    (hfg : ∀ w, P w → f w = g w) :
-    (genF f W).2 = (genF g W).2 ∧ ∀ w, P w → (genF f W).1 w = (genF g W).1 w := by
-  obtain ⟨e1, e2⟩ := genF_congr_aux W P hW f g [] hfg
-  exact ⟨by simp only [genF, e1], e2⟩
-
-theorem foldl_genStepF_acc : ∀ (W : List LInstr) (f : ℕ → ℕ) (acc : List LChunk),
-    W.foldl genStepF (f, acc) = ((W.foldl genStepF (f, [])).1, (W.foldl genStepF (f, [])).2 ++ acc)
-  | [], f, acc => rfl
-  | i :: W, f, acc => by
-    simp only [List.foldl_cons, genStepF]
-    rw [foldl_genStepF_acc W _ ((i.1, _, i.2.2) :: acc), foldl_genStepF_acc W _ [(i.1, _, i.2.2)]]
-    simp
-
-theorem genF_append (f : ℕ → ℕ) (W W' : List LInstr) :
-    genF f (W ++ W') = ((genF (genF f W).1 W').1, (genF f W).2 ++ (genF (genF f W).1 W').2) := by
-  simp only [genF, List.foldl_append]
-  rw [foldl_genStepF_acc W' _ (W.foldl genStepF (f, [])).2]
-  simp
-
-theorem genF_cons (f : ℕ → ℕ) (i : LInstr) (W : List LInstr) :
-    genF f (i :: W) = ((genF (i.2.1.foldl (mvF i.1) (f, [])).1 W).1,
-      (i.1, (i.2.1.foldl (mvF i.1) (f, [])).2.reverse, i.2.2) ::
-        (genF (i.2.1.foldl (mvF i.1) (f, [])).1 W).2) := by
-  have := genF_append f [i] W
-  simp only [List.singleton_append] at this
-  rw [this]
-  simp [genF, genStepF]
-
-theorem genF_nil (f : ℕ → ℕ) : genF f [] = (f, []) := rfl
-
-/-- Gates are kept. -/
-theorem genF_gates : ∀ (W : List LInstr) (f : ℕ → ℕ),
-    (genF f W).2.flatMap (fun ch => ch.2.2) = W.flatMap (fun i => i.2.2)
-  | [], _ => rfl
-  | i :: W, f => by
-    rw [genF_cons, List.flatMap_cons, List.flatMap_cons, genF_gates W]
-
-/-- A segment whose touched wires are all at the instruction codes emits no moves. -/
-theorem genF_static : ∀ (W : List LInstr) (f : ℕ → ℕ), (∀ i ∈ W, ∀ w ∈ i.2.1, f w = i.1) →
-    genF f W = (f, W.map fun i => (i.1, [], i.2.2))
-  | [], _, _ => rfl
-  | i :: W, f, h => by
-    have hfold : ∀ (ts : List ℕ), (∀ w ∈ ts, f w = i.1) → ts.foldl (mvF i.1) (f, []) = (f, []) := by
-      intro ts hts
-      induction ts with
-      | nil => rfl
-      | cons w ts ih =>
-        simp only [List.foldl_cons, mvF, hts w (by simp), if_true]
-        exact ih (fun x hx => hts x (by simp [hx]))
-    rw [genF_cons, hfold _ (h i (by simp)), genF_static W f (fun j hj => h j (by simp [hj]))]
-    simp
 
 end R6Chk.Bit.Loc
 
@@ -633,51 +218,6 @@ section LabGen
 
 variable {Wr : Type*} [Fintype Wr] [DecidableEq Wr] {R : Type*} [CommRing R] {m N : ℕ}
 
-theorem foldl_mvF_acc (c : ℕ) : ∀ (ts : List ℕ) (g : ℕ → ℕ) (acc : List (ℕ × ℕ)),
-    ts.foldl (mvF c) (g, acc) = ((ts.foldl (mvF c) (g, [])).1, (ts.foldl (mvF c) (g, [])).2 ++ acc)
-  | [], g, acc => rfl
-  | w :: ts, g, acc => by
-    simp only [List.foldl_cons, mvF]
-    split_ifs
-    · exact foldl_mvF_acc c ts g acc
-    · rw [foldl_mvF_acc c ts _ ((w, g w) :: acc), foldl_mvF_acc c ts _ [(w, g w)]]; simp
-
-theorem foldl_mvF_cons (c : ℕ) (w : ℕ) (ts : List ℕ) (g : ℕ → ℕ) :
-    (w :: ts).foldl (mvF c) (g, []) =
-      if g w = c then ts.foldl (mvF c) (g, [])
-      else ((ts.foldl (mvF c) (Function.update g w c, [])).1,
-        (ts.foldl (mvF c) (Function.update g w c, [])).2 ++ [(w, g w)]) := by
-  simp only [List.foldl_cons, mvF]
-  split_ifs
-  · rfl
-  · exact foldl_mvF_acc c ts _ _
-
-/-- The moved state: touched wires end at `c`, others keep their code. -/
-theorem foldl_mvF_state (c : ℕ) : ∀ (ts : List ℕ) (g : ℕ → ℕ),
-    (∀ w ∈ ts, (ts.foldl (mvF c) (g, [])).1 w = c) ∧
-      ∀ w, w ∉ ts → (ts.foldl (mvF c) (g, [])).1 w = g w
-  | [], g => ⟨by simp, fun _ _ => rfl⟩
-  | w :: ts, g => by
-    rw [foldl_mvF_cons]
-    split_ifs with h
-    · obtain ⟨h1, h2⟩ := foldl_mvF_state c ts g
-      refine ⟨fun x hx => ?_, fun x hx => h2 x (fun h' => hx (by simp [h']))⟩
-      rcases List.mem_cons.1 hx with rfl | hx
-      · by_cases hxt : x ∈ ts
-        · exact h1 x hxt
-        · rw [h2 x hxt, h]
-      · exact h1 x hx
-    · obtain ⟨h1, h2⟩ := foldl_mvF_state c ts (Function.update g w c)
-      refine ⟨fun x hx => ?_, fun x hx => ?_⟩
-      · rcases List.mem_cons.1 hx with rfl | hx
-        · by_cases hxt : x ∈ ts
-          · exact h1 x hxt
-          · rw [h2 x hxt]; simp
-        · exact h1 x hx
-      · have hx' : x ∉ ts := fun h' => hx (by simp [h'])
-        have hxw : x ≠ w := fun h' => hx (by simp [h'])
-        rw [h2 x hx', Function.update_of_ne hxw]
-
 variable (ι : ℕ → Wr) (D : ℕ → Prop) (lab : ℕ → FMat m N) (E : ℕ → ℕ → Edge m)
 
 end LabGen
@@ -689,77 +229,7 @@ section Scalar
 variable {Wr : Type*} [DecidableEq Wr] {R : Type*} [CommRing R] {m : ℕ}
   {M : Type*} [AddCommGroup M] [Module R M]
 
-theorem xrL_cons (p : ℕ × ℕ) (l : List (ℕ × ℕ)) (u : ℕ → M) :
-    xrL l (Function.update u p.1 (u p.1 + u p.2)) = xrL (p :: l) u := rfl
-
-theorem xrL_append (l l' : List (ℕ × ℕ)) (u : ℕ → M) : xrL (l ++ l') u = xrL l' (xrL l u) := by
-  simp [xrL, List.foldl_append]
-
-theorem gateVecM_xorG {d s : Wr} (hds : d ≠ s) (v : Wr → M) :
-    gateVecM (fun x y => if x = y then (1 : R) else if x = d ∧ y = s then 1 else 0) {d, s} v =
-      Function.update v d (v d + v s) := by
-  funext w
-  simp only [gateVecM, Finset.mem_insert, Finset.mem_singleton]
-  by_cases hwd : w = d
-  · subst hwd
-    rw [Finset.sum_pair hds]
-    simp
-  · by_cases hws : w = s
-    · subst hws
-      rw [Finset.sum_pair hds]
-      simp [hwd]
-    · simp [hwd, hws]
-
 variable (ι : ℕ → Wr) (D : ℕ → Prop) (E : ℕ → ℕ → Edge m)
-
-theorem xorGs_scalar (hι : ∀ w w', D w → D w' → ι w = ι w' → w = w') :
-    ∀ (l : List (ℕ × ℕ)), (∀ p ∈ l, D p.1 ∧ D p.2 ∧ p.1 ≠ p.2) → ∀ (v : Wr → M) (u : ℕ → M),
-      (∀ w, D w → v (ι w) = u w) →
-      (∀ w, D w → (l.map fun p => (xorG (ι p.1) (ι p.2) : Instr Wr R m)).foldl scalarStepM v (ι w) =
-        xrL l u w) ∧
-      ∀ x, (∀ w, D w → ι w ≠ x) →
-        (l.map fun p => (xorG (ι p.1) (ι p.2) : Instr Wr R m)).foldl scalarStepM v x = v x
-  | [], v, u, _, h => ⟨h, fun _ _ => rfl⟩
-  | p :: l, hl, v, u, h => by
-    obtain ⟨hd, hs, hds⟩ := hl p (by simp)
-    have hds' : ι p.1 ≠ ι p.2 := fun e => hds (hι _ _ hd hs e)
-    simp only [List.map_cons, List.foldl_cons]
-    have hstep : scalarStepM v (xorG (ι p.1) (ι p.2) : Instr Wr R m) =
-        Function.update v (ι p.1) (v (ι p.1) + v (ι p.2)) := gateVecM_xorG hds' v
-    rw [hstep, ← xrL_cons]
-    obtain ⟨h1, h2⟩ := xorGs_scalar hι l (fun q hq => hl q (by simp [hq]))
-      (Function.update v (ι p.1) (v (ι p.1) + v (ι p.2))) (Function.update u p.1 (u p.1 + u p.2)) (by
-        intro w hw
-        by_cases hwp : w = p.1
-        · subst hwp; simp [h _ hd, h _ hs]
-        · rw [Function.update_of_ne (fun e => hwp (hι _ _ hw hd e)), Function.update_of_ne hwp, h w hw])
-    refine ⟨h1, fun x hx => ?_⟩
-    rw [h2 x hx, Function.update_of_ne (fun e => hx _ hd e.symm)]
-
-/-- **Scalar run of a chunk program**: the local XOR run of its gates. -/
-theorem chunkProg_scalar (hι : ∀ w w', D w → D w' → ι w = ι w' → w = w') :
-    ∀ (cs : List LChunk), (∀ ch ∈ cs, ∀ p ∈ ch.2.2, D p.1 ∧ D p.2 ∧ p.1 ≠ p.2) →
-      ∀ (v : Wr → M) (u : ℕ → M), (∀ w, D w → v (ι w) = u w) →
-        (∀ w, D w → (chunkProg (R := R) ι E cs).foldl scalarStepM v (ι w) =
-          xrL (cs.flatMap fun ch => ch.2.2) u w) ∧
-        ∀ x, (∀ w, D w → ι w ≠ x) → (chunkProg (R := R) ι E cs).foldl scalarStepM v x = v x
-  | [], _, v, u, h => ⟨h, fun _ _ => rfl⟩
-  | ch :: cs, hcs, v, u, h => by
-    have hedges : ∀ (l : List (Wr × Edge m)),
-        (l.map fun p => (Instr.edge p.1 p.2 : Instr Wr R m)).foldl scalarStepM v = v := by
-      intro l; induction l with
-      | nil => rfl
-      | cons p l ih => simpa [scalarStepM] using ih
-    have hprog : chunkProg (R := R) ι E (ch :: cs) =
-        (ch.2.1.map fun mv => (ι mv.1, E mv.2 ch.1)).map (fun p => (Instr.edge p.1 p.2 : Instr Wr R m)) ++
-          ((ch.2.2.map fun p => (xorG (ι p.1) (ι p.2) : Instr Wr R m)) ++ chunkProg (R := R) ι E cs) := by
-      simp [chunkProg, chunkInstrs, List.flatMap_cons, List.append_assoc, Function.comp_def]
-    rw [hprog, List.foldl_append, hedges, List.foldl_append]
-    obtain ⟨g1, g2⟩ := xorGs_scalar (R := R) (m := m) ι D hι ch.2.2 (hcs ch (by simp)) v u h
-    obtain ⟨r1, r2⟩ := chunkProg_scalar hι cs (fun c hc => hcs c (by simp [hc])) _ (xrL ch.2.2 u) g1
-    refine ⟨fun w hw => ?_, fun x hx => ?_⟩
-    · rw [r1 w hw, List.flatMap_cons, xrL_append]
-    · rw [r2 x hx, g2 x hx]
 
 end Scalar
 
@@ -793,8 +263,6 @@ open R6Chk R6Chk.Bit R6Chk.Bit.Loc
 section XorRun
 
 variable {M : Type*} [AddCommGroup M]
-
-theorem xrL_nil (u : ℕ → M) : xrL [] u = u := rfl
 
 theorem xrL_add : ∀ (l : List (ℕ × ℕ)) (u u' : ℕ → M), xrL l (u + u') = xrL l u + xrL l u'
   | [], _, _ => rfl
@@ -864,15 +332,6 @@ section Msum
 
 variable {M : Type*} [AddCommGroup M]
 
-theorem msum_zero (x : ℕ → M) : msum x 0 = 0 := by simp [msum]
-
-theorem msum_xor (h2 : ∀ a : M, a + a = 0) (x : ℕ → M) (a b : ℕ) :
-    msum x (a ^^^ b) = msum x a + msum x b := by
-  rw [msum, msum, msum, ← Finset.sum_add_distrib]
-  refine Finset.sum_congr rfl fun i _ => ?_
-  rw [Nat.testBit_xor]
-  cases a.testBit i <;> cases b.testBit i <;> simp [h2]
-
 theorem msum_two_pow (x : ℕ → M) {T : ℕ} (hT : T < 1792) : msum x (2 ^ T) = x T := by
   rw [msum, Finset.sum_eq_single T]
   · simp
@@ -887,8 +346,6 @@ section IdSim
 
 variable {M : Type*} [AddCommGroup M] (h2 : ∀ a : M, a + a = 0) (x : ℕ → M)
 
-theorem supG_zero : supG 0 = 0 := DagC.leaves_ok.1
-
 theorem gateOK_of_mem_dagGL {g : ℕ × ℕ × ℕ} (hg : g ∈ dagGL) : GateOK supG g := by
   simp only [dagGL, List.mem_flatMap] at hg
   obtain ⟨c, hc, y, hy, hg⟩ := hg
@@ -896,27 +353,6 @@ theorem gateOK_of_mem_dagGL {g : ℕ × ℕ × ℕ} (hg : g ∈ dagGL) : GateOK 
 
 theorem gateOK_zero : GateOK supG (0, 0, 0) := by
   simp [GateOK, supG_zero]
-
-theorem ne_of_beq_false {a b : ℕ} (h : Nat.beq a b = false) : a ≠ b := by
-  rintro rfl; rw [Nat.beq_refl] at h; cases h
-
-theorem wS_inj {q q' : ℕ} (h : wS q = wS q') : q = q' := by
-  simp only [wS, Nat.add_eq] at h; omega
-
-theorem idF_setF (S q q' v : ℕ) (hv : v < 2 ^ 16) :
-    idF (setF S q v) q' = if q = q' then v else idF S q' := setF_fieldOf S q q' v hv
-
-theorem exStep_fst (n p : ℕ) (a : Bool × ℕ) (o : ℕ) :
-    (exStep n p a o).1 = (a.1 && Nat.blt o NR && Nat.beq (idF a.2 o) 0 && !(Nat.beq o p)) := rfl
-
-theorem foldl_exStep_flag (n p : ℕ) : ∀ (os : List ℕ) (a : Bool × ℕ),
-    (os.foldl (exStep n p) a).1 = true → a.1 = true
-  | [], _, h => h
-  | o :: os, a, h => by
-    have := foldl_exStep_flag n p os _ h
-    rw [exStep_fst] at this
-    simp only [Bool.and_eq_true] at this
-    exact this.1.1.1
 
 /-- Fields of decoded records fit 16 bits. -/
 theorem recsDec_fields : ∀ (cnt s : ℕ), ∀ r ∈ R6Chk.Bit.Loc.recsDec cnt s, r.1 < 2 ^ 16
@@ -926,12 +362,6 @@ theorem recsDec_fields : ∀ (cnt s : ℕ), ∀ r ∈ R6Chk.Bit.Loc.recsDec cnt 
     rcases hr with rfl | hr
     · exact fieldOf_lt _ _ _
     · exact recsDec_fields cnt _ r hr
-
-theorem recStep_flag (acc : (Bool × ℕ) × List (ℕ × ℕ × ℕ)) (r : Rec) :
-    (recStep acc r).1.1 = true → acc.1.1 = true ∧ pivOK acc.1.2 r (acc.2.headD (0, 0, 0)) = true := by
-  intro h
-  have : (acc.1.1 && pivOK acc.1.2 r (acc.2.headD (0, 0, 0))) = true := foldl_exStep_flag r.1 r.2.1 r.2.2.2 _ h
-  exact Bool.and_eq_true_iff.mp this
 
 include h2 in
 theorem recsFold_sound : ∀ (rs : List Rec), (∀ r ∈ rs, r.1 < 2 ^ 16) →
@@ -974,13 +404,6 @@ theorem blk_sound {a b g S S' : ℕ} (h : blkChk a b g S S' = true) (z : ℕ →
   have := recsFold_sound h2 x (blkRecs a b) (blkRecs_fields a b) ((true, S), dagGL.drop g)
     (fun g' hg' => gateOK_of_mem_dagGL (List.mem_of_mem_drop hg')) h.1 z hz
   rwa [h.2] at this
-
-theorem recs_split : recs = blkRecs 0 48 ++ (blkRecs 48 96 ++ blkRecs 96 143) := by
-  rw [recs, GREC_split]
-  simp [blkRecs, List.flatMap_append]
-
-theorem initStep_fst (a : Bool × ℕ) (t : ℕ) :
-    (initStep a t).1 = (a.1 && Nat.blt (srcS t) NR && Nat.beq (idF a.2 (srcS t)) 0) := rfl
 
 include h2 in
 /-- The copies set the source slots to the leaves. -/
@@ -1029,14 +452,6 @@ theorem prod_vals (z : ℕ → M) (hz0 : ∀ q < NR, z (wS q) = 0) (hx : ∀ t <
   rw [Ag, recs_split, List.flatMap_append, List.flatMap_append, xrL_append, xrL_append]
   exact blk_sound h2 x idBlk2 _ (blk_sound h2 x idBlk1 _ (blk_sound h2 x hb0 _ hinit))
 
-theorem readOK_spec {S T : ℕ} (h : readOK S T = true) :
-    (∀ k ∈ tri3, retS (pts T k) < NR ∧ injS T k < NR ∧ pts T k < 23) ∧
-      tri3.foldl (fun a k => Nat.xor a (Nat.xor (supG (idF S (retS (pts T k)))) (supG (idF S (injS T k))))) 0 =
-        2 ^ T := by
-  simp only [readOK, Bool.and_eq_true, List.all_eq_true, Nat.beq_eq, Nat.blt_eq] at h
-  refine ⟨fun k hk => ⟨(h.1 k hk).1.1, (h.1 k hk).1.2, (h.1 k hk).2⟩, ?_⟩
-  rw [h.2, nshl, Nat.one_shiftLeft]
-
 include h2 in
 /-- **`B A C = I`**: the reads of the producer values give back the inputs. -/
 theorem reads_eq (z : ℕ → M) (hz : IdInv x IDS3 z) {T : ℕ} (hT : T < NV) : readSum z T = x T := by
@@ -1077,102 +492,6 @@ set_option maxRecDepth 100000
 namespace IntMul.Kappa.R6.Bit
 
 open R6Chk R6Chk.Bit R6Chk.Bit.Loc
-
-/-! ## Small table facts -/
-
-theorem retS_lt {c : ℕ} (hc : c < 23) : retS c < NR := by
-  have := List.all_eq_true.1 retChk_ok c (List.mem_range.2 hc)
-  simp only [Bool.and_eq_true, Nat.blt_eq] at this
-  exact this.1
-
-theorem retN_lt {c : ℕ} (hc : c < 23) : retN c < 36513 := by
-  have := List.all_eq_true.1 retChk_ok c (List.mem_range.2 hc)
-  simp only [Bool.and_eq_true, Nat.blt_eq] at this
-  exact this.2
-
-theorem srcS_lt {t : ℕ} (ht : t < NV) : srcS t < NR := by
-  have hflag : ∀ (l : List ℕ) (b : Bool × ℕ), (l.foldl initStep b).1 = true →
-      b.1 = true ∧ ∀ t ∈ l, srcS t < NR := by
-    intro l
-    induction l with
-    | nil => intro b h; exact ⟨h, fun _ h => by simp at h⟩
-    | cons t' l ih =>
-      intro b h
-      obtain ⟨h1, h2⟩ := ih _ h
-      rw [initStep_fst] at h1
-      simp only [Bool.and_eq_true, Nat.blt_eq] at h1
-      refine ⟨h1.1.1, fun t ht => ?_⟩
-      simp only [List.mem_cons] at ht
-      rcases ht with rfl | ht
-      · exact h1.1.2
-      · exact h2 t ht
-  exact (hflag _ _ idBlk0.2).2 t (List.mem_range.2 ht)
-
-/-! ## Well-formedness of the producer gates -/
-
-theorem foldl_exStep_all (n p : ℕ) : ∀ (os : List ℕ) (a : Bool × ℕ),
-    (os.foldl (exStep n p) a).1 = true → ∀ o ∈ os, o < NR ∧ o ≠ p
-  | [], _, _, o, ho => by simp at ho
-  | o' :: os, a, h, o, ho => by
-    have h1 := foldl_exStep_flag n p os _ h
-    rw [exStep_fst] at h1
-    simp only [Bool.and_eq_true, Nat.blt_eq, Bool.not_eq_true'] at h1
-    simp only [List.mem_cons] at ho
-    rcases ho with rfl | ho
-    · exact ⟨h1.1.1.2, ne_of_beq_false h1.2⟩
-    · exact foldl_exStep_all n p os _ h o ho
-
-theorem recStep_wf (acc : (Bool × ℕ) × List (ℕ × ℕ × ℕ)) (r : Rec) (h : (recStep acc r).1.1 = true) :
-    ∀ p ∈ recEl r, SlotG p := by
-  obtain ⟨-, hpiv⟩ := recStep_flag acc r h
-  simp only [pivOK, Bool.and_eq_true, Nat.blt_eq] at hpiv
-  obtain ⟨hp, hcase⟩ := hpiv
-  have hex := foldl_exStep_all r.1 r.2.1 r.2.2.2 _ h
-  intro p hpm
-  simp only [recEl, List.mem_append, List.mem_map] at hpm
-  rcases hpm with hpm | ⟨o, ho, rfl⟩
-  · by_cases hb : r.2.2.1 = 0
-    · rw [if_pos hb] at hpm; simp at hpm
-    · rw [if_neg hb, List.mem_singleton] at hpm
-      subst hpm
-      rw [show Nat.beq r.2.2.1 0 = false by
-        cases h' : Nat.beq r.2.2.1 0
-        · rfl
-        · exact absurd (Nat.eq_of_beq_eq_true h') hb, cond_false] at hcase
-      simp only [Bool.and_eq_true, Nat.blt_eq, Bool.not_eq_true'] at hcase
-      obtain ⟨⟨⟨⟨hb', hne⟩, -⟩, -⟩, -⟩ := hcase
-      exact ⟨_, _, rfl, hp, hb', ne_of_beq_false hne⟩
-  · obtain ⟨ho1, ho2⟩ := hex o ho
-    exact ⟨_, _, rfl, ho1, hp, ho2⟩
-
-theorem recsFold_wf : ∀ (rs : List Rec) (acc : (Bool × ℕ) × List (ℕ × ℕ × ℕ)),
-    (rs.foldl recStep acc).1.1 = true → ∀ r ∈ rs, ∀ p ∈ recEl r, SlotG p
-  | [], _, _, r, hr => by simp at hr
-  | r' :: rs, acc, h, r, hr => by
-    have hflag : ∀ (l : List Rec) (a : (Bool × ℕ) × List (ℕ × ℕ × ℕ)),
-        (l.foldl recStep a).1.1 = true → a.1.1 = true := by
-      intro l
-      induction l with
-      | nil => intro a h; exact h
-      | cons r'' l ih => intro a h; exact (recStep_flag a r'' (ih _ h)).1
-    simp only [List.foldl_cons] at h
-    simp only [List.mem_cons] at hr
-    rcases hr with rfl | hr
-    · exact recStep_wf acc r (hflag rs _ h)
-    · exact recsFold_wf rs _ h r hr
-
-theorem blk_wf {a b g S S' : ℕ} (h : blkChk a b g S S' = true) : ∀ r ∈ blkRecs a b, ∀ p ∈ recEl r, SlotG p := by
-  simp only [blkChk, Bool.and_eq_true] at h
-  exact recsFold_wf _ _ h.1
-
-theorem Ag_wf : ∀ p ∈ Ag, SlotG p := by
-  intro p hp
-  rw [Ag, recs_split] at hp
-  simp only [List.flatMap_append, List.mem_append, List.mem_flatMap] at hp
-  rcases hp with ⟨r, hr, hp⟩ | ⟨r, hr, hp⟩ | ⟨r, hr, hp⟩
-  · exact blk_wf idBlk0.1 r hr p hp
-  · exact blk_wf idBlk1 r hr p hp
-  · exact blk_wf idBlk2 r hr p hp
 
 /-! ## Wire ranges -/
 
@@ -1659,74 +978,6 @@ namespace IntMul.Kappa.R6.Bit
 
 open R6Chk R6Chk.Bit R6Chk.Bit.Loc
 
-/-! ## Gates -/
-
-theorem gatesW_append (W W' : List LInstr) : gatesW (W ++ W') = gatesW W ++ gatesW W' :=
-  List.flatMap_append
-
-theorem gatesW_map_mk {α : Type} (code : α → ℕ) (el : α → List (ℕ × ℕ)) :
-    ∀ (l : List α), gatesW (l.map fun a => mk (code a) (el a)) = l.flatMap el
-  | [] => rfl
-  | a :: l => by
-    simp only [List.map_cons, gatesW, List.flatMap_cons] at *
-    rw [← gatesW, gatesW_map_mk code el l]
-    rfl
-
-theorem flatMap_rev {α β : Type} (f : α → List β) : ∀ (l : List α),
-    l.reverse.flatMap (fun a => (f a).reverse) = (l.flatMap f).reverse
-  | [] => rfl
-  | a :: l => by
-    rw [List.reverse_cons, List.flatMap_append, flatMap_rev f l]
-    simp [List.flatMap_cons, List.reverse_append]
-
-theorem gates_mixF (c : ℕ → ℕ) : gatesW (mixF c) = Ag := gatesW_map_mk _ _ _
-
-theorem gates_mixI (c : ℕ → ℕ) : gatesW (mixI c) = Ag.reverse := by
-  rw [mixI, gatesW_map_mk (fun r : Rec => c r.1) (fun r => (recEl r).reverse), flatMap_rev]; rfl
-
-theorem gates_mixFB (a b : ℕ) (c : ℕ → ℕ) : gatesW (mixFB a b c) = (blkRecs a b).flatMap recEl :=
-  gatesW_map_mk _ _ _
-
-theorem gates_copyo (c : ℕ → ℕ) : gatesW (copyo c) = Cg := by
-  rw [copyo, gatesW_map_mk (fun t => c t) (fun t => [(wS (srcS t), wX t)]), Cg]
-  induction (List.range NV) with
-  | nil => rfl
-  | cons a l ih => simp [List.flatMap_cons, ih]
-
-theorem gates_scat (rd c : ℕ → ℕ) : gatesW (scat rd c) = (List.range NV).flatMap (scatEl rd) :=
-  gatesW_map_mk _ _ _
-
-theorem gates_injo (c : ℕ → ℕ) : gatesW (injo c) = Ig := gatesW_map_mk _ _ _
-
-theorem gates_tcopy : gatesW tcopy = Tg := by
-  rw [tcopy, gatesW_map_mk (fun c => cND (retN c)) (fun c => [(wT c, wS (retS c))]), Tg]
-  induction (List.range 23) with
-  | nil => rfl
-  | cons a l ih => simp [List.flatMap_cons, ih]
-
-theorem gates_sweepR (a b f : ℕ) : gatesW (sweepR a b f) = [] := by
-  simp [gatesW, sweepR]
-
-theorem blkRecs_app {a b c : ℕ} (hab : a ≤ b) (hbc : b ≤ c) :
-    blkRecs a b ++ blkRecs b c = blkRecs a c := by
-  simp only [blkRecs, ← List.flatMap_append]
-  congr 1
-  rw [show c - a = (b - a) + (c - b) by omega, List.take_add, List.drop_drop]
-  congr 3
-  omega
-
-theorem blkRecs_all : blkRecs 0 143 = recs := by
-  simp only [blkRecs, List.drop_zero, recs]
-  rw [List.take_of_length_le (by rw [GREC_len])]
-
-/-- The producer blocks of the segments make up `Ag`. -/
-theorem Ag_blocks : (blkRecs 0 12 ++ blkRecs 12 24 ++ blkRecs 24 48 ++ blkRecs 48 72 ++
-    blkRecs 72 96 ++ blkRecs 96 120 ++ blkRecs 120 143).flatMap recEl = Ag := by
-  rw [blkRecs_app (by norm_num) (by norm_num), blkRecs_app (by norm_num) (by norm_num),
-    blkRecs_app (by norm_num) (by norm_num), blkRecs_app (by norm_num) (by norm_num),
-    blkRecs_app (by norm_num) (by norm_num), blkRecs_app (by norm_num) (by norm_num), blkRecs_all]
-  rfl
-
 theorem segW1_0 : segW1 0 = copyo (fun t => cND (t + 1)) ++ mixFB 0 12 cND := rfl
 theorem segW1_1 : segW1 1 = mixFB 12 24 cND := rfl
 theorem segW1_2 : segW1 2 = mixFB 24 48 cND := rfl
@@ -1753,164 +1004,6 @@ theorem gates_W1F : gatesW W1F = G1 := by
   simp only [ gates_mixF, gates_mixI, gates_scat, gates_injo, gates_copyo,
     segW1_10, G1, Sg, List.append_assoc]
 
-/-! ## Well-formed instructions -/
-
-theorem WFw_append {W W' : List LInstr} (h : WFw W) (h' : WFw W') : WFw (W ++ W') := fun i hi => by
-  rcases List.mem_append.1 hi with hi | hi
-  · exact h i hi
-  · exact h' i hi
-
-theorem TouchC_append {P : ℕ → Prop} {c : ℕ → Prop} {W W' : List LInstr} (h : TouchC P c W)
-    (h' : TouchC P c W') : TouchC P c (W ++ W') := fun i hi => by
-  rcases List.mem_append.1 hi with hi | hi
-  · exact h i hi
-  · exact h' i hi
-
-theorem mem_touch {el : List (ℕ × ℕ)} {w : ℕ} (hw : w ∈ touch el) : ∃ p ∈ el, w = p.1 ∨ w = p.2 := by
-  simp only [touch, List.mem_flatMap, List.mem_cons, List.not_mem_nil, or_false] at hw
-  obtain ⟨p, hp, h⟩ := hw
-  exact ⟨p, hp, h⟩
-
-theorem mk_ok {α : Type} (l : List α) (code : α → ℕ) (el : α → List (ℕ × ℕ)) (P : ℕ → Prop)
-    (cP : ℕ → Prop) (hc : ∀ a ∈ l, code a < 38286 ∧ cP (code a))
-    (he : ∀ a ∈ l, ∀ p ∈ el a, p.1 < NL ∧ p.2 < NL ∧ p.1 ≠ p.2 ∧ P p.1 ∧ P p.2) :
-    WFw (l.map fun a => mk (code a) (el a)) ∧ TouchC P cP (l.map fun a => mk (code a) (el a)) := by
-  constructor
-  · intro i hi
-    simp only [List.mem_map] at hi
-    obtain ⟨a, ha, rfl⟩ := hi
-    refine ⟨(hc a ha).1, fun w hw => ?_, fun p hp => ?_⟩
-    · obtain ⟨p, hp, h⟩ := mem_touch hw
-      rcases h with rfl | rfl
-      · exact (he a ha p hp).1
-      · exact (he a ha p hp).2.1
-    · refine ⟨?_, ?_, (he a ha p hp).2.2.1⟩ <;>
-        simp only [mk, touch, List.mem_flatMap, List.mem_cons, List.not_mem_nil, or_false] <;>
-        exact ⟨p, hp, by simp⟩
-  · intro i hi
-    simp only [List.mem_map] at hi
-    obtain ⟨a, ha, rfl⟩ := hi
-    refine ⟨(hc a ha).2, fun w hw => ?_⟩
-    obtain ⟨p, hp, h⟩ := mem_touch hw
-    rcases h with rfl | rfl
-    · exact (he a ha p hp).2.2.2.1
-    · exact (he a ha p hp).2.2.2.2
-
-theorem wS_lt {q : ℕ} (hq : q < NR) : wS q < NL := by simp only [wS, NL, NR, Nat.add_eq] at *; omega
-theorem wY_lt {T : ℕ} (hT : T < NV) : wY T < NL := by simp only [wY, NL, NV, Nat.add_eq] at *; omega
-theorem wX_lt {t : ℕ} (ht : t < NV) : wX t < NL := by simp only [wX, NL, NV] at *; omega
-theorem wT_lt {c : ℕ} (hc : c < 23) : wT c < NL := by simp only [wT, NL, Nat.add_eq] at *; omega
-
-theorem rec_mem {r : Rec} {a b : ℕ} (hr : r ∈ blkRecs a b) : r ∈ recs := by
-  simp only [blkRecs, List.mem_flatMap] at hr
-  obtain ⟨x, hx, hr⟩ := hr
-  exact List.mem_flatMap.2 ⟨x, List.mem_of_mem_drop (List.mem_of_mem_take hx), hr⟩
-
-theorem recEl_ok {r : Rec} (hr : r ∈ recs) :
-    ∀ p ∈ recEl r, p.1 < NL ∧ p.2 < NL ∧ p.1 ≠ p.2 ∧ IsS p.1 ∧ IsS p.2 := by
-  intro p hp
-  obtain ⟨q, q', rfl, hq, hq', hne⟩ := Ag_wf p (List.mem_flatMap.2 ⟨r, hr, hp⟩)
-  exact ⟨wS_lt hq, wS_lt hq', fun e => hne (wS_inj e), ⟨q, hq, rfl⟩, ⟨q', hq', rfl⟩⟩
-
-theorem recEl_ok' {r : Rec} (hr : r ∈ recs) :
-    ∀ p ∈ (recEl r).reverse, p.1 < NL ∧ p.2 < NL ∧ p.1 ≠ p.2 ∧ IsS p.1 ∧ IsS p.2 :=
-  fun p hp => recEl_ok hr p (List.mem_reverse.1 hp)
-
-theorem rec_node {r : Rec} (hr : r ∈ recs) : r.1 < 36513 := by
-  have := List.all_eq_true.1 recs_nodes r hr
-  simpa using this
-
-theorem cND_lt {n : ℕ} (hn : n < 36513) : cND n < 38286 := by simp only [cND, Nat.add_eq]; omega
-
-theorem ok_mixF (code : ℕ → ℕ) (hc : ∀ n < 36513, code n < 38286) (cP : ℕ → Prop)
-    (hcP : ∀ n < 36513, cP (code n)) : WFw (mixF code) ∧ TouchC IsS cP (mixF code) :=
-  mk_ok recs (fun r => code r.1) recEl IsS cP (fun r hr => ⟨hc _ (rec_node hr), hcP _ (rec_node hr)⟩)
-    fun r hr => recEl_ok hr
-
-theorem ok_mixI (code : ℕ → ℕ) (hc : ∀ n < 36513, code n < 38286) (cP : ℕ → Prop)
-    (hcP : ∀ n < 36513, cP (code n)) : WFw (mixI code) ∧ TouchC IsS cP (mixI code) :=
-  mk_ok recs.reverse (fun r => code r.1) (fun r => (recEl r).reverse) IsS cP
-    (fun r hr => ⟨hc _ (rec_node (List.mem_reverse.1 hr)), hcP _ (rec_node (List.mem_reverse.1 hr))⟩)
-    fun r hr => recEl_ok' (List.mem_reverse.1 hr)
-
-theorem ok_mixFB (a b : ℕ) (code : ℕ → ℕ) (hc : ∀ n < 36513, code n < 38286) :
-    WFw (mixFB a b code) :=
-  (mk_ok (blkRecs a b) (fun r => code r.1) recEl IsS (fun _ => True)
-    (fun r hr => ⟨hc _ (rec_node (rec_mem hr)), trivial⟩) fun r hr => recEl_ok (rec_mem hr)).1
-
-theorem readB {T : ℕ} (hT : T < NV) :
-    ∀ k ∈ tri3, retS (pts T k) < NR ∧ injS T k < NR ∧ pts T k < 23 :=
-  (readOK_spec (List.all_eq_true.1 idReads T (List.mem_range.2 hT))).1
-
-theorem ok_scatS (code : ℕ → ℕ) (hc : ∀ T < NV, code T < 38286) (cP : ℕ → Prop)
-    (hcP : ∀ T < NV, cP (code T)) :
-    WFw (scat rdS code) ∧ TouchC (fun w => IsS w ∨ IsY w) cP (scat rdS code) :=
-  mk_ok (List.range NV) code (scatEl rdS) _ cP
-    (fun T hT => ⟨hc T (List.mem_range.1 hT), hcP T (List.mem_range.1 hT)⟩) fun T hT p hp => by
-      have hT' := List.mem_range.1 hT
-      simp only [scatEl, List.mem_map] at hp
-      obtain ⟨k, hk, rfl⟩ := hp
-      have hb := (readB hT' k hk).1
-      refine ⟨wY_lt hT', wS_lt hb, ?_, Or.inr ⟨T, hT', rfl⟩, Or.inl ⟨_, hb, rfl⟩⟩
-      simp only [wY, rdS, wS, Nat.add_eq, NV] at *; omega
-
-theorem ok_scatT (code : ℕ → ℕ) (hc : ∀ T < NV, code T < 38286) : WFw (scat wT code) :=
-  (mk_ok (List.range NV) code (scatEl wT) (fun _ => True) (fun _ => True)
-    (fun T hT => ⟨hc T (List.mem_range.1 hT), trivial⟩) fun T hT p hp => by
-      have hT' := List.mem_range.1 hT
-      simp only [scatEl, List.mem_map] at hp
-      obtain ⟨k, hk, rfl⟩ := hp
-      have hb := (readB hT' k hk).2.2
-      refine ⟨wY_lt hT', wT_lt hb, ?_, trivial, trivial⟩
-      simp only [wY, wT, Nat.add_eq, NV] at *; omega).1
-
-theorem ok_injo (code : ℕ → ℕ) (hc : ∀ T < NV, code T < 38286) (cP : ℕ → Prop)
-    (hcP : ∀ T < NV, cP (code T)) :
-    WFw (injo code) ∧ TouchC (fun w => IsS w ∨ IsY w) cP (injo code) :=
-  mk_ok (List.range NV) code (fun T => tri3.map fun k => (wY T, wS (injS T k))) _ cP
-    (fun T hT => ⟨hc T (List.mem_range.1 hT), hcP T (List.mem_range.1 hT)⟩) fun T hT p hp => by
-      have hT' := List.mem_range.1 hT
-      simp only [List.mem_map] at hp
-      obtain ⟨k, hk, rfl⟩ := hp
-      have hb := (readB hT' k hk).2.1
-      refine ⟨wY_lt hT', wS_lt hb, ?_, Or.inr ⟨T, hT', rfl⟩, Or.inl ⟨_, hb, rfl⟩⟩
-      simp only [wY, wS, Nat.add_eq, NV] at *; omega
-
-theorem ok_copyo (code : ℕ → ℕ) (hc : ∀ t < NV, code t < 38286) (cP : ℕ → Prop)
-    (hcP : ∀ t < NV, cP (code t)) :
-    WFw (copyo code) ∧ TouchC (fun w => IsS w ∨ IsX w) cP (copyo code) :=
-  mk_ok (List.range NV) code (fun t => [(wS (srcS t), wX t)]) _ cP
-    (fun t ht => ⟨hc t (List.mem_range.1 ht), hcP t (List.mem_range.1 ht)⟩) fun t ht p hp => by
-      have ht' := List.mem_range.1 ht
-      simp only [List.mem_singleton] at hp
-      subst hp
-      have hb := srcS_lt ht'
-      refine ⟨wS_lt hb, wX_lt ht', ?_, Or.inl ⟨_, hb, rfl⟩, Or.inr ⟨t, ht', rfl⟩⟩
-      simp only [wX, wS, Nat.add_eq, NV] at *; omega
-
-theorem ok_tcopy : WFw tcopy :=
-  (mk_ok (List.range 23) (fun c => cND (retN c)) (fun c => [(wT c, wS (retS c))]) (fun _ => True)
-    (fun _ => True) (fun c hc => ⟨cND_lt (retN_lt (List.mem_range.1 hc)), trivial⟩) fun c hc p hp => by
-      have hc' := List.mem_range.1 hc
-      simp only [List.mem_singleton] at hp
-      subst hp
-      have hb := retS_lt hc'
-      refine ⟨wT_lt hc', wS_lt hb, ?_, trivial, trivial⟩
-      simp only [wT, wS, Nat.add_eq, NR] at *; omega).1
-
-theorem ok_sweepR (a b f : ℕ) (hb : b ≤ NR) (hf : f < 38286) : WFw (sweepR a b f) := by
-  intro i hi
-  simp only [sweepR, List.mem_map, List.mem_range'_1] at hi
-  obtain ⟨q, ⟨hq1, hq⟩, rfl⟩ := hi
-  refine ⟨hf, fun w hw => ?_, fun p hp => by simp at hp⟩
-  simp only [List.mem_singleton] at hw
-  subst hw
-  exact wS_lt (by omega)
-
-theorem cPT_lt {T : ℕ} (hT : T < NV) : cPT T < 38286 := by simp only [cPT, NV, Nat.add_eq] at *; omega
-
-theorem ndc : ∀ n < 36513, cND n < 38286 := fun n hn => cND_lt hn
-
 theorem WF_segW1 : ∀ j, j ≤ 10 → WFw (segW1 j) := by
   intro j hj
   interval_cases j
@@ -1923,154 +1016,6 @@ theorem WF_segW1 : ∀ j, j ≤ 10 → WFw (segW1 j) := by
     | exact ok_sweepR _ _ _ (by simp [NR]) (by decide)
     | exact (ok_copyo _ (fun _ _ => by decide) (fun _ => True) (fun _ _ => trivial)).1
 
-/-! ## The generator: validity, ranks, counts -/
-
-theorem foldl_mvF_moves (c : ℕ) : ∀ (ts : List ℕ) (g : ℕ → ℕ),
-    ∀ mv ∈ (ts.foldl (mvF c) (g, [])).2, mv.1 ∈ ts ∧ mv.2 = g mv.1 ∧ mv.2 ≠ c
-  | [], g, mv, h => by simp at h
-  | w :: ts, g, mv, h => by
-    rw [foldl_mvF_cons] at h
-    split_ifs at h with hw
-    · obtain ⟨h1, h2, h3⟩ := foldl_mvF_moves c ts g mv h
-      exact ⟨List.mem_cons_of_mem _ h1, h2, h3⟩
-    · rcases List.mem_append.1 h with h | h
-      · obtain ⟨h1, h2, h3⟩ := foldl_mvF_moves c ts _ mv h
-        have hne : mv.1 ≠ w := by
-          intro e; rw [e, Function.update_self] at h2; exact h3 h2
-        rw [Function.update_of_ne hne] at h2
-        exact ⟨List.mem_cons_of_mem _ h1, h2, h3⟩
-      · simp only [List.mem_singleton] at h
-        subst h
-        exact ⟨List.mem_cons_self, rfl, hw⟩
-
-theorem genF_valid : ∀ (W : List LInstr) (f : ℕ → ℕ), WFw W → ValidOn f →
-    ValidOn (genF f W).1 ∧ ∀ ch ∈ (genF f W).2, ∀ mv ∈ ch.2.1, mv.2 < 38286 ∧ ch.1 < 38286
-  | [], f, _, hf => ⟨hf, fun _ h => by simp [genF_nil] at h⟩
-  | i :: W, f, hW, hf => by
-    rw [genF_cons]
-    obtain ⟨hc, ht, -⟩ := hW i List.mem_cons_self
-    have hst := foldl_mvF_state i.1 i.2.1 f
-    have hv : ValidOn (i.2.1.foldl (mvF i.1) (f, [])).1 := by
-      intro w hw
-      by_cases hwt : w ∈ i.2.1
-      · rw [hst.1 w hwt]; exact hc
-      · rw [hst.2 w hwt]; exact hf w hw
-    obtain ⟨ih1, ih2⟩ := genF_valid W _ (fun j hj => hW j (List.mem_cons_of_mem _ hj)) hv
-    refine ⟨ih1, fun ch hch mv hmv => ?_⟩
-    rcases List.mem_cons.1 hch with rfl | hch
-    · obtain ⟨h1, h2, -⟩ := foldl_mvF_moves i.1 i.2.1 f mv (List.mem_reverse.1 hmv)
-      exact ⟨h2 ▸ hf _ (ht _ h1), hc⟩
-    · exact ih2 ch hch mv hmv
-
-theorem shl1 (n : ℕ) : Nat.shiftLeft 1 n = 2 ^ n := by
-  rw [show Nat.shiftLeft 1 n = 1 <<< n from rfl, Nat.one_shiftLeft]
-
-theorem cntF_eq (cs : List LChunk) : cntF cs = ((mvRanks cs).map fun r => 2 ^ (32 * r)).sum := by
-  have inner : ∀ (l : List (ℕ × ℕ)) (c a : ℕ), l.foldl (fun a m =>
-      Nat.add a (Nat.shiftLeft 1 (Nat.mul 32 (let a1 := dimCF m.2; let b1 := dimCF c;
-        cond (Nat.blt a1 b1) (Nat.sub b1 a1) (Nat.sub a1 b1))))) a =
-        a + ((l.map fun m => rkC m.2 c).map fun r => 2 ^ (32 * r)).sum := by
-    intro l c
-    induction l with
-    | nil => intro a; simp
-    | cons m l ih =>
-      intro a
-      rw [List.foldl_cons, ih]
-      simp only [List.map_cons, List.sum_cons, shl1, rkC, Nat.add_eq, Nat.mul_eq]
-      ring
-  have outer : ∀ (cs : List LChunk) (a : ℕ), cs.foldl (fun acc ch => ch.2.1.foldl (fun a m =>
-      Nat.add a (Nat.shiftLeft 1 (Nat.mul 32 (let a1 := dimCF m.2; let b1 := dimCF ch.1;
-        cond (Nat.blt a1 b1) (Nat.sub b1 a1) (Nat.sub a1 b1))))) acc) a =
-        a + ((mvRanks cs).map fun r => 2 ^ (32 * r)).sum := by
-    intro cs
-    induction cs with
-    | nil => intro a; simp [mvRanks]
-    | cons ch cs ih =>
-      intro a
-      rw [List.foldl_cons, ih, inner]
-      simp only [mvRanks, List.flatMap_cons, List.map_append, List.sum_append]
-      ring
-  rw [cntF, outer, zero_add]
-
-theorem mvRanks_append (a b : List LChunk) : mvRanks (a ++ b) = mvRanks a ++ mvRanks b :=
-  List.flatMap_append
-
-theorem cntF_append (a b : List LChunk) : cntF (a ++ b) = cntF a + cntF b := by
-  rw [cntF_eq, cntF_eq, cntF_eq, mvRanks_append, List.map_append, List.sum_append]
-
-/-! ## Segments -/
-
-theorem Fits_of_WF {W : List LInstr} (h : WFw W) : Fits W := fun i hi =>
-  ⟨by have := (h i hi).1; omega, fun w hw => by have := (h i hi).2.1 w hw; simp only [NL] at this; omega⟩
-
-theorem seg_of_chk {S S' c : ℕ} {W : List LInstr} (hW : WFw W) (h : segChk S S' c W = true) :
-    Seg S S' c W := by
-  refine ⟨hW, fun f hf hv => ?_⟩
-  have hP : ∀ i ∈ W, ∀ w ∈ i.2.1, w < 65536 := fun i hi w hw => (Fits_of_WF hW i hi).2 w hw
-  obtain ⟨e1, e2⟩ := genF_congr hP hf
-  obtain ⟨s1, s2, s3⟩ := segChk_sound (Fits_of_WF hW) h
-  obtain ⟨v1, v2⟩ := genF_valid W f hW hv
-  refine ⟨fun w hw => by rw [e2 w hw, s1 w hw], v1, fun ch hch mv hmv => ?_, by rw [e1, s3]⟩
-  refine ⟨?_, v2 ch hch mv hmv⟩
-  rw [e1] at hch
-  exact List.all_eq_true.1 (List.all_eq_true.1 s2 ch hch) mv hmv
-
-theorem seg_static {S : ℕ} {W : List LInstr} (hW : WFw W)
-    (hc : ∀ f : ℕ → ℕ, (∀ w < 65536, f w = codeOf S w) → ∀ i ∈ W, ∀ w ∈ i.2.1, f w = i.1) :
-    Seg S S 0 W := by
-  refine ⟨hW, fun f hf hv => ?_⟩
-  rw [genF_static W f (hc f hf)]
-  refine ⟨hf, hv, fun ch hch mv hmv => ?_, ?_⟩
-  · simp only [List.mem_map] at hch
-    obtain ⟨i, -, rfl⟩ := hch
-    simp at hmv
-  · rw [cntF_eq]
-    have : ∀ W : List LInstr, mvRanks (W.map fun i => (i.1, ([] : List (ℕ × ℕ)), i.2.2)) = [] := by
-      intro W
-      induction W with
-      | nil => rfl
-      | cons i W ih =>
-        simp only [List.map_cons, mvRanks, List.flatMap_cons, List.map_nil, List.nil_append] at ih ⊢
-        exact ih
-    rw [this]; rfl
-
-theorem seg_append {S S' S'' c c' : ℕ} {W W' : List LInstr} (h : Seg S S' c W) (h' : Seg S' S'' c' W') :
-    Seg S S'' (c + c') (W ++ W') := by
-  refine ⟨WFw_append h.1 h'.1, fun f hf hv => ?_⟩
-  obtain ⟨a1, a2, a3, a4⟩ := h.2 f hf hv
-  obtain ⟨b1, b2, b3, b4⟩ := h'.2 _ a1 a2
-  rw [genF_append]
-  refine ⟨b1, b2, fun ch hch => ?_, by rw [cntF_append, a4, b4]⟩
-  rcases List.mem_append.1 hch with hch | hch
-  · exact a3 ch hch
-  · exact b3 ch hch
-
-/-! ## Code facts of the packed states -/
-
-theorem codeOf_pget (S : ℕ) {w : ℕ} (hw : w < 65536) : codeOf S w = pget (toLT S) w :=
-  (pget_toLT S hw).symm
-
-theorem sgFacts_spec {S : ℕ} {fx fy fs : ℕ → ℕ} (h : sgFacts (toLT S) fx fy fs = true) :
-    (∀ t < NV, codeOf S (wX t) = fx t) ∧ (∀ T < NV, codeOf S (wY T) = fy T) ∧
-      ∀ q < NR, codeOf S (wS q) = fs q := by
-  simp only [sgFacts, Bool.and_eq_true, List.all_eq_true, List.mem_range, Nat.beq_eq] at h
-  refine ⟨fun t ht => ?_, fun T hT => ?_, fun q hq => ?_⟩
-  · rw [codeOf_pget S (by have := wX_lt ht; simp only [NL] at this; omega)]; exact (h.1 t ht).1
-  · rw [codeOf_pget S (by have := wY_lt hT; simp only [NL] at this; omega)]; exact (h.1 T hT).2
-  · rw [codeOf_pget S (by have := wS_lt hq; simp only [NL] at this; omega)]; exact h.2 q hq
-
-theorem lt65536 {w : ℕ} (hw : w < NL) : w < 65536 := by simp only [NL] at hw; omega
-
-/-- Static ops touching slots and targets at a common code. -/
-theorem static_SY {S c : ℕ} {W : List LInstr} (hW : WFw W) (hT : TouchC (fun w => IsS w ∨ IsY w) (· = c) W)
-    (hS : ∀ q < NR, codeOf S (wS q) = c) (hY : ∀ T < NV, codeOf S (wY T) = c) : Seg S S 0 W :=
-  seg_static hW fun f hf i hi w hw => by
-    obtain ⟨hc, hP⟩ := hT i hi
-    rw [hc]
-    rcases hP w hw with ⟨q, hq, e⟩ | ⟨T, hT', e⟩
-    · rw [e, hf _ (lt65536 (wS_lt hq)), hS q hq]
-    · rw [e, hf _ (lt65536 (wY_lt hT')), hY T hT']
-
 theorem static_S {S c : ℕ} {W : List LInstr} (hW : WFw W) (hT : TouchC IsS (· = c) W)
     (hS : ∀ q < NR, codeOf S (wS q) = c) : Seg S S 0 W :=
   seg_static hW fun f hf i hi w hw => by
@@ -2078,9 +1023,6 @@ theorem static_S {S c : ℕ} {W : List LInstr} (hW : WFw W) (hT : TouchC IsS (·
     rw [hc]
     obtain ⟨q, hq, e⟩ := hP w hw
     rw [e, hf _ (lt65536 (wS_lt hq)), hS q hq]
-
-theorem TouchC_mono {P Q : ℕ → Prop} {c : ℕ → Prop} {W : List LInstr} (h : TouchC P c W)
-    (hPQ : ∀ w, P w → Q w) : TouchC Q c W := fun i hi => ⟨(h i hi).1, fun w hw => hPQ w ((h i hi).2 w hw)⟩
 
 /-! ## The stages -/
 
@@ -2156,90 +1098,20 @@ section Fold
 
 variable {Wr I α : Type*}
 
-/-- **Parallel composition**: blocks on disjoint wire images. -/
-theorem flat_fold (step : (Wr → α) → I → (Wr → α)) (Q : List I → (Wr → α) → Prop)
-    (hQ : ∀ p q L, Q (p ++ q) L ↔ Q p L ∧ Q q (p.foldl step L)) (hQ0 : ∀ L, Q [] L)
-    (ι : ℕ → ℕ → Wr) (D : ℕ → Prop) (f g : ℕ → ℕ → α) (prog : ℕ → List I) :
-    ∀ bs : List ℕ, bs.Nodup →
-    (∀ b ∈ bs, ∀ b' ∈ bs, b ≠ b' → ∀ w w', D w → D w' → ι b w ≠ ι b' w') →
-    (∀ b ∈ bs, ∀ L : Wr → α, (∀ w, D w → L (ι b w) = f b w) →
-      Q (prog b) L ∧ (∀ w, D w → (prog b).foldl step L (ι b w) = g b w) ∧
-        ∀ x, (∀ w, D w → ι b w ≠ x) → (prog b).foldl step L x = L x) →
-    ∀ L : Wr → α, (∀ b ∈ bs, ∀ w, D w → L (ι b w) = f b w) →
-      Q (bs.flatMap prog) L ∧ (∀ b ∈ bs, ∀ w, D w → (bs.flatMap prog).foldl step L (ι b w) = g b w) ∧
-        ∀ x, (∀ b ∈ bs, ∀ w, D w → ι b w ≠ x) → (bs.flatMap prog).foldl step L x = L x := by
-  intro bs
-  induction bs with
-  | nil => intro _ _ _ L _; exact ⟨hQ0 L, by simp, fun _ _ => rfl⟩
-  | cons b bs ih =>
-    intro hbs hdisj hblk L hL
-    have hb : b ∉ bs := (List.nodup_cons.1 hbs).1
-    obtain ⟨q1, q2, q3⟩ := hblk b List.mem_cons_self L (hL b List.mem_cons_self)
-    have hL1 : ∀ b' ∈ bs, ∀ w, D w → (prog b).foldl step L (ι b' w) = f b' w := by
-      intro b' hb' w hw
-      rw [q3 _ (fun w' hw' e => hdisj b List.mem_cons_self b' (List.mem_cons_of_mem _ hb')
-        (fun h => hb (by rw [h]; exact hb')) w' w hw' hw e)]
-      exact hL b' (List.mem_cons_of_mem _ hb') w hw
-    obtain ⟨r1, r2, r3⟩ := ih (List.nodup_cons.1 hbs).2
-      (fun b1 h1 b2 h2 => hdisj b1 (List.mem_cons_of_mem _ h1) b2 (List.mem_cons_of_mem _ h2))
-      (fun b' hb' => hblk b' (List.mem_cons_of_mem _ hb')) _ hL1
-    rw [List.flatMap_cons, List.foldl_append]
-    refine ⟨(hQ _ _ _).2 ⟨q1, r1⟩, ?_, ?_⟩
-    · intro b' hb' w hw
-      by_cases e : b' = b
-      · subst e
-        rw [r3 _ (fun b'' hb'' w' hw' e' => hdisj b'' (List.mem_cons_of_mem _ hb'') b' hb'
-          (fun h => hb (by rw [← h]; exact hb'')) w' w hw' hw e')]
-        exact q2 w hw
-      · exact r2 b' ((List.mem_cons.1 hb').resolve_left e) w hw
-    · intro x hx
-      rw [r3 x (fun b' hb' => hx b' (List.mem_cons_of_mem _ hb')), q3 x (hx b List.mem_cons_self)]
-
 end Fold
 
 section Edges
 
 variable {Wr : Type*} [Fintype Wr] [DecidableEq Wr] {R : Type*} [CommRing R] {m N : ℕ}
 
-theorem edges_scalar {M : Type*} [AddCommGroup M] [Module R M] (ι : ℕ → Wr) (e : ℕ → Edge m) :
-    ∀ (ws : List ℕ) (v : Wr → M),
-      (ws.map fun w => (Instr.edge (ι w) (e w) : Instr Wr R m)).foldl scalarStepM v = v
-  | [], _ => rfl
-  | w :: ws, v => by simpa [scalarStepM] using edges_scalar ι e ws v
-
 end Edges
-
-/-! ## Wires -/
-
-theorem gw_lt {g : ℕ} (h : g < 148225616) : gw g = .inl ⟨g, h⟩ := by rw [gw, dif_pos h]
-
-theorem gw_ge {g : ℕ} (h1 : 148225616 ≤ g) (h2 : g < 148225616 + 3217907) :
-    gw g = .inr ⟨g - 148225616, by omega⟩ := by
-  simp only [gw, dif_neg (show ¬ g < 148225616 by omega), Sum.inr.injEq, Fin.mk.injEq]
-  exact Nat.mod_eq_of_lt (by omega)
-
-theorem gw_inj {g g' : ℕ} (hg : g < 148225616 + 3217907) (hg' : g' < 148225616 + 3217907)
-    (h : gw g = gw g') : g = g' := by
-  by_cases h1 : g < 148225616 <;> by_cases h2 : g' < 148225616
-  · rw [gw_lt h1, gw_lt h2] at h; simpa using h
-  · rw [gw_lt h1, gw_ge (by omega) hg'] at h; simp at h
-  · rw [gw_ge (by omega) hg, gw_lt h2] at h; simp at h
-  · rw [gw_ge (by omega) hg, gw_ge (by omega) hg'] at h
-    simp only [Sum.inr.injEq, Fin.mk.injEq] at h; omega
 
 theorem g1_lt {b w : ℕ} (hb : b < 1771) (hw : w < 43642) : g1 b w < 148225616 + 3217907 := by
   unfold g1; split_ifs <;> omega
 
-theorem g2_lt {a w : ℕ} (ha : a < 1771) (hw : w < 45413) : g2 a w < 148225616 + 3217907 := by
-  unfold g2; split_ifs <;> omega
-
 theorem g1_inj {b b' w w' : ℕ} (hb : b < 1771) (hb' : b' < 1771) (hw : w < 43642) (hw' : w' < 43642)
     (h : g1 b w = g1 b' w') : b = b' ∧ w = w' := by
   unfold g1 at h; split_ifs at h <;> omega
-
-theorem g2_inj {a a' w w' : ℕ} (ha : a < 1771) (ha' : a' < 1771) (hw : w < 45413) (hw' : w' < 45413)
-    (h : g2 a w = g2 a' w') : a = a' ∧ w = w' := by
-  unfold g2 at h; split_ifs at h <;> omega
 
 /-- Stage-two wires of stage-one images. -/
 theorem g2_x {a t : ℕ} (ht : t < 1771) (ha : a < 1771) : g2 a t = g1 t (wY a) := by
@@ -2258,10 +1130,6 @@ theorem g2_ne_g1 {a w b w' : ℕ} (ha : a < 1771) (hw : 3542 ≤ w) (hw2 : w < 4
 theorem ι1_inj {b b' w w' : ℕ} (hb : b < 1771) (hb' : b' < 1771) (hw : w < 43642) (hw' : w' < 43642)
     (h : ι1 b w = ι1 b' w') : b = b' ∧ w = w' :=
   g1_inj hb hb' hw hw' (gw_inj (g1_lt hb hw) (g1_lt hb' hw') h)
-
-theorem ι2_inj {a a' w w' : ℕ} (ha : a < 1771) (ha' : a' < 1771) (hw : w < 45413) (hw' : w' < 45413)
-    (h : ι2 a w = ι2 a' w') : a = a' ∧ w = w' :=
-  g2_inj ha ha' hw hw' (gw_inj (g2_lt ha hw) (g2_lt ha' hw') h)
 
 /-! ## The network -/
 
@@ -2289,25 +1157,6 @@ set_option linter.constructorNameAsVariable false
 namespace IntMul.Kappa.R6.Bit.NB
 
 open Matrix R6Chk R6Chk.Bit R6Chk.Bit.Loc AModel AModelFac
-
-/-- Chunk gates come from instruction gates. -/
-theorem genF_chunk_mem : ∀ (W : List LInstr) (f : ℕ → ℕ), ∀ chk ∈ (genF f W).2, ∃ i ∈ W, chk.2.2 = i.2.2
-  | [], f, chk, h => by simp [genF_nil] at h
-  | i :: W, f, chk, h => by
-    rw [genF_cons] at h
-    rcases List.mem_cons.1 h with rfl | h
-    · exact ⟨i, List.mem_cons_self, rfl⟩
-    · obtain ⟨j, hj, e⟩ := genF_chunk_mem W _ chk h
-      exact ⟨j, List.mem_cons_of_mem _ hj, e⟩
-
-theorem chunk_gates_ok {W : List LInstr} (hW : WFw W) (f : ℕ → ℕ) :
-    ∀ chk ∈ (genF f W).2, ∀ p ∈ chk.2.2, p.1 < 43642 ∧ p.2 < 43642 ∧ p.1 ≠ p.2 := by
-  intro chk hchk p hp
-  obtain ⟨i, hi, e⟩ := genF_chunk_mem W f chk hchk
-  rw [e] at hp
-  obtain ⟨-, ht, hg⟩ := hW i hi
-  obtain ⟨h1, h2, h3⟩ := hg p hp
-  exact ⟨ht _ h1, ht _ h2, h3⟩
 
 theorem cs1_gates : cs1.flatMap (fun chk => chk.2.2) = G1 := by
   rw [cs1_eq, genF_gates, ← gates_W1F]; rfl

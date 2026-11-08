@@ -413,11 +413,6 @@ namespace NLogN.KFM
 
 open IntMul RS
 
-theorem not_zX_of_lt {j : Fin HS} (h : j.val < 56) : j ∉ zX.all := by
-  simp only [zX_all, List.mem_cons, List.not_mem_nil, or_false]
-  intro hh; rcases hh with hh | hh | hh | hh | hh | hh | hh | hh <;>
-    (rw [hh] at h; exact absurd h (by decide))
-
 /-! ## Counting with an expression test -/
 
 /-! ## Factorials -/
@@ -448,9 +443,6 @@ open IntMul IntMul.OpenAI.Glue
 /-! ## The setup register program -/
 
 open RS
-
-theorem clean_of_regs (e : Ex HS) (h : ∀ j ∈ e.regs, j.val < 56) : e.Clean :=
-  fun j hj => not_zX_of_lt (h j hj)
 
 end NLogN.KFM
 
@@ -513,13 +505,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFM
 
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
-
-theorem DescRegs.upd {t : IState HS} {n w : ℕ} {rw : Fin HS} (h : DescRegs t n w rw) (dst : Fin HS)
-    (hdst : DstOk dst) (hrw : dst ≠ rw) (hEl : dst ≠ zEl) (L : List Item) :
-    DescRegs (t.upd dst L) n w rw := by
-  obtain ⟨hs, ⟨L1, h1⟩, ⟨L2, h2⟩, ⟨L3, h3⟩⟩ := h
-  exact ⟨hs.upd dst hdst.ne.2 L, ⟨L1, by simp [IState.upd_G, Ne.symm hdst.ne.1, h1]⟩,
-    ⟨L2, by simp [IState.upd_G, Ne.symm hEl, h2]⟩, ⟨L3, by simp [IState.upd_G, Ne.symm hrw, h3]⟩⟩
 
 theorem ints_append (a b : List ℤ) : ints (a ++ b) = ints a ++ ints b := by
   simp [ints, List.map_append]
@@ -679,14 +664,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFM
 
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
-
-theorem D18Regs.upd {t : IState HS} {n : ℕ} (h : D18Regs t n) (dst : Fin HS) (hd : D18Ok dst)
-    (L : List Item) : D18Regs (t.upd dst L) n := by
-  obtain ⟨-, h1, h2, h3, h4, h5, h6⟩ := hd.ne
-  obtain ⟨⟨L1, e1⟩, ⟨L2, e2⟩, ⟨L3, e3⟩, ⟨L4, e4⟩, ⟨L5, e5⟩, ⟨L6, e6⟩⟩ := h
-  exact ⟨⟨L1, by simp [Ne.symm h1, e1]⟩, ⟨L2, by simp [Ne.symm h2, e2]⟩,
-    ⟨L3, by simp [Ne.symm h3, e3]⟩, ⟨L4, by simp [Ne.symm h4, e4]⟩,
-    ⟨L5, by simp [Ne.symm h5, e5]⟩, ⟨L6, by simp [Ne.symm h6, e6]⟩⟩
 
 end NLogN.KFM
 
@@ -1198,14 +1175,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFM
 
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
-
-theorem D18G.upd {t : IState HS} {d₀ d₁ r₀ K₀ ℓ₀ b₀ : ℕ} (h : D18G t d₀ d₁ r₀ K₀ ℓ₀ b₀)
-    (dst : Fin HS) (hd : D18Ok dst) (L : List Item) : D18G (t.upd dst L) d₀ d₁ r₀ K₀ ℓ₀ b₀ := by
-  obtain ⟨-, h1, h2, h3, h4, h5, h6⟩ := hd.ne
-  obtain ⟨⟨L1, e1⟩, ⟨L2, e2⟩, ⟨L3, e3⟩, ⟨L4, e4⟩, ⟨L5, e5⟩, ⟨L6, e6⟩⟩ := h
-  exact ⟨⟨L1, by simp [Ne.symm h1, e1]⟩, ⟨L2, by simp [Ne.symm h2, e2]⟩,
-    ⟨L3, by simp [Ne.symm h3, e3]⟩, ⟨L4, by simp [Ne.symm h4, e4]⟩,
-    ⟨L5, by simp [Ne.symm h5, e5]⟩, ⟨L6, by simp [Ne.symm h6, e6]⟩⟩
 
 end NLogN.KFM
 

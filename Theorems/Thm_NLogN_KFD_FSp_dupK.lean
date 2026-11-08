@@ -66,19 +66,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Ghost stacks -/
-
-/-! ## The simulation -/
-
-/-! ## Top level -/
-
-/-! ## Coarse transfer: `fcost ≤ 100 · cost` -/
-
-/-! ## Fine specifications -/
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
-
 /-! ## Loops -/
 
 /-! ## Literal-to-register simulation -/
@@ -114,9 +101,6 @@ open KIL
 /-! ## Expression costs -/
 
 theorem cost_lit (t : IState HS) (c : ℤ) : (Ex.lit (S := HS) c).cost t = zsz c + 2 := rfl
-
-theorem cRep_le {N Bb : ℕ} (h : zsz (N : ℤ) ≤ Bb) : cRep N ≤ 400 * (Bb + 2) + 1100 * N + 400 := by
-  unfold cRep; omega
 
 /-- Fine counted loop with a literal count. -/
 theorem FSp.repLit {C : Fin HS} {b : RS} {s : IState HS} {F : ℕ → Fin HS → List ℤ}

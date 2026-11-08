@@ -102,23 +102,6 @@ variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
 variable (Sb : SelBits sh ι)
 
-@[simp] lemma length_selOp (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) (xs : List M) :
-    (selOp Sb T xs).length = vol sh := by simp [selOp]
-
-lemma getElem_selOp (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) (xs : List M) (j : ℕ)
-    (hj : j < (selOp Sb T xs).length) :
-    (selOp Sb T xs)[j] =
-      ∑ y, T (Sb.bits (decode sh j)) y • xs.getD (encode sh (Sb.set (decode sh j) y)) 0 := by
-  simp [selOp]
-
-/-- Value of `selOp` at a valid address. -/
-lemma getD_selOp_encode (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) (xs : List M) {a : List ℕ}
-    (ha : Valid sh a) :
-    (selOp Sb T xs).getD (encode sh a) 0 =
-      ∑ y, T (Sb.bits a) y • xs.getD (encode sh (Sb.set a y)) 0 := by
-  have hlt := encode_lt ha
-  rw [List.getD_eq_getElem _ _ (by simpa using hlt), getElem_selOp, decode_encode ha]
-
 /-- Composition of selected-bit operators is the matrix product. -/
 theorem selOp_mul (T U : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) (xs : List M) :
     selOp Sb T (selOp Sb U xs) = selOp Sb (T * U) xs := by
@@ -159,17 +142,6 @@ namespace KFD
 
 open KIL AModel AModelL12
 
-theorem not_contains_of {l : List (Fin HS)} {x : Fin HS} (h : x ∉ l) : l.contains x = false := by
-  simpa using h
-
-theorem fok_mvK_eq (X Y C : Fin HS) (n : Ex HS) :
-    fok (NLogN.mvK X Y C n) = (!([Y, X, X].contains C) && !(scr.contains C)) := by
-  simp [NLogN.mvK, fok, touch, Ex.regs]
-
-theorem touch_mvK (X Y C : Fin HS) (n : Ex HS) :
-    touch (NLogN.mvK X Y C n) = C :: (n.regs ++ (Y :: X :: [X])) := by
-  simp [NLogN.mvK, touch, Ex.regs]
-
 /-! ## Gather / scatter -/
 
 /-! ## Table generator, rotations -/
@@ -200,18 +172,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
-
-/-! ## Gaussian integers -/
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
-
-/-! ## Linear-combination expressions -/
-
-theorem tmE_regs (c : ℤ) (r : Fin HS) : ∀ x ∈ (tmE c r).regs, x = r := by
-  intro x hx
-  unfold tmE at hx
-  split_ifs at hx <;> simp [Ex.regs] at hx <;> exact hx
 
 /-! ## Fine moves with the loop overhead bounded by the count -/
 
@@ -352,24 +312,6 @@ namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
 
-/-! ## Scaled coefficients -/
-
-/-! ## Scaled terms -/
-
-theorem tsE_regs (c : ℤ) (d : ℕ) (r : Fin HS) : ∀ x ∈ (tsE c d r).regs, x = r := by
-  intro x hx
-  simp only [tsE, Ex.regs, List.mem_append, List.not_mem_nil, or_false] at hx
-  exact tmE_regs c r x hx
-
-theorem lsE_regs : ∀ (l : List (ℤ × ℕ × Fin HS)), ∀ x ∈ (lsE l).regs, ∃ t ∈ l, x = t.2.2
-  | [], x, hx => by simp [lsE, Ex.regs] at hx
-  | (c, d, r) :: l, x, hx => by
-    simp only [lsE, Ex.regs, List.mem_append] at hx
-    rcases hx with hx | hx
-    · exact ⟨(c, d, r), List.mem_cons_self, tsE_regs c d r x hx⟩
-    · obtain ⟨t, ht, e⟩ := lsE_regs l x hx
-      exact ⟨t, List.mem_cons_of_mem _ ht, e⟩
-
 /-! ## Real and imaginary parts of `p u + q v` -/
 
 /-! ## Bit bounds -/
@@ -397,49 +339,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
-
-/-! ## Compilability -/
-
-theorem lsE_regs_ne {l : List (ℤ × ℕ × Fin HS)} {y : Fin HS} (h : ∀ t ∈ l, t.2.2 ≠ y) :
-    y ∉ (lsE l).regs := fun hy => by
-  obtain ⟨t, ht, e⟩ := lsE_regs l y hy
-  exact h t ht e.symm
-
-theorem reS_ne (p q : SC) : ∀ t ∈ reS p q, t.2.2 ≠ c1 := by
-  intro t ht; simp only [reS, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> dsimp only <;> decide
-
-theorem imS_ne (p q : SC) : ∀ t ∈ imS p q, t.2.2 ≠ c1 := by
-  intro t ht; simp only [imS, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> dsimp only <;> decide
-
-theorem touch_zbS (M : M2S) : c1 ∉ touch (zbS M) := by
-  intro h
-  simp only [zbS, touch, List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at h
-  have k1 := lsE_regs_ne (reS_ne M.a M.b); have k2 := lsE_regs_ne (imS_ne M.a M.b)
-  have k3 := lsE_regs_ne (reS_ne M.c M.d); have k4 := lsE_regs_ne (imS_ne M.c M.d)
-  rcases h with (h | h) | (h | h) | (h | h) | (h | h) | h | h | h | h
-  all_goals first | exact absurd h (by decide) | exact k1 h | exact k2 h | exact k3 h | exact k4 h
-
-theorem fok_zipRS (M : M2S) : fok (zipRS M) = true := by
-  have : (touch (zbS M)).contains c1 = false := not_contains_of (touch_zbS M)
-  simp only [zipRS, fok, this]
-  simp +decide [zbS, fok, scr]
-
-theorem fok_pairP (M : M2S) : fok (pairP M) = true := by
-  simp only [pairP, fok, fok_zipRS, Bool.and_true, Bool.true_and, fok_mvK_eq]
-  simp +decide [distB, fok, touch, Ex.regs, scr]
-
-/-! ## The wrapper -/
-
-theorem fok_pairW (M : M2S) (L i j : ℕ) : fok (pairW M L i j) = true := by
-  simp only [pairW, fok, fok_pairP, Bool.and_true, Bool.true_and]
-
-theorem ClP.upd0 {f : Fin HS → List ℤ} (h : ClP f) (v : List ℤ) : ClP (Function.update f 0 v) :=
-  ⟨⟨by simp +decide [h.scr.t], by simp +decide [h.scr.o], by simp +decide [h.scr.ur],
-    by simp +decide [h.scr.ui], by simp +decide [h.scr.vr], by simp +decide [h.scr.vi],
-    by simp +decide [h.scr.c]⟩, by simp +decide [h.a], by simp +decide [h.p], by simp +decide [h.q],
-    by simp +decide [h.b], by simp +decide [h.b2], by simp +decide [h.rp], by simp +decide [h.rq]⟩
 
 end NLogN.KFG
 
@@ -478,71 +377,6 @@ variable (a : Atom) (e : ℕ → ℕ)
 
 end Atom
 
-theorem fok_atomP (a : Atom) (e : ℕ → ℕ) (L : ℕ) : fok (a.P e L) = true := by
-  unfold Atom.P; split_ifs <;> exact fok_pairW _ _ _ _
-
-/-! ## Gates: lists of atoms -/
-
-theorem fok_gateP : ∀ (as : List Atom) (e : ℕ → ℕ) (L : ℕ), fok (gateP as e L) = true
-  | [], _, _ => rfl
-  | a :: as, e, L => by simp [gateP, fok, fok_atomP, fok_gateP as]
-
-/-! ## The gate matrix -/
-
-/-! ## Unit scalings -/
-
-/-! ## Role swaps and permutations -/
-
-theorem fok_swapsP (L : ℕ) : ∀ l, fok (swapsP L l) = true
-  | [] => rfl
-  | (i, j) :: l => by simp [swapsP, fok, fok_pairW, fok_swapsP L l]
-
-theorem pf_swap {W : ℕ} (a b : Fin W) (w : ℕ) : pf (Equiv.swap a b) w = nsw a.val b.val w := by
-  unfold pf nsw
-  by_cases hw : w < W
-  · rw [dif_pos hw]
-    by_cases e1 : w = a.val
-    · have : (⟨w, hw⟩ : Fin W) = a := Fin.ext e1
-      rw [this, Equiv.swap_apply_left, if_pos e1]
-    · by_cases e2 : w = b.val
-      · have : (⟨w, hw⟩ : Fin W) = b := Fin.ext e2
-        rw [this, Equiv.swap_apply_right, if_neg e1, if_pos e2]
-      · rw [Equiv.swap_apply_of_ne_of_ne (fun h => e1 (by rw [← h])) (fun h => e2 (by rw [← h])),
-          if_neg e1, if_neg e2]
-  · rw [dif_neg hw]
-    have : w ≠ a.val := by have := a.isLt; omega
-    have : w ≠ b.val := by have := b.isLt; omega
-    simp [*]
-
-theorem pf_mul {W : ℕ} (σ τ : Equiv.Perm (Fin W)) (w : ℕ) : pf (σ * τ) w = pf σ (pf τ w) := by
-  unfold pf
-  by_cases hw : w < W
-  · rw [dif_pos hw, dif_pos hw, dif_pos (τ ⟨w, hw⟩).isLt]; rfl
-  · rw [dif_neg hw, dif_neg hw, dif_neg hw]
-
-theorem pf_one {W : ℕ} (w : ℕ) : pf (1 : Equiv.Perm (Fin W)) w = w := by
-  unfold pf; split_ifs <;> rfl
-
-theorem swapsF_eq {W : ℕ} : ∀ (l : List (Fin W × Fin W)) (w : ℕ),
-    swapsF (l.map fun p => (p.1.val, p.2.val)) w = pf (l.map fun p => Equiv.swap p.1 p.2).prod w
-  | [], w => by simp [swapsF, pf_one]
-  | p :: l, w => by
-    simp only [List.map_cons, swapsF, List.prod_cons, Function.comp_apply, pf_mul, pf_swap]
-    rw [swapsF_eq l w]
-
-theorem permSw_spec {W : ℕ} (σ : Equiv.Perm (Fin W)) :
-    (permSw σ).length ≤ W ∧ (∀ p ∈ permSw σ, p.1 < p.2 ∧ p.2 < W) ∧
-      ∀ w, swapsF (permSw σ) w = pf σ⁻¹ w := by
-  have H := (perm_swaps W σ⁻¹ (Finset.card_le_univ _ |>.trans (by simp))).choose_spec
-  refine ⟨?_, ?_, fun w => ?_⟩
-  · simp only [permSw, List.length_map]
-    exact H.1.trans ((Finset.card_le_univ _).trans (by simp))
-  · intro p hp
-    simp only [permSw, List.mem_map] at hp
-    obtain ⟨q, hq, rfl⟩ := hp
-    exact ⟨H.2.1 q hq, q.2.isLt⟩
-  · rw [permSw, swapsF_eq, H.2.2]
-
 end NLogN.KFG
 
 end
@@ -579,24 +413,6 @@ open IntMul RS AModel KIL KFD KFB Complex
 /-! ## The layer layout -/
 
 variable {P K D S ρ : ℕ}
-
-theorem layerShape_drop (P K D S i : ℕ) (hi : i < D) :
-    (Butterfly.layerShape P K D S).drop (i + 2) = List.replicate (D - (i + 1)) (2 ^ K) ++ [S] := by
-  simp only [Butterfly.layerShape, List.cons_append, List.drop_succ_cons]
-  rw [List.drop_append_of_le_length (by simp; omega), List.drop_replicate]
-
-theorem stS_eq (K D S i : ℕ) (hi : i < D) : stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S := by
-  simp [stS, layerShape_drop 1 K D S i hi, vol]
-
-theorem vol_layer (P K D S : ℕ) :
-    vol (Butterfly.layerShape P K D S) = P * (2 ^ K) ^ D * S := by
-  simp [Butterfly.layerShape, vol]; ring
-
-/-! ## The kernel pass on records -/
-
-theorem RecRep.getD {r F : ℕ} {zs : List GI} {xs : List (Fin r → ℂ)} (h : RecRep r F zs xs)
-    {j : ℕ} (hj : j < xs.length) (c : Fin r) :
-    toC (zs.getD (j * r + c) 0) = 2 ^ F * xs.getD j 0 c := h.2 j c hj
 
 /-! ## The self-contained pass -/
 
@@ -639,15 +455,6 @@ namespace NLogN.KFH
 open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
-
-/-! ## Layer implementations -/
-
-theorem LImpl.mono {hρ : ρ < K} {r : ℕ} {T : Butterfly.Op (Fin D)} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : LImpl (P := P) (S := S) hρ r T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    LImpl (P := P) (S := S) hρ r T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 /-- Sequential composition: first `T`, then `U`. -/
 theorem LImpl.comp {hρ : ρ < K} {r : ℕ} {T U : Butterfly.Op (Fin D)} {c1 c2 : RS}
@@ -711,9 +518,6 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 theorem fset_cast {st : ι → ℕ} {n : ℕ} (h : SLaws st n) {j : ℕ} (hj : j < n) (y : ι → Fin 2) :
     ((fset st j y : ℕ) : ℤ) = fsetZ st j y := Int.toNat_of_nonneg (h.nonneg j hj y)
 
-theorem fset_fbit (st : ι → ℕ) (j : ℕ) : fset st j (fbit st j) = j := by
-  simp [fset, fsetZ]
-
 theorem SLaws.set_set {st : ι → ℕ} {n : ℕ} (h : SLaws st n) {j : ℕ} (hj : j < n)
     (y z : ι → Fin 2) : fset st (fset st j y) z = fset st j z := by
   have h1 := fset_cast h hj y
@@ -730,9 +534,6 @@ theorem SLaws.set_set {st : ι → ℕ} {n : ℕ} (h : SLaws st n) {j : ℕ} (hj
   rw [e]
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
-
-@[simp] theorem length_selOpF (st : ι → ℕ) (n : ℕ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
-    (xs : List M) : (selOpF st n T xs).length = n := by simp [selOpF]
 
 theorem getD_selOpF (st : ι → ℕ) (n : ℕ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
     (xs : List M) {j : ℕ} (hj : j < n) :
@@ -765,11 +566,6 @@ section Bridge
 
 variable {sh : Shape} {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-theorem StrideSel.fset_eq {Sb : Butterfly.SelBits sh ι} {st : ι → ℕ} (h : StrideSel Sb st)
-    {j : ℕ} (hj : j < vol sh) (y : ι → Fin 2) :
-    fset st j y = encode sh (Sb.set (decode sh j) y) := by
-  unfold fset; rw [← (h j hj).2 y]; simp
-
 theorem slaws_of_strideSel {Sb : Butterfly.SelBits sh ι} {st : ι → ℕ} (h : StrideSel Sb st) :
     SLaws st (vol sh) := by
   refine ⟨fun j hj y => ?_, fun j hj y => ?_, fun j hj y => ?_⟩
@@ -801,30 +597,7 @@ section Sub
 
 variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
 
-theorem extB_g {g : κ → ι} (hg : Function.Injective g) (x : ι → Fin 2) (z : κ → Fin 2) (k : κ) :
-    extB g x z (g k) = z k := by
-  have h : ∃ k', g k' = g k := ⟨k, rfl⟩
-  simp only [extB, dif_pos h]
-  exact congrArg z (hg (Classical.choose_spec h))
-
-theorem extB_off {g : κ → ι} (x : ι → Fin 2) (z : κ → Fin 2) {i : ι} (hi : ∀ k, g k ≠ i) :
-    extB g x z i = x i := by
-  have h : ¬ ∃ k, g k = i := fun ⟨k, hk⟩ => hi k hk
-  simp only [extB, dif_neg h]
-
 theorem fbit_comp (st : ι → ℕ) (g : κ → ι) (j : ℕ) : fbit (st ∘ g) j = fbit st j ∘ g := rfl
-
-theorem fsetZ_extB {g : κ → ι} (hg : Function.Injective g) (st : ι → ℕ) (j : ℕ) (z : κ → Fin 2) :
-    fsetZ st j (extB g (fbit st j) z) = fsetZ (st ∘ g) j z := by
-  unfold fsetZ
-  congr 1
-  rw [← Finset.sum_subset (Finset.subset_univ (Finset.univ.image g))]
-  · rw [Finset.sum_image (fun a _ b _ h => hg h)]
-    refine Finset.sum_congr rfl fun k _ => ?_
-    rw [extB_g hg]; rfl
-  · intro i _ hi
-    have hi' : ∀ k, g k ≠ i := fun k hk => hi (Finset.mem_image.2 ⟨k, Finset.mem_univ _, hk⟩)
-    rw [extB_off _ _ hi']; ring
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
@@ -882,17 +655,6 @@ section Role
 
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ] {M : Type*} [AddCommMonoid M]
   [Module ℂ M]
-
-@[simp] theorem length_roleOpF (st : Fin m × κ → ℕ) (n : ℕ) (A : ROp (Fin W) m κ)
-    (X : Fin W → List M) (w : Fin W) : (roleOpF st n A X w).length = n := by
-  simp [roleOpF]
-
-theorem getD_roleOpF (st : Fin m × κ → ℕ) (n : ℕ) (A : ROp (Fin W) m κ)
-    (X : Fin W → List M) (w : Fin W) {j : ℕ} (hj : j < n) :
-    (roleOpF st n A X w).getD j 0 =
-      ∑ q : Fin W × Addr m κ, A (w, fbit st j) q • (X q.1).getD (fset st j q.2) 0 := by
-  rw [List.getD_eq_getElem _ _ (by simpa using hj)]
-  simp [roleOpF]
 
 theorem roleOpF_mul {st : Fin m × κ → ℕ} {n : ℕ} (h : SLaws st n) (A B : ROp (Fin W) m κ)
     (X : Fin W → List M) :
@@ -984,13 +746,6 @@ section SImplLemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImpl.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImpl r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImpl r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 /-- Sequential composition: first `T`, then `U`. -/
 theorem SImpl.comp (hs : SLaws st n) {T U : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {c1 c2 : RS}
     {e1 e2 d1 d2 : ℕ} {k1 k2 : ℕ → ℕ} (h1 : SImpl r st n T c1 e1 d1 k1)
@@ -1013,12 +768,6 @@ section RImplDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImpl.mono {A : ROp (Fin W) m κ} {code : RS} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImpl r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) : RImpl r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 /-- Sequential composition: first `A`, then `B`. -/
 theorem RImpl.comp (hs : SLaws st n) {A B : ROp (Fin W) m κ} {c1 c2 : RS} {e1 e2 d1 d2 : ℕ}
@@ -1074,29 +823,6 @@ open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 
 section Scales
 
-theorem levA_ok {W t0 : ℕ} (ht0 : t0 < W) : ∀ a ∈ levA W t0, a.Ok W ∧ a.h ≤ 1 := by
-  intro a ha
-  simp only [levA, List.mem_map, List.mem_filter, List.mem_range] at ha
-  obtain ⟨t, ⟨ht, hne⟩, rfl⟩ := ha
-  exact ⟨⟨ht, ht0, by simpa using hne, by simp [KFB.Sm]⟩, by simp⟩
-
-theorem levA_nots (W t0 : ℕ) : NoTS (levA W t0) := by
-  intro a ha b hb
-  simp only [levA, List.mem_map, List.mem_filter, List.mem_range] at ha hb
-  obtain ⟨t, ⟨ht, hne⟩, rfl⟩ := ha
-  obtain ⟨t', -, rfl⟩ := hb
-  simpa using hne
-
-theorem levA_src {W t0 : ℕ} : ∀ a ∈ levA W t0, a.s = t0 ∧ a.h = 0 ∧ a.c = (0, 0) := by
-  intro a ha
-  simp only [levA, List.mem_map] at ha
-  obtain ⟨t, -, rfl⟩ := ha
-  exact ⟨rfl, rfl, rfl⟩
-
-theorem levA_len (W t0 : ℕ) : (levA W t0).length ≤ W := by
-  simp only [levA, List.length_map]
-  exact le_trans (List.length_filter_le _ _) (by simp)
-
 end Scales
 
 /-! ## Width and cost of a gate pass -/
@@ -1107,17 +833,6 @@ section GateStep
 
 theorem fok_gateC (W L : ℕ) (as : List KFG.Atom) : fok (gateC W L as) = true := by
   simp [gateC, fok, fok_gateP]
-
-theorem levOf_props {W : ℕ} {as : List KFG.Atom} (hok : ∀ a ∈ as, a.Ok W ∧ a.h ≤ 1) :
-    (∀ a ∈ levOf W as, a.Ok W ∧ a.h ≤ 1) ∧ NoTS (levOf W as) ∧
-      (∀ a ∈ levOf W as, a.c = (0, 0)) ∧ (levOf W as).length ≤ W := by
-  unfold levOf
-  split
-  · rename_i a0 h
-    have ha0 : a0 ∈ as := List.mem_of_find?_eq_some h
-    have ht := (hok a0 ha0).1.1
-    exact ⟨levA_ok ht, levA_nots _ _, fun a ha => (levA_src a ha).2.2, levA_len _ _⟩
-  · exact ⟨by simp, fun a ha => by simp at ha, by simp, by simp⟩
 
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
@@ -1157,13 +872,6 @@ section SImplILemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImplI.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : ℕ → IStmt HS Pp} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImplI I iprog r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImplI I iprog r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 /-- Sequential composition: first `T`, then `U`. -/
 theorem SImplI.comp (hs : SLaws st n) {T U : Matrix (ι → Fin 2) (ι → Fin 2) ℂ}
     {c1 c2 : ℕ → IStmt HS Pp} {e1 e2 d1 d2 : ℕ} {k1 k2 : ℕ → ℕ}
@@ -1187,13 +895,6 @@ section RImplIDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImplI.mono {A : ROp (Fin W) m κ} {code : ℕ → IStmt HS Pp} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImplI I iprog r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    RImplI I iprog r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 /-- Sequential composition: first `A`, then `B`. -/
 theorem RImplI.comp (hs : SLaws st n) {A B : ROp (Fin W) m κ} {c1 c2 : ℕ → IStmt HS Pp}
@@ -1241,15 +942,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFN
 
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
-
-theorem cAtom_le (w D L W Z : ℕ) (hW : 1 ≤ W) :
-    cAtom w D L W Z ≤ 1000000 * (W * L) * (w + D + 5) + 50000 * (Z + 2) := by
-  simp only [cAtom, cPairW, cPair, cZS, cD]
-  have : W - 0 - 1 + 1 = W := by omega
-  have hL : L ≤ W * L := Nat.le_mul_of_pos_left _ hW
-  have h2 : (W - 0 - 1) * L ≤ W * L := Nat.mul_le_mul_right _ (by omega)
-  nlinarith [Nat.zero_le (W * L * w), Nat.zero_le (W * L * D), Nat.zero_le ((W - 0 - 1) * L * w),
-    Nat.zero_le (L * w), Nat.zero_le (L * D)]
 
 section Node
 
@@ -1377,35 +1069,6 @@ namespace NLogN.KFW
 
 open IntMul RS KFD
 
-theorem fok_of_sub (σ : Fin HS → Option ℤ) : ∀ (p : RS), NoW σ p →
-    fok (RS.sub σ p) = true → fok p = true
-  | .skip, _, _ => rfl
-  | .asg _ _, _, _ | .push _ _, _, _ | .pop _, _, _ => rfl
-  | .seq a b, hw, h => by
-    have ha : NoW σ a := fun i h => hw i (by simp [RS.writes, h])
-    have hb : NoW σ b := fun i h => hw i (by simp [RS.writes, h])
-    simp only [RS.sub, fok, Bool.and_eq_true] at h ⊢
-    exact ⟨fok_of_sub σ a ha h.1, fok_of_sub σ b hb h.2⟩
-  | .ite c a b, hw, h => by
-    have ha : NoW σ a := fun i h => hw i (by simp [RS.writes, h])
-    have hb : NoW σ b := fun i h => hw i (by simp [RS.writes, h])
-    simp only [RS.sub, fok, Bool.and_eq_true] at h ⊢
-    exact ⟨fok_of_sub σ a ha h.1, fok_of_sub σ b hb h.2⟩
-  | .rep i n b, hw, h => by
-    have hbw : NoW σ b := fun j h => hw j (by simp [RS.writes, h])
-    have hi : σ i = none := hw i (by simp [RS.writes])
-    simp only [RS.sub, fok, Bool.and_eq_true, Bool.not_eq_true'] at h ⊢
-    obtain ⟨⟨h1, h2⟩, h3⟩ := h
-    refine ⟨⟨?_, h2⟩, fok_of_sub σ b hbw h3⟩
-    rcases hc : (touch b).contains i with _ | _
-    · rfl
-    · exfalso
-      have hm : i ∈ touch b := by simpa using hc
-      rcases RS.touch_sub σ b i hm with h' | h'
-      · have : (touch (RS.sub σ b)).contains i = true := by simpa using h'
-        rw [this] at h1; exact absurd h1 (by simp)
-      · rw [hi] at h'; simp at h'
-
 end NLogN.KFW
 
 end
@@ -1430,70 +1093,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFW
 
 open IntMul RS KFD KIL
-
-/-! ## Header refinement -/
-
-theorem HRef.writes {p p' : RS} {X : ℕ} (h : HRef p p' X) : p'.writes = p.writes := by
-  induction h with
-  | refl => rfl
-  | seq _ _ ha hb => simp [RS.writes, ha, hb]
-  | ite _ _ ha hb => simp [RS.writes, ha, hb]
-  | push => rfl
-  | mono _ _ ih => exact ih
-
-theorem HRef.fok {p p' : RS} {X : ℕ} (h : HRef p p' X) : KFD.fok p = true → KFD.fok p' = true := by
-  induction h with
-  | refl => exact id
-  | seq _ _ ha hb =>
-    intro hf; simp only [KFD.fok, Bool.and_eq_true] at hf ⊢; exact ⟨ha hf.1, hb hf.2⟩
-  | ite _ _ ha hb =>
-    intro hf; simp only [KFD.fok, Bool.and_eq_true] at hf ⊢; exact ⟨ha hf.1, hb hf.2⟩
-  | push => intro _; rfl
-  | mono _ _ ih => exact ih
-
-/-! ## Substitution of untouched registers -/
-
-theorem Ex.sub_id (σ : Fin HS → Option ℤ) : ∀ e : Ex HS, (∀ i ∈ e.regs, σ i = none) →
-    Ex.sub σ e = e
-  | .reg i, h => by simp [Ex.sub, h i (by simp [Ex.regs])]
-  | .lit _, _ => rfl
-  | .add a b, h | .mul a b, h | .shl a b, h | .quo a b, h | .rem a b, h | .ndiv a b, h
-  | .nmod a b, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.sub, Ex.sub_id σ a (fun i hi => h i (Or.inl hi)),
-      Ex.sub_id σ b (fun i hi => h i (Or.inr hi))]
-  | .neg a, h | .pow2 a, h => by
-    simp only [Ex.regs] at h; simp only [Ex.sub, Ex.sub_id σ a h]
-  | .sel c x y, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.sub, Ex.sub_id σ c (fun i hi => h i (Or.inl (Or.inl hi))),
-      Ex.sub_id σ x (fun i hi => h i (Or.inl (Or.inr hi))), Ex.sub_id σ y (fun i hi => h i (Or.inr hi))]
-
-theorem RS.sub_id (σ : Fin HS → Option ℤ) : ∀ p : RS, (∀ i ∈ touch p, σ i = none) → RS.sub σ p = p
-  | .skip, _ => rfl
-  | .asg i e, h | .push i e, h => by
-    simp only [touch, List.mem_cons] at h
-    simp only [RS.sub, Ex.sub_id σ e (fun j hj => h j (Or.inr hj))]
-  | .pop _, _ => rfl
-  | .seq a b, h => by
-    simp only [touch, List.mem_append] at h
-    simp only [RS.sub, RS.sub_id σ a (fun i hi => h i (Or.inl hi)),
-      RS.sub_id σ b (fun i hi => h i (Or.inr hi))]
-  | .ite c a b, h => by
-    simp only [touch, List.mem_append] at h
-    simp only [RS.sub, Ex.sub_id σ c (fun i hi => h i (Or.inl hi)),
-      RS.sub_id σ a (fun i hi => h i (Or.inr (Or.inl hi))),
-      RS.sub_id σ b (fun i hi => h i (Or.inr (Or.inr hi)))]
-  | .rep i n b, h => by
-    simp only [touch, List.mem_cons, List.mem_append] at h
-    simp only [RS.sub, Ex.sub_id σ n (fun j hj => h j (Or.inr (Or.inl hj))),
-      RS.sub_id σ b (fun j hj => h j (Or.inr (Or.inr hj)))]
-
-/-! ## Uniform register programs -/
-
-theorem fok_uni {σ : Fin HS → Option ℤ} {U O : RS} (hw : NoW σ U) {X : ℕ}
-    (hO : HRef O (RS.sub σ U) X) (hf : KFD.fok O = true) : KFD.fok U = true :=
-  fok_of_sub σ U hw (hO.fok hf)
 
 /-! ## Pushed parameters in the background -/
 
@@ -1527,36 +1126,12 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex P8Lift Butterfly
 
-theorem Clean0.upd0 {f : Fin HS → List ℤ} (h : Clean0 f) (v : List ℤ) :
-    Clean0 (Function.update f 0 v) := by
-  intro j hj; rw [Function.update_of_ne hj]; exact h j hj
-
-theorem Clean0.clN {f : Fin HS → List ℤ} (h : Clean0 f) : ClN f := by
-  refine ⟨⟨⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩,
-    ⟨⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩,
-    ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩ <;> exact h _ (by decide)
-
-theorem agree_encK {σ : Fin HS → Option ℤ} {s : IState HS} (hs : Agree σ s)
-    {f : Fin HS → List ℤ} (hf : ∀ j, (σ j).isSome → f j = []) : Agree σ (encK s f) := by
-  intro i v hv
-  obtain ⟨L, hL⟩ := hs i v hv
-  refine ⟨L, ?_⟩
-  rw [encK_G, hf i (by simp [hv]), hL]; rfl
-
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
 section SQ
 
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
-
-theorem SImplQ.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {U : IStmt HS Pp} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImplQ I iprog Q lo hi r st n T U e dw c)
-    (hc : ∀ w, lo ≤ w → w + dw ≤ hi → c w ≤ c' w) :
-    SImplQ I iprog Q lo hi r st n T U e dw c' := by
-  intro s f zs l xs F w hQ hC h0 hx hl hb h1 h2
-  obtain ⟨zs', r1, b1, f1⟩ := h s f zs l xs F w hQ hC h0 hx hl hb h1 h2
-  exact ⟨zs', r1, b1, f1.mono (hc w h1 h2)⟩
 
 /-- Sequential composition: first `T`, then `U`. -/
 theorem SImplQ.comp (hs : SLaws st n) {T T' : Matrix (ι → Fin 2) (ι → Fin 2) ℂ}
@@ -1581,14 +1156,6 @@ section RQ
 
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ] {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImplQ.mono {A : ROp (Fin W) m κ} {U : IStmt HS Pp} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImplQ I iprog Q lo hi r n st A U e dw c)
-    (hc : ∀ w, lo ≤ w → w + dw ≤ hi → c w ≤ c' w) :
-    RImplQ I iprog Q lo hi r n st A U e dw c' := by
-  intro s f zs l X F w hQ hC h0 hx hX hb h1 h2
-  obtain ⟨zs', r1, b1, f1⟩ := h s f zs l X F w hQ hC h0 hx hX hb h1 h2
-  exact ⟨zs', r1, b1, f1.mono (hc w h1 h2)⟩
 
 theorem RImplQ.comp (hs : SLaws st n) {A B : ROp (Fin W) m κ} {c1 c2 : IStmt HS Pp}
     {e1 e2 d1 d2 : ℕ} {k1 k2 : ℕ → ℕ} (h1 : RImplQ I iprog Q lo hi r n st A c1 e1 d1 k1)
@@ -1675,117 +1242,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex
 
-theorem pairPz_zbS (M : M2S) : pairPz (zbS M) = pairP M := rfl
-
-theorem Ex.sub_reg_none {σ : Fin HS → Option ℤ} {i : Fin HS} (h : σ i = none) :
-    Ex.sub σ (.reg i) = .reg i := by simp [Ex.sub, h]
-
-theorem touch_mvK (X Y C : Fin HS) (n : Ex HS) :
-    touch (NLogN.mvK X Y C n) = C :: (n.regs ++ (Y :: X :: [X])) := by
-  simp [NLogN.mvK, touch, Ex.regs]
-
-theorem sub_mvK {σ : Fin HS → Option ℤ} (hσ : OffG σ) (X Y C r : Fin HS) (hX : X ∈ gT)
-    (hY : Y ∈ gT) (hC : C ∈ gT) (hr : r ∈ gT) :
-    RS.sub σ (NLogN.mvK X Y C (.reg r)) = NLogN.mvK X Y C (.reg r) := by
-  apply RS.sub_id
-  intro i hi
-  rw [touch_mvK] at hi
-  simp only [Ex.regs, List.mem_cons, List.mem_append, List.mem_singleton, List.not_mem_nil,
-    or_false] at hi
-  rcases hi with h | h | h | h | h <;> subst h <;> exact hσ _ (by assumption)
-
-theorem sub_distB {σ : Fin HS → Option ℤ} (hσ : OffG σ) (Xr Xi : Fin HS) (h1 : Xr ∈ gT)
-    (h2 : Xi ∈ gT) : RS.sub σ (distB Xr Xi) = distB Xr Xi := by
-  apply RS.sub_id
-  intro i hi
-  simp only [distB, touch, Ex.regs, List.mem_cons, List.mem_append, List.not_mem_nil,
-    or_false, List.nil_append, List.cons_append] at hi
-  rcases hi with h | h | h | h | h | h | h | h | h <;> (try subst h) <;>
-    first | exact hσ _ (by decide) | exact hσ _ h1 | exact hσ _ h2
-
-theorem sub_pairPz {σ : Fin HS → Option ℤ} (hσ : OffG σ) (z : RS) :
-    RS.sub σ (pairPz z) = pairPz (RS.sub σ z) := by
-  simp only [pairPz, RS.sub]
-  rw [sub_distB hσ rUr rUi (by decide) (by decide), sub_distB hσ rVr rVi (by decide) (by decide),
-    Ex.sub_reg_none (hσ rB (by decide))]
-  rw [sub_mvK hσ 0 qP c1 rP (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ 0 qT c1 rB2 (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ 0 qQ c1 rQ (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ qO 0 c1 rB2 (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ qQ 0 c1 rQ (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ qA 0 c1 rB2 (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ qP 0 c1 rP (by decide) (by decide) (by decide) (by decide)]
-
-theorem href_push_closed (i : Fin HS) (e : Ex HS) (v : ℤ) (hr : e.regs = [])
-    (hv : ∀ s, e.eval s = v) (hok : ∀ s, e.ok s) (B : ℕ) (hB : ∀ s, e.Bnd s B) :
-    HRef (.push i (.lit v)) (.push i e) (e.size * 10 ^ 7 * (B + 2) ^ 2) :=
-  HRef.push hr hv hok (fun s => Ex.cost_le s B e (hB s))
-
-/-- **Header refinement of a pair pass.** -/
-theorem pairWG_href {σ : Fin HS → Option ℤ} (hσ : OffG σ) {ρ : Fin HS} {L : ℕ}
-    (hρ : σ ρ = some (L : ℤ)) (z : RS) (M : M2S) (hz : RS.sub σ z = zbS M) (i j Z : ℕ)
-    (hij : i < j) (hL : 1 ≤ L) (hZ : zsz ((2 * ((j + 1) * L) : ℕ) : ℤ) ≤ Z) :
-    HRef (pairW M L i j) (RS.sub σ (pairWG z ρ i j)) (Xp Z) := by
-  have zl : ∀ k : ℕ, k ≤ 2 * ((j + 1) * L) → zsz (k : ℤ) ≤ Z :=
-    fun k hk => le_trans (zsz_natCast_le hk) hZ
-  have hjL1 : j + 1 ≤ (j + 1) * L := Nat.le_mul_of_pos_right _ hL
-  have hiL : 2 * i ≤ 2 * ((j + 1) * L) := by omega
-  have hjL : 2 * (j - i - 1) ≤ 2 * ((j + 1) * L) := by
-    have : j + 1 ≤ (j + 1) * L := Nat.le_mul_of_pos_right _ hL
-    omega
-  have hiL2 : 2 * i * L ≤ 2 * ((j + 1) * L) := by nlinarith
-  have hjL2 : 2 * (j - i - 1) * L ≤ 2 * ((j + 1) * L) := by
-    have : (j - i - 1) * L ≤ (j + 1) * L := Nat.mul_le_mul_right _ (by omega)
-    nlinarith
-  simp only [pairWG, pairW, RS.sub, Ex.sub, hρ, sub_pairPz hσ, hz, pairPz_zbS]
-  have e4 : Xp Z = 0 + (Xq Z + (Xq Z + (Xq Z + (0 + (0 + (0 + (0 + 0))))))) := by
-    unfold Xp; ring
-  rw [e4]
-  refine .seq (.refl _) (.seq ?_ (.seq ?_ (.seq ?_ (.seq (.refl _) (.seq (.refl _) (.seq (.refl _)
-    (.seq (.refl _) (.refl _))))))))
-  · refine (href_push_closed _ _ _ rfl (fun s => by simp [Ex.eval]; push_cast; ring)
-      (fun s => by simp [Ex.ok]) Z (fun s => ?_)).mono (by unfold Xq; simp only [Ex.size]; omega)
-    refine ⟨zl L (by nlinarith), zl L (by nlinarith), ?_⟩
-    simp only [Ex.eval]
-    have := zl (2 * L) (by nlinarith); push_cast at this ⊢
-    rw [show (L : ℤ) + L = 2 * L by ring]; exact this
-  · refine (href_push_closed _ _ _ rfl (fun s => by simp [Ex.eval]; push_cast; ring)
-      (fun s => by simp [Ex.ok]) Z (fun s => ?_)).mono (by unfold Xq; simp only [Ex.size]; omega)
-    refine ⟨zl _ hiL, zl L (by nlinarith), ?_⟩
-    simp only [Ex.eval]
-    have := zl (2 * i * L) hiL2; push_cast at this ⊢; exact this
-  · refine (href_push_closed _ _ _ rfl (fun s => by simp [Ex.eval]; push_cast; ring)
-      (fun s => by simp [Ex.ok]) Z (fun s => ?_)).mono (by unfold Xq; simp only [Ex.size]; omega)
-    refine ⟨zl _ hjL, zl L (by nlinarith), ?_⟩
-    simp only [Ex.eval]
-    have := zl (2 * (j - i - 1) * L) hjL2; push_cast at this ⊢; exact this
-
-/-! ## Fixed parts are unchanged by the substitution -/
-
-theorem sub_tmE {σ : Fin HS → Option ℤ} (c : ℤ) (r : Fin HS) (hr : σ r = none) :
-    Ex.sub σ (tmE c r) = tmE c r := by
-  unfold tmE; split_ifs <;> simp [Ex.sub, hr]
-
-theorem sub_lsE {σ : Fin HS → Option ℤ} : ∀ (l : List (ℤ × ℕ × Fin HS)),
-    (∀ t ∈ l, σ t.2.2 = none) → Ex.sub σ (lsE l) = lsE l
-  | [], _ => rfl
-  | (c, d, r) :: l, h => by
-    simp only [lsE, tsE, Ex.sub, sub_tmE c r (h _ List.mem_cons_self),
-      sub_lsE l (fun t ht => h t (List.mem_cons_of_mem _ ht))]
-
-theorem reS_regs (p q : SC) : ∀ t ∈ reS p q, t.2.2 ∈ gT := by
-  intro t ht; simp only [reS, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> dsimp only <;> decide
-
-theorem imS_regs (p q : SC) : ∀ t ∈ imS p q, t.2.2 ∈ gT := by
-  intro t ht; simp only [imS, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> dsimp only <;> decide
-
-theorem sub_zbS {σ : Fin HS → Option ℤ} (hσ : OffG σ) (M : M2S) : RS.sub σ (zbS M) = zbS M := by
-  simp only [zbS, RS.sub]
-  rw [sub_lsE _ (fun t ht => hσ _ (reS_regs _ _ t ht)), sub_lsE _ (fun t ht => hσ _ (imS_regs _ _ t ht)),
-    sub_lsE _ (fun t ht => hσ _ (reS_regs _ _ t ht)), sub_lsE _ (fun t ht => hσ _ (imS_regs _ _ t ht))]
-
 /-! ## Gates -/
 
 theorem gatePG_href {σ : Fin HS → Option ℤ} (hσ : OffG σ) {ρ : Fin HS} {L W Z : ℕ}
@@ -1804,51 +1260,6 @@ theorem gatePG_href {σ : Fin HS → Option ℤ} (hσ : OffG σ) {ρ : Fin HS} {
     · exact pairWG_href hσ hρ _ _ (sub_zbS hσ _) _ _ Z h hL (hz _ hs)
     · exact pairWG_href hσ hρ _ _ (sub_zbS hσ _) _ _ Z (by omega) hL (hz _ ht)
 
-theorem swapsG_href {σ : Fin HS → Option ℤ} (hσ : OffG σ) {ρ : Fin HS} {L W Z : ℕ}
-    (hρ : σ ρ = some (L : ℤ)) (hL : 1 ≤ L) (hZ : zsz ((2 * (W * L) : ℕ) : ℤ) ≤ Z) :
-    ∀ (l : List (ℕ × ℕ)), (∀ p ∈ l, p.1 < p.2 ∧ p.2 < W) →
-      HRef (KFG.swapsP L l) (RS.sub σ (swapsG ρ l)) (l.length * Xp Z)
-  | [], _ => by simpa [KFG.swapsP, swapsG, RS.sub] using HRef.refl RS.skip
-  | (i, j) :: l, hl => by
-    obtain ⟨hij, hj⟩ := hl (i, j) List.mem_cons_self
-    have IH := swapsG_href hσ hρ hL hZ l (fun p hp => hl p (List.mem_cons_of_mem _ hp))
-    have hz : zsz ((2 * ((j + 1) * L) : ℕ) : ℤ) ≤ Z :=
-      le_trans (zsz_natCast_le (by have := Nat.mul_le_mul_right L (show j + 1 ≤ W by omega); omega)) hZ
-    simp only [KFG.swapsP, swapsG, RS.sub]
-    exact (HRef.seq (pairWG_href hσ hρ _ _ (sub_zbS hσ _) i j Z hij hL hz) IH).mono
-      (le_of_eq (by simp [List.length_cons]; ring))
-
-/-! ## Leveling -/
-
-/-! ## Written stacks -/
-
-theorem writes_mvK (X Y C : Fin HS) (n : Ex HS) : (NLogN.mvK X Y C n).writes = [C, Y, X] := by
-  simp [NLogN.mvK, RS.writes]
-
-theorem writes_pairPz (z : RS) : ∀ k ∈ (pairPz z).writes, k ∈ gT ∨ k ∈ z.writes := by
-  intro k hk
-  simp only [pairPz, RS.writes, writes_mvK, distB, List.mem_append, List.mem_cons,
-    List.not_mem_nil, or_false] at hk
-  rcases hk with ((h | h | h) | (h | h | h) | (h | h | h | h | h) | (h | h | h) | (h | h | h) |
-    (h | h | h | h | h) | (h | h) | (h | h | h) | (h | h | h) | (h | h | h) | (h | h | h)) <;>
-    first | exact Or.inr h | (subst h; exact Or.inl (by decide))
-
-theorem writes_pairWG (z : RS) (ρ : Fin HS) (i j : ℕ) :
-    ∀ k ∈ (pairWG z ρ i j).writes, k ∈ gT ∨ k ∈ z.writes := by
-  intro k hk
-  simp only [pairWG, RS.writes, List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hk
-  rcases hk with h | h | h | h | h | h | h | h | h
-  all_goals first | exact writes_pairPz z k h | (subst h; exact Or.inl (by decide))
-
-theorem writes_zbS (M : M2S) : ∀ k ∈ (zbS M).writes, k ∈ gT := by
-  intro k hk
-  simp only [zbS, RS.writes, List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hk
-  rcases hk with h | h | h | h | h | h | h | h <;> subst h <;> decide
-
-theorem pairWG_gT {z : RS} (hz : ∀ k ∈ z.writes, k ∈ gT) (ρ : Fin HS) (i j : ℕ) :
-    ∀ k ∈ (pairWG z ρ i j).writes, k ∈ gT := fun k hk =>
-  (writes_pairWG z ρ i j k hk).elim id (hz k)
-
 theorem gatePG_gT : ∀ (as : List Atom) (e : ℕ → ℕ) (ρ : Fin HS),
     ∀ k ∈ (gatePG as e ρ).writes, k ∈ gT
   | [], _, _ => by simp [gatePG, RS.writes]
@@ -1858,18 +1269,6 @@ theorem gatePG_gT : ∀ (as : List Atom) (e : ℕ → ℕ) (ρ : Fin HS),
     rcases hk with h | h
     · split_ifs at h <;> exact pairWG_gT (writes_zbS _) _ _ _ k h
     · exact gatePG_gT as _ ρ k h
-
-theorem swapsG_gT (ρ : Fin HS) : ∀ (l : List (ℕ × ℕ)), ∀ k ∈ (swapsG ρ l).writes, k ∈ gT
-  | [] => by simp [swapsG, RS.writes]
-  | (i, j) :: l => by
-    intro k hk
-    simp only [swapsG, RS.writes, List.mem_append] at hk
-    rcases hk with h | h
-    · exact pairWG_gT (writes_zbS _) _ _ _ k h
-    · exact swapsG_gT ρ l k h
-
-theorem NoW.of_gT {σ : Fin HS → Option ℤ} (hσ : OffG σ) {p : RS} (h : ∀ k ∈ p.writes, k ∈ gT) :
-    NoW σ p := fun k hk => hσ k (h k hk)
 
 end NLogN.KFW
 
@@ -1901,28 +1300,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFN
 
-/-! ## The lookup expression -/
-
-theorem lookL_size : ∀ (l : List ℕ) (i0 : ℕ) (x : Ex HS),
-    (lookL l i0 x).size = l.length * (x.size + 4) + 1
-  | [], _, _ => by simp [lookL, Ex.size]
-  | v :: l, i0, x => by
-    simp only [lookL, Ex.size, lookL_size l (i0 + 1) x, List.length_cons]; ring
-
-/-! ## The affine positions -/
-
-/-! ## The affine exponent expression -/
-
-theorem εAff_size (eR KR NR : Fin HS) (G : Ex HS → Ex HS) :
-    (εAff eR KR NR G).size = (G (.ndiv (εD eR) (.reg KR))).size + 26 := by
-  simp only [εAff, εD, Ex.size]; omega
-
-/-! ## The two instances -/
-
-theorem εTab_size (eR KR NR fR : Fin HS) (a : List ℕ) :
-    (εTab eR KR NR fR a).size = a.length * 12 + 27 := by
-  simp only [εTab, εAff_size, lookL_size, Ex.size, εD]; try ring
-
 end NLogN.KFW
 
 end
@@ -1948,12 +1325,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem one_le_nN {Bn t S0 : ℕ} (hB : 1 ≤ Bn) (hS : 1 ≤ S0) : 1 ≤ nN Bn t S0 := by
-  unfold nN
-  have : 1 ≤ 2 ^ t := Nat.one_le_two_pow
-  have := Nat.mul_le_mul (Nat.mul_le_mul hB this) hS
-  simpa using this
 
 end NLogN.KFW
 
@@ -1981,50 +1352,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-theorem yu_z (r Z H : ℕ) : (Z + 2) ^ 3 ≤ Yu r Z H := Nat.le_add_left _ _
-
-theorem yu_r (r Z H : ℕ) : r * (2 * H + 21) ≤ Yu r Z H := Nat.le_add_right _ _
-
-theorem yu_z2 (r Z H : ℕ) : (Z + 2) ^ 2 ≤ Yu r Z H := by
-  have : (Z + 2) ^ 2 ≤ (Z + 2) ^ 3 := Nat.pow_le_pow_right (by omega) (by omega)
-  exact this.trans (yu_z r Z H)
-
-theorem yu_z1 (r Z H : ℕ) : Z + 2 ≤ Yu r Z H := by
-  have : Z + 2 ≤ (Z + 2) ^ 2 := by nlinarith
-  exact this.trans (yu_z2 r Z H)
-
-theorem yu_8 (r Z H : ℕ) : 8 ≤ Yu r Z H := by
-  have : 2 ^ 3 ≤ (Z + 2) ^ 3 := Nat.pow_le_pow_left (by omega) 3
-  exact le_trans (by simpa using this) (yu_z r Z H)
-
-/-- **One atom** at a width in the window. -/
-theorem cAtom_Y {W n x D r Z H : ℕ} (hW : 1 ≤ W) (hn : 1 ≤ n) (hx : x + D ≤ 2 * H + 16) :
-    cAtom x D (n * r) W Z ≤ 1000000 * (W * n) * Yu r Z H := by
-  have h1 := cAtom_le x D (n * r) W Z hW
-  have hWn : 1 ≤ W * n := Nat.mul_le_mul hW hn
-  have h2 : W * (n * r) * (x + D + 5) ≤ (W * n) * (r * (2 * H + 21)) := by
-    have : W * (n * r) * (x + D + 5) = (W * n) * (r * (x + D + 5)) := by ring
-    rw [this]
-    exact Nat.mul_le_mul_left _ (Nat.mul_le_mul_left _ (by omega))
-  have h3 : 50000 * (Z + 2) ≤ 1000000 * ((W * n) * (Z + 2) ^ 3) := by
-    have a : Z + 2 ≤ (Z + 2) ^ 3 := Nat.le_self_pow (by norm_num) _
-    have b : (Z + 2) ^ 3 ≤ (W * n) * (Z + 2) ^ 3 := Nat.le_mul_of_pos_left _ hWn
-    omega
-  have e : 1000000 * (W * n) * Yu r Z H =
-      1000000 * ((W * n) * (r * (2 * H + 21))) + 1000000 * ((W * n) * (Z + 2) ^ 3) := by
-    unfold Yu; ring
-  have e2 : 1000000 * (W * (n * r)) * (x + D + 5) = 1000000 * (W * (n * r) * (x + D + 5)) := by
-    ring
-  rw [e]
-  rw [e2] at h1
-  have := Nat.mul_le_mul_left 1000000 h2
-  omega
-
-theorem moveCost_Y (Z r H : ℕ) : moveCost Z ≤ 50 * Yu r Z H := by
-  unfold moveCost
-  have := yu_z1 r Z H
-  omega
-
 end NLogN.KFW
 
 end
@@ -2049,56 +1376,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem xp_Y (r Z H : ℕ) : Xp Z ≤ 90000000 * Yu r Z H := by
-  unfold Xp Xq
-  have := yu_z2 r Z H
-  omega
-
-/-- **The role wrapper.** -/
-theorem cWrapQ_Y {W n r Z H e dw x : ℕ} (hW : 1 ≤ W) (hn : 1 ≤ n) (c : ℕ → ℕ)
-    (hx : x + dw + (e + 2) * W + e ≤ 2 * H + 16) :
-    cWrapQ W (n * r) Z e dw c x ≤ c x + 10 ^ 12 * (W + 2) * ((W * n) * Yu r Z H) := by
-  unfold cWrapQ
-  have h1 := cAtom_Y (r := r) (Z := Z) (H := H) (x := x + dw + (e + 2) * W) (D := e) hW hn
-    (by omega)
-  have h2 := xp_Y r Z H
-  set Y := Yu r Z H
-  have hY8 := yu_8 r Z H
-  have hWn : 1 ≤ W * n := Nat.mul_le_mul hW hn
-  set P := W * n * Y with hP
-  have hYP : Y ≤ P := Nat.le_mul_of_pos_left _ (by omega)
-  have hWP : W * Y ≤ P := by
-    rw [hP]; exact Nat.mul_le_mul_right _ (Nat.le_mul_of_pos_right _ (by omega))
-  have k1 : (W + 2) * cAtom (x + dw + (e + 2) * W) e (n * r) W Z ≤ (W + 2) * (1000000 * P) := by
-    have : 1000000 * (W * n) * Y = 1000000 * P := by rw [hP]; ring
-    rw [this] at h1
-    exact Nat.mul_le_mul_left _ h1
-  have k2 : 3 * (W * Xp Z) ≤ 270000000 * P := by
-    have : W * Xp Z ≤ W * (90000000 * Y) := Nat.mul_le_mul_left _ h2
-    have e1 : W * (90000000 * Y) = 90000000 * (W * Y) := by ring
-    omega
-  have k3 : 3 ≤ 3 * P := by
-    have : 1 ≤ P := le_trans (by omega) hYP
-    omega
-  have e2 : 10 ^ 12 * (W + 2) * P = 10 ^ 12 * (W * P) + 2 * 10 ^ 12 * P := by ring
-  have e3 : (W + 2) * (1000000 * P) = 1000000 * (W * P) + 2000000 * P := by ring
-  have hWP' : P ≤ W * P := Nat.le_mul_of_pos_left _ hW
-  omega
-
-theorem cFrame_Y (N sz r Z H : ℕ) : cFrame N sz Z ≤ N * (sz + 1) * 10 ^ 8 * Yu r Z H + 1 := by
-  unfold cFrame
-  have h1 := yu_z2 r Z H
-  have h2 := moveCost_Y Z r H
-  set Y := Yu r Z H
-  have : sz * 10 ^ 7 * (Z + 2) ^ 2 + (2 * moveCost Z + 19) ≤ (sz + 1) * 10 ^ 8 * Y := by
-    have a : sz * 10 ^ 7 * (Z + 2) ^ 2 ≤ sz * 10 ^ 7 * Y := Nat.mul_le_mul_left _ h1
-    have hY8 := yu_8 r Z H
-    have e : (sz + 1) * 10 ^ 8 * Y = sz * 10 ^ 7 * Y + (9 * sz * 10 ^ 7 * Y + 10 ^ 8 * Y) := by ring
-    omega
-  have := Nat.mul_le_mul_left N this
-  have e : N * ((sz + 1) * 10 ^ 8 * Y) = N * (sz + 1) * 10 ^ 8 * Y := by ring
-  omega
 
 end NLogN.KFW
 
@@ -2177,11 +1454,6 @@ section Step
 
 variable {Pp : ℕ} {Isym : List Sym} {tbl : Fin Pp → IStmt HS Pp}
 variable {σ : Fin HS → Option ℤ} {K t S0 r H Z k e B Bn : ℕ}
-
-theorem yu_monoZ {r Z Z' H : ℕ} (h : Z ≤ Z') : Yu r Z H ≤ Yu r Z' H := by
-  unfold Yu
-  have : (Z + 2) ^ 3 ≤ (Z' + 2) ^ 3 := Nat.pow_le_pow_left (by omega) 3
-  omega
 
 end Step
 
@@ -2314,21 +1586,6 @@ open Matrix Finset Complex Butterfly P8Lift IntMul.Kappa.R6.Cx
 /-! ## The closed-form scale bound -/
 
 section Scale
-
-theorem le_Ap {A p x : ℕ} (hA : 1 ≤ A) (hp : 1 ≤ p) : x ≤ A * ((x + 1) ^ p - 1) := by
-  have h1 : x + 1 ≤ (x + 1) ^ p := Nat.le_self_pow (by omega) _
-  have h2 : (x + 1) ^ p - 1 ≤ A * ((x + 1) ^ p - 1) := Nat.le_mul_of_pos_left _ hA
-  omega
-
-theorem Gs_le {A p m x : ℕ} (hA : 1 ≤ A) (hp : 1 ≤ p) : Gs A p m x ≤ A * ((x + 1) ^ p - 1) := by
-  unfold Gs; split_ifs
-  · exact le_Ap hA hp
-  · exact le_rfl
-
-theorem Gs_lt {A p m x : ℕ} (h : x < 2 * m) : Gs A p m x = x := by simp [Gs, h]
-
-theorem Gs_ge {A p m x : ℕ} (h : 2 * m ≤ x) : Gs A p m x = A * ((x + 1) ^ p - 1) := by
-  simp [Gs, show ¬ x < 2 * m by omega]
 
 end Scale
 
@@ -2567,33 +1824,6 @@ namespace IntMul.Kappa.R6.IL3H
 open IntMul NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN.KFN NLogN.KFW
   Complex P8Lift Butterfly IntMul.Kappa.R6.Cx
 
-theorem nN_boundsW {W Bn t S0 r : ℕ} (hW : 1 ≤ W) (hS : 1 ≤ S0) (hBn : 1 ≤ Bn) (hr : 1 ≤ r) :
-    1 ≤ nN Bn t S0 * r ∧ 4 * (Bn * (S0 * r * 2 ^ t) + S0 * r + Bn + 1) ≤
-      16 * (W * (nN Bn t S0 * r)) ∧
-    2 * (W * (nN Bn t S0 * r)) ≤ 16 * (W * (nN Bn t S0 * r)) ∧
-    4 ≤ 16 * (W * (nN Bn t S0 * r)) := by
-  have hn := one_le_nN (t := t) hBn hS
-  have h1 : 1 ≤ nN Bn t S0 * r := Nat.mul_le_mul hn hr
-  have h2 : 1 ≤ W * (nN Bn t S0 * r) := Nat.mul_le_mul hW h1
-  have h3 : 1 ≤ 2 ^ t := Nat.one_le_two_pow
-  have e1 : Bn * (S0 * r * 2 ^ t) = nN Bn t S0 * r := by unfold nN; ring
-  have a1 : S0 * r ≤ nN Bn t S0 * r := by
-    unfold nN
-    have : S0 ≤ Bn * 2 ^ t * S0 := by
-      have := Nat.mul_le_mul (Nat.mul_le_mul hBn h3) (le_refl S0); simpa using this
-    exact Nat.mul_le_mul_right _ this
-  have a2 : Bn ≤ nN Bn t S0 * r := by
-    unfold nN
-    have : 1 ≤ 2 ^ t * S0 * r := by
-      have := Nat.mul_le_mul (Nat.mul_le_mul h3 hS) hr; simpa using this
-    have := Nat.mul_le_mul (le_refl Bn) this
-    calc Bn = Bn * 1 := (mul_one _).symm
-      _ ≤ Bn * (2 ^ t * S0 * r) := this
-      _ = Bn * 2 ^ t * S0 * r := by ring
-  have a3 : nN Bn t S0 * r ≤ W * (nN Bn t S0 * r) := Nat.le_mul_of_pos_left _ hW
-  refine ⟨h1, ?_, by omega, by omega⟩
-  rw [e1]; omega
-
 section Steps
 
 variable {Pp : ℕ} {Isym : List Sym} {tbl : Fin Pp → IStmt HS Pp} {Q : IState HS → Prop}
@@ -2643,13 +1873,6 @@ theorem stepH_perm (hN : NodeRH c σ K t S0 r H E e B) (hQ : ∀ s, Q s → Agre
   exact rImplQ_leaf (rImpl_perm (1 : Op (Fin (E / c.m))) π (by omega) _ Z hZ) hN.cl
     (NoW.of_gT hN.lev.off (swapsG_gT _ _))
     (swapsG_href hN.lev.off hN.gL hL1 hZ _ (permSw_spec π).2.1) (fok_swapsP _ _) hQ hN.zero
-
-theorem posRH_lt {m K e F t : ℕ} (hK : 1 ≤ K) (het : e - e % K + K ≤ t) (p : Fin m × Fin F) :
-    IL3F.posR m K e F p < t := by
-  unfold IL3F.posR
-  have := Nat.mod_lt e (by omega : 0 < K)
-  have := Nat.mod_le e K
-  omega
 
 theorem slaws_nodeH {m K e F t S0 Bn : ℕ} (hK : 1 ≤ K) (hKe : K * (F * m - 1) ≤ e)
     (hF : 1 ≤ F) (het : e - e % K + K ≤ t) : SLaws (stH m K e F S0) (nN Bn t S0) := by
@@ -2716,21 +1939,6 @@ namespace IntMul.Kappa.R6.IL3H
 
 open IntMul NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN.KFN NLogN.KFW
   Complex P8Lift Butterfly IntMul.Kappa.R6.Cx
-
-/-! ## The scale expressions -/
-
-theorem Gs_mono {A p m : ℕ} (hA : 1 ≤ A) (hp : 1 ≤ p) {x y : ℕ} (hxy : x ≤ y) :
-    Gs A p m x ≤ Gs A p m y := by
-  by_cases hy : y < 2 * m
-  · rw [Gs_lt (by omega), Gs_lt hy]; exact hxy
-  · rw [Gs_ge (show 2 * m ≤ y by omega)]
-    by_cases hx : x < 2 * m
-    · rw [Gs_lt hx]; exact le_trans hxy (le_Ap hA hp)
-    · rw [Gs_ge (show 2 * m ≤ x by omega)]
-      exact Nat.mul_le_mul_left _ (Nat.sub_le_sub_right (Nat.pow_le_pow_left (by omega) _) _)
-
-theorem Gs_le_pow {A p m x : ℕ} (hA : 1 ≤ A) (hp : 1 ≤ p) : Gs A p m x ≤ A * (x + 1) ^ p :=
-  le_trans (Gs_le hA hp) (Nat.mul_le_mul_left _ (Nat.sub_le _ _))
 
 /-! ## The child frame -/
 

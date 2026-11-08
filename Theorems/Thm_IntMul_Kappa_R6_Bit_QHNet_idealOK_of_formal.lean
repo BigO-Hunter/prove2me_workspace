@@ -22,39 +22,10 @@ namespace AModel
 
 open Matrix
 
-/-! ## 1. Mixed-radix basics -/
-
-lemma encode_decode {sh : Shape} {m : ℕ} (h : m < vol sh) : encode sh (decode sh m) = m := by
-  induction sh generalizing m with
-  | nil => simp at h; subst h; rfl
-  | cons q sh ih =>
-    simp only [vol_cons] at h
-    have hV : 0 < vol sh := Nat.pos_of_ne_zero (by rintro h'; simp [h'] at h)
-    have hq : m / vol sh < q := (Nat.div_lt_iff_lt_mul hV).2 h
-    simp only [decode, encode, List.headD_cons, List.tail_cons, Nat.mod_eq_of_lt hq,
-      ih (Nat.mod_lt m hV)]
-    exact Nat.div_add_mod' m (vol sh)
-
 /-! ## 2. Pull maps -/
 
 section Pull
 variable {α : Type*}
-
-/-- `pull` only depends on `g` at valid output addresses. -/
-lemma pull_congr {sh sh' : Shape} {g g' : List ℕ → List ℕ}
-    (h : ∀ a, Valid sh' a → g a = g' a) (d : α) (xs : List α) :
-    pull sh sh' g d xs = pull sh sh' g' d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  rw [getElem_pull, getElem_pull, h _ (valid_decode h₁)]
-
-theorem pull_id {sh : Shape} (d : α) {xs : List α} (h : xs.length = vol sh) :
-    pull sh sh id d xs = xs := by
-  apply List.ext_getElem (by simp [h])
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  rw [getElem_pull, id, encode_decode h₁, List.getD_eq_getElem]
 
 end Pull
 
@@ -64,52 +35,7 @@ variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q)
 
 namespace Layout
 
-lemma actIdx_some {k : ℕ} {i : Fin n} (h : Λ.actIdx k = some i) : (Λ.pos i : ℕ) = k := by
-  have := List.find?_some h
-  simpa using this
-
 end Layout
-
-@[simp] lemma length_setAct (a : List ℕ) (v : Fin n → ZMod Q) :
-    (setAct Λ a v).length = a.length := by simp [setAct]
-
-lemma getElem_setAct (a : List ℕ) (v : Fin n → ZMod Q) (k : ℕ)
-    (hk : k < (setAct Λ a v).length) :
-    (setAct Λ a v)[k] = match Λ.actIdx k with
-      | some i => (v i).val
-      | none => a[k]'(by simpa using hk) := by
-  simp [setAct]
-  all_goals (split <;> simp_all)
-
-lemma Valid.digit_lt {a : List ℕ} (ha : Valid sh a) (i : Fin n) :
-    a.getD (Λ.pos i) 0 < Q := by
-  obtain ⟨hl, hlt⟩ := (valid_iff sh a).1 ha
-  have h2 : (Λ.pos i : ℕ) < sh.length := (Λ.pos i).2
-  have h1 : (Λ.pos i : ℕ) < a.length := by omega
-  have := hlt _ h1 h2
-  have hs := Λ.size i
-  simp only [List.get_eq_getElem] at hs
-  rw [List.getD_eq_getElem _ _ h1]; simpa [hs] using this
-
-lemma setAct_act {a : List ℕ} (ha : Valid sh a) : setAct Λ a (act Λ a) = a := by
-  apply List.ext_getElem (by simp)
-  intro k h₁ h₂
-  rw [getElem_setAct]
-  cases h : Λ.actIdx k with
-  | none => rfl
-  | some i =>
-    have hk := Λ.actIdx_some h
-    have hd := ha.digit_lt Λ i
-    simp only [act, ZMod.val_natCast, Nat.mod_eq_of_lt hd]
-    rw [List.getD_eq_getElem _ _ (by omega)]
-    simp [hk]
-
-lemma vmap_id {a : List ℕ} (ha : Valid sh a) : vmap Λ id a = a := setAct_act Λ ha
-
-lemma amap_eq_vmap (L : Matrix (Fin n) (Fin n) (ZMod Q)) : amap Λ L = vmap Λ (L *ᵥ ·) := rfl
-
-lemma amap_one {a : List ℕ} (ha : Valid sh a) : amap Λ 1 a = a := by
-  rw [amap_eq_vmap]; convert vmap_id Λ ha using 2; funext x; simp
 
 /-! ## 4. Controlled shift -/
 
@@ -219,14 +145,6 @@ section RunChild
 
 variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q) {α : Type*}
 
-lemma length_runArr (d : α) (steps : List (Step n Q)) {xs : List α}
-    (hxs : xs.length = vol sh) : (runArr Λ d steps xs).length = vol sh := by
-  induction steps generalizing xs with
-  | nil => exact hxs
-  | cons s rest ih =>
-    simp only [runArr, List.foldl_cons] at ih ⊢
-    exact ih (by rw [Step.arr, length_pull])
-
 end RunChild
 
 /-! ## 5. Chunk shapes: two chunks split into `m` fields, and merged -/
@@ -288,10 +206,6 @@ end Instr
 section Run
 
 variable {Wr R : Type*} [Fintype Wr] [DecidableEq Wr] [CommRing R] {m : ℕ}
-
-lemma progEdges_cons (i : Instr Wr R m) (l : List (Instr Wr R m)) :
-    progEdges (i :: l) = (i.edgeOf.toList) ++ progEdges l := by
-  cases i <;> simp [progEdges, Instr.edgeOf, List.filterMap_cons]
 
 /-- Two edge implementations agreeing on the edges of the program (on streams of length `n`),
 one of them length preserving, give the same run. -/

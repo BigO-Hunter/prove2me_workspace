@@ -55,10 +55,6 @@ open Matrix
 
 section Chunks
 
-lemma vol_hdShape (A B C : Shape) (m N : ℕ) :
-    vol (hdShape A B C m N) = vol (swShape A B C (N ^ m)) := by
-  simp only [hdShape, swShape, vol_append, vol_cons, vol_replicate]
-
 end Chunks
 
 /-! ## 6. The chunk interchange `amap swapMat` is a block swap -/
@@ -108,13 +104,6 @@ section Proofs
 
 variable (s : IState HS) {Q Bb : ℕ}
 
-theorem vol_le_of_pos : ∀ (A : Shape), (∀ a ∈ A, 1 ≤ a) → 1 ≤ vol A
-  | [], _ => le_rfl
-  | a :: A, h => by
-    rw [vol_cons]
-    exact Nat.one_le_iff_ne_zero.2 (Nat.mul_ne_zero (by have := h a (by simp); omega)
-      (by have := vol_le_of_pos A (fun b hb => h b (by simp [hb])); omega))
-
 end Proofs
 
 /-! ## Stack form -/
@@ -150,10 +139,6 @@ open IntMul AModel
 variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q) {Pp : ℕ} {I : List Sym}
   {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## The unit-coefficient instance -/
-
-theorem vol_pos_of {A : Shape} (h : ∀ a ∈ A, 1 ≤ a) : 1 ≤ vol A := vol_le_of_pos A h
-
 /-! ## Coefficients `±1` -/
 
 end NLogN.KIL
@@ -187,19 +172,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-/-! ## Tables -/
-
-/-! ## Moves with literal counts -/
-
-/-! ## Applying a stream code in place -/
-
-/-! ## Cost unit -/
-
-/-! ## Copying a stream -/
-
-theorem TabB.le {W v Bb : ℕ} (h : TabB W v Bb) {n : ℕ} (hn : n ≤ W * v) : zsz (n : ℤ) ≤ Bb :=
-  le_trans (zsz_natCast_le' hn) h.vol
-
 /-! ## Accumulating a stream on stack `20` -/
 
 /-! ## Building a summed stream, rebuilding the table -/
@@ -229,11 +201,6 @@ open IntMul RS
 namespace KFD
 
 open KIL
-
-/-! ## Expression costs -/
-
-theorem cRep_le {N Bb : ℕ} (h : zsz (N : ℤ) ≤ Bb) : cRep N ≤ 400 * (Bb + 2) + 1100 * N + 400 := by
-  unfold cRep; omega
 
 /-! ## Moves with a register count -/
 
@@ -280,31 +247,6 @@ variable {R : Type*} [CommRing R]
 
 section Depth
 
-lemma depH_of_le {m e : ℕ} (h : m ≤ e) (hm : 2 ≤ m) :
-    depH m e = depH m ((m - 1) * (e / m)) + 1 := by
-  rw [depH, dif_pos ⟨h, hm⟩]
-
-lemma depH_of_not {m e : ℕ} (h : ¬ (m ≤ e ∧ 2 ≤ m)) : depH m e = 0 := by
-  rw [depH, dif_neg h]
-
-lemma depH_mono (m : ℕ) : ∀ e e', e ≤ e' → depH m e ≤ depH m e' := by
-  intro e e'
-  induction e' using Nat.strong_induction_on generalizing e with
-  | _ e' ih =>
-    intro hle
-    by_cases h : m ≤ e ∧ 2 ≤ m
-    · rw [depH_of_le h.1 h.2, depH_of_le (e := e') (by omega) h.2]
-      have := ih ((m - 1) * (e' / m)) (depH_dec ⟨by omega, h.2⟩) ((m - 1) * (e / m))
-        (Nat.mul_le_mul_left _ (Nat.div_le_div_right hle))
-      omega
-    · rw [depH_of_not h]; exact Nat.zero_le _
-
-lemma depH_child {m e w : ℕ} (hm : 2 ≤ m) (he : m ≤ e) (hw : w < m) :
-    depH m (w * (e / m)) + 1 ≤ depH m e := by
-  rw [depH_of_le he hm]
-  have := depH_mono m (w * (e / m)) ((m - 1) * (e / m)) (Nat.mul_le_mul_right _ (by omega))
-  omega
-
 end Depth
 
 /-! ## The program -/
@@ -338,44 +280,6 @@ namespace IntMul.Kappa.R6.Bit
 open AModel AModelFac Matrix
 
 variable {R : Type*} [CommRing R] {W T m : ℕ} [NeZero W]
-
-lemma instrCost_lin {Wr : Type*} (child : ℕ × ℕ × ℕ → ℝ → ℝ)
-    (hc : ∀ ρ v, child ρ v = v * child ρ 1) (V : ℝ) (i : Instr Wr R m) :
-    instrCost child (V / W) i = V * instrCost child (1 / W) i := by
-  cases i with
-  | gate g S => simp only [instrCost]; ring
-  | edge w e =>
-    simp only [instrCost]
-    rw [List.map_congr_left (fun ρ _ => hc ρ (V / W)), List.sum_map_mul_left,
-      List.map_congr_left (l := e.runs) (fun ρ _ => hc ρ (1 / W)), List.sum_map_mul_left]
-    ring
-
-lemma sum_map_mul {α : Type*} (l : List α) (f : α → ℝ) (V : ℝ) :
-    (l.map fun a => V * f a).sum = V * (l.map f).sum := List.sum_map_mul_left _ _ _
-
-/-- The cost is linear in the volume. -/
-theorem costH_lin (C : QHNet R W T m) : ∀ e V, costH C e V = V * costH C e 1 := by
-  intro e
-  induction e using Nat.strong_induction_on with
-  | _ e ih =>
-  intro V
-  rw [costH, costH]
-  split_ifs with he
-  · have hc : ∀ (ρ : ℕ × ℕ × ℕ) (v : ℝ),
-        (if ρ.2.2 * (e / m) < e then costH C (ρ.2.2 * (e / m)) v else 0) =
-          v * (if ρ.2.2 * (e / m) < e then costH C (ρ.2.2 * (e / m)) 1 else 0) := by
-      intro ρ v
-      split_ifs with h
-      · exact ih _ h v
-      · ring
-    rw [List.map_congr_left (fun i _ => instrCost_lin _ hc V i), sum_map_mul]
-    ring
-  · ring
-
-lemma width_lt {m e w : ℕ} (he : m ≤ e) (hw : w < m) : w * (e / m) < e := by
-  have h1 : 1 ≤ e / m := (Nat.le_div_iff_mul_le (by omega)).2 (by omega)
-  have h2 : e / m * m ≤ e := Nat.div_mul_le_self e m
-  nlinarith
 
 end IntMul.Kappa.R6.Bit
 
@@ -463,10 +367,6 @@ open IntMul NLogN RS NLogN.KIL NLogN.KFD NLogN.KFE AModel AModelL12 Finset
 
 noncomputable section
 
-theorem vol_hd_cons (P L : ℕ) (A B Cs : Shape) (e q : ℕ) :
-    vol (P :: L :: hdShape A B Cs e q) = P * L * vol A * q ^ e * vol B * q ^ e * vol Cs := by
-  simp only [vol_cons, vol_hdShape, swShape, vol_append, vol_cons]; ring
-
 end
 
 end IntMul.Kappa.R6.IL
@@ -492,22 +392,6 @@ namespace IntMul.Kappa.R6.IL
 open IntMul NLogN RS NLogN.KIL NLogN.KFD NLogN.KFE AModel AModelL12 Finset
 
 noncomputable section
-
-theorem absRep (A S k b X : ℕ) (hbX : b ≤ X) (hX1 : 1 ≤ X) :
-    A * b + k * (S * X + 8000 * b + 30) + 32 ≤ (A + S + 8062) * ((k + 1) * X) := by
-  have hZ : X ≤ (k + 1) * X := Nat.le_mul_of_pos_left _ (by omega)
-  have h1 : A * b ≤ A * ((k + 1) * X) := Nat.mul_le_mul_left _ (le_trans hbX hZ)
-  have h2 : k * (S * X + 8000 * b + 30) ≤ k * (S * X + 8030 * X) := Nat.mul_le_mul_left _ (by omega)
-  have h3 : k * (S * X + 8030 * X) + (S * X + 8030 * X) = S * ((k + 1) * X) + 8030 * ((k + 1) * X) := by
-    ring
-  have h4 : (A + S + 8062) * ((k + 1) * X) = A * ((k + 1) * X) + S * ((k + 1) * X) +
-      8062 * ((k + 1) * X) := by ring
-  omega
-
-theorem cRep_le (n : NE) (k : ℕ) (L : List (Fin HS × NE)) (B : ℕ) :
-    cRep n k L B ≤ crK n L * ((k + 1) * (B + 2) ^ 2) := by
-  unfold cRep crK
-  exact absRep _ _ k (B + 2) _ (Nat.le_self_pow (n := 2) (by norm_num) _) (Nat.one_le_pow _ _ (by omega))
 
 variable {W T m : ℕ} [NeZero W]
 
@@ -538,19 +422,6 @@ open IntMul NLogN RS NLogN.KIL NLogN.KFD NLogN.KFE AModel AModelL12 Finset
 noncomputable section
 
 variable {W T m : ℕ} [NeZero W]
-
-theorem ovN_eq (C : Bit.QHNet (ZMod 2) W T m) (e : ℕ) :
-    ovN C e = (e + 1) + (if m ≤ e then ((runsL C).map fun ρ => if h : ρ.2.2 * (e / m) < e then
-      ovN C (ρ.2.2 * (e / m)) else 0).sum else 0) := by
-  rw [ovN]
-
-theorem run_facts (C : Bit.QHNet (ZMod 2) W T m) (hruns : C.RunsOK) {e : ℕ} (hm : 2 ≤ m)
-    (hme : m ≤ e) {ρ : ℕ × ℕ × ℕ} (hρ : ρ ∈ runsL C) :
-    ρ.2.2 * (e / m) < e ∧ 1 ≤ ρ.2.2 * (e / m) ∧ ρ.2.2 < m := by
-  obtain ⟨e', he', hρ'⟩ := List.mem_flatMap.1 hρ
-  obtain ⟨hr0, hrm, hi, hj⟩ := hruns e' he' ρ hρ'
-  have hf : 1 ≤ e / m := (Nat.le_div_iff_mul_le (by omega)).2 (by omega)
-  exact ⟨Bit.width_lt hme hrm, Nat.mul_pos hr0 hf, hrm⟩
 
 /-- The overhead weight is at most `(e + 1) (S + 1) ^ depH e`. -/
 theorem ovN_le (C : Bit.QHNet (ZMod 2) W T m) (hm : 2 ≤ m) (hruns : C.RunsOK) :

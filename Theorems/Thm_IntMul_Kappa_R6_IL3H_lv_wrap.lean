@@ -27,6 +27,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs3
 import Definitions.Def_IntMul_Kappa_K_Defs17
 import Definitions.Def_IntMul_Kappa_K_Defs15
 import Definitions.Def_IntMul_Kappa_K_Defs13
+import Theorems.Thm_NLogN_KIL_desc4_sp
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -168,40 +169,6 @@ namespace NLogN.KIL
 open IntMul RS AModel AModelL12
 
 namespace NE
-
-theorem size_toEx : ∀ e : NE, e.toEx.size = e.size
-  | reg _ | lit _ => rfl
-  | add a b | mul a b | div a b | mod a b => by
-      simp only [toEx, Ex.size, size, size_toEx a, size_toEx b]
-  | sub a b => by simp only [toEx, Ex.size, size, size_toEx a, size_toEx b]; ring
-  | lt a b x y => by
-      simp only [toEx, Ex.size, size, size_toEx a, size_toEx b, size_toEx x, size_toEx y]; ring
-
-theorem le_of_OK {v : Fin HS → ℕ} {M : ℕ} : ∀ e : NE, e.OK v M → e.val v ≤ M
-  | reg _, h | lit _, h => h
-  | add a b, h | mul a b, h => h.2.2
-  | sub a b, h => le_trans (Nat.sub_le _ _) (le_of_OK a h.1)
-  | div a b, h => le_trans (Nat.div_le_self _ _) (le_of_OK a h.1)
-  | mod a b, h => le_trans (Nat.mod_le _ _) (le_of_OK a h.1)
-  | lt a b x y, h => by
-      simp only [OK] at h; simp only [val]
-      split_ifs at h ⊢ with hc
-      · exact le_of_OK x h.2.2
-      · exact le_of_OK y h.2.2
-
-theorem regs_toEx : ∀ e : NE, e.toEx.regs = e.regs
-  | reg _ | lit _ => rfl
-  | add a b | mul a b | div a b | mod a b => by
-      simp only [toEx, Ex.regs, regs, regs_toEx a, regs_toEx b]
-  | sub a b => by simp only [toEx, Ex.regs, regs, regs_toEx a, regs_toEx b]
-  | lt a b x y => by
-      simp only [toEx, Ex.regs, regs, regs_toEx a, regs_toEx b, regs_toEx x, regs_toEx y,
-        List.append_assoc]
-
-theorem clean {e : NE} (h : e.RegsLt) : e.toEx.Clean := by
-  intro i hi
-  rw [regs_toEx] at hi
-  exact clean_of_lt (h i hi) i (by simp [Ex.regs])
 
 end NE
 

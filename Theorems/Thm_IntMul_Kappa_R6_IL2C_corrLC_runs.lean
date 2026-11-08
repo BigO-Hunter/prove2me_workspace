@@ -46,8 +46,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem ints_append (A B : List ℤ) : ints (A ++ B) = ints A ++ ints B := by simp [ints]
-
 end NLogN
 
 end
@@ -72,10 +70,6 @@ section
 namespace Butterfly
 
 open Complex
-
-/-! ## 1. The constants -/
-
-theorem sc_lt : sc < Wc * mc := by norm_num [sc, Wc, mc]
 
 /-! ## 2. Depth recurrence and the chain -/
 
@@ -109,9 +103,6 @@ namespace NLogN
 open IntMul RS
 
 namespace KIL
-
-theorem encK_nil (s : IState HS) : encK s (fun _ => []) = s := by
-  cases s; rfl
 
 /-! ## Elementary statements -/
 
@@ -252,11 +243,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
 
-/-! ## Gaussian integers -/
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
-
 /-! ## Linear-combination expressions -/
 
 /-! ## Fine moves with the loop overhead bounded by the count -/
@@ -300,15 +286,6 @@ namespace NLogN.KFH
 open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
-
-/-! ## Layer implementations -/
-
-theorem LImpl.mono {hρ : ρ < K} {r : ℕ} {T : Butterfly.Op (Fin D)} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : LImpl (P := P) (S := S) hρ r T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    LImpl (P := P) (S := S) hρ r T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 /-! ## The concrete kernels -/
 
@@ -363,8 +340,6 @@ theorem sc_int (Q S v n : ℕ) : (sc Q S v n : ℤ) = n + ((v : ℤ) - gc Q S n)
   push_cast at h' ⊢
   linarith
 
-theorem gc_lt {Q S : ℕ} (hQ : 0 < Q) (n : ℕ) : gc Q S n < Q := Nat.mod_lt _ hQ
-
 theorem div_sc {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
     sc Q S v n / (Q * S) = n / (Q * S) := by
   unfold sc
@@ -408,19 +383,6 @@ theorem gc_sc_lo {Q S Q' S' m : ℕ} (hS' : 0 < S') (hS : S = S' * Q' * m) (v n 
 
 theorem sc_gc (Q S n : ℕ) : sc Q S (gc Q S n) n = n := (decomp Q S n).symm
 
-theorem sc_lt {Q S m v n : ℕ} (hS : 0 < S) (hv : v < Q) (hn : n < Q * S * m) :
-    sc Q S v n < Q * S * m := by
-  have hQS : 0 < Q * S := Nat.mul_pos (by omega) hS
-  have h1 : n / (Q * S) < m := by
-    rw [Nat.div_lt_iff_lt_mul hQS]; linarith
-  have hr : v * S + n % S < Q * S := by
-    have := Nat.mod_lt n hS
-    have : v * S + S ≤ Q * S := by nlinarith
-    omega
-  unfold sc
-  have : n / (Q * S) * (Q * S) + (Q * S) ≤ Q * S * m := by nlinarith
-  omega
-
 /-! ## Reindexing -/
 
 /-! ## Geometry and triple maps -/
@@ -462,13 +424,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -528,13 +483,6 @@ section SImplLemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImpl.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImpl r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImpl r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplLemmas
 
 section RImplDefs
@@ -542,12 +490,6 @@ section RImplDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImpl.mono {A : ROp (Fin W) m κ} {code : RS} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImpl r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) : RImpl r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplDefs
 
@@ -587,13 +529,6 @@ section SImplILemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImplI.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : ℕ → IStmt HS Pp} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImplI I iprog r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImplI I iprog r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplILemmas
 
 section RImplIDefs
@@ -601,13 +536,6 @@ section RImplIDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImplI.mono {A : ROp (Fin W) m κ} {code : ℕ → IStmt HS Pp} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImplI I iprog r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    RImplI I iprog r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplIDefs
 
@@ -637,17 +565,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN.KFU
 
 open AModel AModelL12
-
-/-! ## Position permutations -/
-
-/-! ### `swapPos` -/
-
-/-! ### `swapMid` -/
-
-/-! ## Layouts -/
-
-theorem Full.mono {bg : ℕ → Bool} {ax0 l l' : List ℕ} (h : Full bg ax0 l) (hm : ∀ x ∈ l, x ∈ l') :
-    Full bg ax0 l' := fun j hj => ⟨hm _ (h j hj).1, fun hb => hm _ ((h j hj).2 hb)⟩
 
 /-! ## The standard layout -/
 
@@ -693,12 +610,6 @@ section Layer
 
 variable {r : ℕ}
 
-theorem LayerOK.mono {code : IStmt HS Pp} {T : List (Fin r → ℂ) → List (Fin r → ℂ)} {N p W c c' : ℕ}
-    (h : LayerOK I iprog code T N p W c) (hc : c ≤ c') : LayerOK I iprog code T N p W c' := by
-  intro s f zs l xs hx hl h0 hC hb hd
-  obtain ⟨zs', h1, h2, h3, h4, h5⟩ := h s f zs l xs hx hl h0 hC hb hd
-  exact ⟨zs', h1, h2, h3, h4, h5.mono' rfl hc⟩
-
 end Layer
 
 end NLogN.KFV
@@ -724,11 +635,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFW
 
 open IntMul RS KFD
-
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
 
 end NLogN.KFW
 
@@ -924,13 +830,6 @@ namespace IntMul.Kappa.R6.IL2C
 
 open Finset
 
-/-! ## Digits -/
-
-theorem dgt_zero (W x : ℕ) : dgt W 0 x = x % W := by simp [dgt]
-
-theorem dgt_succ (W s x : ℕ) : dgt W (s + 1) x = dgt W s (x / W) := by
-  simp only [dgt, pow_succ, Nat.div_div_eq_div_mul, mul_comm]
-
 /-- `x = Σ_{s<n} dgt s x W^s + W^n (x / W^n)`. -/
 theorem digits_sum (W : ℕ) : ∀ (n x : ℕ),
     (x : ℤ) = ∑ s ∈ range n, (dgt W s x : ℤ) * (W : ℤ) ^ s + (W : ℤ) ^ n * ((x / W ^ n : ℕ) : ℤ)
@@ -961,12 +860,6 @@ theorem eq_of_digits (W n : ℕ) {x x' : ℕ} (hd : ∀ s < n, dgt W s x = dgt W
     exact sum_congr rfl fun s hs => by rw [hd s (mem_range.1 hs)]
   exact_mod_cast this
 
-/-! ## The register-loop sum -/
-
-/-- For an even radix, the parity of `u / W^s` is that of its digit. -/
-theorem par_dgt {W : ℕ} (hW : 2 ∣ W) (s u : ℕ) : (u / W ^ s) % 2 = dgt W s u % 2 := by
-  unfold dgt; rw [Nat.mod_mod_of_dvd _ hW]
-
 /-! ## Parameters and the offsets -/
 
 /-! ## Closed forms of the offsets -/
@@ -974,27 +867,6 @@ theorem par_dgt {W : ℕ} (hW : 2 ∣ W) (s u : ℕ) : (u / W ^ s) % 2 = dgt W s
 section Closed
 
 variable {K ρ G n : ℕ}
-
-theorem two_pow_dvd {G : ℕ} (hG : 1 ≤ G) : 2 ∣ 2 ^ G := dvd_pow_self 2 (by omega)
-
-theorem cdiv (u W s : ℕ) : ((u : ℤ) / ((W : ℤ)) ^ s) = ((u / W ^ s : ℕ) : ℤ) := by
-  rw [Int.natCast_div]; push_cast; rfl
-
-theorem cdivG (u G s : ℕ) : ((u : ℤ) / ((2 : ℤ) ^ G) ^ s) = ((u / (2 ^ G) ^ s : ℕ) : ℤ) := by
-  have := cdiv u (2 ^ G) s; push_cast at this; exact this
-
-theorem cpar {W : ℕ} (hW : 2 ∣ W) (u s : ℕ) :
-    ((u / W ^ s : ℕ) : ℤ) % 2 = ((dgt W s u % 2 : ℕ) : ℤ) := by
-  exact_mod_cast par_dgt hW s u
-
-theorem oT_eq (hK : 1 ≤ K) (x y : ℕ) : oT K ρ n x y =
-    ∑ s ∈ range n, ((ybit K ρ s x : ℕ) * (1 - 2 * (ybit K ρ s y : ℕ)) : ℤ) *
-      ((2 : ℤ) ^ ρ * (2 ^ K) ^ s) := by
-  unfold oT segSum
-  refine sum_congr rfl fun s _ => ?_
-  beta_reduce
-  rw [cdivG, cdivG, cpar (two_pow_dvd hK), cpar (two_pow_dvd hK)]
-  unfold ybit seg; ring
 
 end Closed
 
@@ -1011,19 +883,6 @@ theorem slot_eq {y y' : ℕ} (h0 : y % 2 ^ ρ = y' % 2 ^ ρ) (hs : ∀ s < n, se
   rw [← Nat.mod_add_div y (2 ^ ρ), ← Nat.mod_add_div y' (2 ^ ρ), h0, e]
 
 end Slot
-
-/-! ## Modular pulls -/
-
-theorem subM_lt {Q : ℕ} (hQ : 0 < Q) (a : ℕ) (o : ℤ) : subM Q a o < Q := by
-  unfold subM
-  have h1 := Int.emod_nonneg ((a : ℤ) - o) (by omega : (Q : ℤ) ≠ 0)
-  have h2 := Int.emod_lt_of_pos ((a : ℤ) - o) (by omega : (0 : ℤ) < Q)
-  omega
-
-theorem subM_cast {Q : ℕ} (hQ : 0 < Q) (a : ℕ) (o : ℤ) :
-    (subM Q a o : ℤ) = ((a : ℤ) - o) % (Q : ℤ) := by
-  unfold subM
-  exact Int.toNat_of_nonneg (Int.emod_nonneg _ (by omega))
 
 theorem subM_subM {Q : ℕ} (hQ : 0 < Q) {a : ℕ} (ha : a < Q) (o : ℤ) :
     subM Q (subM Q a o) (-o) = a := by
@@ -1042,8 +901,6 @@ theorem subM_subM' {Q : ℕ} (hQ : 0 < Q) {a : ℕ} (ha : a < Q) (o : ℤ) :
 section Inv
 
 variable {K ρ G n L : ℕ}
-
-theorem Qc_pos : 0 < Qc G n := by unfold Qc; positivity
 
 theorem pU_pU {c : CS} (h : c.u < Qc G n) (o : ℤ) : pU G n (-o) (pU G n o c) = c := by
   simp only [pU]; rw [subM_subM Qc_pos h]
@@ -1120,37 +977,6 @@ section Good
 
 variable {K ρ G n L : ℕ}
 
-theorem seg_lt (s y : ℕ) : seg K ρ s y < 2 ^ K := Nat.mod_lt _ (by positivity)
-
-theorem two_pow_even (hK : 1 ≤ K) : 2 ^ K = 2 * 2 ^ (K - 1) := by
-  rw [← pow_succ']; congr 1; omega
-
-/-- The ideal map on one slot. -/
-theorem Tl_spec (hK : 1 ≤ K) (hL : ρ + n * K ≤ L) (x : ℕ) {y : ℕ} (hy : y < 2 ^ L) :
-    Tl K ρ n x y < 2 ^ L ∧ Tl K ρ n x y % 2 ^ ρ = y % 2 ^ ρ ∧
-      Tl K ρ n x y / 2 ^ ρ / (2 ^ K) ^ n = y / 2 ^ ρ / (2 ^ K) ^ n ∧
-      ∀ s < n, (seg K ρ s (Tl K ρ n x y) : ℤ) = seg K ρ s y +
-        ((ybit K ρ s x : ℕ) : ℤ) * (1 - 2 * ((ybit K ρ s y : ℕ) : ℤ)) := by
-  obtain ⟨y', ey, hy', ly, dy, hhy⟩ := slot_add hK hL hy
-    (fun s => ((ybit K ρ s x : ℕ) : ℤ) * (1 - 2 * ((ybit K ρ s y : ℕ) : ℤ))) (by
-    intro s hs
-    have h1 := seg_lt (K := K) (ρ := ρ) s y
-    have hev := two_pow_even hK
-    have hxb : ybit K ρ s x < 2 := Nat.mod_lt _ (by norm_num)
-    unfold ybit at hxb ⊢
-    have h1' : (seg K ρ s y : ℤ) < 2 * 2 ^ (K - 1) := by
-      have h1c := h1; rw [hev] at h1c; exact_mod_cast h1c
-    have hev' : ((2 : ℤ) ^ K) = 2 * 2 ^ (K - 1) := by exact_mod_cast hev
-    rw [hev']
-    rcases (show seg K ρ s x % 2 = 0 ∨ seg K ρ s x % 2 = 1 by omega) with h | h <;> rw [h] <;>
-      push_cast <;> omega)
-  have e : Tl K ρ n x y = y' := by
-    unfold Tl; rw [oT_eq hK]
-    have : (y : ℤ) + ∑ s ∈ range n, ((ybit K ρ s x : ℕ) * (1 - 2 * (ybit K ρ s y : ℕ)) : ℤ) *
-        ((2 : ℤ) ^ ρ * (2 ^ K) ^ s) = y' := by rw [ey]
-    rw [this]; simp
-  rw [e]; exact ⟨hy', ly, hhy, dy⟩
-
 theorem Tl_Tl (hK : 1 ≤ K) (hL : ρ + n * K ≤ L) (x : ℕ) {y : ℕ} (hy : y < 2 ^ L) :
     Tl K ρ n x (Tl K ρ n x y) = y := by
   obtain ⟨b1, l1, h1, d1⟩ := Tl_spec hK hL x hy
@@ -1211,10 +1037,6 @@ theorem gc_up {Q1 S1 Q2 S2 k : ℕ} (hS2 : 0 < S2) (hk : 0 < k) (h : S1 = S2 * Q
 theorem gc_dn {Q1 S1 Q2 S2 k : ℕ} (hS2 : 0 < S2) (h : S1 = S2 * Q2 * k) (v m : ℕ) :
     gc Q2 S2 (sc Q1 S1 v m) = gc Q2 S2 m := gc_sc_lo hS2 h v m
 
-theorem nest_trans {S1 S2 S3 Q2 Q3 k k' : ℕ} (hk : 0 < k) (hk' : 0 < k') (h1 : S1 = S2 * Q2 * k)
-    (h2 : S2 = S3 * Q3 * k') (hQ2 : 0 < Q2) : ∃ k'', 0 < k'' ∧ S1 = S3 * Q3 * k'' :=
-  ⟨k' * Q2 * k, by positivity, by rw [h1, h2]; ring⟩
-
 /-- `gc` of a value set in the same field. -/
 theorem gc_sc_same {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (m : ℕ) : gc Q S (sc Q S v m) = v :=
   gc_sc_self hS hv m
@@ -1225,26 +1047,8 @@ namespace Lay
 
 variable {l : Lay}
 
-theorem OK.pY (h : l.OK) : 0 < l.sY := by
-  obtain ⟨k, hk, e⟩ := h.kYB; rw [e]; exact Nat.mul_pos (Nat.mul_pos h.pB h.qc) hk
-theorem OK.pX (h : l.OK) : 0 < l.sX := by
-  obtain ⟨k, hk, e⟩ := h.kXB; rw [e]; exact Nat.mul_pos (Nat.mul_pos h.pB h.qc) hk
-theorem OK.pU (h : l.OK) : 0 < l.sU := by
-  obtain ⟨k, hk, e⟩ := h.kUY; rw [e]; exact Nat.mul_pos (Nat.mul_pos h.pY h.ql) hk
-theorem OK.pT (h : l.OK) : 0 < l.sT := by
-  obtain ⟨k, hk, e⟩ := h.kTU; rw [e]; exact Nat.mul_pos (Nat.mul_pos h.pU h.qc) hk
 theorem OK.pM (h : l.OK) : 0 < l.M := by
   obtain ⟨k, hk, e⟩ := h.kM; rw [e]; exact Nat.mul_pos (Nat.mul_pos h.pT h.qc) hk
-
-theorem OK.kTY (h : l.OK) : ∃ k, 0 < k ∧ l.sT = l.sY * l.QL * k := by
-  obtain ⟨a, ha, ea⟩ := h.kTU; obtain ⟨b, hb, eb⟩ := h.kUY
-  exact nest_trans ha hb ea eb h.qc
-theorem OK.kTX (h : l.OK) : ∃ k, 0 < k ∧ l.sT = l.sX * l.QL * k := by
-  obtain ⟨a, ha, ea⟩ := h.kTU; obtain ⟨b, hb, eb⟩ := h.kUX
-  exact nest_trans ha hb ea eb h.qc
-
-theorem OK.kMT (h : l.OK) : ∃ k, 0 < k ∧ l.M = l.QC * l.sT * k := by
-  obtain ⟨k, hk, e⟩ := h.kM; exact ⟨k, hk, by rw [e]; ring⟩
 
 theorem box_cs (h : l.OK) (m : ℕ) : l.BoxL (l.cs m) :=
   ⟨gc_lt h.qc _, gc_lt h.qc _, gc_lt h.ql _⟩
@@ -1385,18 +1189,6 @@ namespace IntMul.Kappa.R6.IL2C
 
 open NLogN NLogN.KFL NLogN.KIL NLogN.KFD IntMul RS
 
-/-! ## Value hypotheses and the register environment -/
-
-theorem KEnv.congr {t t' : IState HS} {l : Lay} {K ρ G n : ℕ} (h : KEnv t l K ρ G n)
-    (e : ∀ r ∈ kEnvRegs, t'.G r = t.G r) : KEnv t' l K ρ G n := by
-  obtain ⟨⟨a1, h1⟩, ⟨a2, h2⟩, ⟨a3, h3⟩, ⟨a4, h4⟩, ⟨a5, h5⟩, ⟨a6, h6⟩, ⟨a7, h7⟩, ⟨a8, h8⟩,
-    ⟨a9, h9⟩, ⟨a10, h10⟩⟩ := h
-  exact ⟨⟨a1, by rw [e _ (by simp [kEnvRegs])]; exact h1⟩, ⟨a2, by rw [e _ (by simp [kEnvRegs])]; exact h2⟩,
-    ⟨a3, by rw [e _ (by simp [kEnvRegs])]; exact h3⟩, ⟨a4, by rw [e _ (by simp [kEnvRegs])]; exact h4⟩,
-    ⟨a5, by rw [e _ (by simp [kEnvRegs])]; exact h5⟩, ⟨a6, by rw [e _ (by simp [kEnvRegs])]; exact h6⟩,
-    ⟨a7, by rw [e _ (by simp [kEnvRegs])]; exact h7⟩, ⟨a8, by rw [e _ (by simp [kEnvRegs])]; exact h8⟩,
-    ⟨a9, by rw [e _ (by simp [kEnvRegs])]; exact h9⟩, ⟨a10, by rw [e _ (by simp [kEnvRegs])]; exact h10⟩⟩
-
 /-! ## The key state -/
 
 /-! ## Facts from the value hypotheses -/
@@ -1405,9 +1197,6 @@ namespace KVal
 
 variable {l : Lay} {K ρ G n L M Bb : ℕ} (hV : KVal l K ρ G n L M Bb)
 include hV
-
-theorem ql1 : 1 ≤ l.QL := by rw [hV.ql]; exact Nat.one_le_two_pow
-theorem qc1 : 1 ≤ l.QC := by rw [hV.qc]; exact Nat.one_le_iff_ne_zero.2 (by positivity)
 
 end KVal
 

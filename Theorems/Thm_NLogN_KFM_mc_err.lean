@@ -15,14 +15,9 @@ open Complex
 
 noncomputable section
 
-lemma hp_pos (p : ℕ) : 0 < hp p := by unfold hp; positivity
-
 section Arr
 
 variable {ι : Type*} [Fintype ι]
-
-lemma pi_le {f : ι → ℂ} {C : ℝ} (hC : 0 ≤ C) (h : ∀ i, ‖f i‖ ≤ C) : ‖f‖ ≤ C :=
-  (pi_norm_le_iff_of_nonneg hC).2 h
 
 lemma truncNum_grid (p : ℕ) (n : ℤ) : Butterfly.truncNum p ((n : ℝ) / 2 ^ p) = n := by
   have h2 : (0 : ℝ) < 2 ^ p := by positivity

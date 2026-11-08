@@ -14,8 +14,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
 end NLogN
 
 namespace NLogN
@@ -34,10 +32,6 @@ variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 namespace IRuns
 
-theorem mono {p : IStmt S P} {s s' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (hc : c ≤ c') : IRuns I iprog p s s' c' := by
-  obtain ⟨d, hd, h⟩ := h; exact ⟨d, by omega, h⟩
-
 theorem seq {p q : IStmt S P} {s s₁ s₂ : IState S} {c₁ c₂ : ℕ} (h₁ : IRuns I iprog p s s₁ c₁)
     (h₂ : IRuns I iprog q s₁ s₂ c₂) : IRuns I iprog (.seq p q) s s₂ (c₁ + c₂) := by
   obtain ⟨d₁, hd₁, h₁⟩ := h₁; obtain ⟨d₂, hd₂, h₂⟩ := h₂
@@ -52,10 +46,6 @@ end IRuns
 @[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
     (s.upd i L).upd i L' = s.upd i L' := by
   simp [IState.upd]
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
 
 end NLogN
 
@@ -79,9 +69,6 @@ section
 namespace NLogN
 
 open IntMul
-
-@[simp] theorem runsTo_some {S : ℕ} (r : IState S × ℕ) (t : IState S) (c : ℕ) :
-    runsTo (some r) t c ↔ r.1 = t ∧ r.2 ≤ c := Iff.rfl
 
 variable {P : ℕ}
 

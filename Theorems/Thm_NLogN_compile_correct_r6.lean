@@ -26,12 +26,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-@[simp] theorem St.pop_stk (σ : St S) (i j : Fin S) :
-    (σ.pop i).stk j = if j = i then (σ.stk i).tail else σ.stk j := by
-  simp [St.pop, Function.update_apply]
-
-theorem St.top_eq (σ : St S) (i : Fin S) : σ.top i = (σ.stk i).head? := rfl
-
 /-! ### Normalising chains of `set` -/
 
 /-! ## Moving symbols from one stack to another -/
@@ -55,10 +49,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ}
-
-/-! ## Stacks of the compiled program -/
-
-@[simp] theorem enc_s3 (s : IState S) : (encI s).stk (s3 S) = [] := by simp [encI, s3]
 
 /-! ## Operations -/
 

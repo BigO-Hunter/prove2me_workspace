@@ -20,6 +20,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs13
 import Definitions.Def_IntMul_Kappa_R6_Defs10
 import Definitions.Def_IntMul_Kappa_K_Defs33
 import Definitions.Def_IntMul_Kappa_K_Defs1
+import Theorems.Thm_NLogN_KFD_bodyF_run
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -36,8 +37,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-
-theorem ints_append (A B : List ℤ) : ints (A ++ B) = ints A ++ ints B := by simp [ints]
 
 end NLogN
 
@@ -63,9 +62,6 @@ namespace NLogN
 open IntMul RS
 
 namespace KIL
-
-theorem encK_nil (s : IState HS) : encK s (fun _ => []) = s := by
-  cases s; rfl
 
 /-! ## Elementary statements -/
 
@@ -108,19 +104,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-/-! ## Tables -/
-
-/-! ## Moves with literal counts -/
-
-/-! ## Applying a stream code in place -/
-
-/-! ## Cost unit -/
-
-/-! ## Copying a stream -/
-
-theorem TabB.le {W v Bb : ℕ} (h : TabB W v Bb) {n : ℕ} (hn : n ≤ W * v) : zsz (n : ℤ) ≤ Bb :=
-  le_trans (zsz_natCast_le' hn) h.vol
-
 /-! ## Accumulating a stream on stack `20` -/
 
 /-! ## Building a summed stream, rebuilding the table -/
@@ -148,27 +131,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-/-! ## Pushes and pops -/
-
-theorem pushSt_G_of_not_mem (t : IState HS) (r : Fin HS) :
-    ∀ l : List (Fin HS × ℤ), r ∉ l.map Prod.fst → (pushSt t l).G r = t.G r
-  | [], _ => rfl
-  | (i, v) :: l, h => by
-    simp only [List.map_cons, List.mem_cons, not_or] at h
-    simp only [pushSt]
-    rw [pushSt_G_of_not_mem _ r l h.2]
-    simp [Ne.symm h.1, h.1]
-
-theorem pushSt_G (t : IState HS) (r : Fin HS) : ∀ l : List (Fin HS × ℤ),
-    (pushSt t l).G r = ints ((l.filter (fun p => p.1 = r)).map Prod.snd).reverse ++ t.G r
-  | [] => by simp [pushSt]
-  | (i, v) :: l => by
-    simp only [pushSt]
-    rw [pushSt_G _ r l]
-    by_cases h : i = r
-    · subst h; simp [List.filter_cons, ints_append, ints]
-    · simp [List.filter_cons, h, Ne.symm h]
 
 /-! ## Products of positive parameters -/
 
@@ -207,24 +169,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-/-! ## Push-list hygiene -/
-
-theorem clean_of_rd {e : Ex HS} (h : ∀ r ∈ e.regs, RdOK r) : e.Clean := fun j hj =>
-  clean_of_lt (h j hj).lt j (by simp [Ex.regs])
-
-theorem pushOK_of {t : IState HS} {Bb : ℕ} (L : List (Fin HS × Ex HS))
-    (hL : ∀ p ∈ L, 24 ≤ p.1.val ∧ p.1.val ≤ 37) (hg : ∀ p ∈ L, GoodE t Bb p.2) :
-    PushOK t Bb L := by
-  intro p hp
-  obtain ⟨h1, h2⟩ := hL p hp
-  refine ⟨by omega, clean_of_rd (hg p hp).rd, ?_, (hg p hp).ok, (hg p hp).bnd⟩
-  intro r hr hm
-  obtain ⟨q, hq, rfl⟩ := List.mem_map.1 hm
-  have := hL q hq
-  rcases (hg p hp).rd q.1 hr with h | h
-  · rw [h] at this; exact absurd this.1 (by decide)
-  · omega
-
 /-! ## Templates -/
 
 variable {m : ℕ}
@@ -252,13 +196,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -299,11 +236,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFW
 
 open IntMul RS KFD
-
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
 
 end NLogN.KFW
 

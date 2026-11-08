@@ -37,16 +37,6 @@ open IntMul RS
 
 namespace KIL
 
-/-! ## Elementary statements -/
-
-/-! ## Moving integers between stacks -/
-
-/-! ## Counted loops through a family of managed states -/
-
-/-! ## Expression side conditions on managed states -/
-
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
-
 end KIL
 
 end NLogN
@@ -96,32 +86,6 @@ end NLogN.KIL
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-theorem cRBlk_le {Q B Bb : ℕ} (hB1 : 1 ≤ B) (hQ1 : 1 ≤ Q) :
-    cRBlk Q B Bb ≤ 150000 * (Q * B) * (Bb + 2) := by
-  unfold cRBlk
-  have hQ : Q ≤ Q * B := Nat.le_mul_of_pos_right _ hB1
-  have h1 : 1 ≤ Q * B := le_trans hQ1 hQ
-  have e : Q * ((1 + 1) * 2000 * (Bb + 2) + B * (14000 * (Bb + 2)) + 32 + 8000 * (Bb + 2) + 30) =
-      12000 * Q * (Bb + 2) + 14000 * (Q * B) * (Bb + 2) + 62 * Q := by ring
-  have h2 : Q * (Bb + 2) ≤ Q * B * (Bb + 2) := Nat.mul_le_mul_right _ hQ
-  have h3 : (Bb + 2) ≤ Q * B * (Bb + 2) := by nlinarith
-  rw [e]
-  nlinarith
-
-theorem cRot_le {P Q B Bb : ℕ} (hB1 : 1 ≤ B) (hQ1 : 1 ≤ Q) :
-    cRot P Q B Bb ≤ 200000 * (P * (Q * B) + 1) * (Bb + 2) + 10 ^ 8 * (Bb + 2) ^ 2 := by
-  unfold cRot
-  have hb := cRBlk_le (Bb := Bb) hB1 hQ1
-  have h1 : 1 ≤ Q * B := Nat.mul_pos hQ1 hB1
-  have h5 : P * (cRBlk Q B Bb + 8000 * (Bb + 2) + 30) ≤
-      P * (150000 * (Q * B) * (Bb + 2) + 8000 * (Bb + 2) + 30) := by gcongr
-  have h6 : P * (Bb + 2) ≤ P * (Q * B) * (Bb + 2) := by
-    apply Nat.mul_le_mul_right; exact Nat.le_mul_of_pos_right _ h1
-  have h7 : P ≤ P * (Q * B) * (Bb + 2) := by nlinarith
-  have e : P * (150000 * (Q * B) * (Bb + 2) + 8000 * (Bb + 2) + 30) =
-      150000 * (P * (Q * B)) * (Bb + 2) + 8000 * (P * (Bb + 2)) + 30 * P := by ring
-  nlinarith
 
 end NLogN.KIL
 
@@ -173,19 +137,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Ghost stacks -/
-
-/-! ## The simulation -/
-
-/-! ## Top level -/
-
-/-! ## Coarse transfer: `fcost ≤ 100 · cost` -/
-
-/-! ## Fine specifications -/
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
-
 /-! ## Loops -/
 
 /-! ## Literal-to-register simulation -/
@@ -218,18 +169,6 @@ open IntMul AModel
 namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-/-! ## Prologue / epilogue of a unary counter pair -/
-
-/-! ## The core: blocks, then copy the output back -/
-
-/-! ## The program -/
-
-theorem zsz_nat_le (n : ℕ) : zsz (n : ℤ) ≤ n :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
-
-theorem cUL_le (n : ℕ) : cUL n ≤ 1300 * n + 1000 := by
-  have := zsz_nat_le n; unfold cUL; omega
 
 end KFC
 
@@ -264,17 +203,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD
 
-/-! ## Pushing a linear combination -/
-
-/-! ## The zip loop -/
-
-/-! ## One block -/
-
-theorem Cnt.congr {s : IState HS} {f g : Fin HS → List ℤ} {B1 : ℕ} (h : Cnt s f B1)
-    (h1 : g rB = f rB) (h2 : g rB2 = f rB2) (h3 : g rB4 = f rB4) : Cnt s g B1 :=
-  ⟨by simp only [encK_G, h1]; exact h.b, by simp only [encK_G, h2]; exact h.b2,
-    by simp only [encK_G, h3]; exact h.b4⟩
-
 /-! ## A group of blocks, and the whole pass -/
 
 /-! ## Fine compilability -/
@@ -305,29 +233,6 @@ namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Core, wrapper, program -/
-
-theorem cRotF_le (P Q B w : ℕ) (hP : 1 ≤ P) (hQ : 1 ≤ Q) (hB : 1 ≤ B) :
-    cRotF P Q B w ≤ 68 * kap w * (P * Q * B) := by
-  have hk : 200 ≤ kap w := by simp [kap]
-  set V := P * Q * B with hV
-  have hPQ : P * Q ≤ V := Nat.le_mul_of_pos_right _ hB
-  have hPV : P ≤ V := le_trans (Nat.le_mul_of_pos_right _ hQ) hPQ
-  have hBV : B ≤ V := Nat.le_mul_of_pos_left _ (Nat.mul_pos hP hQ)
-  have h1V : 1 ≤ V := le_trans hP hPV
-  have hz : zsz (Q : ℤ) ≤ Q := zsz_nat_le Q
-  have hzP : P * zsz (Q : ℤ) ≤ P * Q := Nat.mul_le_mul_left _ hz
-  have := cUL_le P; have := cUL_le B
-  have e : P * (3 * Q * (B * kap w + 124) + 1100 * Q + 2200 * zsz (Q : ℤ) + 4000 + 64) =
-      3 * (kap w * V) + 1472 * (P * Q) + 2200 * (P * zsz (Q : ℤ)) + 4064 * P := by
-    rw [hV]; ring
-  have h2 : 200 * V ≤ kap w * V := Nat.mul_le_mul_right _ hk
-  have e2 : 68 * kap w * V = 68 * (kap w * V) := by ring
-  have e3 : V * kap w = kap w * V := by ring
-  unfold cRotF cRB
-  rw [e, e2, e3]
-  omega
-
 end KFC
 
 end NLogN
@@ -357,8 +262,6 @@ open AModel Butterfly
 namespace Geo
 variable (g : Geo)
 
-theorem V_rec : g.V = g.recG.V * g.B := by simp only [V, S0, S1, S2, Geo.recG]; ring
-theorem Pos.recG {g : Geo} (h : g.Pos) : g.recG.Pos := ⟨h.q, h.n0, h.n1, h.n2, h.n3, Nat.one_pos⟩
 end Geo
 
 /-! ## Record arrays -/
@@ -387,13 +290,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -432,26 +328,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly Finset
 
-/-! ## Cost bookkeeping -/
-
-/-! ## Cutting a bit array into records -/
-
-/-! ## The correction step in IL -/
-
-theorem V_div_B {g : Geo} (hg : g.Pos) : g.V / g.B = g.recG.V := by
-  rw [Geo.V_rec, Nat.mul_div_cancel _ hg.b]
-
-theorem f_lt_zsz {K f : ℕ} (hK : 1 ≤ K) {g : Geo} (hg : g.Pos) (hQe : g.Q = 2 ^ (f * K)) :
-    f + 1 ≤ zsz (g.V : ℤ) := by
-  have h1 : 2 ^ f ≤ g.V := by
-    calc 2 ^ f ≤ 2 ^ (f * K) := Nat.pow_le_pow_right (by norm_num) (Nat.le_mul_of_pos_right _ hK)
-      _ = g.Q := hQe.symm
-      _ ≤ g.V := by
-        unfold Geo.V
-        exact Nat.le_mul_of_pos_right _ hg.n0 |>.trans' (Nat.le_mul_of_pos_right _ hg.s0)
-  have := zsz_natCast_le h1
-  rwa [Nat.cast_pow, Nat.cast_ofNat, zsz_two_pow] at this
-
 end NLogN.KFL
 
 end
@@ -475,118 +351,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD KFB KFH AModel Butterfly
-
-/-! ## Sequences of slot swaps -/
-
-/-! ## Cost bounds of the rotations -/
-
-theorem cSegIt_offE (b : ℤ) (Bb : ℕ) : cSegIt (offE b) Bb ≤ 72 * 10 ^ 7 * (Bb + 2) ^ 2 := by
-  unfold offE; split_ifs <;> simp [cSegIt, Ex.size]
-
-set_option maxRecDepth 100000 in
-theorem cRot_le (K f : ℕ) (b : ℤ) (P Q S Bb : ℕ) (hP : 1 ≤ P) (hQ : 1 ≤ Q) (hS : 1 ≤ S) :
-    cRot K f b P Q S 1 Bb ≤
-      10 ^ 11 * (P * (f + 1) * (Bb + 2) ^ 2) + 10 ^ 6 * (P * Q * S) + 10 ^ 9 * (Bb + 2) ^ 2 := by
-  have hR := KFC.cRotF_le P Q S 1 hP hQ hS
-  have k1 : KFC.kap 1 = 276 := by simp [KFC.kap]
-  rw [k1] at hR
-  have hseg := cSegIt_offE b Bb
-  unfold cRot cTabGen cTab cLp
-  generalize cSegIt (offE b) Bb = sg at hseg
-  generalize KFC.cRotF P Q S 1 = rf at hR
-  generalize P * Q * S = V at hR
-  have hc : 2 ≤ Bb + 2 := by omega
-  generalize hcb : Bb + 2 = c at hseg hc ⊢
-  have hcc : c ≤ c ^ 2 := by nlinarith
-  have e1 : (f - 1) * (sg + 1100) ≤ f * (72 * 10 ^ 7 * c ^ 2 + 1100) :=
-    Nat.mul_le_mul (Nat.sub_le f 1) (by omega)
-  generalize (f - 1) * (sg + 1100) = e at e1
-  have e2 : 1000 * c + e + 50 * 10 ^ 7 * c ^ 2 ≤ 10 ^ 9 * ((f + 1) * c ^ 2) := by nlinarith
-  generalize 1000 * c + e + 50 * 10 ^ 7 * c ^ 2 = X at e2
-  have e3 : P * (X + 1100) ≤ P * (10 ^ 9 * ((f + 1) * c ^ 2) + 1100) :=
-    Nat.mul_le_mul_left _ (by omega)
-  have e4 : P * 1100 ≤ 1100 * (P * ((f + 1) * c ^ 2)) := by
-    have : 1 ≤ (f + 1) * c ^ 2 := Nat.mul_pos (by omega) (by positivity)
-    nlinarith [Nat.mul_le_mul_left P this]
-  have e5 : 1000 * c ≤ 10 ^ 9 * c ^ 2 := by nlinarith
-  have e6 : P * (10 ^ 9 * ((f + 1) * c ^ 2) + 1100) = 10 ^ 9 * (P * ((f + 1) * c ^ 2)) + P * 1100 := by
-    ring
-  have e7 : P * ((f + 1) * c ^ 2) = P * (f + 1) * c ^ 2 := by ring
-  omega
-
-theorem cRotG_le (K f : ℕ) (g : Geo) (hg : g.Pos) (Bb : ℕ) (hfb : f + 1 ≤ Bb + 2) :
-    cRotG K f g Bb ≤ 10 ^ 12 * (g.recG.V * (Bb + 2) ^ 3 + g.V) := by
-  unfold cRotG
-  set P := g.N0 * g.Q * g.N1 * g.Q * g.N2
-  have hP : 1 ≤ P := Nat.mul_pos (Nat.mul_pos (Nat.mul_pos (Nat.mul_pos hg.n0 hg.q) hg.n1) hg.q) hg.n2
-  have hPV : P ≤ g.recG.V := by
-    have : g.recG.V = P * (g.Q * g.N3) := by
-      simp only [P, Geo.V, Geo.S0, Geo.S1, Geo.S2, Geo.recG_Q, Geo.recG_N0, Geo.recG_N1,
-        Geo.recG_N2, Geo.recG_N3, Geo.recG_B]; ring
-    rw [this]; exact Nat.le_mul_of_pos_right _ (Nat.mul_pos hg.q hg.n3)
-  have hV : P * g.Q * g.S2 = g.V := by simp only [P, Geo.V, Geo.S0, Geo.S1]; ring
-  have h0 := cRot_le K f 0 P g.Q g.S2 Bb hP hg.q hg.s2
-  have h1 := cRot_le K f 1 P g.Q g.S2 Bb hP hg.q hg.s2
-  rw [hV] at h0 h1
-  have hm : P * (f + 1) * (Bb + 2) ^ 2 ≤ g.recG.V * (Bb + 2) ^ 3 := by
-    calc P * (f + 1) * (Bb + 2) ^ 2 ≤ g.recG.V * (Bb + 2) * (Bb + 2) ^ 2 :=
-          Nat.mul_le_mul_right _ (Nat.mul_le_mul hPV hfb)
-      _ = _ := by ring
-  have hM : 1 ≤ g.recG.V := hg.recG.v
-  have hb3 : (Bb + 2) ^ 2 ≤ g.recG.V * (Bb + 2) ^ 3 := by
-    calc (Bb + 2) ^ 2 ≤ (Bb + 2) ^ 3 := Nat.pow_le_pow_right (by omega) (by norm_num)
-      _ ≤ _ := Nat.le_mul_of_pos_left _ hM
-  omega
-
-theorem cXor_le (P B Bb : ℕ) (hP : 1 ≤ P) (hB : 1 ≤ B) :
-    cXor P B 1 Bb ≤ 10 ^ 10 * (P * (Bb + 2) ^ 2 + P * 2 * B) := by
-  have hR := KFC.cRotF_le P 2 B 1 hP (by norm_num) hB
-  have k1 : KFC.kap 1 = 276 := by simp [KFC.kap]
-  rw [k1] at hR
-  unfold cXor cXorGen cLp
-  generalize hb : Bb + 2 = c at *
-  have hc : 2 ≤ c := by omega
-  have hcc : c ≤ c ^ 2 := by nlinarith
-  have e1 : P * 1100 ≤ P * c ^ 2 * 1100 := by nlinarith
-  have e2 : c ^ 2 ≤ P * c ^ 2 := Nat.le_mul_of_pos_left _ hP
-  nlinarith
-
-/-! ## The program -/
-
-/-! ## Lemma 13: denotation and the cost pieces -/
-
-/-! ## The cost in the form (19) -/
-
-theorem xor_dims {K ρ f : ℕ} (hρK : ρ < K) (hf : 1 ≤ f) (g : Geo) (hg : g.Pos)
-    (hQe : g.Q = 2 ^ (f * K)) :
-    1 ≤ g.N0 * g.Q * g.N1 * 2 ^ (f * K - (ρ + (f - 1) * K) - 1) ∧
-    1 ≤ 2 ^ (ρ + (f - 1) * K) * g.S1 ∧
-    g.N0 * g.Q * g.N1 * 2 ^ (f * K - (ρ + (f - 1) * K) - 1) * 2 * (2 ^ (ρ + (f - 1) * K) * g.S1)
-      = g.V ∧
-    g.N0 * g.Q * g.N1 * 2 ^ (f * K - (ρ + (f - 1) * K) - 1) ≤ g.recG.V := by
-  set j := ρ + (f - 1) * K
-  set E := 2 ^ (f * K - j - 1)
-  set D := 2 ^ j
-  have hjK : j + 1 ≤ f * K := by
-    have : (f - 1) * K + K = f * K := by
-      have : f = (f - 1) + 1 := by omega
-      conv_rhs => rw [this]
-      ring
-    omega
-  have hQ : g.Q = 2 * D * E := by
-    rw [hQe]; simp only [D, E]; rw [← pow_succ', ← pow_add]; congr 1; omega
-  have hE : 0 < E := by positivity
-  have hD : 0 < D := by positivity
-  refine ⟨Nat.mul_pos (Nat.mul_pos (Nat.mul_pos hg.n0 hg.q) hg.n1) hE, Nat.mul_pos hD hg.s1, ?_, ?_⟩
-  · simp only [Geo.V, Geo.S0]; rw [hQ]; ring
-  · have hEQ : E ≤ g.Q := by rw [hQ]; nlinarith
-    have : g.recG.V = g.N0 * g.Q * g.N1 * g.Q * (g.N2 * g.Q * g.N3) := by
-      simp only [Geo.V, Geo.S0, Geo.S1, Geo.S2, Geo.recG_Q, Geo.recG_N0, Geo.recG_N1,
-        Geo.recG_N2, Geo.recG_N3, Geo.recG_B]; ring
-    rw [this]
-    have h1 : 1 ≤ g.N2 * g.Q * g.N3 := Nat.mul_pos (Nat.mul_pos hg.n2 hg.q) hg.n3
-    calc g.N0 * g.Q * g.N1 * E ≤ g.N0 * g.Q * g.N1 * g.Q := Nat.mul_le_mul_left _ hEQ
-      _ ≤ _ := Nat.le_mul_of_pos_right _ h1
 
 end NLogN.KFL
 

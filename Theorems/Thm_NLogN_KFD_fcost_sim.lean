@@ -39,58 +39,7 @@ section ESimLemmas
 
 variable {π : PMap} {s : IState HS}
 
-theorem par_cost (v : ℤ) : dupCost (zsz v) + 17 ≤ 200 * (zsz v + 2) := by
-  unfold dupCost zipCost moveCost; omega
-
-theorem ESim.cost_le (hs : PV π s) {e e' : Ex HS} (h : ESim π e e') :
-    e'.cost s ≤ 200 * e.cost s := by
-  induction h with
-  | reg i => simp only [Ex.cost]; omega
-  | lit c => simp only [Ex.cost]; omega
-  | par hi =>
-    obtain ⟨L, hL⟩ := hs _ _ hi
-    simp only [Ex.cost, IState.top_eq hL]
-    exact par_cost _
-  | add ha hb iha ihb =>
-    simp only [Ex.cost, ha.eval_eq hs, hb.eval_eq hs]; nlinarith
-  | neg _ iha => simp only [Ex.cost]; omega
-  | mul ha hb iha ihb =>
-    simp only [Ex.cost, ha.eval_eq hs, hb.eval_eq hs]; nlinarith
-  | shl ha hb iha ihb =>
-    simp only [Ex.cost, ha.eval_eq hs, hb.eval_eq hs]; nlinarith
-  | quo ha hb iha ihb =>
-    simp only [Ex.cost, ha.eval_eq hs, hb.eval_eq hs]; nlinarith
-  | rem ha hb iha ihb =>
-    simp only [Ex.cost, ha.eval_eq hs, hb.eval_eq hs]; nlinarith
-  | pow2 ha iha =>
-    simp only [Ex.cost, ha.eval_eq hs]; nlinarith
-  | sel hc ha hb ihc iha ihb =>
-    simp only [Ex.cost, hc.eval_eq hs]
-    split_ifs <;> nlinarith
-  | ndiv ha hb iha ihb =>
-    simp only [Ex.cost, ha.eval_eq hs, hb.eval_eq hs]; nlinarith
-  | nmod ha hb iha ihb =>
-    simp only [Ex.cost, ha.eval_eq hs, hb.eval_eq hs]; nlinarith
-
 end ESimLemmas
-
-theorem PV.of_G {π : PMap} {s t : IState HS} (hs : PV π s)
-    (h : ∀ i v, π i = some v → t.G i = s.G i) : PV π t := by
-  intro i v hi
-  rw [h i v hi]; exact hs i v hi
-
-/-- The iterate states of `rep` keep every stack outside `i :: b.writes`. -/
-theorem repSt_G_of_not_mem (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (j : Fin HS)
-    (hji : j ≠ i) (hj : j ∉ b.writes) : ∀ k, (repSt i n b s k).G j = s.G j := by
-  intro k
-  induction k with
-  | zero => simp [repSt, IState.upd_G, hji]
-  | succ k ih =>
-    simp only [repSt] at ih ⊢
-    rw [Function.iterate_succ_apply']
-    generalize ((fun t => decSt i (b.run t))^[k] (s.upd i (.int (n.eval s) :: s.G i))) = X at ih ⊢
-    simp only [decSt, IState.upd_G, if_neg hji]
-    rw [RS.run_G_of_not_mem b X j hj, ih]
 
 /-! ## Parameter maps and states -/
 

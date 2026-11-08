@@ -93,10 +93,6 @@ open Matrix
 
 section Chunks
 
-lemma vol_hdShape (A B C : Shape) (m N : ℕ) :
-    vol (hdShape A B C m N) = vol (swShape A B C (N ^ m)) := by
-  simp only [hdShape, swShape, vol_append, vol_cons, vol_replicate]
-
 end Chunks
 
 /-! ## 6. The chunk interchange `amap swapMat` is a block swap -/
@@ -228,11 +224,6 @@ open IntMul NLogN RS NLogN.KIL NLogN.KFD AModel AModelL12 Finset
 
 noncomputable section
 
-/-! ## The register file and the descriptor -/
-
-theorem fDesc_free {e P L a b c : ℕ} {i : Fin HS} (h : i ∉ descD) : fDesc e P L a b c i = [] := by
-  simp [fDesc, regState, h]
-
 theorem desc_split {t : IState HS} {e P L a b c : ℕ} (h : DescG t e P L a b c) :
     ∃ s0 : IState HS, t = encK s0 (fDesc e P L a b c) ∧ s0.G dJ = t.G dJ ∧ s0.G 0 = t.G 0 := by
   obtain ⟨⟨R1, h1⟩, ⟨R2, h2⟩, ⟨R3, h3⟩, ⟨R4, h4⟩, ⟨R5, h5⟩, ⟨R6, h6⟩, ⟨R7, h7⟩⟩ := h
@@ -254,13 +245,6 @@ theorem desc_split {t : IState HS} {e P L a b c : ℕ} (h : DescG t e P L a b c)
   by_cases j6 : j = dC
   · subst j6; simp +decide [h7, ints]
   simp [j1, j2, j3, j4, j5, j6]
-
-theorem encK_upd0_free {s : IState HS} {f : Fin HS → List ℤ} (hf : f 0 = []) (X : List Item) :
-    (encK s f).upd 0 X = encK (s.upd 0 X) f := by
-  refine IState.ext' (fun j => ?_) rfl rfl
-  by_cases h : j = 0
-  · subst h; simp [hf]
-  · simp [h]
 
 /-! ## Loops multiplying by a register -/
 
@@ -296,25 +280,6 @@ open IntMul NLogN RS NLogN.KIL NLogN.KFD AModel AModelL12 Finset
 noncomputable section
 
 variable {W T m : ℕ} [NeZero W]
-
-theorem vol_lev (P L' : ℕ) (A B Cs : Shape) (q f r : ℕ) (m : ℕ) :
-    vol (P :: L' :: hdShape A (List.replicate r q ++ B) (List.replicate r q ++ Cs) m (q ^ f)) =
-      P * L' * vol A * (q ^ f) ^ m * (q ^ r * vol B) * (q ^ f) ^ m * (q ^ r * vol Cs) := by
-  simp only [vol_cons, vol_hdShape, swShape, vol_append, vol_replicate]; ring
-
-theorem vol_lev_big (P L : ℕ) (A B Cs : Shape) (q m e : ℕ) (hm : 1 ≤ m) :
-    vol (P :: L :: hdShape A (List.replicate (e % m) q ++ B) (List.replicate (e % m) q ++ Cs) m
-      (q ^ (e / m))) = vol (P :: L :: hdShape A B Cs e q) := by
-  rw [vol_lev]
-  have her : m * (e / m) + e % m = e := Nat.div_add_mod e m
-  have h1 : (q ^ (e / m)) ^ m * q ^ (e % m) = q ^ e := by
-    rw [← pow_mul, ← pow_add, mul_comm (e / m) m, her]
-  simp only [vol_cons, vol_hdShape, swShape, vol_append]
-  calc P * L * vol A * (q ^ (e / m)) ^ m * (q ^ (e % m) * vol B) * (q ^ (e / m)) ^ m *
-        (q ^ (e % m) * vol Cs)
-      = P * L * vol A * ((q ^ (e / m)) ^ m * q ^ (e % m)) * vol B *
-          ((q ^ (e / m)) ^ m * q ^ (e % m)) * vol Cs := by ring
-    _ = _ := by rw [h1]; ring
 
 end
 

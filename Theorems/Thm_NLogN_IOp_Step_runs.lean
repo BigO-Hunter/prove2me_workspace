@@ -282,12 +282,6 @@ theorem St.set_of_eq (σ : St S) (i : Fin S) (l : List Sym) (h : σ.stk i = l) :
 
 @[simp] theorem St.set_self (σ : St S) (i : Fin S) : σ.set i (σ.stk i) = σ := St.set_of_eq _ _ _ rfl
 
-theorem moveδ_length (q src dst : Fin S) (g : Sym → Option Sym) (os) :
-    (moveδ q src dst g os).length ≤ 2 := by
-  unfold moveδ; split
-  · split <;> simp
-  · simp
-
 theorem Runs.move {q src dst : Fin S} {g : Sym → Option Sym} (hqs : q ≠ src) (hqd : q ≠ dst)
     (hsd : src ≠ dst) (σ : St S) (l r : List Sym) (hs : σ.stk src = l ++ r)
     (hl : ∀ a ∈ l, (g a).isSome) (hr : r.head?.bind g = none) :
@@ -391,17 +385,6 @@ theorem length_zipL (f : Bool → Bool → Bool → Bool × Bool) :
 
 @[simp] theorem decide_codeBit_eq_one (c : Bool) : decide (codeBit c = 1) = c := by
   cases c <;> decide
-
-theorem zipδ_length (q a b d e : Fin S) (keep f) (fin : Bool → List Sym) (B : ℕ)
-    (hB : ∀ c, (fin c).length ≤ B) (os) : (zipδ q a b d e keep f fin os).length ≤ B + 6 := by
-  unfold zipδ; split
-  · rename_i c ta tb
-    by_cases h : bitOf ta = none ∧ bitOf tb = none
-    · rw [if_pos h]; have := hB (decide (c = 1)); simp; omega
-    · rw [if_neg h]
-      simp only [List.length_append]
-      cases (bitOf ta).isSome <;> cases (bitOf tb).isSome <;> cases keep <;> simp
-  · simp
 
 theorem runOps_append (l₁ l₂ : List (Op S)) (σ : St S) :
     runOps I (l₁ ++ l₂) σ = runOps I l₂ (runOps I l₁ σ) := by
@@ -1325,16 +1308,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem takeδ_length (q a b d e : Fin S) (os) : (takeδ q a b d e os).length ≤ 4 := by
-  unfold takeδ; split
-  · rename_i ta sb
-    split_ifs
-    · rcases ta with _ | sa
-      · simp
-      · simp only; split_ifs <;> simp
-    · simp
-  · simp
-
 theorem Runs.take {q a b d e : Fin S} (hqa : q ≠ a) (hqb : q ≠ b) (hqd : q ≠ d) (hqe : q ≠ e)
     (hab : a ≠ b) (had : a ≠ d) (hae : a ≠ e) (hbd : b ≠ d) (hbe : b ≠ e) (hde : d ≠ e)
     (σ : St S) (A Bw : List Bool) (ra rb : List Sym)
@@ -1731,11 +1704,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem readδ_length (q x : Fin S) (stop : Sym) (os) : (readδ q x stop os).length ≤ 3 := by
-  unfold readδ; split
-  · split_ifs <;> simp
-  · simp
-
 section read
 variable {q x : Fin S} (hqx : q ≠ x) (stop : Sym) (Q : List Sym)
 
@@ -1831,11 +1799,6 @@ theorem Runs.readUntil (σ : St S) (W : List Sym) (hW : stop ∉ W)
 
 end read
 
-theorem outδ_length (q x : Fin S) (os) : (outδ q x os).length ≤ 2 := by
-  unfold outδ; split
-  · split <;> simp
-  · simp
-
 section out
 variable {q x : Fin S} (hqx : q ≠ x) (r Q : List Sym) (hr : bitOf r.head? = none)
 
@@ -1882,13 +1845,6 @@ theorem length_fitL : ∀ n A, (fitL n A).length = n
   | 0, _ => rfl
   | n + 1, [] => by simp [fitL, length_fitL n []]
   | n + 1, _ :: A => by simp [fitL, length_fitL n A]
-
-theorem padδ_length (q src cnt dst : Fin S) (os) : (padδ q src cnt dst os).length ≤ 3 := by
-  unfold padδ; split
-  · split
-    · split <;> simp
-    · simp
-  · simp
 
 section pad
 variable {q a c d : Fin S} (hqa : q ≠ a) (hqc : q ≠ c) (hqd : q ≠ d) (hac : a ≠ c) (had : a ≠ d)

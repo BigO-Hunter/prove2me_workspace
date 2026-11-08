@@ -42,16 +42,6 @@ namespace NLogN
 
 open IntMul RS IntMul.HvdH
 
-theorem abs_ediv_le (a d : ℤ) (hd : 1 ≤ d) : |a / d| ≤ |a| := by
-  have h1 := Int.ediv_mul_le a (show d ≠ 0 by omega)
-  have h2 := Int.lt_ediv_add_one_mul_self a (show 0 < d by omega)
-  rw [abs_le]
-  rcases le_or_gt 0 a with ha | ha
-  · rw [abs_of_nonneg ha]
-    constructor <;> nlinarith
-  · rw [abs_of_neg ha]
-    constructor <;> nlinarith
-
 end NLogN
 
 end

@@ -13,27 +13,8 @@ namespace AModel
 
 open Matrix
 
-lemma encode_decode {sh : Shape} {m : ℕ} (h : m < AModel.vol sh) : encode sh (decode sh m) = m := by
-  induction sh generalizing m with
-  | nil => simp at h; subst h; rfl
-  | cons q sh ih =>
-    simp only [vol_cons] at h
-    have hV : 0 < AModel.vol sh := Nat.pos_of_ne_zero (by rintro h'; simp [h'] at h)
-    have hq : m / AModel.vol sh < q := (Nat.div_lt_iff_lt_mul hV).2 h
-    simp only [decode, encode, List.headD_cons, List.tail_cons, Nat.mod_eq_of_lt hq,
-      ih (Nat.mod_lt m hV)]
-    exact Nat.div_add_mod' m (AModel.vol sh)
-
 section Pull
 variable {α : Type*}
-
-@[simp] lemma length_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) :
-    (AModel.pull sh sh' g d xs).length = AModel.vol sh' := by simp [AModel.pull]
-
-lemma getElem_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) (j : ℕ)
-    (hj : j < (AModel.pull sh sh' g d xs).length) :
-    (AModel.pull sh sh' g d xs)[j] = xs.getD (encode sh (g (decode sh' j))) d := by
-  simp [AModel.pull]
 
 end Pull
 
@@ -79,11 +60,6 @@ section
 namespace AModel
 
 section Reshape
-
-lemma length_decode (sh : Shape) (m : ℕ) : (decode sh m).length = sh.length := by
-  induction sh generalizing m with
-  | nil => rfl
-  | cons q sh ih => simp [decode, ih]
 
 end Reshape
 
@@ -231,9 +207,6 @@ namespace Geo
 variable (g : Geo)
 
 variable {g}
-
-theorem Pos.s2 (h : g.Pos) : 0 < g.S2 := Nat.mul_pos h.n3 h.b
-theorem Pos.s1 (h : g.Pos) : 0 < g.S1 := Nat.mul_pos (Nat.mul_pos h.q h.s2) h.n2
 
 theorem vol_sh8 : vol g.sh8 = g.V := by
   simp [sh8, NLogN.KFL.Geo.V, NLogN.KFL.Geo.S0, S1, S2, vol]; ring

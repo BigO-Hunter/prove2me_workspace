@@ -23,15 +23,6 @@ open Submodule Module
 
 variable {K : Type*} [Field K]
 
-lemma rank_eq_of_range_rows {m m' n : Type*} [Fintype m] [Fintype m'] [Fintype n]
-    {A : Matrix m n K} {B : Matrix m' n K} (h : Set.range A.row = Set.range B.row) : A.rank = B.rank := by
-  rw [Matrix.rank_eq_finrank_span_row, Matrix.rank_eq_finrank_span_row, h]
-
-lemma rank_eq_of_range_cols {m n n' : Type*} [Fintype m] [Fintype n] [Fintype n']
-    {A : Matrix m n K} {B : Matrix m n' K} (h : Set.range A.col = Set.range B.col) :
-    A.rank = B.rank := by
-  rw [Matrix.rank_eq_finrank_span_cols, Matrix.rank_eq_finrank_span_cols, h]
-
 end PSwapAux
 
 end Sec_PSwap
@@ -80,20 +71,6 @@ namespace RunsAux
 
 variable {K : Type*} [Field K]
 
-lemma rank_submatrix_range {ι κ α β γ δ : Type*} [Fintype α] [Fintype β] [Fintype γ] [Fintype δ]
-    (A : Matrix ι κ K) (f : α → ι) (f' : β → ι) (g : γ → κ) (g' : δ → κ)
-    (hf : Set.range f = Set.range f') (hg : Set.range g = Set.range g') :
-    (A.submatrix f g).rank = (A.submatrix f' g').rank := by
-  trans (A.submatrix f' g).rank
-  · apply PSwapAux.rank_eq_of_range_rows
-    have h1 : (A.submatrix f g).row = (fun i c => A i (g c)) ∘ f := rfl
-    have h2 : (A.submatrix f' g).row = (fun i c => A i (g c)) ∘ f' := rfl
-    rw [h1, h2, Set.range_comp, Set.range_comp, hf]
-  · apply PSwapAux.rank_eq_of_range_cols
-    have h1 : (A.submatrix f' g).col = (fun j r => A (f' r) j) ∘ g := rfl
-    have h2 : (A.submatrix f' g').col = (fun j r => A (f' r) j) ∘ g' := rfl
-    rw [h1, h2, Set.range_comp, Set.range_comp, hg]
-
 end RunsAux
 
 end Sec_Runs
@@ -122,42 +99,6 @@ open Matrix Finset
 section Piv
 
 variable {K : Type*} [Field K] {n a b : ℕ}
-
-lemma rk_congr (q : Matrix (Fin a) (Fin b) K) {X X' Y Y' : ℕ}
-    (hX : ∀ r : Fin a, r.val < X ↔ r.val < X') (hY : ∀ c : Fin b, Y ≤ c.val ↔ Y' ≤ c.val) :
-    rk q X Y = rk q X' Y' := by
-  unfold rk
-  apply RunsLib.RunsAux.rank_submatrix_range
-  · ext r; simp [hX]
-  · ext c; simp [hY]
-
-lemma not_isPiv_of_le_row (q : Matrix (Fin a) (Fin b) K) {i : ℕ} (hi : a ≤ i) (j : ℕ) :
-    ¬ IsPiv q i j := by
-  unfold IsPiv
-  have h1 : ∀ Y, rk q (i + 1) Y = rk q i Y := fun Y =>
-    rk_congr q (fun r => by have := r.isLt; omega) (fun _ => Iff.rfl)
-  rw [h1, h1]; omega
-
-lemma rk_zero_of_le_col (q : Matrix (Fin a) (Fin b) K) (X : ℕ) {Y : ℕ} (hY : b ≤ Y) :
-    rk q X Y = 0 := by
-  unfold rk
-  apply Nat.eq_zero_of_le_zero
-  refine (Matrix.rank_le_card_width _).trans ?_
-  rw [Nat.le_zero, Fintype.card_eq_zero_iff]
-  exact ⟨fun c => by have := c.1.isLt; have := c.2; omega⟩
-
-lemma not_isPiv_of_le_col (q : Matrix (Fin a) (Fin b) K) (i : ℕ) {j : ℕ} (hj : b ≤ j) :
-    ¬ IsPiv q i j := by
-  unfold IsPiv
-  rw [rk_zero_of_le_col q _ hj, rk_zero_of_le_col q _ hj, rk_zero_of_le_col q _ (by omega),
-    rk_zero_of_le_col q _ (by omega)]
-  omega
-
-lemma isPiv_lt {q : Matrix (Fin a) (Fin b) K} {i j : ℕ} (h : IsPiv q i j) : i < a ∧ j < b := by
-  by_contra hc
-  rcases not_and_or.1 hc with h' | h'
-  · exact not_isPiv_of_le_row q (by omega) j h
-  · exact not_isPiv_of_le_col q i (by omega) h
 
 end Piv
 

@@ -1121,16 +1121,6 @@ include hG
 
 end general
 
-/-- For an idempotent matrix, `rank = trace`. -/
-theorem rank_eq_trace_of_idem (P : Matrix ι ι K) (hP : P * P = P) : (P.rank : K) = P.trace := by
-  have hf : IsIdempotentElem (Matrix.toLin' P) := by
-    unfold IsIdempotentElem
-    rw [Module.End.mul_eq_comp, ← Matrix.toLin'_mul, hP]
-  have := ((LinearMap.isProj_range_iff_isIdempotentElem _).2 hf).trace
-  rw [Matrix.trace_toLin'_eq] at this
-  rw [this]
-  rfl
-
 section tensor
 variable {κ : Type*} [Fintype κ] [DecidableEq κ]
 open scoped Kronecker
@@ -1184,31 +1174,11 @@ lemma idem_add {X Y : R} (hX : X * X = X) (hY : Y * Y = Y) (h1 : X * Y = 0) (h2 
     (X + Y) * (X + Y) = X + Y := by
   simp only [add_mul, mul_add, hX, hY, h1, h2, add_zero, zero_add]
 
-lemma idem_one_sub {X : R} (hX : X * X = X) : (1 - X) * (1 - X) = 1 - X := by
-  simp only [sub_mul, mul_sub, one_mul, mul_one, hX, sub_self, sub_zero]
-
-lemma idem_sub {X Y : R} (hX : X * X = X) (hY : Y * Y = Y) (h1 : X * Y = Y) (h2 : Y * X = Y) :
-    (X - Y) * (X - Y) = X - Y := by
-  simp only [sub_mul, mul_sub, hX, hY, h1, h2, sub_self, sub_zero]
-
 end Ring
 
 section Rank
 
 variable {n : Type*} [Fintype n] [DecidableEq n]
-
-lemma rk_idem {E : Matrix n n ℚ} (hE : E * E = E) : rk E = trace E :=
-  rank_eq_trace_of_idem E hE
-
-lemma rank_smul_ne {E : Matrix n n ℚ} {c : ℚ} (hc : c ≠ 0) : (c • E).rank = E.rank := by
-  have : c • E = E * (c • (1 : Matrix n n ℚ)) := by rw [Matrix.mul_smul, mul_one]
-  rw [this, rank_mul_eq_left_of_det_ne_zero]
-  rw [det_smul, det_one, mul_one]
-  exact pow_ne_zero _ hc
-
-lemma rk_neg (E : Matrix n n ℚ) : rk (-E) = rk E := by
-  unfold rk
-  rw [show -E = (-1 : ℚ) • E by simp, rank_smul_ne (by norm_num)]
 
 lemma rk_two (E : Matrix n n ℚ) : rk (E + E) = rk E := by
   unfold rk
@@ -1229,7 +1199,6 @@ namespace SRel
 variable (S : SRel α A τ Nb h a)
 include S
 
-lemma ββ : (A - α) * (A - α) = A - α := idem_sub S.AA S.αα S.Aα S.αA
 lemma αβ : α * (A - α) = 0 := by rw [mul_sub, S.αA, S.αα, sub_self]
 lemma βα : (A - α) * α = 0 := by rw [sub_mul, S.Aα, S.αα, sub_self]
 lemma τβ (t : ι) : Commute (τ t) (A - α) := (S.τA t).sub_right (S.τα t)
@@ -1245,14 +1214,6 @@ lemma rk_E1 (t : ι) : rk ((A - α) * (1 - τ t)) = a * h - h - a + 1 := by
 lemma rk_E2 (t : ι) : rk (α * (1 - τ t)) = h - 1 := by
   rw [rk_idem (idem_mul_comm S.αα (S.one_sub_τ t) (comm_one_sub (S.τα t).symm))]
   rw [mul_sub, mul_one, trace_sub, S.trα, S.trατ]
-
-lemma rk_β : rk (A - α) = a * h - h := by
-  rw [rk_idem S.ββ, trace_sub, S.trA, S.trα]
-
-lemma rk_α : rk α = h := by rw [rk_idem S.αα, S.trα]
-
-lemma rk_one_sub_A : rk (1 - A) = Fintype.card n - a * h := by
-  rw [rk_idem (idem_one_sub S.AA), trace_sub, trace_one, S.trA]
 
 lemma rk_E6 (t : ι) : rk ((A - α) * τ t) = a - 1 := by
   rw [rk_idem (idem_mul_comm S.ββ (S.ττ t) (S.τβ t).symm), sub_mul, trace_sub, S.trAτ, S.trατ]
@@ -1317,16 +1278,6 @@ lemma chainY (t : ι) (L z1 z4 : Matrix n n ℚ) (hL : L = (A - α) * τ t) (R :
   rw [show A - α - (A - α) * τ t = (A - α) * (1 - τ t) by noncomm_ring,
     show A - α * τ t - (A - α) = α * (1 - τ t) by noncomm_ring, sub_self, sub_self, S.rk_E1,
     S.rk_E2, rk_zero]
-  ring
-
-/-- **Central wire**: source `0`, gates at times 1, 3, 4, 6, sink `1`; total `m + 2h`. -/
-lemma chainC (z : Matrix n n ℚ) :
-    rk (labK α A z 1 - 0) + (rk (labK α A z 3 - labK α A z 1) +
-      (rk (labK α A z 4 - labK α A z 3) + (rk (labK α A z 6 - labK α A z 4) +
-        rk (1 - labK α A z 6)))) = Fintype.card n + 2 * h := by
-  simp only [labK]
-  rw [sub_zero, sub_sub_cancel, show A - α - A = -α by abel, rk_neg, S.rk_β, S.rk_α,
-    S.rk_one_sub_A]
   ring
 
 /-- **Side wire** joining the `Y`-triple `s` and the `X`-triple `t` (neighbours):
@@ -1659,9 +1610,6 @@ set_option synthInstance.maxSize 512
 namespace NetProp7
 
 open Matrix Finset AModel NetScalar AModelRat AModelFac
-
-lemma ind₀_card (t : NetProp7.T₀) : (NetProp7.ind₀ t).card = 3 := t.2
-lemma ind₀_inj : Function.Injective ind₀ := Subtype.val_injective
 
 /-- **(9)**: `s_b = W_b m − N + 2 L_b = 177176569088785861287000000`. -/
 theorem rankSum_bit :

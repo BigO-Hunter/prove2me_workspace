@@ -154,10 +154,6 @@ open Matrix
 
 section Chunks
 
-lemma vol_hdShape (A B C : Shape) (m N : ℕ) :
-    vol (hdShape A B C m N) = vol (swShape A B C (N ^ m)) := by
-  simp only [hdShape, swShape, vol_append, vol_cons, vol_replicate]
-
 end Chunks
 
 /-! ## 6. The chunk interchange `amap swapMat` is a block swap -/
@@ -210,19 +206,6 @@ open AModel
 
 section Shapes
 
-lemma vol_rowShape (P R : ℕ) (G Suf : Shape) (q n : ℕ) :
-    vol (rowShape P R G Suf q n) = P * R * vol (restShape G Suf q n) := by
-  simp [rowShape, mul_assoc]
-
-lemma le_padRows {W K R : ℕ} (hW : 1 ≤ W) : R ≤ padRows W K R := by
-  unfold padRows
-  have hp : 0 < W ^ K := by positivity
-  have := Nat.div_add_mod (R + W ^ K - 1) (W ^ K)
-  have := Nat.mod_lt (R + W ^ K - 1) hp
-  have : W ^ K * ((R + W ^ K - 1) / W ^ K) + (R + W ^ K - 1) % W ^ K = R + W ^ K - 1 := by
-    omega
-  omega
-
 end Shapes
 
 /-! ## 2. The pieces -/
@@ -236,10 +219,6 @@ end Shapes
 section Binary
 
 variable {α : Type*}
-
-lemma vol_binShape_q (Pre G Suf : Shape) (q e : ℕ) :
-    vol (binShape Pre G Suf (q ^ e)) = vol (qShape Pre G Suf q e) := by
-  simp [binShape, qShape, restShape, vol_append, vol_replicate]
 
 end Binary
 
@@ -360,21 +339,6 @@ section Aux
 
 variable {α β : Type*}
 
-/-- Base-`m` digits as quotients and remainders. -/
-theorem digit_eq {m : ℕ} (hm : 2 ≤ m) : ∀ (n j : ℕ), digit m n j = n / m ^ j % m := by
-  intro n j
-  induction j generalizing n with
-  | zero =>
-    unfold digit
-    rcases Nat.eq_zero_or_pos n with h | h
-    · subst h; simp
-    · rw [Nat.digits_def' (by omega) h]; simp
-  | succ j ih =>
-    unfold digit at ih ⊢
-    rcases Nat.eq_zero_or_pos n with h | h
-    · subst h; simp
-    · rw [Nat.digits_def' (by omega) h, List.getD_cons_succ, ih, pow_succ', Nat.div_div_eq_div_mul]
-
 end Aux
 
 end NLogN.KIL
@@ -401,16 +365,6 @@ namespace NLogN
 open IntMul RS
 
 namespace KIL
-
-/-! ## Elementary statements -/
-
-/-! ## Moving integers between stacks -/
-
-/-! ## Counted loops through a family of managed states -/
-
-/-! ## Expression side conditions on managed states -/
-
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
 
 end KIL
 
@@ -445,19 +399,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-/-! ## Tables -/
-
-/-! ## Moves with literal counts -/
-
-/-! ## Applying a stream code in place -/
-
-/-! ## Cost unit -/
-
-/-! ## Copying a stream -/
-
-theorem TabB.le {W v Bb : ℕ} (h : TabB W v Bb) {n : ℕ} (hn : n ≤ W * v) : zsz (n : ℤ) ≤ Bb :=
-  le_trans (zsz_natCast_le' hn) h.vol
-
 /-! ## Accumulating a stream on stack `20` -/
 
 /-! ## Building a summed stream, rebuilding the table -/
@@ -483,18 +424,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-theorem one_le_vol {S : Shape} (h : ∀ a ∈ S, 1 ≤ a) : 1 ≤ vol S := by
-  unfold vol; exact Nat.one_le_iff_ne_zero.2 (List.prod_ne_zero (fun h0 => by have := h 0 h0; omega))
-
-/-! ## Arithmetic of the levels -/
-
-theorem pow_le_of_lt_len {m n j : ℕ} (hm : 2 ≤ m) (hn : 1 ≤ n) (hj : j < (Nat.digits m n).length) :
-    m ^ j ≤ n := by
-  have h := Nat.base_pow_length_digits_le m n (by omega) (by omega)
-  have : m ^ j * m ≤ m * n := le_trans (by rw [← pow_succ]; exact Nat.pow_le_pow_right (by omega) hj) h
-  rw [mul_comm] at this
-  exact Nat.le_of_mul_le_mul_left this (by omega)
 
 /-! ## Counting the digits -/
 
@@ -527,9 +456,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-theorem clog_le_self {m : ℕ} (hm : 2 ≤ m) (e : ℕ) : Nat.clog m e ≤ e :=
-  Nat.clog_le_of_le_pow (Nat.lt_pow_self (by omega)).le
-
 end NLogN.KIL
 
 end
@@ -550,10 +476,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-theorem vol_binShape (Pre G Suf : Shape) (F : ℕ) :
-    vol (binShape Pre G Suf F) = vol Pre * (F * (vol G * (F * vol Suf))) := by
-  simp [binShape, vol_append, vol_cons]
 
 /-! ## The padding expressions -/
 
@@ -580,29 +502,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-theorem padRows_le (W K R : ℕ) (hW : 1 ≤ W) : padRows W K R ≤ R + W ^ K - 1 := by
-  unfold padRows
-  have h : 0 < W ^ K := Nat.pos_of_ne_zero (pow_ne_zero _ (by omega))
-  exact Nat.mul_div_le _ _
-
-theorem le_padRows (W K R : ℕ) (hW : 1 ≤ W) : R ≤ padRows W K R := by
-  unfold padRows
-  have h : 0 < W ^ K := Nat.pos_of_ne_zero (pow_ne_zero _ (by omega))
-  have := Nat.div_add_mod (R + W ^ K - 1) (W ^ K)
-  have := Nat.mod_lt (R + W ^ K - 1) h
-  omega
-
-/-! ## Row padding -/
-
-theorem vol_restShape' (G Suf : Shape) (q n : ℕ) :
-    vol (restShape G Suf q n) = q ^ n * (vol G * (q ^ n * vol Suf)) := by
-  simp [restShape, vol_append, vol_replicate]
-
-theorem vol_qShape_row (Pre G Suf : Shape) (q r n : ℕ) :
-    vol (qShape Pre G Suf q (r + n)) =
-      vol Pre * (q ^ r * vol (restShape (G ++ List.replicate r q) Suf q n)) := by
-  simp only [qShape, restShape, vol_append, vol_replicate, pow_add]; ring
-
 end NLogN.KIL
 
 end
@@ -627,13 +526,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-/-- `W^K ≤ q^(W K)`. -/
-theorem pow_le_q_pow {W K q : ℕ} (hq : 2 ≤ q) : W ^ K ≤ q ^ (W * K) := by
-  rw [pow_mul]
-  apply Nat.pow_le_pow_left
-  calc W ≤ 2 ^ W := Nat.lt_two_pow_self.le
-    _ ≤ q ^ W := Nat.pow_le_pow_left hq W
 
 end NLogN.KIL
 
@@ -685,19 +577,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Ghost stacks -/
-
-/-! ## The simulation -/
-
-/-! ## Top level -/
-
-/-! ## Coarse transfer: `fcost ≤ 100 · cost` -/
-
-/-! ## Fine specifications -/
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
-
 /-! ## Loops -/
 
 /-! ## Literal-to-register simulation -/
@@ -730,15 +609,6 @@ open IntMul AModel
 namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-/-! ## Prologue / epilogue of a unary counter pair -/
-
-/-! ## The core: blocks, then copy the output back -/
-
-/-! ## The program -/
-
-theorem zsz_nat_le (n : ℕ) : zsz (n : ℤ) ≤ n :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
 
 end KFC
 
@@ -831,18 +701,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12 Finset
 
-/-! ## The oracle cost -/
-
-/-! ## The linear part -/
-
-theorem digits_len_le {m n : ℕ} (hm : 2 ≤ m) (hn : 1 ≤ n) : (Nat.digits m n).length ≤ n := by
-  have h1 : 1 ≤ (Nat.digits m n).length := by
-    rw [Nat.digits_def' (by omega) (by omega)]; simp
-  have h2 := pow_le_of_lt_len hm hn (j := (Nat.digits m n).length - 1) (by omega)
-  have h3 : (Nat.digits m n).length - 1 < 2 ^ ((Nat.digits m n).length - 1) := Nat.lt_two_pow_self
-  have h4 := Nat.pow_le_pow_left hm ((Nat.digits m n).length - 1)
-  omega
-
 /-! ## The closed bound -/
 
 theorem e_le_u {q u : ℕ} (hq : 2 ≤ q) : Nat.clog q (2 ^ u) ≤ u :=
@@ -908,17 +766,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD
 
-/-! ## Pushing a linear combination -/
-
-/-! ## The zip loop -/
-
-/-! ## One block -/
-
-theorem Cnt.congr {s : IState HS} {f g : Fin HS → List ℤ} {B1 : ℕ} (h : Cnt s f B1)
-    (h1 : g rB = f rB) (h2 : g rB2 = f rB2) (h3 : g rB4 = f rB4) : Cnt s g B1 :=
-  ⟨by simp only [encK_G, h1]; exact h.b, by simp only [encK_G, h2]; exact h.b2,
-    by simp only [encK_G, h3]; exact h.b4⟩
-
 /-! ## A group of blocks, and the whole pass -/
 
 /-! ## Fine compilability -/
@@ -950,12 +797,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
-
-theorem PCnt.congr {s : IState HS} {f g : Fin HS → List ℤ} {L P Q : ℕ} (h : PCnt s f L P Q)
-    (h1 : g rB = f rB) (h2 : g rB2 = f rB2) (h3 : g rP = f rP) (h4 : g rQ = f rQ) :
-    PCnt s g L P Q :=
-  ⟨by simp only [encK_G, h1]; exact h.b, by simp only [encK_G, h2]; exact h.b2,
-    by simp only [encK_G, h3]; exact h.p, by simp only [encK_G, h4]; exact h.q⟩
 
 end NLogN.KFG
 
@@ -1090,12 +931,6 @@ namespace QHNet
 
 variable {R : Type*} [CommRing R] {W T m : ℕ}
 
-lemma mem_widths {C : QHNet R W T m} {w : ℕ} (hw : w ∈ C.widths) :
-    ∃ e ∈ C.edges, ∃ ρ ∈ e.runs, ρ.2.2 = w := by
-  simp only [widths, List.mem_flatMap, List.mem_map] at hw
-  obtain ⟨e, he, ρ, hρ, rfl⟩ := hw
-  exact ⟨e, he, ρ, hρ, rfl⟩
-
 end QHNet
 
 end IntMul.Kappa.R6.Bit
@@ -1127,66 +962,6 @@ namespace IntMul.Kappa.R6.Bit
 open AModel AModelFac Matrix
 
 variable {R : Type*} [CommRing R] {W T m : ℕ} [NeZero W]
-
-lemma instrCost_lin {Wr : Type*} (child : ℕ × ℕ × ℕ → ℝ → ℝ)
-    (hc : ∀ ρ v, child ρ v = v * child ρ 1) (V : ℝ) (i : Instr Wr R m) :
-    instrCost child (V / W) i = V * instrCost child (1 / W) i := by
-  cases i with
-  | gate g S => simp only [instrCost]; ring
-  | edge w e =>
-    simp only [instrCost]
-    rw [List.map_congr_left (fun ρ _ => hc ρ (V / W)), List.sum_map_mul_left,
-      List.map_congr_left (l := e.runs) (fun ρ _ => hc ρ (1 / W)), List.sum_map_mul_left]
-    ring
-
-lemma sum_map_mul {α : Type*} (l : List α) (f : α → ℝ) (V : ℝ) :
-    (l.map fun a => V * f a).sum = V * (l.map f).sum := List.sum_map_mul_left _ _ _
-
-/-- The cost is linear in the volume. -/
-theorem costH_lin (C : QHNet R W T m) : ∀ e V, costH C e V = V * costH C e 1 := by
-  intro e
-  induction e using Nat.strong_induction_on with
-  | _ e ih =>
-  intro V
-  rw [costH, costH]
-  split_ifs with he
-  · have hc : ∀ (ρ : ℕ × ℕ × ℕ) (v : ℝ),
-        (if ρ.2.2 * (e / m) < e then costH C (ρ.2.2 * (e / m)) v else 0) =
-          v * (if ρ.2.2 * (e / m) < e then costH C (ρ.2.2 * (e / m)) 1 else 0) := by
-      intro ρ v
-      split_ifs with h
-      · exact ih _ h v
-      · ring
-    rw [List.map_congr_left (fun i _ => instrCost_lin _ hc V i), sum_map_mul]
-    ring
-  · ring
-
-lemma width_lt {m e w : ℕ} (he : m ≤ e) (hw : w < m) : w * (e / m) < e := by
-  have h1 : 1 ≤ e / m := (Nat.le_div_iff_mul_le (by omega)).2 (by omega)
-  have h2 : e / m * m ≤ e := Nat.div_mul_le_self e m
-  nlinarith
-
-lemma cH_lt (C : QHNet R W T m) {e : ℕ} (he : ¬ m ≤ e) : cH C e = e := by
-  rw [cH, costH, if_neg he]; ring
-
-lemma K0_nonneg (C : QHNet R W T m) : 0 ≤ K0 C := by
-  unfold K0; positivity
-
-lemma cH_nonneg (C : QHNet R W T m) (hruns : C.RunsOK) : ∀ e, 0 ≤ cH C e := by
-  intro e
-  induction e using Nat.strong_induction_on with
-  | _ e ih =>
-  by_cases he : m ≤ e
-  · rw [cH_rec C hruns he]
-    have : 0 ≤ (C.widths.map fun w => cH C (w * (e / m))).sum := by
-      apply List.sum_nonneg
-      intro x hx
-      obtain ⟨w, hw, rfl⟩ := List.mem_map.1 hx
-      obtain ⟨e', he', ρ, hρ, rfl⟩ := QHNet.mem_widths hw
-      exact ih _ (width_lt he (hruns e' he' ρ hρ).2.1)
-    have := K0_nonneg C
-    positivity
-  · rw [cH_lt C he]; positivity
 
 end IntMul.Kappa.R6.Bit
 

@@ -18,27 +18,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -70,8 +52,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -93,93 +73,11 @@ variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 namespace IRuns
 
-theorem mono {p : IStmt S P} {s s' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (hc : c ≤ c') : IRuns I iprog p s s' c' := by
-  obtain ⟨d, hd, h⟩ := h; exact ⟨d, by omega, h⟩
-
-theorem mono' {p : IStmt S P} {s s' s'' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (he : s' = s'') (hc : c ≤ c') : IRuns I iprog p s s'' c' := he ▸ h.mono hc
-
-theorem skip (s : IState S) : IRuns I iprog .skip s s 1 := ⟨1, le_rfl, .skip s⟩
-
-theorem op {o : IOp S} {s s' : IState S} {c : ℕ} (h : o.Step I s s' c) :
-    IRuns I iprog (.op o) s s' c := ⟨c, le_rfl, .op h⟩
-
-theorem seq {p q : IStmt S P} {s s₁ s₂ : IState S} {c₁ c₂ : ℕ} (h₁ : IRuns I iprog p s s₁ c₁)
-    (h₂ : IRuns I iprog q s₁ s₂ c₂) : IRuns I iprog (.seq p q) s s₂ (c₁ + c₂) := by
-  obtain ⟨d₁, hd₁, h₁⟩ := h₁; obtain ⟨d₂, hd₂, h₂⟩ := h₂
-  exact ⟨d₁ + d₂, by omega, .seq h₁ h₂⟩
-
-theorem iteT {i f} {p q : IStmt S P} {s s' : IState S} {c : ℕ} (hf : f (s.cl i) = true)
-    (h : IRuns I iprog p s s' c) : IRuns I iprog (.ite i f p q) s s' (c + 25) := by
-  obtain ⟨d, hd, h⟩ := h; exact ⟨d + 25, by omega, .iteT hf h⟩
-
-theorem iteF {i f} {p q : IStmt S P} {s s' : IState S} {c : ℕ} (hf : f (s.cl i) = false)
-    (h : IRuns I iprog q s s' c) : IRuns I iprog (.ite i f p q) s s' (c + 25) := by
-  obtain ⟨d, hd, h⟩ := h; exact ⟨d + 25, by omega, .iteF hf h⟩
-
-theorem loopF {i f} {p : IStmt S P} {s : IState S} (hf : f (s.cl i) = false) :
-    IRuns I iprog (.loop i f p) s s 30 := ⟨30, le_rfl, .loopF hf⟩
-
-theorem loopT {i f} {p : IStmt S P} {s s₁ s₂ : IState S} {c₁ c₂ : ℕ} (hf : f (s.cl i) = true)
-    (h₁ : IRuns I iprog p s s₁ c₁) (h₂ : IRuns I iprog (.loop i f p) s₁ s₂ c₂) :
-    IRuns I iprog (.loop i f p) s s₂ (c₁ + c₂ + 30) := by
-  obtain ⟨d₁, hd₁, h₁⟩ := h₁; obtain ⟨d₂, hd₂, h₂⟩ := h₂
-  exact ⟨d₁ + d₂ + 30, by omega, .loopT hf h₁ h₂⟩
-
-/-- A loop running through the states `ss 0, …, ss m`. -/
-theorem loop {i f} {p : IStmt S P} (ss : ℕ → IState S) (cs : ℕ → ℕ) (m : ℕ)
-    (hT : ∀ k < m, f ((ss k).cl i) = true) (hF : f ((ss m).cl i) = false)
-    (hb : ∀ k < m, IRuns I iprog p (ss k) (ss (k + 1)) (cs k)) :
-    IRuns I iprog (.loop i f p) (ss 0) (ss m) ((∑ k ∈ Finset.range m, (cs k + 30)) + 30) := by
-  suffices H : ∀ r j, j + r = m → IRuns I iprog (.loop i f p) (ss j) (ss m)
-      ((∑ k ∈ Finset.Ico j m, (cs k + 30)) + 30) by
-    have := H m 0 (by omega)
-    rwa [Finset.range_eq_Ico]
-  intro r
-  induction r with
-  | zero => intro j hj; subst hj; simpa using loopF hF
-  | succ r ih =>
-    intro j hj
-    have hjm : j < m := by omega
-    have := loopT (hT j hjm) (hb j hjm) (ih (j + 1) (by omega))
-    refine this.mono ?_
-    rw [Finset.sum_eq_sum_Ico_succ_bot hjm]
-    omega
-
 end IRuns
 
 namespace IRuns
 
-theorem dup {s : IState S} {i j : Fin S} {a : ℤ} {L : List Item} (hij : i ≠ j)
-    (hi : s.G i = .int a :: L) :
-    IRuns I iprog (.op (.dup i j)) s (s.upd j (.int a :: s.G j)) (dupCost (zsz a) + 17) :=
-  NLogN.IRuns.op (.dup hij hi)
-
-theorem drop {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (hi : s.G i = .int a :: L) :
-    IRuns I iprog (.op (.drop i)) s (s.upd i L) (2 * zsz a + 2) := NLogN.IRuns.op (.drop hi)
-
-theorem mv {s : IState S} {i j : Fin S} {a : ℤ} {L : List Item} (hij : i ≠ j)
-    (hi : s.G i = .int a :: L) :
-    IRuns I iprog (.op (.mv i j)) s ((s.upd i L).upd j (.int a :: s.G j))
-      (2 * moveCost (zsz a) + 19) := NLogN.IRuns.op (.mv hij hi)
-
 end IRuns
-
-@[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
-    (s.upd i L).upd i L' = s.upd i L' := by
-  simp [IState.upd]
-
-@[simp] theorem IState.upd_self (s : IState S) (i : Fin S) : s.upd i (s.G i) = s := by
-  simp [IState.upd]
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
-@[simp] theorem cl_int (s : IState S) (i : Fin S) (z : ℤ) (L : List Item) (h : s.G i = .int z :: L) :
-    s.cl i = if z = 0 then .zero else if z < 0 then .neg else .pos := by
-  simp [IState.cl, h, cls]
 
 end NLogN
 
@@ -188,17 +86,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem moveIntCost_le (L : ℕ) : 2 * moveCost L + 19 ≤ 110 * (L + 1) := by
-  simp only [moveCost]; omega
-
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
 
 end NLogN
 
@@ -211,9 +98,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-
-theorem IState.top_eq {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (h : s.G i = .int a :: L) :
-    s.top i = a := by simp [IState.top, h]
 
 namespace Ex
 
@@ -239,9 +123,6 @@ open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
-theorem IState.isInt_of {s : IState S} {i : Fin S} {a : ℤ} {L : List Item}
-    (h : s.G i = .int a :: L) : s.IsInt i := ⟨L, by rw [IState.top_eq h, h]⟩
-
 namespace Ex
 
 end Ex
@@ -259,8 +140,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-theorem zX_all : zX.all = [56, 57, 58, 59, 60, 61, 62, 63] := rfl
 
 namespace Ex
 
@@ -281,167 +160,6 @@ open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
-
-theorem run_G_of_not_mem : ∀ (p : RS) (s : IState HS) (j : Fin HS), j ∉ p.writes →
-    (p.run s).G j = s.G j
-  | skip, s, j, _ => rfl
-  | asg i e, s, j, h | push i e, s, j, h | pop i, s, j, h => by
-    simp only [NLogN.RS.writes, List.mem_singleton] at h; simp [NLogN.RS.run, IState.upd_G, h]
-  | seq a b, s, j, h => by
-    simp only [NLogN.RS.writes, List.mem_append, not_or] at h
-    simp only [NLogN.RS.run]; rw [run_G_of_not_mem b _ j h.2, run_G_of_not_mem a _ j h.1]
-  | ite c a b, s, j, h => by
-    simp only [NLogN.RS.writes, List.mem_append, not_or] at h
-    simp only [NLogN.RS.run]; split_ifs
-    · exact run_G_of_not_mem a _ j h.1
-    · exact run_G_of_not_mem b _ j h.2
-  | rep i n b, s, j, h => by
-    simp only [NLogN.RS.writes, List.mem_cons, not_or] at h
-    simp only [NLogN.RS.run, IState.upd_G, if_neg h.1]
-    suffices H : ∀ k (t : IState HS), ((fun t => decSt i (b.run t))^[k] t).G j = t.G j by
-      rw [H]; simp [IState.upd_G, h.1]
-    intro k; induction k with
-    | zero => intro t; rfl
-    | succ k ih =>
-      intro t
-      rw [Function.iterate_succ_apply']
-      have e := ih t
-      generalize ((fun t => decSt i (b.run t))^[k] t) = X at e ⊢
-      simp only [decSt, IState.upd_G, if_neg h.1]
-      rw [run_G_of_not_mem b _ j h.2, e]
-
-theorem repSt_G (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (hi : i ∉ b.writes) :
-    ∀ k, (NLogN.RS.repSt i n b s k).G i = .int (n.eval s - k) :: s.G i := by
-  intro k; induction k with
-  | zero => simp [NLogN.RS.repSt, IState.upd_G]
-  | succ k ih =>
-    simp only [NLogN.RS.repSt] at ih ⊢
-    rw [Function.iterate_succ_apply']
-    generalize ((fun t => decSt i (b.run t))^[k] (s.upd i (.int (n.eval s) :: s.G i))) = X at ih ⊢
-    have h1 := run_G_of_not_mem b X i hi
-    rw [ih] at h1
-    simp only [decSt, IState.upd_G, if_pos rfl, IState.top, h1, List.tail_cons]
-    push_cast; ring_nf
-
-theorem ne56 {i : Fin HS} (hi : i.val < 56) : (56 : Fin HS) ≠ i := by
-  intro h; rw [← h] at hi; exact absurd hi (by decide)
-
-theorem clean_of_lt {i : Fin HS} (hi : i.val < 56) : (Ex.reg i).Clean := by
-  intro j hj
-  simp only [Ex.regs, List.mem_singleton] at hj
-  subst hj; simp only [zX_all, List.mem_cons, List.not_mem_nil, or_false]
-  intro h; rcases h with h | h | h | h | h | h | h | h <;> (subst h; exact absurd hi (by decide))
-
-theorem asg_runs (i : Fin HS) (e : Ex HS) (s : IState HS) (hi : i.val < 56) (hc : e.Clean)
-    (hok : e.ok s) (hint : s.IsInt i) :
-    IRuns I iprog (.seq (e.code zX) (.seq (.op (.drop i)) (.op (.mv zX.V i)))) s
-      (s.upd i (.int (e.eval s) :: (s.G i).tail)) (asgCost i e s) := by
-  have hne := ne56 hi
-  have h1 := Ex.code_runs (I := I) (iprog := iprog) e s hc hok
-  obtain ⟨L, hL⟩ := hint
-  have h2 := IRuns.drop (I := I) (iprog := iprog) (s := s.upd 56 (.int (e.eval s) :: s.G 56))
-    (i := i) (a := s.top i) (L := L) (by simp [IState.upd_G, Ne.symm hne, hL])
-  have h3 := IRuns.mv (I := I) (iprog := iprog)
-    (s := (s.upd 56 (.int (e.eval s) :: s.G 56)).upd i L) (i := zX.V) (j := i) (a := e.eval s)
-    (L := s.G 56) (by simpa using hne) (by simp [IState.upd_G, hne])
-  refine (h1.seq (h2.seq h3)).mono' ?_ (by simp only [asgCost]; omega)
-  have hne' := Ne.symm hne
-  apply IState.ext' <;> intros <;> simp only [IState.upd_G, IState.upd_ip, IState.upd_out] <;>
-    split_ifs <;> simp_all
-
-theorem code_runs : ∀ (p : RS) (s : IState HS), p.ok s →
-    IRuns I iprog (p.code) s (p.run s) (p.cost s)
-  | skip, s, _ => IRuns.skip s
-  | asg i e, s, ⟨hi, hc, hok, hint⟩ => asg_runs i e s hi hc hok hint
-  | push i e, s, ⟨hi, hc, hok⟩ => by
-    have hne := ne56 hi
-    have h1 := Ex.code_runs (I := I) (iprog := iprog) e s hc hok
-    have h3 := IRuns.mv (I := I) (iprog := iprog)
-      (s := s.upd 56 (.int (e.eval s) :: s.G 56)) (i := zX.V) (j := i) (a := e.eval s)
-      (L := s.G 56) (by simpa using hne) (by simp [IState.upd_G])
-    refine (h1.seq h3).mono' ?_ (by simp only [NLogN.RS.cost]; exact le_rfl)
-    have hne' := Ne.symm hne
-    simp only [NLogN.RS.run]
-    apply IState.ext' <;> intros <;> simp only [IState.upd_G, IState.upd_ip, IState.upd_out] <;>
-      split_ifs <;> simp_all
-  | pop i, s, ⟨hi, L, hL⟩ => by
-    have := IRuns.drop (I := I) (iprog := iprog) (s := s) (i := i) (a := s.top i) (L := L) hL
-    exact this.mono' (by simp [NLogN.RS.run, hL]) (by simp [NLogN.RS.cost])
-  | seq a b, s, ⟨ha, hb⟩ => by
-    exact ((code_runs a s ha).seq (code_runs b _ hb)).mono' rfl (by simp [NLogN.RS.cost])
-  | ite c a b, s, ⟨hcc, hoc, hab⟩ => by
-    have h1 := Ex.code_runs (I := I) (iprog := iprog) c s hcc hoc
-    have h2 := IRuns.mv (I := I) (iprog := iprog) (s := s.upd 56 (.int (c.eval s) :: s.G 56))
-      (i := zX.V) (j := zX.A) (a := c.eval s) (L := s.G 56) (by decide) (by simp)
-    set s2 := ((s.upd 56 (.int (c.eval s) :: s.G 56)).upd zX.V (s.G 56)).upd zX.A
-      (.int (c.eval s) :: (s.upd 56 (.int (c.eval s) :: s.G 56)).G zX.A)
-    have hd := IRuns.drop (I := I) (iprog := iprog) (s := s2) (i := zX.A) (a := c.eval s)
-      (L := s.G 57) (by simp [s2])
-    have e3 : s2.upd zX.A (s.G 57) = s := by simp only [s2]; ((apply IState.ext' <;> intros <;> simp +decide only [IState.upd_G, IState.upd_ip, IState.upd_out] <;> split_ifs <;> simp_all +decide))
-    rw [e3] at hd
-    by_cases hneg : c.eval s < 0
-    · have hx := code_runs a s (by simpa [hneg] using hab)
-      have hi := IRuns.iteT (I := I) (iprog := iprog) (i := zX.A) (f := fun k => k == .neg)
-        (q := .seq (.op (.drop zX.A)) b.code)
-        (by rw [cl_int s2 zX.A (c.eval s) (s.G 57) (by simp [s2])]; simp [hneg]; omega)
-        (hd.seq hx)
-      refine (h1.seq (h2.seq hi)).mono' (by simp [NLogN.RS.run, hneg]) ?_
-      simp only [NLogN.RS.cost, if_pos hneg]; omega
-    · have hy := code_runs b s (by simpa [hneg] using hab)
-      have hi := IRuns.iteF (I := I) (iprog := iprog) (i := zX.A) (f := fun k => k == .neg)
-        (p := .seq (.op (.drop zX.A)) a.code)
-        (by rw [cl_int s2 zX.A (c.eval s) (s.G 57) (by simp [s2])]; simp [hneg]; split_ifs <;> simp)
-        (hd.seq hy)
-      refine (h1.seq (h2.seq hi)).mono' (by simp [NLogN.RS.run, hneg]) ?_
-      simp only [NLogN.RS.cost, if_neg hneg]; omega
-  | rep i n b, s, ⟨hi, hc, hok, hn0, hw, hb⟩ => by
-    have hne := ne56 hi
-    have hne' := Ne.symm hne
-    have h1 := Ex.code_runs (I := I) (iprog := iprog) n s hc hok
-    have h2 := IRuns.mv (I := I) (iprog := iprog)
-      (s := s.upd 56 (.int (n.eval s) :: s.G 56)) (i := zX.V) (j := i) (a := n.eval s)
-      (L := s.G 56) (by simpa using hne) (by simp [IState.upd_G])
-    have e0 : ((s.upd 56 (.int (n.eval s) :: s.G 56)).upd zX.V (s.G 56)).upd i
-        (.int (n.eval s) :: (s.upd 56 (.int (n.eval s) :: s.G 56)).G i) = NLogN.RS.repSt i n b s 0 := by
-      simp only [NLogN.RS.repSt, Function.iterate_zero, id]
-      apply IState.ext' <;> intros <;> simp only [IState.upd_G, IState.upd_ip, IState.upd_out] <;>
-        split_ifs <;> simp_all
-    rw [e0] at h2
-    set N := (n.eval s).toNat with hN
-    have hNv : n.eval s = N := by omega
-    have hG := repSt_G i n b s hw
-    have hloop := IRuns.loop (I := I) (iprog := iprog) (i := i) (f := fun c => c != .zero)
-      (p := .seq b.code (.seq ((decE i).code zX) (.seq (.op (.drop i)) (.op (.mv zX.V i)))))
-      (NLogN.RS.repSt i n b s)
-      (fun k => b.cost (NLogN.RS.repSt i n b s k) + asgCost i (decE i) (b.run (NLogN.RS.repSt i n b s k))) N
-      (fun k hk => by
-        rw [cl_int _ i _ _ (hG k)]
-        have : n.eval s - k ≠ 0 := by omega
-        simp [this]; split_ifs <;> simp)
-      (by rw [cl_int _ i _ _ (hG N)]; simp [hNv])
-      (fun k hk => by
-        have hbk := code_runs b (NLogN.RS.repSt i n b s k) (hb k hk)
-        have hGb := run_G_of_not_mem b (NLogN.RS.repSt i n b s k) i hw
-        rw [hG k] at hGb
-        have hd := asg_runs (I := I) (iprog := iprog) i (decE i) (b.run (NLogN.RS.repSt i n b s k)) hi
-          (by intro j hj; simp only [decE, Ex.regs, List.append_nil] at hj; exact clean_of_lt hi j hj)
-          (by simp only [decE, Ex.ok, and_true]; exact IState.isInt_of hGb)
-          (IState.isInt_of hGb)
-        refine (hbk.seq hd).mono' ?_ le_rfl
-        simp only [NLogN.RS.repSt, Function.iterate_succ_apply']
-        simp only [NLogN.RS.repSt] at hGb
-        simp only [decSt, decE, Ex.eval, sub_eq_add_neg])
-    have hdrop := IRuns.drop (I := I) (iprog := iprog) (s := NLogN.RS.repSt i n b s N) (i := i)
-      (a := n.eval s - N) (L := s.G i) (hG N)
-    refine ((h1.seq h2).seq (hloop.seq hdrop)).mono' ?_ ?_
-    · have hGN := hG N
-      simp only [NLogN.RS.repSt] at hGN
-      simp only [NLogN.RS.run, NLogN.RS.repSt, ← hN]
-      rw [hGN]; rfl
-    · have hz : zsz (n.eval s - N) = 0 := by rw [hNv, sub_self, zsz_zero]
-      rw [hz]
-      simp only [NLogN.RS.cost, ← hN]
-      omega
 
 end RS
 

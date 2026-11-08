@@ -33,9 +33,6 @@ set_option autoImplicit false
 set_option relaxedAutoImplicit false
 set_option maxHeartbeats 1000000
 
-/-- local alias of the platform node `NLogN.KFX.agree_sigmaM` (ASCII-renamed) -/
-theorem NLogN.KFX.agree_σM : type_of% @NLogN.KFX.agree_sigmaM := @NLogN.KFX.agree_sigmaM
-
 section
 -- Source module: NLogN.SSLoops
 /-!
@@ -78,9 +75,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem zsz_natCast_le_self (k : ℕ) : zsz (k : ℤ) ≤ k := by
-  apply zsz_le_of_lt; simp only [Int.natAbs_natCast]; exact Nat.lt_two_pow_self
-
 end NLogN
 
 end
@@ -105,16 +99,6 @@ namespace NLogN
 open IntMul RS
 
 namespace KIL
-
-/-! ## Elementary statements -/
-
-/-! ## Moving integers between stacks -/
-
-/-! ## Counted loops through a family of managed states -/
-
-/-! ## Expression side conditions on managed states -/
-
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
 
 end KIL
 
@@ -200,13 +184,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-/-! ## Push-list hygiene -/
-
-theorem RdOK.lt {r : Fin HS} (h : RdOK r) : r.val < 56 := by
-  rcases h with h | h
-  · rw [h]; decide
-  · exact h.2
-
 theorem clean_of_rd {e : Ex HS} (h : ∀ r ∈ e.regs, RdOK r) : e.Clean := fun j hj =>
   clean_of_lt (h j hj).lt j (by simp [Ex.regs])
 
@@ -277,19 +254,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Ghost stacks -/
-
-/-! ## The simulation -/
-
-/-! ## Top level -/
-
-/-! ## Coarse transfer: `fcost ≤ 100 · cost` -/
-
-/-! ## Fine specifications -/
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
-
 /-! ## Loops -/
 
 /-! ## Literal-to-register simulation -/
@@ -322,15 +286,6 @@ open IntMul AModel
 namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-/-! ## Prologue / epilogue of a unary counter pair -/
-
-/-! ## The core: blocks, then copy the output back -/
-
-/-! ## The program -/
-
-theorem zsz_nat_le (n : ℕ) : zsz (n : ℤ) ≤ n :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
 
 end KFC
 
@@ -365,17 +320,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD
 
-/-! ## Pushing a linear combination -/
-
-/-! ## The zip loop -/
-
-/-! ## One block -/
-
-theorem Cnt.congr {s : IState HS} {f g : Fin HS → List ℤ} {B1 : ℕ} (h : Cnt s f B1)
-    (h1 : g rB = f rB) (h2 : g rB2 = f rB2) (h3 : g rB4 = f rB4) : Cnt s g B1 :=
-  ⟨by simp only [encK_G, h1]; exact h.b, by simp only [encK_G, h2]; exact h.b2,
-    by simp only [encK_G, h3]; exact h.b4⟩
-
 /-! ## A group of blocks, and the whole pass -/
 
 /-! ## Fine compilability -/
@@ -406,16 +350,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
-
-/-! ## Scaled coefficients -/
-
-/-! ## Scaled terms -/
-
-theorem zsz_two_pow (d : ℕ) : zsz ((2 : ℤ) ^ d) ≤ d + 1 := by
-  apply zsz_le_of_lt
-  rw [Int.natAbs_pow]
-  simp only [Int.reduceAbs]
-  rw [pow_succ]; have := Nat.one_le_two_pow (n := d); omega
 
 /-! ## Real and imaginary parts of `p u + q v` -/
 
@@ -449,12 +383,6 @@ namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
 
-theorem PCnt.congr {s : IState HS} {f g : Fin HS → List ℤ} {L P Q : ℕ} (h : PCnt s f L P Q)
-    (h1 : g rB = f rB) (h2 : g rB2 = f rB2) (h3 : g rP = f rP) (h4 : g rQ = f rQ) :
-    PCnt s g L P Q :=
-  ⟨by simp only [encK_G, h1]; exact h.b, by simp only [encK_G, h2]; exact h.b2,
-    by simp only [encK_G, h3]; exact h.p, by simp only [encK_G, h4]; exact h.q⟩
-
 end NLogN.KFG
 
 end
@@ -480,13 +408,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD
-
-/-! ## Registers -/
-
-theorem clean_all (e : Ex HS) (h : ∀ i ∈ e.regs, i.val < 56) : e.Clean := fun i hi hz => by
-  have := h i hi
-  simp only [ExSt.all, zX, List.mem_cons, List.not_mem_nil, or_false] at hz
-  rcases hz with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> exact absurd this (by decide)
 
 /-! ## The loop -/
 end NLogN.KFL
@@ -546,13 +467,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -783,19 +697,6 @@ namespace NLogN.KFW
 
 open IntMul RS KFD
 
-theorem Agree.top {σ : Fin HS → Option ℤ} {s : IState HS} (h : Agree σ s) {i : Fin HS} {v : ℤ}
-    (hi : σ i = some v) : s.top i = v := by
-  obtain ⟨L, hL⟩ := h i v hi; exact IState.top_eq hL
-
-theorem Agree.isInt {σ : Fin HS → Option ℤ} {s : IState HS} (h : Agree σ s) {i : Fin HS} {v : ℤ}
-    (hi : σ i = some v) : s.IsInt i := by
-  obtain ⟨L, hL⟩ := h i v hi; exact ⟨L, by rw [hL, IState.top_eq hL]⟩
-
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
-
 end NLogN.KFW
 
 end
@@ -820,11 +721,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFW
 
 open IntMul RS KFD KIL
-
-/-! ## Header refinement -/
-
-/-- Literal pushes of the same value. -/
-theorem HRef.lit (i : Fin HS) (v : ℤ) : HRef (.push i (.lit v)) (.push i (.lit v)) 0 := .refl _
 
 /-! ## Substitution of untouched registers -/
 
@@ -910,13 +806,6 @@ theorem pushCost_le_size (Bb : ℕ) (l : List (Fin HS × Ex HS)) (S : ℕ)
   have := Nat.mul_le_mul_right (10 ^ 7 * (Bb + 2) ^ 2) hS
   nlinarith
 
-/-! ## The uniform table generator of a line -/
-
-theorem notMem_zX {i : Fin HS} (h : i.val < 56) : i ∉ zX.all := by
-  intro hz
-  simp only [ExSt.all, zX, List.mem_cons, List.not_mem_nil, or_false] at hz
-  rcases hz with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> exact absurd h (by decide)
-
 /-! ## One line, register-driven -/
 
 /-! ## The last-bit step, register-driven -/
@@ -945,16 +834,6 @@ set_option maxRecDepth 20000
 namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW KFH AModel Butterfly
-
-/-! ## Master registers -/
-
-/-! ## Expression specifications from the masters -/
-
-theorem ESp.ofAgree {σ : Fin HS → Option ℤ} {t : IState HS} (hA : Agree σ t) {r : Fin HS} {v : ℤ}
-    (h : σ r = some v) (hr : r.val < 56) {Bb : ℕ} (hb : zsz v ≤ Bb) : ESp (.reg r) t Bb v := by
-  refine ⟨fun i hi => ?_, hA.isInt h, ?_, hA.top h⟩
-  · simp only [Ex.regs, List.mem_singleton] at hi; subst hi; exact notMem_zX hr
-  · show zsz (t.top r) ≤ Bb; rw [hA.top h]; exact hb
 
 theorem ESp.mulN {a b : Ex HS} {t : IState HS} {Bb : ℕ} {x y : ℕ} (ha : ESp a t Bb (x : ℤ))
     (hb : ESp b t Bb (y : ℤ)) (h : zsz ((x * y : ℕ) : ℤ) ≤ Bb) :
@@ -1089,27 +968,15 @@ theorem gx_val {a b : ℕ} (hab : a ≠ b) (N2 K f : ℕ) : (gxV N2 K f (pxR a b
   have hlt' : s0R a b < s2R a b := by omega
   unfold gxV; simp only [pxR_eq2 hlt', Nat.cast_inj]; split_ifs <;> simp
 
-/-! ## Expression combinators -/
-
-theorem clean56 {e : Ex HS} (h : ∀ i ∈ e.regs, i.val < 56) : e.Clean := KFL.clean_all e h
-
 section Comb
 
 variable {u : IState HS} {Bb : ℕ}
-
-theorem ESp.pow2 {a : Ex HS} {x : ℕ} (ha : ESp a u Bb (x : ℤ)) (hx : x + 1 ≤ Bb) :
-    ESp (.pow2 a) u Bb ((2 ^ x : ℕ) : ℤ) := by
-  refine ⟨ha.clean, ⟨ha.ok, by rw [ha.ev]; positivity⟩, ⟨ha.bnd, by rw [ha.ev]; simpa using hx⟩, ?_⟩
-  simp only [Ex.eval, ha.ev]; simp
 
 theorem ESp.max {a b : Ex HS} {x y : ℤ} (ha : ESp a u Bb x) (hb : ESp b u Bb y)
     (h : zsz (x - y) ≤ Bb) : ESp (eMax a b) u Bb (max x y) :=
   ESp.sel (ESp.sub ha hb h) hb.clean ha.clean
     (fun hl => ESp.of_eq hb (by rw [max_eq_right (by linarith)]))
     (fun hl => ESp.of_eq ha (by rw [max_eq_left (by linarith)]))
-
-theorem ESp.sq {a : Ex HS} {x : ℤ} (ha : ESp a u Bb x) (h : zsz (x * x) ≤ Bb) :
-    ESp (eSq a) u Bb (x * x) := ESp.mul ha ha h
 
 /-- `[x ≠ y]` as `sel (-(x-y)²) 1 0`. -/
 theorem ESp.neq {a b : Ex HS} {x y : ℤ} (ha : ESp a u Bb x) (hb : ESp b u Bb y)
@@ -1143,15 +1010,6 @@ theorem ESp.eq {a b : Ex HS} {x y : ℤ} (ha : ESp a u Bb x) (hb : ESp b u Bb y)
 
 end Comb
 
-/-! ## The parameter expressions -/
-
-theorem rowσ_at (k K e t S0 B r H : ℕ) (i j : Fin mC) (q : Fin 10) :
-    rowσ k K e t S0 B r H i j (KFW.rowR q) = some (rowVals k K e t S0 B r H i j q) := by
-  have hq := q.isLt
-  unfold rowσ KFW.rowR
-  rw [dif_pos (by simp only; omega)]
-  congr 2; ext; simp
-
 /-! ## Arithmetic of the rows -/
 
 theorem sR_int {K F e s m : ℕ} (hF : 1 ≤ F) (hs : s < m) (he : K * (F * m - 1) ≤ e) :
@@ -1168,38 +1026,12 @@ theorem sR_int {K F e s m : ℕ} (hF : 1 ≤ F) (hs : s < m) (he : K * (F * m - 
   unfold KFR.sR
   rw [Nat.cast_sub (by omega), Nat.cast_sub hE, Nat.cast_mul, hc]
 
-/-! ## The shape factors -/
-
-/-! ## Specifications of the parameter expressions -/
-
-theorem mC_eq : mC = 1000000 := by norm_num [mC]
-
-theorem f1_pos (k : ℕ) : 1 ≤ mC ^ k := Nat.one_le_pow _ _ (by norm_num)
-
 section PFacts
 
 variable {k K e T S0 B r H : ℕ} (hp : PF k K e T S0 B r)
 include hp
 
-theorem PF.eT : e < T := by
-  have := hp.ht; have := Nat.mod_lt e (show 0 < K by have := hp.k1; omega)
-  have := Nat.mod_le e K; omega
-
 theorem PF.KT : K ≤ T := by have := hp.ht; omega
-
-theorem PF.mT : mC ^ (k + 1) ≤ T := by
-  have h1 : mC ^ (k + 1) - 1 ≤ K * (mC ^ (k + 1) - 1) := Nat.le_mul_of_pos_left _ hp.k1
-  have := hp.he; have := hp.eT
-  have : 1 ≤ mC ^ (k + 1) := Nat.one_le_pow _ _ (by norm_num)
-  omega
-
-theorem PF.fm : mC ^ k * mC ≤ T := by rw [← pow_succ]; exact hp.mT
-
-theorem PF.mCT : mC ≤ T := by
-  have := hp.fm; have := f1_pos k
-  calc mC = 1 * mC := (one_mul _).symm
-    _ ≤ mC ^ k * mC := Nat.mul_le_mul_right _ this
-    _ ≤ T := hp.fm
 
 theorem PF.fT : mC ^ k ≤ T := by
   have := hp.fm
@@ -1217,14 +1049,6 @@ theorem PF.fK : mC ^ k * K ≤ e := by
   have := Nat.mul_le_mul_left K h1
   have := hp.he'
   rw [Nat.mul_comm (mC ^ k) K]; omega
-
-theorem PF.TV : 2 ^ T ≤ VbR T S0 B r H := by
-  unfold VbR
-  have := hp.s0; have := hp.b; have := hp.r
-  calc 2 ^ T = 1 * 2 ^ T * 1 := by ring
-    _ ≤ B * 2 ^ T * S0 := Nat.mul_le_mul (Nat.mul_le_mul_right _ hp.b) hp.s0
-    _ ≤ (B * 2 ^ T * S0) * (2 * r * (H + 1)) := Nat.le_mul_of_pos_right _ (by positivity)
-    _ = 2 * (B * 2 ^ T * S0) * r * (H + 1) := by ring
 
 end PFacts
 
@@ -1276,40 +1100,11 @@ theorem zV {v : ℤ} (h0 : -((VbR T S0 B r H : ℕ) : ℤ) ≤ v) (h1 : v ≤ (V
 
 omit hA in
 include hp hBb in
-theorem TB : T + 1 ≤ Bb := by
-  have h := zsz_nat_le (hp.TV (H := H))
-  have e : zsz (((2 ^ T : ℕ)) : ℤ) = T + 1 := by push_cast; exact zsz_two_pow T
-  omega
-
-omit hA in
 include hp hBb in
-theorem zT {v : ℤ} (h0 : -(T : ℤ) ≤ v) (h1 : v ≤ T) : zsz v ≤ Bb :=
-  le_trans (zsz_mono (b := (T : ℤ)) (by
-    rw [Int.natAbs_natCast]
-    exact Int.ofNat_le.mp (by rw [Int.natCast_natAbs]; exact abs_le.mpr ⟨h0, h1⟩))) (le_trans (zsz_natCast_le_self T) (by have := TB hp hBb; omega))
-
-omit hA in
 include hp hBb in
-theorem zS {v : ℤ} (h0 : -(10 ^ 24 : ℤ) ≤ v) (h1 : v ≤ 10 ^ 24) : zsz v ≤ Bb := by
-  have h80 : zsz v ≤ 80 := zsz_le_of_lt (by
-    have : (v.natAbs : ℤ) ≤ 10 ^ 24 := by rw [Int.natCast_natAbs]; exact abs_le.mpr ⟨h0, h1⟩
-    have : v.natAbs ≤ 10 ^ 24 := by exact_mod_cast this
-    have : (10 : ℕ) ^ 24 < 2 ^ 80 := by norm_num
-    omega)
-  have := TB hp hBb; have := hp.mCT; rw [mC_eq] at this; omega
-
 include hp hA hBb
 
 omit hp hBb in
-theorem sPr (q : Fin 10) (hb : zsz (rowVals k K e T S0 B r H i j q) ≤ Bb) :
-    ESp (pr q) u Bb (rowVals k K e T S0 B r H i j q) :=
-  ESp.ofAgree hA (rowσ_at k K e T S0 B r H i j q)
-    (by have := q.isLt; simp only [KFW.rowR]; omega) hb
-
-omit hp hBb in
-theorem sPr' (q : Fin 10) {v : ℤ} (hv : rowVals k K e T S0 B r H i j q = v) (hb : zsz v ≤ Bb) :
-    ESp (pr q) u Bb v := hv ▸ sPr hA q (hv ▸ hb)
-
 theorem sFp : ESp (pr 0) u Bb ((mC ^ k : ℕ) : ℤ) :=
   sPr' hA 0 rfl (zT hp hBb (by have : (0 : ℤ) ≤ ((mC ^ k : ℕ) : ℤ) := Nat.cast_nonneg _; omega)
     (by exact_mod_cast hp.fT))
@@ -1363,19 +1158,6 @@ theorem sHp : ESp (pr 7) u Bb (H : ℤ) :=
   sPr' hA 7 rfl (zV hBb (by omega) (by
     have := (VbR_ge (H := H) hp).2.2.2.1; exact_mod_cast (by omega : H ≤ VbR T S0 B r H)))
 
-theorem sIp : ESp (pr 8) u Bb ((i : ℕ) : ℤ) :=
-  sPr' hA 8 rfl (zT hp hBb (by omega) (by
-    have := i.isLt; have := hp.mCT; exact_mod_cast (by omega : (i : ℕ) ≤ T)))
-
-theorem sJp : ESp (pr 9) u Bb ((j : ℕ) : ℤ) :=
-  sPr' hA 9 rfl (zT hp hBb (by omega) (by
-    have := j.isLt; have := hp.mCT; exact_mod_cast (by omega : (j : ℕ) ≤ T)))
-
-omit hA in
-theorem sLit (c : ℤ) (h0 : -(10 ^ 24 : ℤ) ≤ c) (h1 : c ≤ 10 ^ 24) : ESp (.lit c) u Bb c :=
-  ESp.lit (zS hp hBb h0 h1)
-
-omit hp hA hBb in
 theorem hR_le (i j : ℕ) : hR i j ≤ 2 := by unfold hR; split_ifs <;> omega
 
 theorem sAm : ESp eAm u Bb ((min (i : ℕ) (j : ℕ) : ℕ) : ℤ) := by
@@ -1635,17 +1417,8 @@ namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW KFH AModel Butterfly
 
-/-! ## The bit-length loop -/
-
-theorem mA_ne_rX : mA ≠ rX := by decide
 theorem rX_ne0 : rX ≠ 0 := by decide
 theorem mA_ne0 : mA ≠ 0 := by decide
-
-theorem ssZ_G_rX (t : IState HS) (V m : ℕ) : (ssZ t V m).G rX = .int ((V / 2 ^ m : ℕ) : ℤ) :: t.G rX := by
-  simp [ssZ]
-
-theorem ssZ_G_mA (t : IState HS) (V m : ℕ) : (ssZ t V m).G mA = .int (m : ℤ) :: t.G mA := by
-  simp [ssZ, mA_ne_rX]
 
 theorem loopZ_runs {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp} (t : IState HS)
     (V Bb : ℕ) (hB : zsz (V : ℤ) ≤ Bb) (hB2 : 2 ≤ Bb) :

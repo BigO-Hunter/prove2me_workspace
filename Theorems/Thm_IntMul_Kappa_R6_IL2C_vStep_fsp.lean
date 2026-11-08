@@ -59,11 +59,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem zsz_le_of_abs {z : ℤ} {m : ℕ} (h : |z| < 2 ^ m) : zsz z ≤ m := by
-  apply zsz_le_of_lt
-  have : ((z.natAbs : ℕ) : ℤ) < ((2 ^ m : ℕ) : ℤ) := by push_cast; exact h
-  exact_mod_cast this
-
 end NLogN
 
 end
@@ -88,11 +83,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-/-! ## Expressions -/
-
-theorem zsz_le_of_abs {a : ℤ} {Q Bb : ℕ} (h : a.natAbs ≤ 2 * Q) (hQ : zsz ((2 * Q : ℕ) : ℤ) ≤ Bb) :
-    zsz a ≤ Bb := le_trans (zsz_mono (le_of_le_of_eq h (Int.natAbs_natCast _).symm)) hQ
 
 /-! ## The program -/
 
@@ -128,11 +118,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
-
-/-! ## Gaussian integers -/
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
 
 /-! ## Linear-combination expressions -/
 
@@ -178,15 +163,6 @@ open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
 
-/-! ## Layer implementations -/
-
-theorem LImpl.mono {hρ : ρ < K} {r : ℕ} {T : Butterfly.Op (Fin D)} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : LImpl (P := P) (S := S) hρ r T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    LImpl (P := P) (S := S) hρ r T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 /-! ## The concrete kernels -/
 
 /-! ## The program -/
@@ -217,22 +193,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD
 
-/-! ## Registers -/
-
-theorem clean_all (e : Ex HS) (h : ∀ i ∈ e.regs, i.val < 56) : e.Clean := fun i hi hz => by
-  have := h i hi
-  simp only [ExSt.all, zX, List.mem_cons, List.not_mem_nil, or_false] at hz
-  rcases hz with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> exact absurd this (by decide)
-
-theorem zsz_le_of_abs {v : ℤ} {B : ℕ} (h : |v| < 2 ^ B) : zsz v ≤ B := by
-  apply zsz_le_of_lt
-  have : (v.natAbs : ℤ) < 2 ^ B := by rw [Int.natCast_natAbs]; exact h
-  exact_mod_cast this
-
-/-! ## The loop -/
-
-theorem upd_ne {F : Fin HS → List ℤ} {i j : Fin HS} (h : j ≠ i) (x : List ℤ) :
-    Function.update F i x j = F j := Function.update_of_ne h _ _
 end NLogN.KFL
 
 end
@@ -256,13 +216,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -332,13 +285,6 @@ section SImplLemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImpl.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImpl r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImpl r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplLemmas
 
 section RImplDefs
@@ -346,12 +292,6 @@ section RImplDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImpl.mono {A : ROp (Fin W) m κ} {code : RS} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImpl r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) : RImpl r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplDefs
 
@@ -391,13 +331,6 @@ section SImplILemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImplI.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : ℕ → IStmt HS Pp} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImplI I iprog r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImplI I iprog r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplILemmas
 
 section RImplIDefs
@@ -405,13 +338,6 @@ section RImplIDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImplI.mono {A : ROp (Fin W) m κ} {code : ℕ → IStmt HS Pp} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImplI I iprog r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    RImplI I iprog r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplIDefs
 
@@ -441,17 +367,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN.KFU
 
 open AModel AModelL12
-
-/-! ## Position permutations -/
-
-/-! ### `swapPos` -/
-
-/-! ### `swapMid` -/
-
-/-! ## Layouts -/
-
-theorem Full.mono {bg : ℕ → Bool} {ax0 l l' : List ℕ} (h : Full bg ax0 l) (hm : ∀ x ∈ l, x ∈ l') :
-    Full bg ax0 l' := fun j hj => ⟨hm _ (h j hj).1, fun hb => hm _ ((h j hj).2 hb)⟩
 
 /-! ## The standard layout -/
 
@@ -496,12 +411,6 @@ variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 section Layer
 
 variable {r : ℕ}
-
-theorem LayerOK.mono {code : IStmt HS Pp} {T : List (Fin r → ℂ) → List (Fin r → ℂ)} {N p W c c' : ℕ}
-    (h : LayerOK I iprog code T N p W c) (hc : c ≤ c') : LayerOK I iprog code T N p W c' := by
-  intro s f zs l xs hx hl h0 hC hb hd
-  obtain ⟨zs', h1, h2, h3, h4, h5⟩ := h s f zs l xs hx hl h0 hC hb hd
-  exact ⟨zs', h1, h2, h3, h4, h5.mono' rfl hc⟩
 
 end Layer
 
@@ -608,45 +517,6 @@ set_option linter.unusedSimpArgs false
 namespace IntMul.Kappa.R6.IL2C
 
 open NLogN NLogN.KFL NLogN.KIL NLogN.KFD IntMul RS
-
-/-! ## Parameter registers -/
-
-theorem ESp.ofG' {t : IState HS} {x : Fin HS} {v : ℤ} {L : List Item} {Bb : ℕ}
-    (h : t.G x = .int v :: L) (hx : x.val < 56) (hb : zsz v ≤ Bb) : ESp (.reg x) t Bb v :=
-  ⟨KFL.clean_all _ (by simp [Ex.regs, hx]), IState.isInt_of h,
-    by show zsz (t.top x) ≤ Bb; rw [IState.top_eq h]; exact hb, IState.top_eq h⟩
-
-/-- A register read through a managed state whose managed part does not touch it. -/
-theorem encK_G_eq {s : IState HS} {F F' : Fin HS → List ℤ} {r : Fin HS} (h : F' r = F r) :
-    (encK s F').G r = (encK s F).G r := by simp [h]
-
-/-! ## The loop -/
-
-theorem geom_le {r : ℤ} (hr : 2 ≤ r) (k : ℕ) : ∑ i ∈ Finset.range k, r ^ i ≤ r ^ k - 1 := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    rw [Finset.sum_range_succ, pow_succ]
-    have : 0 ≤ r ^ k := by positivity
-    nlinarith
-
-theorem segSum_abs {tf : ℤ → ℤ → ℤ} {Tm : ℤ} (htf : ∀ a b, |tf a b| ≤ Tm) {ru rv rw w : ℤ}
-    (hrw : 2 ≤ rw) (hw : 0 ≤ w) (u v : ℤ) (k : ℕ) :
-    |segSum tf ru rv rw w u v k| ≤ Tm * w * (rw ^ k - 1) := by
-  unfold segSum
-  refine le_trans (Finset.abs_sum_le_sum_abs _ _) ?_
-  have h1 : ∀ i ∈ Finset.range k, |w * rw ^ i * tf (u / ru ^ i) (v / rv ^ i)| ≤ Tm * w * rw ^ i := by
-    intro i _
-    rw [abs_mul, abs_of_nonneg (by positivity : 0 ≤ w * rw ^ i)]
-    have := htf (u / ru ^ i) (v / rv ^ i)
-    have hp : (0 : ℤ) ≤ w * rw ^ i := by positivity
-    nlinarith
-  refine le_trans (Finset.sum_le_sum h1) ?_
-  rw [← Finset.mul_sum]
-  have := geom_le hrw k
-  have hT : 0 ≤ Tm := le_trans (abs_nonneg _) (htf 0 0)
-  have h2 : 0 ≤ Tm * w := by positivity
-  nlinarith
 
 end IntMul.Kappa.R6.IL2C
 

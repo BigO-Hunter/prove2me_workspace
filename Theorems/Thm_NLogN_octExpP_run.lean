@@ -24,10 +24,6 @@ namespace IRuns
 
 end IRuns
 
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
 end NLogN
 
 end
@@ -44,43 +40,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-theorem iter_ip (f : IState HS → IState HS) (hf : ∀ t, (f t).ip = t.ip ∧ (f t).out = t.out) :
-    ∀ k t, (f^[k] t).ip = t.ip ∧ (f^[k] t).out = t.out
-  | 0, t => ⟨rfl, rfl⟩
-  | k + 1, t => by
-    rw [Function.iterate_succ_apply']
-    exact ⟨(hf _).1.trans (iter_ip f hf k t).1, (hf _).2.trans (iter_ip f hf k t).2⟩
-
-theorem run_ip_out : ∀ (p : RS) (s : IState HS), (p.run s).ip = s.ip ∧ (p.run s).out = s.out
-  | skip, s => ⟨rfl, rfl⟩
-  | asg i e, s | push i e, s | pop i, s => by simp [NLogN.RS.run]
-  | seq a b, s => by
-    simp only [NLogN.RS.run]
-    exact ⟨(run_ip_out b _).1.trans (run_ip_out a s).1, (run_ip_out b _).2.trans (run_ip_out a s).2⟩
-  | ite c a b, s => by
-    simp only [NLogN.RS.run]; split_ifs
-    · exact run_ip_out a s
-    · exact run_ip_out b s
-  | rep i n b, s => by
-    simp only [NLogN.RS.run, IState.upd_ip, IState.upd_out]
-    have := iter_ip (fun t => decSt i (b.run t))
-      (fun t => by simp only [decSt, IState.upd_ip, IState.upd_out]; exact run_ip_out b t)
-      (n.eval s).toNat (s.upd i (.int (n.eval s) :: s.G i))
-    simpa using this
-
-@[simp] theorem run_ip (p : RS) (s : IState HS) : (p.run s).ip = s.ip := (NLogN.RS.run_ip_out p s).1
-@[simp] theorem run_out (p : RS) (s : IState HS) : (p.run s).out = s.out := (NLogN.RS.run_ip_out p s).2
-
-@[simp] theorem run_push_G (i : Fin HS) (e : Ex HS) (s : IState HS) (j : Fin HS) :
-    ((push i e).run s).G j = if j = i then .int (e.eval s) :: s.G i else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-@[simp] theorem run_pop_G (i : Fin HS) (s : IState HS) (j : Fin HS) :
-    ((pop i).run s).G j = if j = i then (s.G i).tail else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-theorem run_seq (a b : RS) (s : IState HS) : (NLogN.RS.seq a b).run s = b.run (a.run s) := rfl
-
 end RS
 
 end NLogN
@@ -94,25 +53,6 @@ namespace NLogN
 open IntMul
 
 namespace Ex
-
-theorem floor_div_neg (a b : ℤ) (hb : 0 < b) : a / b = -((-a + (b + -1)) / b) := by
-  have h1 := Int.ediv_mul_le (-a + (b + -1)) hb.ne'
-  have h2 := Int.lt_ediv_add_one_mul_self (-a + (b + -1)) hb
-  set q := (-a + (b + -1)) / b
-  have := (Int.ediv_emod_unique'' (a := a) (b := b) (r := a + b * q) (q := -q) hb.ne').2
-    ⟨by ring, by nlinarith, by rw [abs_of_pos hb]; nlinarith⟩
-  exact this.1
-
-theorem fdiv_eval (s : IState HS) (a b : Ex HS) (hb : 0 < b.eval s) :
-    (fdiv a b).eval s = a.eval s / b.eval s := by
-  simp only [fdiv, eval]
-  split_ifs with h
-  · exact (floor_div_neg _ _ hb).symm
-  · rfl
-
-@[simp] theorem fdiv_pow2_eval (s : IState HS) (a b : Ex HS) :
-    (fdiv a (.pow2 b)).eval s = a.eval s / 2 ^ (b.eval s).toNat :=
-  fdiv_eval s a _ (by simp only [eval]; positivity)
 
 end Ex
 

@@ -16,27 +16,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -68,8 +50,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -87,8 +67,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem zbits_neg (z : ℤ) : zbits (-z) = zbits z := by simp [zbits]
-
 end NLogN
 
 namespace NLogN
@@ -103,9 +81,6 @@ section
 -- Source module: NLogN.Costs
 namespace NLogN
 
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
 theorem zsz_le_iff {z : ℤ} {m : ℕ} : zsz z ≤ m ↔ z.natAbs < 2 ^ m :=
   ⟨fun h => lt_of_lt_of_le (natAbs_lt_zsz z) (Nat.pow_le_pow_right (by norm_num) h),
     zsz_le_of_lt⟩
@@ -118,13 +93,8 @@ theorem zsz_add_le (a b : ℤ) : zsz (a + b) ≤ max (zsz a) (zsz b) + 1 := by
   have := Int.natAbs_add_le a b
   rw [pow_succ]; omega
 
-theorem zsz_neg (z : ℤ) : zsz (-z) = zsz z := by simp [zsz, zbits_neg]
-
 theorem zsz_one : zsz 1 = 1 := by
   simp [zsz, zbits]; rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
 
 end NLogN
 
@@ -255,52 +225,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN
 
 open IntMul RS IntMul.HvdH
-
-theorem abs_ediv_le (a d : ℤ) (hd : 1 ≤ d) : |a / d| ≤ |a| := by
-  have h1 := Int.ediv_mul_le a (show d ≠ 0 by omega)
-  have h2 := Int.lt_ediv_add_one_mul_self a (show 0 < d by omega)
-  rw [abs_le]
-  rcases le_or_gt 0 a with ha | ha
-  · rw [abs_of_nonneg ha]
-    constructor <;> nlinarith
-  · rw [abs_of_neg ha]
-    constructor <;> nlinarith
-
-theorem expTerm_abs_le (N : ℕ) (X Y W : ℤ) (hW : |X| + |Y| ≤ W) (k : ℕ) :
-    |(expTerm N X Y k).1| ≤ 2 ^ N * W ^ k ∧ |(expTerm N X Y k).2| ≤ 2 ^ N * W ^ k := by
-  induction k with
-  | zero => simp [expTerm]
-  | succ k ih =>
-    obtain ⟨h1, h2⟩ := ih
-    have hd : (1 : ℤ) ≤ ((k : ℤ) + 1) * 2 ^ N := by
-      have : (1 : ℤ) ≤ 2 ^ N := one_le_pow₀ (by norm_num)
-      nlinarith
-    have hX := abs_nonneg X
-    have hY := abs_nonneg Y
-    have hT : (0 : ℤ) ≤ 2 ^ N * W ^ k := le_trans (abs_nonneg _) h1
-    have e : (2 : ℤ) ^ N * W ^ (k + 1) = 2 ^ N * W ^ k * W := by ring
-    simp only [expTerm]
-    constructor
-    · refine le_trans (abs_ediv_le _ _ hd) ?_
-      rw [e]
-      calc |(expTerm N X Y k).1 * X - (expTerm N X Y k).2 * Y|
-          ≤ |(expTerm N X Y k).1| * |X| + |(expTerm N X Y k).2| * |Y| := by
-            rw [← abs_mul, ← abs_mul]; exact abs_sub _ _
-        _ ≤ 2 ^ N * W ^ k * |X| + 2 ^ N * W ^ k * |Y| := by
-            apply add_le_add <;> apply mul_le_mul_of_nonneg_right <;> assumption
-        _ ≤ _ := by nlinarith
-    · refine le_trans (abs_ediv_le _ _ hd) ?_
-      rw [e]
-      calc |(expTerm N X Y k).1 * Y + (expTerm N X Y k).2 * X|
-          ≤ |(expTerm N X Y k).1| * |Y| + |(expTerm N X Y k).2| * |X| := by
-            rw [← abs_mul, ← abs_mul]; exact abs_add_le _ _
-        _ ≤ 2 ^ N * W ^ k * |Y| + 2 ^ N * W ^ k * |X| := by
-            apply add_le_add <;> apply mul_le_mul_of_nonneg_right <;> assumption
-        _ ≤ _ := by nlinarith
-
-theorem expApprox_succ (N k : ℕ) (X Y : ℤ) : expApprox N (k + 1) X Y =
-    ((expApprox N k X Y).1 + (expTerm N X Y k).1, (expApprox N k X Y).2 + (expTerm N X Y k).2) := by
-  simp [expApprox, Finset.sum_range_succ]
 
 end NLogN
 

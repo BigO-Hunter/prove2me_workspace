@@ -20,27 +20,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -72,8 +54,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -91,8 +71,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem zbits_neg (z : ℤ) : zbits (-z) = zbits z := by simp [zbits]
-
 end NLogN
 
 namespace NLogN
@@ -108,16 +86,6 @@ section
 namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
-
-theorem nbits_two_pow (m : ℕ) : nbits (2 ^ m) = List.replicate m false ++ [true] := by
-  induction m with
-  | zero => rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-  | succ m ih =>
-    rw [nbits_pos (by positivity), pow_succ, List.replicate_succ]
-    simp [ih, Nat.mul_mod_left]
-
-theorem zbits_two_pow (m : ℕ) : zbits (2 ^ m : ℕ) = List.replicate m false ++ [true] := by
-  simp [zbits, nbits_two_pow]
 
 end NLogN
 
@@ -145,10 +113,6 @@ namespace IRuns
 
 end IRuns
 
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
 end NLogN
 
 end
@@ -156,36 +120,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_mul_le (a b : ℤ) : zsz (a * b) ≤ zsz a + zsz b := by
-  apply zsz_le_of_lt
-  rw [Int.natAbs_mul, pow_add]
-  exact Nat.mul_lt_mul'' (natAbs_lt_zsz a) (natAbs_lt_zsz b)
-
-theorem zsz_add_le (a b : ℤ) : zsz (a + b) ≤ max (zsz a) (zsz b) + 1 := by
-  apply zsz_le_of_lt
-  have ha := natAbs_lt_zsz a; have hb := natAbs_lt_zsz b
-  have ha' : 2 ^ zsz a ≤ 2 ^ max (zsz a) (zsz b) := Nat.pow_le_pow_right (by norm_num) (le_max_left _ _)
-  have hb' : 2 ^ zsz b ≤ 2 ^ max (zsz a) (zsz b) := Nat.pow_le_pow_right (by norm_num) (le_max_right _ _)
-  have := Int.natAbs_add_le a b
-  rw [pow_succ]; omega
-
-theorem zsz_two_pow (m : ℕ) : zsz ((2 : ℤ) ^ m) = m + 1 := by
-  have : ((2 : ℤ) ^ m) = ((2 ^ m : ℕ) : ℤ) := by push_cast; rfl
-  rw [this, zsz, zbits_two_pow]; simp
-
-theorem zsz_neg (z : ℤ) : zsz (-z) = zsz z := by simp [zsz, zbits_neg]
-
-theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
-
-theorem zsz_one : zsz 1 = 1 := by
-  simp [zsz, zbits]; rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
 
 end NLogN
 
@@ -207,11 +141,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem zsz_le_of_abs {z : ℤ} {m : ℕ} (h : |z| < 2 ^ m) : zsz z ≤ m := by
-  apply zsz_le_of_lt
-  have : ((z.natAbs : ℕ) : ℤ) < ((2 ^ m : ℕ) : ℤ) := by push_cast; exact h
-  exact_mod_cast this
-
 end NLogN
 
 end
@@ -227,12 +156,6 @@ open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-theorem zsz_add_le' (a b : ℤ) : zsz (a + b) ≤ zsz a + zsz b + 1 := by
-  have := zsz_add_le a b; omega
-
-theorem zsz_natCast_le_self' (k : ℕ) : zsz (k : ℤ) ≤ k :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
 
 end NLogN
 
@@ -250,49 +173,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-theorem iter_ip (f : IState HS → IState HS) (hf : ∀ t, (f t).ip = t.ip ∧ (f t).out = t.out) :
-    ∀ k t, (f^[k] t).ip = t.ip ∧ (f^[k] t).out = t.out
-  | 0, t => ⟨rfl, rfl⟩
-  | k + 1, t => by
-    rw [Function.iterate_succ_apply']
-    exact ⟨(hf _).1.trans (iter_ip f hf k t).1, (hf _).2.trans (iter_ip f hf k t).2⟩
-
-theorem run_ip_out : ∀ (p : RS) (s : IState HS), (p.run s).ip = s.ip ∧ (p.run s).out = s.out
-  | skip, s => ⟨rfl, rfl⟩
-  | asg i e, s | push i e, s | pop i, s => by simp [NLogN.RS.run]
-  | seq a b, s => by
-    simp only [NLogN.RS.run]
-    exact ⟨(run_ip_out b _).1.trans (run_ip_out a s).1, (run_ip_out b _).2.trans (run_ip_out a s).2⟩
-  | ite c a b, s => by
-    simp only [NLogN.RS.run]; split_ifs
-    · exact run_ip_out a s
-    · exact run_ip_out b s
-  | rep i n b, s => by
-    simp only [NLogN.RS.run, IState.upd_ip, IState.upd_out]
-    have := iter_ip (fun t => decSt i (b.run t))
-      (fun t => by simp only [decSt, IState.upd_ip, IState.upd_out]; exact run_ip_out b t)
-      (n.eval s).toNat (s.upd i (.int (n.eval s) :: s.G i))
-    simpa using this
-
-@[simp] theorem run_ip (p : RS) (s : IState HS) : (p.run s).ip = s.ip := (NLogN.RS.run_ip_out p s).1
-@[simp] theorem run_out (p : RS) (s : IState HS) : (p.run s).out = s.out := (NLogN.RS.run_ip_out p s).2
-
-theorem pushCost_le (e : Ex HS) (s : IState HS) (B : ℕ) (h : e.Bnd s B) :
-    e.cost s + (2 * moveCost (zsz (e.eval s)) + 19) ≤ (e.size + 1) * 10 ^ 7 * (B + 2) ^ 2 := by
-  have h1 := Ex.cost_le s B e h
-  have h2 := Ex.zsz_eval_le s B e h
-  simp only [moveCost]; nlinarith
-
-@[simp] theorem run_push_G (i : Fin HS) (e : Ex HS) (s : IState HS) (j : Fin HS) :
-    ((push i e).run s).G j = if j = i then .int (e.eval s) :: s.G i else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-@[simp] theorem run_pop_G (i : Fin HS) (s : IState HS) (j : Fin HS) :
-    ((pop i).run s).G j = if j = i then (s.G i).tail else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-theorem run_seq (a b : RS) (s : IState HS) : (NLogN.RS.seq a b).run s = b.run (a.run s) := rfl
-
 end RS
 
 end NLogN
@@ -307,28 +187,10 @@ namespace NLogN
 
 open IntMul RS
 
-theorem atanSum_succ (x N : ℕ) (σ : ℤ) (k : ℕ) : atanSum x N σ (k + 1) =
-    atanSum x N σ k + σ ^ k * ((2 ^ N / ((2 * k + 1) * x ^ (2 * k + 1)) : ℕ) : ℤ) := by
-  simp [atanSum, Finset.sum_range_succ]
-
 end NLogN
 
 namespace NLogN
 open IntMul RS
-
-theorem atanSum_abs_le (x N : ℕ) (σ : ℤ) (hσ : |σ| = 1) (k : ℕ) :
-    |atanSum x N σ k| ≤ k * 2 ^ N := by
-  induction k with
-  | zero => simp [atanSum]
-  | succ k ih =>
-    rw [atanSum_succ]
-    have hq : |(((2 ^ N / ((2 * k + 1) * x ^ (2 * k + 1)) : ℕ) : ℤ))| ≤ 2 ^ N := by
-      rw [abs_of_nonneg (by positivity)]
-      exact_mod_cast Nat.div_le_self _ _
-    calc |atanSum x N σ k + σ ^ k * _| ≤ |atanSum x N σ k| + |σ ^ k * _| := abs_add_le _ _
-      _ ≤ k * 2 ^ N + 2 ^ N := by
-        rw [abs_mul, abs_pow, hσ, one_pow, one_mul]; exact add_le_add ih hq
-      _ = ((k + 1 : ℕ) : ℤ) * 2 ^ N := by push_cast; ring
 
 end NLogN
 
@@ -341,21 +203,6 @@ namespace NLogN
 open IntMul
 
 namespace Ex
-
-theorem floor_div_neg (a b : ℤ) (hb : 0 < b) : a / b = -((-a + (b + -1)) / b) := by
-  have h1 := Int.ediv_mul_le (-a + (b + -1)) hb.ne'
-  have h2 := Int.lt_ediv_add_one_mul_self (-a + (b + -1)) hb
-  set q := (-a + (b + -1)) / b
-  have := (Int.ediv_emod_unique'' (a := a) (b := b) (r := a + b * q) (q := -q) hb.ne').2
-    ⟨by ring, by nlinarith, by rw [abs_of_pos hb]; nlinarith⟩
-  exact this.1
-
-theorem fdiv_eval (s : IState HS) (a b : Ex HS) (hb : 0 < b.eval s) :
-    (fdiv a b).eval s = a.eval s / b.eval s := by
-  simp only [fdiv, eval]
-  split_ifs with h
-  · exact (floor_div_neg _ _ hb).symm
-  · rfl
 
 end Ex
 
@@ -370,9 +217,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN
 
 open IntMul RS
-
-theorem atanInv_eq (x N K : ℕ) : IntMul.HvdH.atanInv x N K = atanSum x N (-1) K := by
-  simp [IntMul.HvdH.atanInv, atanSum]
 
 end NLogN
 
@@ -392,16 +236,6 @@ namespace NLogN
 
 open IntMul RS IntMul.HvdH
 
-theorem abs_ediv_le (a d : ℤ) (hd : 1 ≤ d) : |a / d| ≤ |a| := by
-  have h1 := Int.ediv_mul_le a (show d ≠ 0 by omega)
-  have h2 := Int.lt_ediv_add_one_mul_self a (show 0 < d by omega)
-  rw [abs_le]
-  rcases le_or_gt 0 a with ha | ha
-  · rw [abs_of_nonneg ha]
-    constructor <;> nlinarith
-  · rw [abs_of_neg ha]
-    constructor <;> nlinarith
-
 end NLogN
 
 end
@@ -416,78 +250,7 @@ open IntMul RS IntMul.HvdH
 
 namespace Ex
 
-@[simp] theorem ediv_eval (s : IState HS) (a b : Ex HS) :
-    (ediv a b).eval s = a.eval s / b.eval s := by
-  rcases lt_trichotomy (b.eval s) 0 with h | h | h
-  · have h1 : ¬ (-b.eval s < 0) := by omega
-    simp only [ediv, eval, h1, h, if_false, if_true]
-    rw [fdiv_eval s a _ (by simp only [eval]; linarith)]
-    simp only [eval, Int.ediv_neg, neg_neg]
-  · simp [ediv, eval, h]
-  · have h1 : -b.eval s < 0 := by omega
-    simp only [ediv, eval, h1, if_true]
-    exact fdiv_eval s a b h
-
-@[simp] theorem emod_eval (s : IState HS) (a b : Ex HS) :
-    (emod a b).eval s = a.eval s % b.eval s := by
-  simp only [emod, eval, ediv_eval]
-  rw [Int.emod_def]; ring
-
-@[simp] theorem max0_eval (s : IState HS) (a : Ex HS) :
-    (NLogN.Ex.max0 a).eval s = ((a.eval s).toNat : ℤ) := by
-  simp only [NLogN.Ex.max0, eval]
-  split_ifs with h
-  · simp; omega
-  · simp; omega
-
 end Ex
-
-theorem top_toNat_G {s : IState HS} {i : Fin HS} (h : s.IsInt i) (h0 : 0 ≤ s.top i) :
-    ∃ L, s.G i = .int (((s.top i).toNat : ℕ) : ℤ) :: L := by
-  obtain ⟨L, hL⟩ := h
-  exact ⟨L, by rw [Int.toNat_of_nonneg h0]; exact hL⟩
-
-theorem abs_ediv_le_of (x d c : ℤ) (hd : 0 < d) (h : |x| ≤ c * d) : |x / d| ≤ c := by
-  have h1 := Int.ediv_mul_le x hd.ne'
-  have h2 := Int.lt_ediv_add_one_mul_self x hd
-  rw [abs_le] at h ⊢
-  constructor
-  · by_contra hc
-    have : x / d + 1 ≤ -c := by omega
-    nlinarith
-  · by_contra hc
-    have : c + 1 ≤ x / d := by omega
-    nlinarith
-
-theorem piApprox_abs_le (M : ℕ) : |piApprox M| ≤ 20 * M * 2 ^ M := by
-  have h1 := atanSum_abs_le 5 M (-1) (by norm_num) M
-  have h2 := atanSum_abs_le 239 M (-1) (by norm_num) M
-  simp only [piApprox, atanInv_eq]
-  calc |16 * atanSum 5 M (-1) M - 4 * atanSum 239 M (-1) M|
-      ≤ |16 * atanSum 5 M (-1) M| + |4 * atanSum 239 M (-1) M| := abs_sub _ _
-    _ ≤ 16 * (M * 2 ^ M) + 4 * (M * 2 ^ M) := by
-        rw [abs_mul, abs_mul]; norm_num; linarith
-    _ = _ := by ring
-
-theorem round_abs_le (A : ℤ) (m : ℕ) (hA : |A| ≤ 20 * ((2 * m + 9 : ℕ) : ℤ) * 2 ^ (2 * m + 9)) :
-    |(A + 2 ^ (m + 8)) / 2 ^ (m + 9)| ≤ 21 * ((2 * m + 9 : ℕ) : ℤ) * 2 ^ m := by
-  apply abs_ediv_le_of _ _ _ (by positivity)
-  have e1 : (2 : ℤ) ^ (2 * m + 9) = 2 ^ m * 2 ^ (m + 9) := by rw [← pow_add]; ring_nf
-  have e2 : (2 : ℤ) ^ (m + 9) = 2 ^ (m + 8) * 2 := by rw [pow_succ]
-  have hM : (1 : ℤ) ≤ ((2 * m + 9 : ℕ) : ℤ) := by push_cast; omega
-  have hq : (1 : ℤ) ≤ 2 ^ m := one_le_pow₀ (by norm_num)
-  have hd : (0 : ℤ) ≤ 2 ^ (m + 8) := by positivity
-  calc |A + 2 ^ (m + 8)| ≤ |A| + 2 ^ (m + 8) := by
-        refine le_trans (abs_add_le _ _) ?_; rw [abs_of_nonneg hd]
-    _ ≤ _ := by
-        rw [e1] at hA; rw [e2] at hA ⊢
-        have : (2 : ℤ) ^ (m + 8) ≤ ((2 * m + 9 : ℕ) : ℤ) * 2 ^ m * (2 ^ (m + 8) * 2) := by
-          have : (1 : ℤ) ≤ ((2 * m + 9 : ℕ) : ℤ) * 2 ^ m := by nlinarith
-          nlinarith
-        nlinarith
-
-theorem piBits_abs_le (m : ℕ) : |piBits m| ≤ 21 * ((2 * m + 9 : ℕ) : ℤ) * 2 ^ m :=
-  round_abs_le _ m (piApprox_abs_le _)
 
 end NLogN
 
@@ -500,9 +263,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN
 
 open IntMul RS IntMul.HvdH
-
-theorem expB_mono (n : ℕ) {a b : ℕ} (h : a ≤ b) : expB n a ≤ expB n b := by
-  simp only [expB]; nlinarith
 
 theorem piCost_le (x₁ x₂ n : ℕ) (h₁ : x₁ ≤ 239) (h₂ : x₂ ≤ 239) :
     piCost x₁ x₂ n ≤ 10 ^ 18 * (n + 10) ^ 3 := by
@@ -529,17 +289,6 @@ namespace NLogN
 
 open IntMul RS IntMul.HvdH
 
-theorem zsz_ediv_le (a d : ℤ) (hd : 1 ≤ d) : zsz (a / d) ≤ zsz a := by
-  apply zsz_mono
-  have h := abs_ediv_le a d hd
-  rw [Int.abs_eq_natAbs, Int.abs_eq_natAbs] at h
-  exact_mod_cast h
-
-theorem zsz_ediv_le' (a d : ℤ) (hd : 0 ≤ d) : zsz (a / d) ≤ zsz a := by
-  rcases eq_or_lt_of_le hd with h | h
-  · rw [← h, Int.ediv_zero, zsz_zero]; exact Nat.zero_le _
-  · exact zsz_ediv_le a d (by omega)
-
 end NLogN
 
 end
@@ -551,16 +300,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN
 
 open IntMul RS IntMul.HvdH
-
-theorem piBits_zsz (m : ℕ) : zsz (piBits m) ≤ 3 * m + 14 := by
-  apply NLogN.zsz_le_of_abs
-  have h := piBits_abs_le m
-  have h1 : ((2 * m + 9 : ℕ) : ℤ) < 2 ^ (2 * m + 9) := by exact_mod_cast Nat.lt_two_pow_self
-  have e : (2 : ℤ) ^ (3 * m + 14) = 32 * 2 ^ (2 * m + 9) * 2 ^ m := by
-    rw [show 3 * m + 14 = 5 + (2 * m + 9) + m by omega, pow_add, pow_add]; norm_num
-  rw [e]
-  have : (0 : ℤ) < 2 ^ m := by positivity
-  nlinarith
 
 set_option maxHeartbeats 1000000 in
 theorem octExpP_cost (n k a : ℕ) (s : IState HS) (L48 L49 L50 : List Item)
@@ -636,10 +375,6 @@ theorem octExpP_cost' (s : IState HS) (h48 : s.IsInt 48) (h48' : 0 ≤ s.top 48)
       (zsz ((s.top 49).toNat : ℤ)) :=
   (octExpP_top s h48 h48' h49 h49' h50 h50').2.2
 
-theorem aE_eval (s : IState HS) : NLogN.aE.eval s =
-    ((if s.top 12 < 1 then (s.top 11).toNat else (s.top 29 - s.top 11).toNat : ℕ) : ℤ) := by
-  simp only [NLogN.aE, Ex.eval, Ex.max0_eval]; split_ifs <;> omega
-
 theorem yE_eval (s : IState HS) : yE.eval s = if s.top 12 < 1 then s.top 52 else -s.top 52 := by
   simp only [yE, Ex.eval]; split_ifs <;> omega
 
@@ -656,55 +391,6 @@ theorem imE_eval (s : IState HS) : NLogN.imE.eval s = (rot4 (s.top 13) (s.top 51
   have e3 : (s.top 13 + -3 < 0) ↔ s.top 13 < 3 := by omega
   simp only [NLogN.imE, Ex.eval, rot4, e1, e2, e3]
   split_ifs <;> rfl
-
-theorem sel_bnd (s : IState HS) (c a b : Ex HS) (B : ℕ) (hc : c.Bnd s B) (ha : a.Bnd s B)
-    (hb : b.Bnd s B) : (Ex.sel c a b).Bnd s B := by
-  simp only [Ex.Bnd]; exact ⟨hc, by split_ifs <;> assumption⟩
-
-theorem zsz_mul_ediv_le (a b : ℤ) (ha : 0 ≤ a) (hb : 0 ≤ b) : zsz (b * (a / b)) ≤ zsz a := by
-  apply zsz_mono
-  rcases eq_or_lt_of_le hb with h | h
-  · rw [← h]; simp
-  · have h1 := Int.ediv_mul_le a h.ne'
-    rw [mul_comm] at h1
-    have h2 : 0 ≤ a / b := Int.ediv_nonneg ha hb
-    have h3 : 0 ≤ b * (a / b) := mul_nonneg hb h2
-    omega
-
-theorem zsz_emod_le (a b : ℤ) (ha : 0 ≤ a) (hb : 0 ≤ b) : zsz (a % b) ≤ zsz a := by
-  apply zsz_mono
-  rcases eq_or_lt_of_le hb with h | h
-  · rw [← h, Int.emod_zero]
-  · have h1 := Int.emod_nonneg a h.ne'
-    have h2 := Int.emod_def a b
-    have h3 : 0 ≤ b * (a / b) := mul_nonneg hb (Int.ediv_nonneg ha hb)
-    omega
-
-theorem small_zsz (x : ℤ) (h1 : -8 < x) (h2 : x < 8) : zsz x ≤ 3 :=
-  NLogN.zsz_le_of_abs (by rw [abs_lt]; constructor <;> norm_num <;> omega)
-
-theorem rot4_zsz (t : ℤ) (p : ℤ × ℤ) :
-    zsz (rot4 t p).1 ≤ zsz p.1 + zsz p.2 ∧ zsz (rot4 t p).2 ≤ zsz p.1 + zsz p.2 := by
-  unfold rot4; split_ifs <;> (try simp only [zsz_neg]) <;> omega
-
-theorem octExp_zsz (n k a : ℕ) :
-    zsz (octExp n k a).1 ≤ expB (n + 4) (3 * (n + 4) + 14 + zsz (a : ℤ)) + 6 ∧
-    zsz (octExp n k a).2 ≤ expB (n + 4) (3 * (n + 4) + 14 + zsz (a : ℤ)) + 6 := by
-  have hφ : zsz (piBits (n + 4) * a / (4 * k)) ≤ 3 * (n + 4) + 14 + zsz (a : ℤ) :=
-    le_trans (zsz_ediv_le' (piBits (n + 4) * a) (4 * (k : ℤ)) (by positivity))
-      (le_trans (zsz_mul_le _ _) (by have := piBits_zsz (n + 4); omega))
-  have hu := expBits_zsz (n + 4) 0 (piBits (n + 4) * a / (4 * k))
-  rw [zsz_zero, zero_add] at hu
-  have hmono := expB_mono (n + 4) hφ
-  have h8 : zsz ((2 : ℤ) ^ 3) = 4 := NLogN.zsz_two_pow 3
-  have hu1 := zsz_add_le' (expBits (n + 4) 0 (piBits (n + 4) * a / (4 * k))).1 (2 ^ 3)
-  have hu2 := zsz_add_le' (expBits (n + 4) 0 (piBits (n + 4) * a / (4 * k))).2 (2 ^ 3)
-  have hw1 := zsz_ediv_le ((expBits (n + 4) 0 (piBits (n + 4) * a / (4 * k))).1 + 2 ^ 3) (2 ^ 4)
-    (by norm_num)
-  have hw2 := zsz_ediv_le ((expBits (n + 4) 0 (piBits (n + 4) * a / (4 * k))).2 + 2 ^ 3) (2 ^ 4)
-    (by norm_num)
-  simp only [octExp]
-  constructor <;> omega
 
 set_option maxHeartbeats 4000000 in
 theorem twB_cost (t : IState HS) (B : ℕ)
@@ -743,130 +429,6 @@ theorem twB_cost (t : IState HS) (B : ℕ)
   linarith
 
 set_option maxHeartbeats 4000000 in
-theorem tw_facts (n k j : ℕ) :
-    zsz (n : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (j : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (k : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (8 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (4 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (2 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (1 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (3 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz ((j : ℤ) % k) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (8 * ((j : ℤ) % k)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (8 * ((j : ℤ) % k) / k) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (8 * ((j : ℤ) % k) % k) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz ((k : ℤ) * ((j : ℤ) / k)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz ((k : ℤ) * ((8 * ((j : ℤ) % k)) / k)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz ((8 * ((j : ℤ) % k) / k % 2) + -1) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (8 * ((j : ℤ) % k) / k % 2) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (2 * ((8 * ((j : ℤ) % k) / k) / 2)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz ((8 * ((j : ℤ) % k) / k) + 1) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz ((8 * ((j : ℤ) % k) / k + 1) / 2) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (4 * (((8 * ((j : ℤ) % k) / k + 1) / 2) / 4)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz ((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) + -1) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) + -2) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) + -3) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz ((k : ℤ) + -(8 * ((j : ℤ) % k) % k)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (((if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat) : ℕ) : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).1 ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2 ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2 else -(octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (rot4 ((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) ((octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).1, (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2 else -(octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2))).1 ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) ∧
-    zsz (rot4 ((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) ((octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).1, (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2 else -(octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2))).2 ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by
-  -- basic facts
-  have hJ : ((j : ℤ) % k) = ((j % k : ℕ) : ℤ) := by push_cast; rfl
-  have hJ0 : 0 ≤ ((j : ℤ) % k) := by rw [hJ]; positivity
-  have hJj : ((j : ℤ) % k) ≤ j := by rw [hJ]; exact_mod_cast Nat.mod_le j k
-  have hE0 : 0 ≤ (8 * ((j : ℤ) % k)) := by positivity
-  have hQ0 : 0 ≤ (8 * ((j : ℤ) % k) / k) := Int.ediv_nonneg hE0 (by positivity)
-  have hR0 : 0 ≤ (8 * ((j : ℤ) % k) % k) := by
-    rcases Nat.eq_zero_or_pos k with h | h
-    · subst h; simp
-    · exact Int.emod_nonneg _ (by positivity)
-  have zJ : zsz ((j : ℤ) % k) ≤ zsz (j : ℤ) := zsz_mono (by omega)
-  have zE : zsz (8 * ((j : ℤ) % k)) ≤ zsz (j : ℤ) + 4 := by
-    have := zsz_mul_le (8 : ℤ) ((j : ℤ) % k)
-    have e : zsz (8 : ℤ) = 4 := by rw [show (8 : ℤ) = 2 ^ 3 by norm_num, NLogN.zsz_two_pow]
-    omega
-  have zQ : zsz (8 * ((j : ℤ) % k) / k) ≤ zsz (j : ℤ) + 4 := le_trans (zsz_ediv_le' _ _ (by positivity)) zE
-  have zR : zsz (8 * ((j : ℤ) % k) % k) ≤ zsz (j : ℤ) + 4 := le_trans (zsz_emod_le _ _ hE0 (by positivity)) zE
-  have zkjk : zsz ((k : ℤ) * ((j : ℤ) / k)) ≤ zsz (j : ℤ) :=
-    zsz_mul_ediv_le _ _ (by positivity) (by positivity)
-  have zkEk : zsz ((k : ℤ) * ((8 * ((j : ℤ) % k)) / k)) ≤ zsz (j : ℤ) + 4 :=
-    le_trans (zsz_mul_ediv_le _ _ hE0 (by positivity)) zE
-  have zC : zsz ((8 * ((j : ℤ) % k) / k % 2) + -1) ≤ 3 := small_zsz _ (by omega) (by omega)
-  have zC' : zsz (8 * ((j : ℤ) % k) / k % 2) ≤ 3 := small_zsz _ (by omega) (by omega)
-  have z2Q : zsz (2 * ((8 * ((j : ℤ) % k) / k) / 2)) ≤ zsz (j : ℤ) + 4 :=
-    le_trans (zsz_mul_ediv_le _ _ hQ0 (by norm_num)) zQ
-  have zQ1 : zsz ((8 * ((j : ℤ) % k) / k) + 1) ≤ zsz (j : ℤ) + 6 := by
-    have := zsz_add_le' (8 * ((j : ℤ) % k) / k) 1; rw [zsz_one] at this; omega
-  have zH : zsz ((8 * ((j : ℤ) % k) / k + 1) / 2) ≤ zsz (j : ℤ) + 6 := le_trans (zsz_ediv_le' _ _ (by norm_num)) zQ1
-  have z4H : zsz (4 * (((8 * ((j : ℤ) % k) / k + 1) / 2) / 4)) ≤ zsz (j : ℤ) + 6 :=
-    le_trans (zsz_mul_ediv_le _ _ (by omega) (by norm_num)) zH
-  have zT : zsz ((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) ≤ 3 := small_zsz _ (by omega) (by omega)
-  have zT1 : zsz (((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) + -1) ≤ 3 := small_zsz _ (by omega) (by omega)
-  have zT2 : zsz (((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) + -2) ≤ 3 := small_zsz _ (by omega) (by omega)
-  have zT3 : zsz (((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) + -3) ≤ 3 := small_zsz _ (by omega) (by omega)
-  have zkR : zsz ((k : ℤ) + -(8 * ((j : ℤ) % k) % k)) ≤ zsz (k : ℤ) + zsz (j : ℤ) + 5 := by
-    have := zsz_add_le' (k : ℤ) (-(8 * ((j : ℤ) % k) % k)); rw [zsz_neg] at this; omega
-  have zA : zsz (((if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat) : ℕ) : ℤ) ≤ zsz (j : ℤ) + zsz (k : ℤ) + 4 := by
-    split_ifs
-    · rw [Int.toNat_of_nonneg hR0]; omega
-    · refine le_trans (zsz_mono ?_) (show zsz (k : ℤ) ≤ _ by omega)
-      have : (((k : ℤ) - (8 * ((j : ℤ) % k) % k)).toNat : ℤ) ≤ k := by omega
-      omega
-  have hO := octExp_zsz n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)
-  have hOm := expB_mono (n + 4) (show 3 * (n + 4) + 14 + zsz (((if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat) : ℕ) : ℤ) ≤
-    3 * (n + 4) + 14 + zsz (j : ℤ) + zsz (k : ℤ) + 4 by omega)
-  have zYp : zsz (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2 else -(octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2) ≤ zsz (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2 := by split_ifs <;> simp [zsz_neg]
-  have hrot := rot4_zsz ((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) ((octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).1, (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2 else -(octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2))
-  simp only at hrot
-  have hBdef : twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) =
-      2 * expB (n + 4) (3 * (n + 4) + 14 + zsz (j : ℤ) + zsz (k : ℤ) + 4) +
-      4 * zsz (j : ℤ) + 4 * zsz (k : ℤ) + 20 * n + 200 := rfl
-  have zn : zsz (n : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := le_trans (zsz_natCast_le_self' n) (by omega)
-  have zj : zsz (j : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zk : zsz (k : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zl8 : zsz (8 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by
-    have := zsz_natCast_le_self' 8; push_cast at this; omega
-  have zl4 : zsz (4 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by
-    have := zsz_natCast_le_self' 4; push_cast at this; omega
-  have zl2 : zsz (2 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by
-    have := zsz_natCast_le_self' 2; push_cast at this; omega
-  have zl1 : zsz (1 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by rw [zsz_one]; omega
-  have zm1 : zsz (-1 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by rw [zsz_neg, zsz_one]; omega
-  have zm2 : zsz (-2 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by rw [zsz_neg]; omega
-  have zm3 : zsz (-3 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by
-    rw [zsz_neg]; have := zsz_natCast_le_self' 3; push_cast at this; omega
-  have zJ' : zsz ((j : ℤ) % k) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zE' : zsz (8 * ((j : ℤ) % k)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zQ' : zsz (8 * ((j : ℤ) % k) / k) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zR' : zsz (8 * ((j : ℤ) % k) % k) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zkjk' : zsz ((k : ℤ) * ((j : ℤ) / k)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zkEk' : zsz ((k : ℤ) * ((8 * ((j : ℤ) % k)) / k)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zC1' : zsz ((8 * ((j : ℤ) % k) / k % 2) + -1) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zC'' : zsz (8 * ((j : ℤ) % k) / k % 2) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have z2Q' : zsz (2 * ((8 * ((j : ℤ) % k) / k) / 2)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zQ1' : zsz ((8 * ((j : ℤ) % k) / k) + 1) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zH' : zsz ((8 * ((j : ℤ) % k) / k + 1) / 2) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have z4H' : zsz (4 * (((8 * ((j : ℤ) % k) / k + 1) / 2) / 4)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zT' : zsz ((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zT1' : zsz (((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) + -1) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zT2' : zsz (((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) + -2) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zT3' : zsz (((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) + -3) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zkR' : zsz ((k : ℤ) + -(8 * ((j : ℤ) % k) % k)) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zA' : zsz (((if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat) : ℕ) : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zX' : zsz (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).1 ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zY' : zsz (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2 ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zYp' : zsz (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2 else -(octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zRe' : zsz (rot4 ((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) ((octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).1, (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2 else -(octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2))).1 ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zIm' : zsz (rot4 ((8 * ((j : ℤ) % k) / k + 1) / 2 % 4) ((octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).1, (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2 else -(octExp n k (if 8 * ((j : ℤ) % k) / k % 2 < 1 then (8 * ((j : ℤ) % k) % k).toNat else ((k : ℤ) - 8 * ((j : ℤ) % k) % k).toNat)).2))).2 ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by omega
-  have zl3 : zsz (3 : ℤ) ≤ twBB n (zsz (j : ℤ)) (zsz (k : ℤ)) := by
-    have := zsz_natCast_le_self' 3; push_cast at this; omega
-  exact ⟨zn, zj, zk, zl8, zl4, zl2, zl1, zl3, zJ', zE', zQ', zR', zkjk', zkEk', zC1', zC'', z2Q', zQ1', zH', z4H', zT', zT1', zT2', zT3', zkR', zA', zX', zY', zYp', zRe', zIm'⟩
-
 set_option maxHeartbeats 2000000 in
 theorem twA_run (n k j : ℕ) (s : IState HS) (L28 L29 L53 : List Item)
     (h28 : s.G 28 = .int n :: L28) (h29 : s.G 29 = .int k :: L29)

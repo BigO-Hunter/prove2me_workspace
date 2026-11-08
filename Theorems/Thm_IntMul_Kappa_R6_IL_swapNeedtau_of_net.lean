@@ -50,9 +50,6 @@ variable {R : Type*} [CommRing R]
 
 section Depth
 
-lemma depH_of_not {m e : ℕ} (h : ¬ (m ≤ e ∧ 2 ≤ m)) : depH m e = 0 := by
-  rw [depH, dif_neg h]
-
 end Depth
 
 /-! ## The program -/
@@ -141,31 +138,6 @@ noncomputable section
 /-! ## 1. The recursion depth of `progH` is logarithmic -/
 
 section Depth
-
-/-- At the widths `m ^ k` the depth is at most linear in `k`. -/
-theorem depH_pow_le {m : ℕ} (hm : 2 ≤ m) :
-    ∃ c : ℕ, 1 ≤ c ∧ ∀ k, Bit.depH m (m ^ k) ≤ c * k := by
-  have hm2 : (2 : ℝ) ≤ m := by exact_mod_cast hm
-  have hm1' : (0 : ℝ) < (m : ℝ) - 1 := by linarith
-  have hm1 : (1 : ℝ) < (m : ℝ) / ((m : ℝ) - 1) := by
-    rw [one_lt_div hm1']; linarith
-  set lam := Real.log ((m : ℝ) / ((m : ℝ) - 1)) with hlam
-  have hl0 : 0 < lam := Real.log_pos hm1
-  refine ⟨⌈Real.log m / lam⌉₊ + 1, by omega, fun k => ?_⟩
-  rcases Nat.eq_zero_or_pos k with rfl | hk
-  · rw [pow_zero, Bit.depH_of_not (by omega)]; simp
-  · have h := depH_le_log hm (m ^ k) (Nat.one_le_pow _ _ (by omega))
-    have hl : Real.log ((m ^ k : ℕ) : ℝ) = k * Real.log m := by
-      push_cast; rw [Real.log_pow]
-    rw [hl, mul_div_assoc] at h
-    have hc : Real.log m / lam ≤ ⌈Real.log m / lam⌉₊ := Nat.le_ceil _
-    have hk1 : (1 : ℝ) ≤ k := by exact_mod_cast hk
-    have h3 : (k : ℝ) * (Real.log m / lam) ≤ k * ⌈Real.log m / lam⌉₊ :=
-      mul_le_mul_of_nonneg_left hc (by positivity)
-    have h4 : (Bit.depH m (m ^ k) : ℝ) ≤ ((⌈Real.log m / lam⌉₊ + 1) * k : ℕ) := by
-      push_cast
-      nlinarith
-    exact_mod_cast h4
 
 end Depth
 

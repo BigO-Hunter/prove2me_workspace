@@ -28,17 +28,6 @@ lemma decode_encode {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) : decode
       Nat.add_mul_div_left _ _ hV, Nat.div_eq_of_lt he, Nat.add_mul_mod_self_left,
       Nat.mod_eq_of_lt he, ih, zero_add, Nat.mod_eq_of_lt hx]
 
-lemma encode_decode {sh : Shape} {m : ℕ} (h : m < AModel.vol sh) : encode sh (decode sh m) = m := by
-  induction sh generalizing m with
-  | nil => simp at h; subst h; rfl
-  | cons q sh ih =>
-    simp only [vol_cons] at h
-    have hV : 0 < AModel.vol sh := Nat.pos_of_ne_zero (by rintro h'; simp [h'] at h)
-    have hq : m / AModel.vol sh < q := (Nat.div_lt_iff_lt_mul hV).2 h
-    simp only [decode, encode, List.headD_cons, List.tail_cons, Nat.mod_eq_of_lt hq,
-      ih (Nat.mod_lt m hV)]
-    exact Nat.div_add_mod' m (AModel.vol sh)
-
 section Pull
 variable {α : Type*}
 
@@ -87,27 +76,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -139,8 +110,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -156,12 +125,6 @@ section
 -- Source module: NLogN.Costs
 namespace NLogN
 
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
-
 end NLogN
 
 end
@@ -173,9 +136,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-
-theorem zsz_natCast_le {j k : ℕ} (h : j ≤ k) : zsz (j : ℤ) ≤ zsz (k : ℤ) :=
-  zsz_mono (by simpa using h)
 
 end NLogN
 
@@ -196,8 +156,6 @@ variable (s : IState HS) (f : Fin HS → List ℤ)
 
 end
 
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
-
 end KIL
 
 end NLogN
@@ -215,28 +173,12 @@ open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
 
-theorem layerShape_drop (P K D S i : ℕ) (hi : i < D) :
-    (Butterfly.layerShape P K D S).drop (i + 2) = List.replicate (D - (i + 1)) (2 ^ K) ++ [S] := by
-  simp only [Butterfly.layerShape, List.cons_append, List.drop_succ_cons]
-  rw [List.drop_append_of_le_length (by simp; omega), List.drop_replicate]
-
 theorem stS_eq (K D S i : ℕ) (hi : i < D) : stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S := by
   simp [stS, layerShape_drop 1 K D S i hi, vol]
 
 theorem vol_layer (P K D S : ℕ) :
     vol (Butterfly.layerShape P K D S) = P * (2 ^ K) ^ D * S := by
   simp [Butterfly.layerShape, vol]; ring
-
-theorem setBit_sub (ρ v : ℕ) (b : Fin 2) :
-    (Butterfly.setBit ρ v b : ℤ) - v = ((b : ℤ) - (Butterfly.getBit ρ v : ℕ)) * 2 ^ ρ := by
-  have h1 := Butterfly.setBit_eq ρ v b
-  have h2 := Butterfly.setBit_eq ρ v (Butterfly.getBit ρ v)
-  rw [Butterfly.setBit_getBit] at h2
-  have : ((Butterfly.setBit ρ v b : ℕ) : ℤ) - ((v : ℕ) : ℤ) =
-      (((2 * (v / 2 ^ (ρ + 1)) + b) * 2 ^ ρ + v % 2 ^ ρ : ℕ) : ℤ) -
-      (((2 * (v / 2 ^ (ρ + 1)) + (Butterfly.getBit ρ v : ℕ)) * 2 ^ ρ + v % 2 ^ ρ : ℕ) : ℤ) := by
-    rw [← h1]; nth_rewrite 2 [h2]; rfl
-  rw [this]; push_cast; ring
 
 end NLogN.KFH
 
@@ -256,13 +198,7 @@ section Basic
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-theorem fset_fbit (st : ι → ℕ) (j : ℕ) : fset st j (fbit st j) = j := by
-  simp [fset, fsetZ]
-
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
-
-@[simp] theorem length_selOpF (st : ι → ℕ) (n : ℕ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
-    (xs : List M) : (selOpF st n T xs).length = n := by simp [selOpF]
 
 theorem selOpF_one {st : ι → ℕ} {n : ℕ} {xs : List M} (h : xs.length = n) :
     selOpF st n 1 xs = xs := by
@@ -385,30 +321,7 @@ section Sub
 
 variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
 
-theorem extB_g {g : κ → ι} (hg : Function.Injective g) (x : ι → Fin 2) (z : κ → Fin 2) (k : κ) :
-    extB g x z (g k) = z k := by
-  have h : ∃ k', g k' = g k := ⟨k, rfl⟩
-  simp only [extB, dif_pos h]
-  exact congrArg z (hg (Classical.choose_spec h))
-
-theorem extB_off {g : κ → ι} (x : ι → Fin 2) (z : κ → Fin 2) {i : ι} (hi : ∀ k, g k ≠ i) :
-    extB g x z i = x i := by
-  have h : ¬ ∃ k, g k = i := fun ⟨k, hk⟩ => hi k hk
-  simp only [extB, dif_neg h]
-
 theorem fbit_comp (st : ι → ℕ) (g : κ → ι) (j : ℕ) : fbit (st ∘ g) j = fbit st j ∘ g := rfl
-
-theorem fsetZ_extB {g : κ → ι} (hg : Function.Injective g) (st : ι → ℕ) (j : ℕ) (z : κ → Fin 2) :
-    fsetZ st j (extB g (fbit st j) z) = fsetZ (st ∘ g) j z := by
-  unfold fsetZ
-  congr 1
-  rw [← Finset.sum_subset (Finset.subset_univ (Finset.univ.image g))]
-  · rw [Finset.sum_image (fun a _ b _ h => hg h)]
-    refine Finset.sum_congr rfl fun k _ => ?_
-    rw [extB_g hg]; rfl
-  · intro i _ hi
-    have hi' : ∀ k, g k ≠ i := fun k hk => hi (Finset.mem_image.2 ⟨k, Finset.mem_univ _, hk⟩)
-    rw [extB_off _ _ hi']; ring
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 

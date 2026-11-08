@@ -45,21 +45,6 @@ namespace Butterfly
 
 open Real
 
-/-- Internal-node overhead: `(eK)^τ + 1 ≤ 2 e^λ` when `1 ≤ e`, `0 ≤ K ≤ e^{c/β}`,
-`τ(1 + c/β) ≤ λ`. -/
-theorem overhead_le {e K τ c β lam : ℝ} (he : 1 ≤ e) (hK0 : 0 ≤ K) (hK : K ≤ e ^ (c / β))
-    (hτ : 0 ≤ τ) (hl : τ * (1 + c / β) ≤ lam) (hlam : 0 ≤ lam) :
-    (e * K) ^ τ + 1 ≤ 2 * e ^ lam := by
-  have he0 : 0 < e := by linarith
-  have h1 : (e * K) ^ τ ≤ (e * e ^ (c / β)) ^ τ :=
-    rpow_le_rpow (by positivity) (mul_le_mul_of_nonneg_left hK he0.le) hτ
-  have h2 : (e * e ^ (c / β)) ^ τ = e ^ (τ * (1 + c / β)) := by
-    rw [show e * e ^ (c / β) = e ^ (1 + c / β) by rw [rpow_add he0, rpow_one],
-      ← rpow_mul he0.le, mul_comm]
-  have h3 : e ^ (τ * (1 + c / β)) ≤ e ^ lam := rpow_le_rpow_of_exponent_le he hl
-  have h4 : 1 ≤ e ^ lam := one_le_rpow he hlam
-  linarith
-
 end Butterfly
 
 end
@@ -83,25 +68,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-/-! ## Pushes and pops -/
-
-theorem pushSt_G_of_not_mem (t : IState HS) (r : Fin HS) :
-    ∀ l : List (Fin HS × ℤ), r ∉ l.map Prod.fst → (pushSt t l).G r = t.G r
-  | [], _ => rfl
-  | (i, v) :: l, h => by
-    simp only [List.map_cons, List.mem_cons, not_or] at h
-    simp only [pushSt]
-    rw [pushSt_G_of_not_mem _ r l h.2]
-    simp [Ne.symm h.1, h.1]
-
-@[simp] theorem pushSt_ip (t : IState HS) : ∀ l, (pushSt t l).ip = t.ip
-  | [] => rfl
-  | (i, v) :: l => by simp only [pushSt]; rw [pushSt_ip _ l]; rfl
-
-@[simp] theorem pushSt_out (t : IState HS) : ∀ l, (pushSt t l).out = t.out
-  | [] => rfl
-  | (i, v) :: l => by simp only [pushSt]; rw [pushSt_out _ l]; rfl
 
 /-! ## Products of positive parameters -/
 
@@ -128,9 +94,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-theorem one_le_vol {S : Shape} (h : ∀ a ∈ S, 1 ≤ a) : 1 ≤ vol S := by
-  unfold vol; exact Nat.one_le_iff_ne_zero.2 (List.prod_ne_zero (fun h0 => by have := h 0 h0; omega))
 
 /-! ## Arithmetic of the levels -/
 
@@ -164,10 +127,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-theorem vol_binShape (Pre G Suf : Shape) (F : ℕ) :
-    vol (binShape Pre G Suf F) = vol Pre * (F * (vol G * (F * vol Suf))) := by
-  simp [binShape, vol_append, vol_cons]
 
 /-! ## The padding expressions -/
 
@@ -223,19 +182,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Ghost stacks -/
-
-/-! ## The simulation -/
-
-/-! ## Top level -/
-
-/-! ## Coarse transfer: `fcost ≤ 100 · cost` -/
-
-/-! ## Fine specifications -/
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
-
 /-! ## Loops -/
 
 /-! ## Literal-to-register simulation -/
@@ -271,28 +217,6 @@ namespace NLogN.KFE
 
 open IntMul RS AModel AModelL12 AModelRat AModelFac Finset KIL KFD
 
-/-! ## The overhead term -/
-
-theorem two_pow_le_vol {u : ℕ} (Pre G Suf : Shape) (hPre : ∀ a ∈ Pre, 1 ≤ a)
-    (hG : ∀ a ∈ G, 1 ≤ a) (hS : ∀ a ∈ Suf, 1 ≤ a) : 2 ^ u ≤ vol (binShape Pre G Suf (2 ^ u)) := by
-  rw [KIL.vol_binShape]
-  have h1 := one_le_vol hPre; have h2 := one_le_vol hG; have h3 := one_le_vol hS
-  have h4 : 1 ≤ 2 ^ u := Nat.one_le_two_pow
-  calc 2 ^ u = 1 * (2 ^ u * (1 * (1 * 1))) := by ring
-    _ ≤ vol Pre * (2 ^ u * (vol G * (2 ^ u * vol Suf))) := by gcongr
-
-/-- `u + 1 ≤ zsz V` for the bit volume `V ≥ 2^u`: the overhead `(u+1)^c (Bb+2)²` is polylogarithmic
-in `V`. -/
-theorem succ_le_zsz_vol {u : ℕ} (Pre G Suf : Shape) (hPre : ∀ a ∈ Pre, 1 ≤ a)
-    (hG : ∀ a ∈ G, 1 ≤ a) (hS : ∀ a ∈ Suf, 1 ≤ a) :
-    u + 1 ≤ zsz ((vol (binShape Pre G Suf (2 ^ u)) : ℕ) : ℤ) := by
-  by_contra h
-  have h' : zsz ((vol (binShape Pre G Suf (2 ^ u)) : ℕ) : ℤ) ≤ u := by omega
-  rw [zsz_le_iff] at h'
-  have := two_pow_le_vol (u := u) Pre G Suf hPre hG hS
-  simp only [Int.natAbs_natCast] at h'
-  omega
-
 end NLogN.KFE
 
 end
@@ -320,69 +244,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel AModelL12 AModelRat AModelFac Finset KIL KFD KFE Filter
-
-/-- Polynomial versus exponential: `n^k ≤ C 2^n`. -/
-theorem pow_le_two_pow (k : ℕ) : ∃ C : ℝ, 0 ≤ C ∧ ∀ n : ℕ, (n : ℝ) ^ k ≤ C * 2 ^ n := by
-  have ht := tendsto_pow_const_div_const_pow_of_one_lt k (r := 2) (by norm_num)
-  obtain ⟨C, hC⟩ := ht.bddAbove_range
-  refine ⟨max C 0, le_max_right _ _, fun n => ?_⟩
-  have h1 : (n : ℝ) ^ k / 2 ^ n ≤ max C 0 := le_trans (hC ⟨n, rfl⟩) (le_max_left _ _)
-  have h2 : (0 : ℝ) < 2 ^ n := by positivity
-  rwa [div_le_iff₀ h2] at h1
-
-/-- `2^(zsz V - 1) ≤ V` for `V ≥ 1`. -/
-theorem two_pow_pred_zsz_le {V : ℕ} (hV : 1 ≤ V) : 2 ^ (zsz (V : ℤ) - 1) ≤ V := by
-  by_contra h
-  push Not at h
-  have h' : zsz (V : ℤ) ≤ zsz (V : ℤ) - 1 := by
-    rw [zsz_le_iff]; simpa using h
-  have : 1 ≤ zsz (V : ℤ) := by
-    by_contra h0
-    have h00 : zsz (V : ℤ) ≤ 0 := by omega
-    rw [zsz_le_iff] at h00
-    simp at h00; omega
-  omega
-
-theorem two_pow_zsz_le {V : ℕ} (hV : 1 ≤ V) : 2 ^ zsz (V : ℤ) ≤ 2 * V := by
-  have h1 := two_pow_pred_zsz_le hV
-  have : 1 ≤ zsz (V : ℤ) := by
-    by_contra h0
-    have h00 : zsz (V : ℤ) ≤ 0 := by omega
-    rw [zsz_le_iff] at h00
-    simp at h00; omega
-  calc 2 ^ zsz (V : ℤ) = 2 * 2 ^ (zsz (V : ℤ) - 1) := by
-        rw [← pow_succ']; congr 1; omega
-    _ ≤ 2 * V := by omega
-
-theorem one_le_zsz {V : ℕ} (hV : 1 ≤ V) : 1 ≤ zsz (V : ℤ) := by
-  by_contra h0
-  have h00 : zsz (V : ℤ) ≤ 0 := by omega
-  rw [zsz_le_iff] at h00
-  simp at h00; omega
-
-/-- The overhead estimate: `(u+1)^c (Bb+2)² ≤ D (V+1)` for the canonical `Bb`, once `u+1 ≤ zsz V`. -/
-theorem overhead_le (c A : ℕ) : ∃ D : ℝ, 0 ≤ D ∧ ∀ (u V Bb : ℕ), 1 ≤ V → u + 1 ≤ zsz (V : ℤ) →
-    Bb ≤ A + 2 * zsz (V : ℤ) → ((u : ℝ) + 1) ^ c * ((Bb : ℝ) + 2) ^ 2 ≤ D * V := by
-  obtain ⟨C, hC0, hC⟩ := pow_le_two_pow (c + 2)
-  refine ⟨((A : ℝ) + 4) ^ 2 * C * 2, by positivity, fun u V Bb hV hu hB => ?_⟩
-  set L := zsz (V : ℤ)
-  have hL1 : 1 ≤ L := one_le_zsz hV
-  have hL : (1 : ℝ) ≤ L := by exact_mod_cast hL1
-  have h1 : ((u : ℝ) + 1) ≤ L := by exact_mod_cast hu
-  have h2 : ((Bb : ℝ) + 2) ≤ ((A : ℝ) + 4) * L := by
-    have : (Bb : ℝ) ≤ A + 2 * L := by exact_mod_cast hB
-    nlinarith
-  have h3 : ((u : ℝ) + 1) ^ c ≤ (L : ℝ) ^ c := pow_le_pow_left₀ (by positivity) h1 c
-  have h4 : ((Bb : ℝ) + 2) ^ 2 ≤ (((A : ℝ) + 4) * L) ^ 2 := pow_le_pow_left₀ (by positivity) h2 2
-  have h5 : (L : ℝ) ^ (c + 2) ≤ C * 2 ^ L := hC L
-  have h6 : ((2 : ℝ) ^ L) ≤ 2 * V := by exact_mod_cast two_pow_zsz_le hV
-  calc ((u : ℝ) + 1) ^ c * ((Bb : ℝ) + 2) ^ 2 ≤ (L : ℝ) ^ c * (((A : ℝ) + 4) * L) ^ 2 :=
-        mul_le_mul h3 h4 (by positivity) (by positivity)
-    _ = ((A : ℝ) + 4) ^ 2 * (L : ℝ) ^ (c + 2) := by ring
-    _ ≤ ((A : ℝ) + 4) ^ 2 * (C * 2 ^ L) := mul_le_mul_of_nonneg_left h5 (by positivity)
-    _ ≤ ((A : ℝ) + 4) ^ 2 * (C * (2 * V)) :=
-        mul_le_mul_of_nonneg_left (mul_le_mul_of_nonneg_left h6 hC0) (by positivity)
-    _ = ((A : ℝ) + 4) ^ 2 * C * 2 * V := by ring
 
 end NLogN.KFB
 
@@ -414,17 +275,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD
-
-/-! ## Pushing a linear combination -/
-
-/-! ## The zip loop -/
-
-/-! ## One block -/
-
-theorem Cnt.congr {s : IState HS} {f g : Fin HS → List ℤ} {B1 : ℕ} (h : Cnt s f B1)
-    (h1 : g rB = f rB) (h2 : g rB2 = f rB2) (h3 : g rB4 = f rB4) : Cnt s g B1 :=
-  ⟨by simp only [encK_G, h1]; exact h.b, by simp only [encK_G, h2]; exact h.b2,
-    by simp only [encK_G, h3]; exact h.b4⟩
 
 /-! ## A group of blocks, and the whole pass -/
 
@@ -458,12 +308,6 @@ namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
 
-theorem PCnt.congr {s : IState HS} {f g : Fin HS → List ℤ} {L P Q : ℕ} (h : PCnt s f L P Q)
-    (h1 : g rB = f rB) (h2 : g rB2 = f rB2) (h3 : g rP = f rP) (h4 : g rQ = f rQ) :
-    PCnt s g L P Q :=
-  ⟨by simp only [encK_G, h1]; exact h.b, by simp only [encK_G, h2]; exact h.b2,
-    by simp only [encK_G, h3]; exact h.p, by simp only [encK_G, h4]; exact h.q⟩
-
 end NLogN.KFG
 
 end
@@ -489,42 +333,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD KFE KFB AModel AModelL12 NetProp7
 
-theorem encK_Fsw (t : IState HS) (R : List Item) (ys : List ℤ) (vP vG vS u : ℕ) :
-    encK (t.upd 0 R) (Fsw ys vP vG vS u) =
-      (pushSt t [(kP, (vP : ℤ)), (kG, (vG : ℤ)), (kS, (vS : ℤ)), (aU, (u : ℤ))]).upd 0
-        (ints ys ++ R) := by
-  apply IState.ext' _ (by simp) (by simp)
-  intro i
-  simp only [encK_G, IState.upd_G, Fsw, pushSt, Function.update_apply]
-  by_cases h0 : i = 0
-  · subst h0; simp +decide
-  by_cases h1 : i = kP
-  · subst h1; simp +decide
-  by_cases h2 : i = kG
-  · subst h2; simp +decide
-  by_cases h3 : i = kS
-  · subst h3; simp +decide
-  by_cases h4 : i = aU
-  · subst h4; simp +decide
-  simp [h0, h1, h2, h3, h4]
-
-theorem update_Fsw (xs ys : List ℤ) (vP vG vS u : ℕ) :
-    Function.update (Fsw xs vP vG vS u) 0 ys = Fsw ys vP vG vS u := by
-  funext i
-  simp only [Function.update_apply, Fsw]
-  split_ifs <;> simp_all
-
-theorem upd_self (t : IState HS) (i : Fin HS) : t.upd i (t.G i) = t := by
-  refine IState.ext' (fun j => ?_) rfl rfl
-  simp only [IState.upd_G, Function.update_apply]; split_ifs with h <;> simp [h]
-
-theorem enc2_pull (sh sh' : Shape) (f : List ℕ → List ℕ) (xs : List (ZMod 2)) :
-    enc2 (pull sh sh' f 0 xs) = pull sh sh' f 0 (enc2 xs) := by
-  simp only [enc2, pull, List.map_map]
-  congr 1; funext j
-  simp only [Function.comp_apply, List.getD_eq_getElem?_getD, List.getElem?_map]
-  cases xs[encode sh (f (decode sh' j))]? <;> simp
-
 /-! ## Bit lists and the three geometry swaps -/
 end NLogN.KFL
 
@@ -549,13 +357,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -623,29 +424,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL AModel AModelL12 NetProp7
-
-theorem cost_absorbE {u c Bb V : ℕ} {K D : ℝ} (hu : 1 ≤ u) (hK : 0 ≤ K) (hD0 : 0 ≤ D)
-    (hov : ((Bb : ℝ) + 2) ^ 2 ≤ D * V) (X : ℕ) (hX : X ≤ 10 ^ 9 * (Bb + 2) ^ 2 + 1)
-    (hc : (c : ℝ) ≤ K * ((V : ℝ) + 1) * (u : ℝ) ^ (1 - (2 : ℝ)⁻¹ ^ 50)) :
-    (((X + c + (4 * (2 * Bb + 2) + 1) : ℕ)) : ℝ)
-      ≤ (K + 10 ^ 10 * D) * ((V : ℝ) + 1) * (u : ℝ) ^ (1 - (2 : ℝ)⁻¹ ^ 50) := by
-  set x := (u : ℝ) ^ (1 - (2 : ℝ)⁻¹ ^ 50)
-  have hx : (1 : ℝ) ≤ x := Real.one_le_rpow (by exact_mod_cast hu) (by norm_num)
-  have hB : (0 : ℝ) ≤ Bb := Nat.cast_nonneg _
-  have hV0 : (0 : ℝ) ≤ V := Nat.cast_nonneg _
-  have h1 : D * V ≤ D * (((V : ℝ) + 1) * x) := by
-    apply mul_le_mul_of_nonneg_left _ hD0; nlinarith
-  have hXr : (X : ℝ) ≤ 10 ^ 9 * ((Bb : ℝ) + 2) ^ 2 + 1 := by exact_mod_cast hX
-  push_cast
-  have e : (K + 10 ^ 10 * D) * ((V : ℝ) + 1) * x =
-      K * ((V : ℝ) + 1) * x + 10 ^ 10 * (D * (((V : ℝ) + 1) * x)) := by ring
-  rw [e]
-  have hBB : 10 ^ 9 * ((Bb : ℝ) + 2) ^ 2 + 1 + 4 * (2 * (Bb : ℝ) + 2) + 1 ≤
-      10 ^ 10 * ((Bb : ℝ) + 2) ^ 2 := by nlinarith
-  have h2 : 10 ^ 10 * ((Bb : ℝ) + 2) ^ 2 ≤ 10 ^ 10 * (D * (((V : ℝ) + 1) * x)) := by
-    have := le_trans hov h1
-    linarith
-  linarith
 
 /-! ## The three slot swaps on the 8-axis geometry -/
 

@@ -31,27 +31,6 @@ open Matrix
 section Pull
 variable {α : Type*}
 
-/-- `pull` only depends on `g` at valid output addresses. -/
-lemma pull_congr {sh sh' : Shape} {g g' : List ℕ → List ℕ}
-    (h : ∀ a, Valid sh' a → g a = g' a) (d : α) (xs : List α) :
-    pull sh sh' g d xs = pull sh sh' g' d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  rw [getElem_pull, getElem_pull, h _ (valid_decode h₁)]
-
-/-- Composition of pulls. -/
-theorem pull_comp {sh sh' sh'' : Shape} (g g' : List ℕ → List ℕ)
-    (hg' : ∀ a, Valid sh'' a → Valid sh' (g' a)) (d : α) (xs : List α) :
-    pull sh' sh'' g' d (pull sh sh' g d xs) = pull sh sh'' (g ∘ g') d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  have hv := hg' _ (valid_decode h₁)
-  have hlt := encode_lt hv
-  rw [getElem_pull, getElem_pull, List.getD_eq_getElem _ _ (by simpa using hlt), getElem_pull,
-    decode_encode hv, Function.comp_apply]
-
 end Pull
 
 /-! ## 3. Active fields -/
@@ -60,77 +39,7 @@ variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q)
 
 namespace Layout
 
-lemma actIdx_some {k : ℕ} {i : Fin n} (h : Λ.actIdx k = some i) : (Λ.pos i : ℕ) = k := by
-  have := List.find?_some h
-  simpa using this
-
-lemma actIdx_pos (i : Fin n) : Λ.actIdx (Λ.pos i) = some i := by
-  cases h : Λ.actIdx (Λ.pos i) with
-  | none =>
-    unfold actIdx at h
-    rw [List.find?_eq_none] at h
-    exact absurd (by simp) (h i (List.mem_finRange i))
-  | some r => rw [Λ.mono.injective (Fin.ext (Λ.actIdx_some h))]
-
 end Layout
-
-@[simp] lemma length_setAct (a : List ℕ) (v : Fin n → ZMod Q) :
-    (setAct Λ a v).length = a.length := by simp [setAct]
-
-lemma getElem_setAct (a : List ℕ) (v : Fin n → ZMod Q) (k : ℕ)
-    (hk : k < (setAct Λ a v).length) :
-    (setAct Λ a v)[k] = match Λ.actIdx k with
-      | some i => (v i).val
-      | none => a[k]'(by simpa using hk) := by
-  simp [setAct]
-  all_goals (split <;> simp_all)
-
-lemma getElem_setAct_pos (a : List ℕ) (v : Fin n → ZMod Q) (i : Fin n)
-    (hk : (Λ.pos i : ℕ) < (setAct Λ a v).length) :
-    (setAct Λ a v)[(Λ.pos i : ℕ)] = (v i).val := by
-  rw [getElem_setAct, Λ.actIdx_pos]
-
-lemma setAct_setAct (a : List ℕ) (v w : Fin n → ZMod Q) :
-    setAct Λ (setAct Λ a v) w = setAct Λ a w := by
-  apply List.ext_getElem (by simp)
-  intro k h₁ h₂
-  simp only [getElem_setAct]
-  cases Λ.actIdx k <;> rfl
-
-lemma valid_setAct [NeZero Q] {a : List ℕ} (ha : Valid sh a) (v : Fin n → ZMod Q) :
-    Valid sh (setAct Λ a v) := by
-  obtain ⟨hl, hlt⟩ := (valid_iff sh a).1 ha
-  refine (valid_iff _ _).2 ⟨by simp [hl], fun k h₁ h₂ => ?_⟩
-  rw [getElem_setAct]
-  cases h : Λ.actIdx k with
-  | none => exact hlt _ _ _
-  | some i =>
-    have hk := Λ.actIdx_some h
-    subst hk
-    have := Λ.size i
-    simp only [List.get_eq_getElem] at this
-    simp only [this]
-    exact ZMod.val_lt _
-
-lemma act_setAct [NeZero Q] {a : List ℕ} (ha : Valid sh a) (v : Fin n → ZMod Q) :
-    act Λ (setAct Λ a v) = v := by
-  funext i
-  have h1 : (Λ.pos i : ℕ) < (setAct Λ a v).length := by simp [ha.length_eq]
-  rw [act, List.getD_eq_getElem _ _ h1, getElem_setAct_pos, ZMod.natCast_zmod_val]
-
-lemma vmap_vmap [NeZero Q] (F G : (Fin n → ZMod Q) → (Fin n → ZMod Q)) {a : List ℕ}
-    (ha : Valid sh a) : vmap Λ G (vmap Λ F a) = vmap Λ (G ∘ F) a := by
-  simp only [vmap, act_setAct Λ ha, setAct_setAct, Function.comp_apply]
-
-lemma amap_eq_vmap (L : Matrix (Fin n) (Fin n) (ZMod Q)) : amap Λ L = vmap Λ (L *ᵥ ·) := rfl
-
-lemma valid_amap [NeZero Q] (L : Matrix (Fin n) (Fin n) (ZMod Q)) {a : List ℕ}
-    (ha : Valid sh a) : Valid sh (amap Λ L a) := valid_setAct Λ ha _
-
-lemma amap_mul [NeZero Q] (M L : Matrix (Fin n) (Fin n) (ZMod Q)) {a : List ℕ}
-    (ha : Valid sh a) : amap Λ M (amap Λ L a) = amap Λ (M * L) a := by
-  rw [amap_eq_vmap, amap_eq_vmap, vmap_vmap Λ _ _ ha, amap_eq_vmap]
-  congr 1; funext x; simp [Matrix.mulVec_mulVec]
 
 /-! ## 4. Controlled shift -/
 

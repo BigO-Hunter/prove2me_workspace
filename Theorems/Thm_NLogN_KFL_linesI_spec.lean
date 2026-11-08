@@ -14,11 +14,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
 end NLogN
 
 namespace NLogN
@@ -37,33 +32,11 @@ variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 namespace IRuns
 
-theorem mono {p : IStmt S P} {s s' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (hc : c ≤ c') : IRuns I iprog p s s' c' := by
-  obtain ⟨d, hd, h⟩ := h; exact ⟨d, by omega, h⟩
-
-theorem mono' {p : IStmt S P} {s s' s'' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (he : s' = s'') (hc : c ≤ c') : IRuns I iprog p s s'' c' := he ▸ h.mono hc
-
-theorem skip (s : IState S) : IRuns I iprog .skip s s 1 := ⟨1, le_rfl, .skip s⟩
-
-theorem seq {p q : IStmt S P} {s s₁ s₂ : IState S} {c₁ c₂ : ℕ} (h₁ : IRuns I iprog p s s₁ c₁)
-    (h₂ : IRuns I iprog q s₁ s₂ c₂) : IRuns I iprog (.seq p q) s s₂ (c₁ + c₂) := by
-  obtain ⟨d₁, hd₁, h₁⟩ := h₁; obtain ⟨d₂, hd₂, h₂⟩ := h₂
-  exact ⟨d₁ + d₂, by omega, .seq h₁ h₂⟩
-
 end IRuns
 
 namespace IRuns
 
 end IRuns
-
-@[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
-    (s.upd i L).upd i L' = s.upd i L' := by
-  simp [IState.upd]
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
 
 end NLogN
 
@@ -72,11 +45,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
-
-theorem zsz_one : zsz 1 = 1 := by
-  simp [zsz, zbits]; rw [nbits_pos (by norm_num)]; simp [nbits_zero]
 
 end NLogN
 
@@ -91,47 +59,12 @@ namespace NLogN.KFL
 
 open AModel
 
-theorem decomp (Q S n : ℕ) : n = n / (Q * S) * (Q * S) + gc Q S n * S + n % S := by
-  unfold gc
-  have h1 := Nat.div_add_mod n S
-  have h2 := Nat.div_add_mod (n / S) Q
-  rw [Nat.div_div_eq_div_mul] at h2
-  rw [mul_comm Q S]
-  nlinarith [h1, h2]
-
-theorem sc_int (Q S v n : ℕ) : (NLogN.KFL.sc Q S v n : ℤ) = n + ((v : ℤ) - gc Q S n) * S := by
-  have h := decomp Q S n
-  unfold NLogN.KFL.sc
-  have h' : (n : ℤ) = (n / (Q * S) * (Q * S) : ℕ) + (gc Q S n * S : ℕ) + (n % S : ℕ) := by
-    exact_mod_cast h
-  push_cast at h' ⊢
-  linarith
-
-theorem gc_lt {Q S : ℕ} (hQ : 0 < Q) (n : ℕ) : gc Q S n < Q := Nat.mod_lt _ hQ
-
-theorem div_sc {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
-    NLogN.KFL.sc Q S v n / (Q * S) = n / (Q * S) := by
-  unfold NLogN.KFL.sc
-  have hQS : 0 < Q * S := Nat.mul_pos (by omega) hS
-  have hr : v * S + n % S < Q * S := by
-    have := Nat.mod_lt n hS
-    have : v * S + S ≤ Q * S := by nlinarith
-    omega
-  rw [add_assoc, Nat.add_comm, Nat.add_mul_div_right _ _ hQS, Nat.div_eq_of_lt hr, zero_add]
-
 theorem gc_sc_self {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
     gc Q S (NLogN.KFL.sc Q S v n) = v := by
   unfold gc NLogN.KFL.sc
   have e : n / (Q * S) * (Q * S) + v * S + n % S = n % S + S * (n / (Q * S) * Q + v) := by ring
   rw [e, Nat.add_mul_div_left _ _ hS, Nat.div_eq_of_lt (Nat.mod_lt n hS), zero_add,
     Nat.add_mod, Nat.mul_mod_left, zero_add, Nat.mod_mod, Nat.mod_eq_of_lt hv]
-
-/-- A chunk at a higher stride `S' = Q S m` is unchanged. -/
-theorem gc_sc_hi {Q S Q' S' m : ℕ} (hS : 0 < S) (hm : 0 < m) (hS' : S' = Q * S * m) {v : ℕ}
-    (hv : v < Q) (n : ℕ) : gc Q' S' (NLogN.KFL.sc Q S v n) = gc Q' S' n := by
-  unfold gc
-  subst hS'
-  rw [← Nat.div_div_eq_div_mul (NLogN.KFL.sc Q S v n), ← Nat.div_div_eq_div_mul n, div_sc hS hv]
 
 theorem div_mod_lo {S' Q' m X r : ℕ} (hS' : 0 < S') :
     (S' * Q' * m * X + r) / S' % Q' = r / S' % Q' := by
@@ -165,9 +98,6 @@ theorem sc_lt {Q S m v n : ℕ} (hS : 0 < S) (hv : v < Q) (hn : n < Q * S * m) :
   have : n / (Q * S) * (Q * S) + (Q * S) ≤ Q * S * m := by nlinarith
   omega
 
-@[simp] theorem length_rix {α : Type*} (V : ℕ) (φ : ℕ → ℕ) (d : α) (xs : List α) :
-    (rix V φ d xs).length = V := by simp [rix]
-
 theorem getD_rix {α : Type*} {V : ℕ} (φ : ℕ → ℕ) (d : α) (xs : List α) {j : ℕ} (hj : j < V) :
     (rix V φ d xs).getD j d = xs.getD (φ j) d := by
   simp [rix, List.getD_eq_getElem?_getD, hj]
@@ -180,13 +110,6 @@ theorem rix_rix {α : Type*} {V : ℕ} (φ₁ φ₂ : ℕ → ℕ) (h : ∀ j < 
   simp only [rix, List.getElem_map, List.getElem_range, Function.comp]
   have := getD_rix φ₁ d xs (h j h1)
   simpa [rix] using this
-
-theorem rix_congr {α : Type*} {V : ℕ} {φ φ' : ℕ → ℕ} (h : ∀ j < V, φ j = φ' j) (d : α)
-    (xs : List α) : rix V φ d xs = rix V φ' d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h1 h2
-  simp only [length_rix] at h1
-  simp [rix, h j h1]
 
 theorem rix_id {α : Type*} {V : ℕ} (d : α) {xs : List α} (h : xs.length = V) :
     rix V id d xs = xs := by
@@ -201,29 +124,12 @@ variable (g : Geo)
 
 variable {g}
 
-theorem Pos.s2 (h : g.Pos) : 0 < g.S2 := Nat.mul_pos h.n3 h.b
-theorem Pos.s1 (h : g.Pos) : 0 < g.S1 := Nat.mul_pos (Nat.mul_pos h.q h.s2) h.n2
-theorem Pos.s0 (h : g.Pos) : 0 < g.S0 := Nat.mul_pos (Nat.mul_pos h.q h.s1) h.n1
-
 end Geo
-
-theorem TV_trOf {g : Geo} (hg : g.Pos) (n : ℕ) : TV g.Q (trOf g n) :=
-  ⟨gc_lt hg.q _, gc_lt hg.q _, gc_lt hg.q _⟩
 
 section Phi
 
 variable {g : Geo} (hg : g.Pos)
 include hg
-
-theorem gc1_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S1 (NLogN.KFL.sc g.Q g.S2 v n) = gc g.Q g.S1 n :=
-  gc_sc_hi hg.s2 hg.n2 rfl hv n
-
-theorem gc0_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (NLogN.KFL.sc g.Q g.S2 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s2 (Nat.mul_pos hg.n2 (Nat.mul_pos hg.q hg.n1))
-    (by simp only [Geo.S0, Geo.S1]; ring) hv n
-
-theorem gc0_sc1 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (NLogN.KFL.sc g.Q g.S1 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s1 hg.n1 rfl hv n
 
 theorem gc1_sc0 (v n : ℕ) : gc g.Q g.S1 (NLogN.KFL.sc g.Q g.S0 v n) = gc g.Q g.S1 n :=
   gc_sc_lo hg.s1 (m := g.N1) (by simp only [Geo.S0]; ring) v n
@@ -245,18 +151,6 @@ theorem trOf_phi {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) (n : �
   refine Prod.ext (gc_sc_self hg.s0 h0 _) (Prod.ext ?_ ?_)
   · simp only; rw [gc1_sc0 hg, gc_sc_self hg.s1 h1]
   · simp only; rw [gc2_sc0 hg, gc2_sc1 hg, gc_sc_self hg.s2 h2]
-
-/-- Integer formula of `phi`. -/
-theorem phi_int {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) (n : ℕ) :
-    (phi g F n : ℤ) = n + (((F (trOf g n)).1 : ℤ) - (trOf g n).1) * g.S0 +
-      (((F (trOf g n)).2.1 : ℤ) - (trOf g n).2.1) * g.S1 +
-      (((F (trOf g n)).2.2 : ℤ) - (trOf g n).2.2) * g.S2 := by
-  obtain ⟨h0, h1, h2⟩ := hF _ (TV_trOf hg n)
-  show ((NLogN.KFL.sc g.Q g.S0 (F (trOf g n)).1 (NLogN.KFL.sc g.Q g.S1 (F (trOf g n)).2.1
-    (NLogN.KFL.sc g.Q g.S2 (F (trOf g n)).2.2 n)) : ℕ) : ℤ) = _
-  generalize F (trOf g n) = c at h0 h1 h2 ⊢
-  rw [sc_int, sc_int, sc_int, gc0_sc1 hg _ _ h1, gc0_sc2 hg _ _ h2, gc1_sc2 hg _ _ h2]
-  simp only [trOf]; ring
 
 theorem phi_lt {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) {n : ℕ} (hn : n < g.V) :
     phi g F n < g.V := by
@@ -313,11 +207,6 @@ theorem rixT_congr {g : Geo} (hg : g.Pos) {F F' : Tr → Tr} (h : ∀ c, TV g.Q 
   refine rix_congr (fun j _ => ?_) _ _
   simp only [phi, h _ (TV_trOf hg j)]
 
-theorem TV_sw12 {Q : ℕ} (c : Tr) (h : TV Q c) : TV Q (sw12 c) := ⟨h.1, h.2.2, h.2.1⟩
-
-theorem TV_rot2 {Q : ℕ} (hQ : 0 < Q) (a : ℕ → ℕ → ℕ) (c : Tr) (h : TV Q c) : TV Q (rot2 Q a c) :=
-  ⟨h.1, h.2.1, Nat.mod_lt _ hQ⟩
-
 end NLogN.KFL
 
 end
@@ -330,10 +219,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD KFE KFB AModel AModelL12 NetProp7
-
-theorem upd_self (t : IState HS) (i : Fin HS) : t.upd i (t.G i) = t := by
-  refine IState.ext' (fun j => ?_) rfl rfl
-  simp only [IState.upd_G, Function.update_apply]; split_ifs with h <;> simp [h]
 
 theorem bits_rix {V : ℕ} {φ : ℕ → ℕ} {zs : List ℤ} (h : Bits zs) : Bits (rix V φ 0 zs) := by
   intro z hz

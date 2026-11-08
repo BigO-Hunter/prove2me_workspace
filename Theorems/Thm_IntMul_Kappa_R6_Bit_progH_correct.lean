@@ -27,51 +27,10 @@ namespace AModel
 
 open Matrix
 
-/-! ## 1. Mixed-radix basics -/
-
-lemma encode_decode {sh : Shape} {m : ℕ} (h : m < vol sh) : encode sh (decode sh m) = m := by
-  induction sh generalizing m with
-  | nil => simp at h; subst h; rfl
-  | cons q sh ih =>
-    simp only [vol_cons] at h
-    have hV : 0 < vol sh := Nat.pos_of_ne_zero (by rintro h'; simp [h'] at h)
-    have hq : m / vol sh < q := (Nat.div_lt_iff_lt_mul hV).2 h
-    simp only [decode, encode, List.headD_cons, List.tail_cons, Nat.mod_eq_of_lt hq,
-      ih (Nat.mod_lt m hV)]
-    exact Nat.div_add_mod' m (vol sh)
-
 /-! ## 2. Pull maps -/
 
 section Pull
 variable {α : Type*}
-
-/-- `pull` only depends on `g` at valid output addresses. -/
-lemma pull_congr {sh sh' : Shape} {g g' : List ℕ → List ℕ}
-    (h : ∀ a, Valid sh' a → g a = g' a) (d : α) (xs : List α) :
-    pull sh sh' g d xs = pull sh sh' g' d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  rw [getElem_pull, getElem_pull, h _ (valid_decode h₁)]
-
-/-- Composition of pulls. -/
-theorem pull_comp {sh sh' sh'' : Shape} (g g' : List ℕ → List ℕ)
-    (hg' : ∀ a, Valid sh'' a → Valid sh' (g' a)) (d : α) (xs : List α) :
-    pull sh' sh'' g' d (pull sh sh' g d xs) = pull sh sh'' (g ∘ g') d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  have hv := hg' _ (valid_decode h₁)
-  have hlt := encode_lt hv
-  rw [getElem_pull, getElem_pull, List.getD_eq_getElem _ _ (by simpa using hlt), getElem_pull,
-    decode_encode hv, Function.comp_apply]
-
-theorem pull_id {sh : Shape} (d : α) {xs : List α} (h : xs.length = vol sh) :
-    pull sh sh id d xs = xs := by
-  apply List.ext_getElem (by simp [h])
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  rw [getElem_pull, id, encode_decode h₁, List.getD_eq_getElem]
 
 end Pull
 
@@ -308,30 +267,6 @@ end Reshape
 
 section BlockSwap
 
-lemma getElem_permIdx (f : ℕ → ℕ) (a : List ℕ) (k : ℕ) (hk : k < (permIdx f a).length) :
-    (permIdx f a)[k] = a.getD (f k) 0 := by simp [permIdx]
-
-lemma permIdx_congr {f f' : ℕ → ℕ} {a : List ℕ} (h : ∀ k < a.length, f k = f' k) :
-    permIdx f a = permIdx f' a := by
-  apply List.ext_getElem (by simp)
-  intro k h₁ h₂
-  simp only [length_permIdx] at h₁
-  rw [getElem_permIdx, getElem_permIdx, h k h₁]
-
-lemma permIdx_of_id {f : ℕ → ℕ} {a : List ℕ} (h : ∀ k < a.length, f k = k) :
-    permIdx f a = a := by
-  apply List.ext_getElem (by simp)
-  intro k h₁ h₂
-  rw [getElem_permIdx, h k h₂, List.getD_eq_getElem]
-
-lemma permIdx_permIdx {f g : ℕ → ℕ} {a : List ℕ} (hf : ∀ k < a.length, f k < a.length) :
-    permIdx f (permIdx g a) = permIdx (g ∘ f) a := by
-  apply List.ext_getElem (by simp)
-  intro k h₁ h₂
-  simp only [length_permIdx] at h₁
-  rw [getElem_permIdx, getElem_permIdx, List.getD_eq_getElem _ _ (by simpa using hf k h₁),
-    getElem_permIdx, Function.comp_apply]
-
 lemma valid_permIdx {sh : Shape} {f : ℕ → ℕ} {a : List ℕ} (ha : Valid sh a)
     (hf : ∀ k < sh.length, f k < sh.length ∧ sh.getD (f k) 0 = sh.getD k 0) :
     Valid sh (permIdx f a) := by
@@ -341,68 +276,6 @@ lemma valid_permIdx {sh : Shape} {f : ℕ → ℕ} {a : List ℕ} (ha : Valid sh
   rw [getElem_permIdx, List.getD_eq_getElem _ _ (by omega), ← List.getD_eq_getElem sh 0 h₂,
     ← hf2, List.getD_eq_getElem _ _ hf1]
   exact hlt _ _ _
-
-lemma swapPos_eq_permIdx {p q : ℕ} {a : List ℕ} (hp : p < a.length) (hq : q < a.length) :
-    swapPos p q a = permIdx (swapIdx p q) a := by
-  apply List.ext_getElem (by simp [swapPos])
-  intro k h₁ h₂
-  simp only [length_permIdx] at h₂
-  rw [getElem_permIdx]
-  simp only [swapPos, List.getElem_set, swapIdx]
-  by_cases hkq : k = q
-  · subst hkq; simp
-  · by_cases hkp : k = p
-    · subst hkp; simp [hkq, Ne.symm hkq]
-    · simp [hkq, hkp, Ne.symm hkq, Ne.symm hkp, List.getElem?_eq_getElem h₂]
-
-@[simp] lemma length_swapPos (p q : ℕ) (a : List ℕ) : (swapPos p q a).length = a.length := by
-  simp [swapPos]
-
-@[simp] lemma length_blockSwap (i j r : ℕ) (a : List ℕ) :
-    (blockSwap i j r a).length = a.length := by simp [blockSwap]
-
-lemma getElem_blockSwap (i j r : ℕ) (a : List ℕ) (k : ℕ) (hk : k < (blockSwap i j r a).length) :
-    (blockSwap i j r a)[k] = a.getD (bsIdx i j r k) 0 := getElem_permIdx _ _ _ _
-
-lemma bsIdx_left {i j r k : ℕ} (hij : i + r ≤ j) (hk : k < r) : bsIdx i j r (i + k) = j + k := by
-  unfold bsIdx; split_ifs <;> omega
-
-lemma bsIdx_right {i j r k : ℕ} (hij : i + r ≤ j) (hk : k < r) : bsIdx i j r (j + k) = i + k := by
-  unfold bsIdx; split_ifs <;> omega
-
-lemma bsIdx_out {i j r k : ℕ} (h1 : ¬ (i ≤ k ∧ k < i + r)) (h2 : ¬ (j ≤ k ∧ k < j + r)) :
-    bsIdx i j r k = k := by
-  unfold bsIdx; rw [if_neg h1, if_neg h2]
-
-lemma bsIdx_zero (i j k : ℕ) : bsIdx i j 0 k = k := by
-  unfold bsIdx; split_ifs <;> omega
-
-lemma swapIdx_bsIdx {i j r : ℕ} (hij : i + r + 1 ≤ j) (k : ℕ) :
-    swapIdx (i + r) (j + r) (bsIdx i j r k) = bsIdx i j (r + 1) k := by
-  unfold swapIdx bsIdx; split_ifs <;> omega
-
-lemma blockSwap_zero (i j : ℕ) (a : List ℕ) : blockSwap i j 0 a = a :=
-  permIdx_of_id fun k _ => bsIdx_zero i j k
-
-lemma blockSwap_swapPos {i j r : ℕ} {a : List ℕ} (hij : i + r + 1 ≤ j) (hj : j + r + 1 ≤ a.length) :
-    blockSwap i j r (swapPos (i + r) (j + r) a) = blockSwap i j (r + 1) a := by
-  rw [swapPos_eq_permIdx (by omega) (by omega), blockSwap,
-    permIdx_permIdx (fun k hk => bsIdx_lt (by omega) (by omega) hk), blockSwap]
-  exact permIdx_congr fun k _ => swapIdx_bsIdx hij k
-
-lemma chain_append (L₁ L₂ : List (ℕ × ℕ)) (a : List ℕ) :
-    chain (L₁ ++ L₂) a = chain L₁ (chain L₂ a) := by
-  simp [chain, List.foldr_append]
-
-/-- **Block swap = composition of the `r` single swaps.** -/
-theorem chain_runPairs {i j r : ℕ} {a : List ℕ} (hij : i + r ≤ j) (hj : j + r ≤ a.length) :
-    chain (runPairs i j r) a = blockSwap i j r a := by
-  induction r generalizing a with
-  | zero => simp [chain, runPairs, blockSwap_zero]
-  | succ r ih =>
-    rw [runPairs, List.range_succ, List.map_append, chain_append, ← runPairs]
-    have : chain (List.map (fun k => (i + k, j + k)) [r]) a = swapPos (i + r) (j + r) a := rfl
-    rw [this, ih (by omega) (by simp; omega), blockSwap_swapPos (by omega) (by omega)]
 
 lemma valid_blockSwap {sh : Shape} {i j r : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ sh.length)
     (hsz : ∀ k < r, sh.getD (i + k) 0 = sh.getD (j + k) 0) {a : List ℕ} (ha : Valid sh a) :

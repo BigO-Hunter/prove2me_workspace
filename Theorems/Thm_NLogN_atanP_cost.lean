@@ -15,11 +15,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
 end NLogN
 
 namespace NLogN
@@ -34,16 +29,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_two_pow (m : ℕ) : nbits (2 ^ m) = List.replicate m false ++ [true] := by
-  induction m with
-  | zero => rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-  | succ m ih =>
-    rw [nbits_pos (by positivity), pow_succ, List.replicate_succ]
-    simp [ih, Nat.mul_mod_left]
-
-theorem zbits_two_pow (m : ℕ) : zbits (2 ^ m : ℕ) = List.replicate m false ++ [true] := by
-  simp [zbits, nbits_two_pow]
-
 end NLogN
 
 namespace NLogN
@@ -57,10 +42,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem zsz_two_pow (m : ℕ) : zsz ((2 : ℤ) ^ m) = m + 1 := by
-  have : ((2 : ℤ) ^ m) = ((2 ^ m : ℕ) : ℤ) := by push_cast; rfl
-  rw [this, zsz, zbits_two_pow]; simp
 
 theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
 
@@ -82,9 +63,6 @@ open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-theorem zsz_natCast_le_self' (k : ℕ) : zsz (k : ℤ) ≤ k :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
 
 end NLogN
 

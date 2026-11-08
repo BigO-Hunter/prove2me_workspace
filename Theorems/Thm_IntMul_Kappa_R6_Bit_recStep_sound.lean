@@ -36,7 +36,6 @@ namespace R6Chk
 
 theorem nxor (x y : ℕ) : Nat.xor x y = x ^^^ y := rfl
 
-theorem nshl (x y : ℕ) : Nat.shiftLeft x y = x <<< y := rfl
 theorem nmul (x y : ℕ) : Nat.mul x y = x * y := rfl
 
 theorem nsub (x y : ℕ) : Nat.sub x y = x - y := rfl

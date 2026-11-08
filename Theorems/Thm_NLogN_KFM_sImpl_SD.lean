@@ -94,8 +94,6 @@ variable (s : IState HS) (f : Fin HS → List ℤ)
 
 end
 
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
-
 end KIL
 
 end NLogN

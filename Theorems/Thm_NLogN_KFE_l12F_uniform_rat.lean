@@ -19,9 +19,6 @@ open Matrix
 section Pull
 variable {α : Type*}
 
-@[simp] lemma length_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) :
-    (AModel.pull sh sh' g d xs).length = AModel.vol sh' := by simp [AModel.pull]
-
 end Pull
 
 variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q)
@@ -66,8 +63,6 @@ section
 namespace AModel
 
 section Reshape
-
-lemma vol_append (A B : Shape) : AModel.vol (A ++ B) = AModel.vol A * AModel.vol B := List.prod_append
 
 end Reshape
 
@@ -131,23 +126,9 @@ section RunChild
 
 variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q) {α : Type*}
 
-lemma length_runArr (d : α) (steps : List (AModel.Step n Q)) {xs : List α}
-    (hxs : xs.length = AModel.vol sh) : (AModel.runArr Λ d steps xs).length = AModel.vol sh := by
-  induction steps generalizing xs with
-  | nil => exact hxs
-  | cons s rest ih =>
-    simp only [AModel.runArr, List.foldl_cons] at ih ⊢
-    exact ih (by rw [Step.arr, length_pull])
-
 end RunChild
 
 section Chunks
-
-lemma vol_replicate (m N : ℕ) : AModel.vol (List.replicate m N) = N ^ m := List.prod_replicate m N
-
-lemma vol_hdShape (A B C : Shape) (m N : ℕ) :
-    AModel.vol (hdShape A B C m N) = AModel.vol (swShape A B C (N ^ m)) := by
-  simp only [hdShape, swShape, vol_append, vol_cons, vol_replicate]
 
 end Chunks
 
@@ -209,10 +190,6 @@ open AModel
 
 section Shapes
 
-lemma vol_rowShape (P R : ℕ) (G Suf : Shape) (q n : ℕ) :
-    AModel.vol (rowShape P R G Suf q n) = P * R * AModel.vol (restShape G Suf q n) := by
-  simp [rowShape, mul_assoc]
-
 end Shapes
 
 section PiecesDef
@@ -247,27 +224,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -299,8 +258,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -316,12 +273,6 @@ section
 -- Source module: NLogN.Costs
 namespace NLogN
 
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
-
 end NLogN
 
 end
@@ -333,9 +284,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-
-theorem zsz_natCast_le {j k : ℕ} (h : j ≤ k) : zsz (j : ℤ) ≤ zsz (k : ℤ) :=
-  zsz_mono (by simpa using h)
 
 end NLogN
 
@@ -355,8 +303,6 @@ section
 variable (s : IState HS) (f : Fin HS → List ℤ)
 
 end
-
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
 
 end KIL
 
@@ -423,23 +369,6 @@ section Lengths
 
 variable {m W : ℕ} [NeZero W] (C : Circuit (ZMod 2) m W)
 
-theorem length_levelR (N P L' : ℕ) (A B Cs : Shape)
-    (child : Fin (m + m) → Fin (m + m) → List (ZMod 2) → List (ZMod 2)) (xs : List (ZMod 2)) :
-    (levelR C N P L' A B Cs child xs).length = vol (P :: W * L' :: hdShape A B Cs m N) := by
-  unfold levelR
-  exact length_runArr _ _ _ (by simp [rowMerge])
-
-theorem length_prog (q : ℕ) (P : ℕ) (A B Cs : Shape) (xs : List (ZMod 2)) :
-    ∀ (j L : ℕ), W ^ j ∣ L →
-      (AModel.prog C q j P L A B Cs xs).length = vol (P :: L :: swShape A B Cs (q ^ m ^ j))
-  | 0, L, _ => by simp [AModel.prog, length_pull]
-  | j + 1, L, hL => by
-    obtain ⟨L', rfl⟩ : W ∣ L := (dvd_pow_self W (Nat.succ_ne_zero j)).trans hL
-    have hdiv : W * L' / W = L' := Nat.mul_div_cancel_left L' (NeZero.pos W)
-    simp only [AModel.prog, hdiv, length_levelR]
-    simp only [vol_cons, vol_hdShape]
-    rw [← pow_mul, ← pow_succ]
-
 end Lengths
 
 section Table
@@ -467,9 +396,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-theorem one_le_vol {S : Shape} (h : ∀ a ∈ S, 1 ≤ a) : 1 ≤ vol S := by
-  unfold vol; exact Nat.one_le_iff_ne_zero.2 (List.prod_ne_zero (fun h0 => by have := h 0 h0; omega))
-
 end NLogN.KIL
 
 end
@@ -482,9 +408,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-theorem clog_le_self {m : ℕ} (hm : 2 ≤ m) (e : ℕ) : Nat.clog m e ≤ e :=
-  Nat.clog_le_of_le_pow (Nat.lt_pow_self (by omega)).le
 
 end NLogN.KIL
 
@@ -499,27 +422,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-theorem padRows_le (W K R : ℕ) (hW : 1 ≤ W) : padRows W K R ≤ R + W ^ K - 1 := by
-  unfold padRows
-  have h : 0 < W ^ K := Nat.pos_of_ne_zero (pow_ne_zero _ (by omega))
-  exact Nat.mul_div_le _ _
-
-theorem le_padRows (W K R : ℕ) (hW : 1 ≤ W) : R ≤ padRows W K R := by
-  unfold padRows
-  have h : 0 < W ^ K := Nat.pos_of_ne_zero (pow_ne_zero _ (by omega))
-  have := Nat.div_add_mod (R + W ^ K - 1) (W ^ K)
-  have := Nat.mod_lt (R + W ^ K - 1) h
-  omega
-
-theorem vol_restShape' (G Suf : Shape) (q n : ℕ) :
-    vol (restShape G Suf q n) = q ^ n * (vol G * (q ^ n * vol Suf)) := by
-  simp [restShape, vol_append, vol_replicate]
-
-theorem vol_qShape_row (Pre G Suf : Shape) (q r n : ℕ) :
-    vol (qShape Pre G Suf q (r + n)) =
-      vol Pre * (q ^ r * vol (restShape (G ++ List.replicate r q) Suf q n)) := by
-  simp only [qShape, restShape, vol_append, vol_replicate, pow_add]; ring
-
 end NLogN.KIL
 
 end
@@ -532,13 +434,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-/-- `W^K ≤ q^(W K)`. -/
-theorem pow_le_q_pow {W K q : ℕ} (hq : 2 ≤ q) : W ^ K ≤ q ^ (W * K) := by
-  rw [pow_mul]
-  apply Nat.pow_le_pow_left
-  calc W ≤ 2 ^ W := Nat.lt_two_pow_self.le
-    _ ≤ q ^ W := Nat.pow_le_pow_left hq W
 
 end NLogN.KIL
 

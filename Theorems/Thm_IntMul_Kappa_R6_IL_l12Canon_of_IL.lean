@@ -36,9 +36,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-theorem one_le_vol {S : Shape} (h : ∀ a ∈ S, 1 ≤ a) : 1 ≤ vol S := by
-  unfold vol; exact Nat.one_le_iff_ne_zero.2 (List.prod_ne_zero (fun h0 => by have := h 0 h0; omega))
-
 /-! ## Arithmetic of the levels -/
 
 /-! ## Counting the digits -/
@@ -71,10 +68,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-theorem vol_binShape (Pre G Suf : Shape) (F : ℕ) :
-    vol (binShape Pre G Suf F) = vol Pre * (F * (vol G * (F * vol Suf))) := by
-  simp [binShape, vol_append, vol_cons]
 
 /-! ## The padding expressions -/
 
@@ -129,19 +122,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 /-! ## The fine compilation and its cost -/
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-/-! ## Ghost stacks -/
-
-/-! ## The simulation -/
-
-/-! ## Top level -/
-
-/-! ## Coarse transfer: `fcost ≤ 100 · cost` -/
-
-/-! ## Fine specifications -/
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
 
 /-! ## Loops -/
 

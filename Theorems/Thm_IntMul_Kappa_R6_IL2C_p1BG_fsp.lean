@@ -31,6 +31,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs14
 import Definitions.Def_IntMul_Kappa_K_Defs3
 import Definitions.Def_IntMul_Kappa_K_Defs17
 import Definitions.Def_IntMul_Kappa_K_Defs15
+import Theorems.Thm_NLogN_KFD_genPU_fsp
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -92,11 +93,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-/-! ## Expressions -/
-
-theorem zsz_le_of_abs {a : ℤ} {Q Bb : ℕ} (h : a.natAbs ≤ 2 * Q) (hQ : zsz ((2 * Q : ℕ) : ℤ) ≤ Bb) :
-    zsz a ≤ Bb := le_trans (zsz_mono (le_of_le_of_eq h (Int.natAbs_natCast _).symm)) hQ
-
 /-! ## The program -/
 
 /-! ## Denotation -/
@@ -131,11 +127,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
-
-/-! ## Gaussian integers -/
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
 
 /-! ## Linear-combination expressions -/
 
@@ -227,10 +218,6 @@ theorem zsz_le_of_abs {v : ℤ} {B : ℕ} (h : |v| < 2 ^ B) : zsz v ≤ B := by
   have : (v.natAbs : ℤ) < 2 ^ B := by rw [Int.natCast_natAbs]; exact h
   exact_mod_cast this
 
-/-! ## The loop -/
-
-theorem upd_ne {F : Fin HS → List ℤ} {i j : Fin HS} (h : j ≠ i) (x : List ℤ) :
-    Function.update F i x j = F j := Function.update_of_ne h _ _
 end NLogN.KFL
 
 end
@@ -254,13 +241,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 

@@ -78,3 +78,10 @@ theorem NLogN.KIL.Sp_pop {i : Fin NLogN.HS} {a : ℤ} {l : List ℤ} {B : ℕ} (
     rw [← NLogN.KIL.encK_upd]; simp [hf]
   · simp only [NLogN.RS.cost, NLogN.KIL.top_encK hf]; omega
 end
+
+-- Dotted alias restored by repair: downstream proofs use `h.pop`-style member access.
+theorem NLogN.KIL.Sp.pop {i : Fin NLogN.HS} {a : ℤ} {l : List ℤ} {B : ℕ}
+    (s : NLogN.IState NLogN.HS) (f : Fin NLogN.HS → List ℤ) (hi : i.val < 56)
+    (hf : f i = a :: l) (ha : NLogN.zsz a ≤ B) :
+    NLogN.KIL.Sp (.pop i) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i l)) (2 * B + 2) :=
+  NLogN.KIL.Sp_pop s f hi hf ha

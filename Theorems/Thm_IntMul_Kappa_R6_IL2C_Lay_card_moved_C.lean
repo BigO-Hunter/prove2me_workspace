@@ -732,3 +732,6 @@ end IntMul.Kappa.R6.IL2C
 end
 
 theorem IntMul.Kappa.R6.IL2C.Lay_card_moved_C : type_of% @IntMul.Kappa.R6.IL2C.Lay.card_moved_C_sol_aux := @IntMul.Kappa.R6.IL2C.Lay.card_moved_C_sol_aux
+
+-- Dotted alias restored by repair: cL13_le references `Lay.card_moved_C` directly.
+theorem IntMul.Kappa.R6.IL2C.Lay.card_moved_C : type_of% @IntMul.Kappa.R6.IL2C.Lay.card_moved_C_sol_aux := @IntMul.Kappa.R6.IL2C.Lay.card_moved_C_sol_aux

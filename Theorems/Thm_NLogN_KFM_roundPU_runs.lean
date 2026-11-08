@@ -14,11 +14,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
 theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
   induction m using Nat.strong_induction_on with
   | _ m ih =>
@@ -107,23 +102,6 @@ variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 namespace IRuns
 
-theorem mono {p : IStmt S P} {s s' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (hc : c ≤ c') : IRuns I iprog p s s' c' := by
-  obtain ⟨d, hd, h⟩ := h; exact ⟨d, by omega, h⟩
-
-theorem mono' {p : IStmt S P} {s s' s'' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (he : s' = s'') (hc : c ≤ c') : IRuns I iprog p s s'' c' := he ▸ h.mono hc
-
-theorem skip (s : IState S) : IRuns I iprog .skip s s 1 := ⟨1, le_rfl, .skip s⟩
-
-theorem op {o : IOp S} {s s' : IState S} {c : ℕ} (h : o.Step I s s' c) :
-    IRuns I iprog (.op o) s s' c := ⟨c, le_rfl, .op h⟩
-
-theorem seq {p q : IStmt S P} {s s₁ s₂ : IState S} {c₁ c₂ : ℕ} (h₁ : IRuns I iprog p s s₁ c₁)
-    (h₂ : IRuns I iprog q s₁ s₂ c₂) : IRuns I iprog (.seq p q) s s₂ (c₁ + c₂) := by
-  obtain ⟨d₁, hd₁, h₁⟩ := h₁; obtain ⟨d₂, hd₂, h₂⟩ := h₂
-  exact ⟨d₁ + d₂, by omega, .seq h₁ h₂⟩
-
 end IRuns
 
 namespace IRuns
@@ -137,38 +115,7 @@ theorem add {s : IState S} {i j k : Fin S} {a b : ℤ} {Li Lj : List Item} (hij 
 theorem neg {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (hi : s.G i = .int a :: L) :
     IRuns I iprog (.op (.neg i)) s (s.upd i (.int (-a) :: L)) 20 := NLogN.IRuns.op (.neg hi)
 
-theorem dup {s : IState S} {i j : Fin S} {a : ℤ} {L : List Item} (hij : i ≠ j)
-    (hi : s.G i = .int a :: L) :
-    IRuns I iprog (.op (.dup i j)) s (s.upd j (.int a :: s.G j)) (dupCost (zsz a) + 17) :=
-  NLogN.IRuns.op (.dup hij hi)
-
-theorem drop {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (hi : s.G i = .int a :: L) :
-    IRuns I iprog (.op (.drop i)) s (s.upd i L) (2 * zsz a + 2) := NLogN.IRuns.op (.drop hi)
-
-theorem mv {s : IState S} {i j : Fin S} {a : ℤ} {L : List Item} (hij : i ≠ j)
-    (hi : s.G i = .int a :: L) :
-    IRuns I iprog (.op (.mv i j)) s ((s.upd i L).upd j (.int a :: s.G j))
-      (2 * moveCost (zsz a) + 19) := NLogN.IRuns.op (.mv hij hi)
-
-theorem split {s : IState S} {i j k : Fin S} {a : ℤ} {m : ℕ} {Li Lj : List Item} (hij : i ≠ j)
-    (hik : i ≠ k) (hjk : j ≠ k) (hi : s.G i = .int a :: Li) (hj : s.G j = .int (2 ^ m) :: Lj) :
-    IRuns I iprog (.op (.split i j k)) s
-      ((s.upd i (.int (sg a (a.natAbs / 2 ^ m)) :: Li)).upd k
-        (.int (sg a (a.natAbs % 2 ^ m)) :: s.G k)) (splitCost m + 17) :=
-  NLogN.IRuns.op (.split hij hik hjk hi hj)
-
 end IRuns
-
-@[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
-    (s.upd i L).upd i L' = s.upd i L' := by
-  simp [IState.upd]
-
-@[simp] theorem IState.upd_self (s : IState S) (i : Fin S) : s.upd i (s.G i) = s := by
-  simp [IState.upd]
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
 
 end NLogN
 
@@ -180,11 +127,6 @@ namespace NLogN
 
 theorem addIntCost_le (L : ℕ) : addIntCost L ≤ 400 * (L + 1) := by
   simp only [addIntCost, addMagCost, subMagCost, zipCost, moveCost]; omega
-theorem dupCost_le (L : ℕ) : dupCost L + 17 ≤ 300 * (L + 1) := by
-  simp only [dupCost, zipCost, moveCost]; ring_nf; omega
-theorem moveIntCost_le (L : ℕ) : 2 * moveCost L + 19 ≤ 110 * (L + 1) := by
-  simp only [moveCost]; omega
-
 theorem splitCost_le (m : ℕ) : splitCost m + 17 ≤ 200 * (m + 1) := by
   simp only [splitCost, takeCost, moveCost]; omega
 
@@ -216,16 +158,6 @@ section
 namespace NLogN
 
 open IntMul
-
-@[simp] theorem IState.self_eq_upd {S : ℕ} (s : IState S) (i : Fin S) (L : List Item) :
-    s = s.upd i L ↔ s.G i = L := by
-  constructor
-  · intro h; rw [h]; simp
-  · intro h; rw [← h]; simp
-
-@[simp] theorem IState.upd_eq_self {S : ℕ} (s : IState S) (i : Fin S) (L : List Item) :
-    s.upd i L = s ↔ s.G i = L := by
-  rw [eq_comm]; exact IState.self_eq_upd s i L
 
 variable {P : ℕ}
 

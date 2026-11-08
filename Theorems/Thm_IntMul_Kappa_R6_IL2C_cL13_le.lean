@@ -305,13 +305,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
 
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
-
 /-! ## The generic segment step -/
 
 /-! ## Expression combinators -/
@@ -491,11 +484,6 @@ namespace NLogN.KFW
 
 open IntMul RS KFD
 
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
-
 end NLogN.KFW
 
 end
@@ -574,46 +562,20 @@ namespace IntMul.Kappa.R6.IL2C
 
 open NLogN NLogN.KFL AModel AModelL12
 
-/-! ## Record-wise reindexing -/
-
-/-! ## Fields with a record factor -/
-
-/-! ## Rotations on records -/
-
-/-! ## Swaps on records -/
-
-/-! ## Nested fields -/
-
-theorem nest_trans {S1 S2 S3 Q2 Q3 k k' : ℕ} (hk : 0 < k) (hk' : 0 < k') (h1 : S1 = S2 * Q2 * k)
-    (h2 : S2 = S3 * Q3 * k') (hQ2 : 0 < Q2) : ∃ k'', 0 < k'' ∧ S1 = S3 * Q3 * k'' :=
-  ⟨k' * Q2 * k, by positivity, by rw [h1, h2]; ring⟩
-
 /-! ## The layout of a record index -/
 
 namespace Lay
 
 variable {l : Lay}
 
-theorem OK.pY (h : l.OK) : 0 < l.sY := by
-  obtain ⟨k, hk, e⟩ := h.kYB; rw [e]; exact Nat.mul_pos (Nat.mul_pos h.pB h.qc) hk
 theorem OK.pX (h : l.OK) : 0 < l.sX := by
   obtain ⟨k, hk, e⟩ := h.kXB; rw [e]; exact Nat.mul_pos (Nat.mul_pos h.pB h.qc) hk
-theorem OK.pU (h : l.OK) : 0 < l.sU := by
-  obtain ⟨k, hk, e⟩ := h.kUY; rw [e]; exact Nat.mul_pos (Nat.mul_pos h.pY h.ql) hk
-theorem OK.pT (h : l.OK) : 0 < l.sT := by
-  obtain ⟨k, hk, e⟩ := h.kTU; rw [e]; exact Nat.mul_pos (Nat.mul_pos h.pU h.qc) hk
 theorem OK.pM (h : l.OK) : 0 < l.M := by
   obtain ⟨k, hk, e⟩ := h.kM; rw [e]; exact Nat.mul_pos (Nat.mul_pos h.pT h.qc) hk
 
-theorem OK.kTY (h : l.OK) : ∃ k, 0 < k ∧ l.sT = l.sY * l.QL * k := by
-  obtain ⟨a, ha, ea⟩ := h.kTU; obtain ⟨b, hb, eb⟩ := h.kUY
-  exact nest_trans ha hb ea eb h.qc
 theorem OK.kTX (h : l.OK) : ∃ k, 0 < k ∧ l.sT = l.sX * l.QL * k := by
   obtain ⟨a, ha, ea⟩ := h.kTU; obtain ⟨b, hb, eb⟩ := h.kUX
   exact nest_trans ha hb ea eb h.qc
-
-theorem OK.kMT (h : l.OK) : ∃ k, 0 < k ∧ l.M = l.QC * l.sT * k := by
-  obtain ⟨k, hk, e⟩ := h.kM; exact ⟨k, hk, by rw [e]; ring⟩
 
 /-! ### Single fields as states -/
 

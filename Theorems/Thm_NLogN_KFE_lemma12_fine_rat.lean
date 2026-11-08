@@ -16,66 +16,8 @@ namespace AModel
 
 open Matrix
 
-lemma decode_encode {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) : decode sh (encode sh a) = a := by
-  induction h with
-  | nil => rfl
-  | @cons x q as sh hx hr ih =>
-    have he := encode_lt hr
-    have hV : 0 < AModel.vol sh := by omega
-    simp only [encode, List.headD_cons, List.tail_cons, decode]
-    rw [show x * AModel.vol sh + encode sh as = encode sh as + AModel.vol sh * x by ring,
-      Nat.add_mul_div_left _ _ hV, Nat.div_eq_of_lt he, Nat.add_mul_mod_self_left,
-      Nat.mod_eq_of_lt he, ih, zero_add, Nat.mod_eq_of_lt hx]
-
-lemma encode_decode {sh : Shape} {m : ℕ} (h : m < AModel.vol sh) : encode sh (decode sh m) = m := by
-  induction sh generalizing m with
-  | nil => simp at h; subst h; rfl
-  | cons q sh ih =>
-    simp only [vol_cons] at h
-    have hV : 0 < AModel.vol sh := Nat.pos_of_ne_zero (by rintro h'; simp [h'] at h)
-    have hq : m / AModel.vol sh < q := (Nat.div_lt_iff_lt_mul hV).2 h
-    simp only [decode, encode, List.headD_cons, List.tail_cons, Nat.mod_eq_of_lt hq,
-      ih (Nat.mod_lt m hV)]
-    exact Nat.div_add_mod' m (AModel.vol sh)
-
 section Pull
 variable {α : Type*}
-
-@[simp] lemma length_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) :
-    (AModel.pull sh sh' g d xs).length = AModel.vol sh' := by simp [AModel.pull]
-
-lemma getElem_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) (j : ℕ)
-    (hj : j < (AModel.pull sh sh' g d xs).length) :
-    (AModel.pull sh sh' g d xs)[j] = xs.getD (encode sh (g (decode sh' j))) d := by
-  simp [AModel.pull]
-
-/-- `pull` only depends on `g` at valid output addresses. -/
-lemma pull_congr {sh sh' : Shape} {g g' : List ℕ → List ℕ}
-    (h : ∀ a, AModel.Valid sh' a → g a = g' a) (d : α) (xs : List α) :
-    AModel.pull sh sh' g d xs = AModel.pull sh sh' g' d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  rw [getElem_pull, getElem_pull, h _ (valid_decode h₁)]
-
-/-- Composition of pulls. -/
-theorem pull_comp {sh sh' sh'' : Shape} (g g' : List ℕ → List ℕ)
-    (hg' : ∀ a, AModel.Valid sh'' a → AModel.Valid sh' (g' a)) (d : α) (xs : List α) :
-    AModel.pull sh' sh'' g' d (AModel.pull sh sh' g d xs) = AModel.pull sh sh'' (g ∘ g') d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  have hv := hg' _ (valid_decode h₁)
-  have hlt := encode_lt hv
-  rw [getElem_pull, getElem_pull, List.getD_eq_getElem _ _ (by simpa using hlt), getElem_pull,
-    decode_encode hv, Function.comp_apply]
-
-theorem pull_id {sh : Shape} (d : α) {xs : List α} (h : xs.length = AModel.vol sh) :
-    AModel.pull sh sh id d xs = xs := by
-  apply List.ext_getElem (by simp [h])
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  rw [getElem_pull, id, encode_decode h₁, List.getD_eq_getElem]
 
 end Pull
 
@@ -83,33 +25,7 @@ variable {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q)
 
 namespace Layout
 
-lemma actIdx_some {k : ℕ} {i : Fin n} (h : Λ.actIdx k = some i) : (Λ.pos i : ℕ) = k := by
-  have := List.find?_some h
-  simpa using this
-
-lemma actIdx_pos (i : Fin n) : Λ.actIdx (Λ.pos i) = some i := by
-  cases h : Λ.actIdx (Λ.pos i) with
-  | none =>
-    unfold actIdx at h
-    rw [List.find?_eq_none] at h
-    exact absurd (by simp) (h i (List.mem_finRange i))
-  | some r => rw [Λ.mono.injective (Fin.ext (Λ.actIdx_some h))]
-
-lemma actIdx_none {k : ℕ} (h : Λ.actIdx k = none) (i : Fin n) : (Λ.pos i : ℕ) ≠ k := by
-  rintro rfl; rw [Λ.actIdx_pos] at h; cases h
-
 end Layout
-
-@[simp] lemma length_setAct (a : List ℕ) (v : Fin n → ZMod Q) :
-    (setAct Λ a v).length = a.length := by simp [setAct]
-
-lemma getElem_setAct (a : List ℕ) (v : Fin n → ZMod Q) (k : ℕ)
-    (hk : k < (setAct Λ a v).length) :
-    (setAct Λ a v)[k] = match Λ.actIdx k with
-      | some i => (v i).val
-      | none => a[k]'(by simpa using hk) := by
-  simp [setAct]
-  try (first | rfl | (split <;> rfl))
 
 lemma getElem_setAct_pos (a : List ℕ) (v : Fin n → ZMod Q) (i : Fin n)
     (hk : (Λ.pos i : ℕ) < (setAct Λ a v).length) :
@@ -122,16 +38,6 @@ lemma setAct_setAct (a : List ℕ) (v w : Fin n → ZMod Q) :
   intro k h₁ h₂
   simp only [getElem_setAct]
   cases Λ.actIdx k <;> rfl
-
-lemma Valid.digit_lt {a : List ℕ} (ha : AModel.Valid sh a) (i : Fin n) :
-    a.getD (Λ.pos i) 0 < Q := by
-  obtain ⟨hl, hlt⟩ := (valid_iff sh a).1 ha
-  have h2 : (Λ.pos i : ℕ) < sh.length := (Λ.pos i).2
-  have h1 : (Λ.pos i : ℕ) < a.length := by omega
-  have := hlt _ h1 h2
-  have hs := Λ.size i
-  simp only [List.get_eq_getElem] at hs
-  rw [List.getD_eq_getElem _ _ h1]; simpa [hs] using this
 
 lemma valid_setAct [NeZero Q] {a : List ℕ} (ha : AModel.Valid sh a) (v : Fin n → ZMod Q) :
     AModel.Valid sh (setAct Λ a v) := by
@@ -396,49 +302,6 @@ namespace AModel
 
 open Finset
 
-/-- `((m:ℝ)^k)^τ = (m^τ)^k`. -/
-lemma pow_rpow_eq (m : ℕ) (k : ℕ) (τ : ℝ) :
-    (((m : ℝ) ^ k) ^ τ) = ((m : ℝ) ^ τ) ^ k :=
-  (Real.rpow_pow_comm (Nat.cast_nonneg m) τ k).symm
-
-lemma one_le_base_rpow {m : ℕ} (hm : 2 ≤ m) {τ : ℝ} (hτ : 0 ≤ τ) :
-    1 ≤ (m : ℝ) ^ τ :=
-  Real.one_le_rpow (by exact_mod_cast (by omega : 1 ≤ m)) hτ
-
-/-- Abstract version: `F (k+1) ≤ a F k + C`, `0 ≤ a < b`, `1 ≤ b` gives `F k ≤ K b^k`. -/
-lemma linear_recurrence_bound {a b C : ℝ} (ha : 0 ≤ a) (hab : a < b) (hb : 1 ≤ b)
-    (hC : 0 ≤ C) (F : ℕ → ℝ) (h0 : F 0 ≤ C) (hstep : ∀ k, F (k + 1) ≤ a * F k + C) :
-    ∀ k, F k ≤ max C (C / (b - a)) * b ^ k := by
-  set K := max C (C / (b - a))
-  have hba : 0 < b - a := by linarith
-  have hKC : C ≤ K := le_max_left _ _
-  have hK2 : C ≤ K * (b - a) := by
-    have : C / (b - a) ≤ K := le_max_right _ _
-    rwa [div_le_iff₀ hba] at this
-  have hK0 : 0 ≤ K := le_trans hC hKC
-  intro k
-  induction k with
-  | zero => simpa using h0.trans hKC
-  | succ k ih =>
-    have hbk : 1 ≤ b ^ k := one_le_pow₀ hb
-    have h1 : a * F k ≤ a * (K * b ^ k) := mul_le_mul_of_nonneg_left ih ha
-    have h2 : C ≤ K * (b - a) * b ^ k := by
-      nlinarith [mul_nonneg hK0 hba.le]
-    calc F (k + 1) ≤ a * F k + C := hstep k
-      _ ≤ a * (K * b ^ k) + K * (b - a) * b ^ k := by linarith
-      _ = K * b ^ (k + 1) := by ring
-
-/-- **Prop. 11, eq. (12)** (power widths). -/
-theorem power_width_recurrence (m W s : ℕ) (τ C : ℝ) (hm : 2 ≤ m) (_hW : 1 ≤ W)
-    (hτ : 0 < τ ∧ τ < 1) (hs : (s : ℝ) / W < (m : ℝ) ^ τ) (hC : 0 ≤ C) :
-    ∃ K : ℝ, 0 ≤ K ∧ ∀ F : ℕ → ℝ, F 0 ≤ C → (∀ k, F (k + 1) ≤ ((s : ℝ) / W) * F k + C) →
-      ∀ k, F k ≤ K * ((m : ℝ) ^ k) ^ τ := by
-  refine ⟨max C (C / ((m : ℝ) ^ τ - (s : ℝ) / W)), le_trans hC (le_max_left _ _), ?_⟩
-  intro F h0 hstep k
-  rw [pow_rpow_eq]
-  exact linear_recurrence_bound (by positivity) hs (one_le_base_rpow hm hτ.1.le) hC F h0
-    hstep k
-
 /-- The time recurrence is dominated by `V * coeffSeq`. -/
 lemma time_le_vol_mul_coeff (s W : ℕ) (C : ℝ) (T : ℕ → ℝ → ℝ)
     (h0 : ∀ V, 0 ≤ V → T 0 V ≤ C * V)
@@ -481,184 +344,6 @@ namespace AModel
 
 section Reshape
 
-lemma vol_append (A B : Shape) : AModel.vol (A ++ B) = AModel.vol A * AModel.vol B := List.prod_append
-
-set_option linter.unnecessarySimpa false in
-lemma encode_congr {A : Shape} {c c' : List ℕ} (h : ∀ k < A.length, c.getD k 0 = c'.getD k 0) :
-    encode A c = encode A c' := by
-  induction A generalizing c c' with
-  | nil => rfl
-  | cons q A ih =>
-    simp only [encode]
-    have h0 := h 0 (by simp)
-    have ht : encode A c.tail = encode A c'.tail := by
-      apply ih; intro k hk
-      have := h (k + 1) (by simp; omega)
-      rcases c with _ | ⟨x, c⟩ <;> rcases c' with _ | ⟨y, c'⟩ <;>
-        simpa [List.getD_eq_getElem?_getD] using this
-    have hh : c.headD 0 = c'.headD 0 := by
-      rcases c with _ | ⟨x, c⟩ <;> rcases c' with _ | ⟨y, c'⟩ <;>
-        simpa [List.getD_eq_getElem?_getD] using h0
-    rw [ht, hh]
-
-lemma encode_append (A B : Shape) (c : List ℕ) :
-    encode (A ++ B) c = encode A c * AModel.vol B + encode B (c.drop A.length) := by
-  induction A generalizing c with
-  | nil => simp [encode]
-  | cons q A ih =>
-    simp only [List.cons_append, encode, ih, vol_append, List.length_cons]
-    rw [show c.drop (A.length + 1) = c.tail.drop A.length by cases c <;> simp]
-    ring
-
-lemma encode_append3 (P M S : Shape) (c : List ℕ) :
-    encode (P ++ (M ++ S)) c = encode P c * (AModel.vol M * AModel.vol S) +
-      encode M (c.drop P.length) * AModel.vol S + encode S (c.drop (P.length + M.length)) := by
-  rw [encode_append, encode_append, vol_append, List.drop_drop]; ring
-
-lemma shape_split (sh : Shape) (i r : ℕ) :
-    sh = sh.take i ++ ((sh.drop i).take r ++ sh.drop (i + r)) := by
-  rw [← List.drop_drop, List.take_append_drop, List.take_append_drop]
-
-lemma length_mergeShape {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.length) :
-    (mergeShape sh i r).length = sh.length + 1 - r := by
-  simp [mergeShape]; omega
-
-theorem vol_mergeShape (sh : Shape) (i r : ℕ) : AModel.vol (mergeShape sh i r) = AModel.vol sh := by
-  conv_rhs => rw [shape_split sh i r]
-  simp only [mergeShape, vol_append, List.append_assoc, List.cons_append, List.nil_append,
-    vol_cons]
-
-lemma length_decode (sh : Shape) (m : ℕ) : (decode sh m).length = sh.length := by
-  induction sh generalizing m with
-  | nil => rfl
-  | cons q sh ih => simp [decode, ih]
-
-theorem encode_mergeAddr {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.length) {a : List ℕ}
-    (hi : i ≤ a.length) :
-    encode (mergeShape sh i r) (mergeAddr sh i r a) = encode sh a := by
-  conv_rhs => rw [shape_split sh i r]
-  have hP : (sh.take i).length = i := by simp; omega
-  have hM : ((sh.drop i).take r).length = r := by simp; omega
-  have hti : (a.take i).length = i := by simp; omega
-  have hm : mergeShape sh i r = sh.take i ++ ([AModel.vol ((sh.drop i).take r)] ++ sh.drop (i + r)) := by
-    simp [mergeShape]
-  rw [hm, encode_append3, encode_append3, hP, hM]
-  have e1 : encode (sh.take i) (mergeAddr sh i r a) = encode (sh.take i) a := by
-    apply encode_congr; intro k hk
-    rw [hP] at hk
-    simp only [mergeAddr, List.append_assoc]
-    rw [List.getD_append _ _ _ _ (by omega)]
-    simp [List.getD_eq_getElem?_getD, hk]
-  have e2 : encode ((sh.drop i).take r) (a.drop i) =
-      encode ((sh.drop i).take r) ((a.drop i).take r) := by
-    apply encode_congr; intro k hk
-    rw [hM] at hk
-    simp [List.getD_eq_getElem?_getD, hk]
-  have e3 : (mergeAddr sh i r a).drop i =
-      encode ((sh.drop i).take r) ((a.drop i).take r) :: a.drop (i + r) := by
-    simp [mergeAddr, hti]
-  have e4 : (mergeAddr sh i r a).drop (i + 1) = a.drop (i + r) := by
-    rw [← List.drop_drop, e3]; simp
-  simp only [List.length_singleton]
-  rw [e1, e2, e3, e4]
-  simp [encode]
-
-lemma valid_append {A B : Shape} {a b : List ℕ} (ha : AModel.Valid A a) (hb : AModel.Valid B b) :
-    AModel.Valid (A ++ B) (a ++ b) := List.rel_append ha hb
-
-lemma Valid.take {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) (k : ℕ) :
-    AModel.Valid (sh.take k) (a.take k) := List.forall₂_take k h
-
-lemma Valid.drop {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) (k : ℕ) :
-    AModel.Valid (sh.drop k) (a.drop k) := List.forall₂_drop k h
-
-theorem valid_mergeAddr {sh : Shape} {i r : ℕ} {a : List ℕ} (ha : AModel.Valid sh a) :
-    AModel.Valid (mergeShape sh i r) (mergeAddr sh i r a) := by
-  unfold mergeShape mergeAddr
-  refine valid_append (valid_append (ha.take i) ?_) (ha.drop (i + r))
-  exact List.Forall₂.cons (encode_lt ((ha.drop i).take r)) List.Forall₂.nil
-
-lemma mergeShape_take {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.length) :
-    (mergeShape sh i r).take i = sh.take i := by
-  simp [mergeShape, List.take_append, List.take_take]; omega
-
-lemma mergeShape_drop {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.length) :
-    (mergeShape sh i r).drop i = AModel.vol ((sh.drop i).take r) :: sh.drop (i + r) := by
-  have hti : (sh.take i).length = i := by simp; omega
-  simp [mergeShape, hti]
-
-lemma Valid.merged_digit {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.length) {b : List ℕ}
-    (hb : AModel.Valid (mergeShape sh i r) b) :
-    i < b.length ∧ b.getD i 0 < AModel.vol ((sh.drop i).take r) ∧
-      AModel.Valid (sh.take i) (b.take i) ∧ AModel.Valid (sh.drop (i + r)) (b.drop (i + 1)) := by
-  have hl : b.length = sh.length + 1 - r := by rw [hb.length_eq, length_mergeShape h]
-  have hlen : i < b.length := by omega
-  have hd := hb.drop i
-  rw [mergeShape_drop h, List.drop_eq_getElem_cons hlen] at hd
-  have ht := hb.take i
-  rw [mergeShape_take h] at ht
-  refine ⟨hlen, ?_, ht, (List.forall₂_cons.1 hd).2⟩
-  rw [List.getD_eq_getElem _ _ hlen]; exact (List.forall₂_cons.1 hd).1
-
-theorem valid_splitAddr {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.length) {b : List ℕ}
-    (hb : AModel.Valid (mergeShape sh i r) b) : AModel.Valid sh (splitAddr sh i r b) := by
-  obtain ⟨-, hd, ht, hr⟩ := hb.merged_digit h
-  have := valid_append (valid_append ht (valid_decode hd)) hr
-  rwa [List.append_assoc, ← shape_split] at this
-
-theorem mergeAddr_splitAddr {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.length) {b : List ℕ}
-    (hb : AModel.Valid (mergeShape sh i r) b) : mergeAddr sh i r (splitAddr sh i r b) = b := by
-  obtain ⟨hlen, hd, -, -⟩ := hb.merged_digit h
-  have hD : (decode ((sh.drop i).take r) (b.getD i 0)).length = r := by
-    rw [length_decode]; simp; omega
-  have hti : (b.take i).length = i := by simp; omega
-  have hs : splitAddr sh i r b =
-      b.take i ++ (decode ((sh.drop i).take r) (b.getD i 0) ++ b.drop (i + 1)) := by
-    simp [splitAddr]
-  have e1 : (splitAddr sh i r b).take i = b.take i := by
-    rw [hs, List.take_left' hti]
-  have e2 : ((splitAddr sh i r b).drop i).take r = decode ((sh.drop i).take r) (b.getD i 0) := by
-    rw [hs, List.drop_left' hti, List.take_left' hD]
-  have e3 : (splitAddr sh i r b).drop (i + r) = b.drop (i + 1) := by
-    rw [hs, ← List.drop_drop, List.drop_left' hti, List.drop_left' hD]
-  unfold mergeAddr
-  rw [e1, e2, e3, encode_decode hd, List.getD_eq_getElem _ _ hlen, List.append_assoc,
-    List.singleton_append, ← List.drop_eq_getElem_cons hlen, List.take_append_drop]
-
-theorem encode_splitAddr {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.length) {b : List ℕ}
-    (hb : AModel.Valid (mergeShape sh i r) b) :
-    encode sh (splitAddr sh i r b) = encode (mergeShape sh i r) b := by
-  have hv := valid_splitAddr h hb
-  conv_rhs => rw [← mergeAddr_splitAddr h hb]
-  rw [encode_mergeAddr h (by rw [hv.length_eq]; omega)]
-
-/-- General transport of a pull along reshapes `sB : B' → B` (on the output side) and
-`mA : A → A'` (on the input side) that preserve the linear index. -/
-theorem pull_reshape {α : Type*} {A B A' B' : Shape} (g : List ℕ → List ℕ)
-    (mA sB : List ℕ → List ℕ) (hvol : AModel.vol B' = AModel.vol B)
-    (hs : ∀ b, AModel.Valid B' b → AModel.Valid B (sB b) ∧ encode B (sB b) = encode B' b)
-    (hm : ∀ a, AModel.Valid A a → encode A' (mA a) = encode A a)
-    (hg : ∀ b, AModel.Valid B b → AModel.Valid A (g b)) (d : α) (xs : List α) :
-    AModel.pull A B g d xs = AModel.pull A' B' (mA ∘ g ∘ sB) d xs := by
-  apply List.ext_getElem (by simp [hvol])
-  intro j h₁ h₂
-  simp only [length_pull] at h₁ h₂
-  rw [getElem_pull, getElem_pull]
-  obtain ⟨hv, he⟩ := hs _ (valid_decode h₂)
-  rw [encode_decode h₂] at he
-  have : sB (decode B' j) = decode B j := by conv_rhs => rw [← he, decode_encode hv]
-  simp only [Function.comp_apply, this, hm _ (hg _ (valid_decode h₁))]
-
-/-- **Reshape is free.** Merging fields `[i, i+r)` conjugates any pull on `sh`. -/
-theorem pull_merge {α : Type*} {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.length)
-    (g : List ℕ → List ℕ) (hg : ∀ a, AModel.Valid sh a → AModel.Valid sh (g a)) (d : α) (xs : List α) :
-    AModel.pull sh sh g d xs =
-      AModel.pull (mergeShape sh i r) (mergeShape sh i r)
-        (mergeAddr sh i r ∘ g ∘ splitAddr sh i r) d xs :=
-  pull_reshape g _ _ (vol_mergeShape sh i r)
-    (fun b hb => ⟨valid_splitAddr h hb, encode_splitAddr h hb⟩)
-    (fun a ha => encode_mergeAddr h (by rw [ha.length_eq]; omega)) hg d xs
-
 end Reshape
 
 section BlockSwap
@@ -666,195 +351,11 @@ section BlockSwap
 lemma swapMap_eq_swapPos {sh : Shape} {n Q : ℕ} (Λ : Layout sh n Q) (i j : Fin n) :
     swapMap Λ i j = swapPos (Λ.pos i) (Λ.pos j) := rfl
 
-@[simp] lemma length_permIdx (f : ℕ → ℕ) (a : List ℕ) : (permIdx f a).length = a.length := by
-  simp [permIdx]
-
-lemma getElem_permIdx (f : ℕ → ℕ) (a : List ℕ) (k : ℕ) (hk : k < (permIdx f a).length) :
-    (permIdx f a)[k] = a.getD (f k) 0 := by simp [permIdx]
-
-lemma valid_permIdx {sh : Shape} {f : ℕ → ℕ} {a : List ℕ} (ha : AModel.Valid sh a)
-    (hf : ∀ k < sh.length, f k < sh.length ∧ sh.getD (f k) 0 = sh.getD k 0) :
-    AModel.Valid sh (permIdx f a) := by
-  obtain ⟨hl, hlt⟩ := (valid_iff sh a).1 ha
-  refine (valid_iff _ _).2 ⟨by simp [hl], fun k h₁ h₂ => ?_⟩
-  obtain ⟨hf1, hf2⟩ := hf k h₂
-  rw [getElem_permIdx, List.getD_eq_getElem _ _ (by omega), ← List.getD_eq_getElem sh 0 h₂,
-    ← hf2, List.getD_eq_getElem _ _ hf1]
-  exact hlt _ _ _
-
-@[simp] lemma length_blockSwap (i j r : ℕ) (a : List ℕ) :
-    (blockSwap i j r a).length = a.length := by simp [blockSwap]
-
-lemma getElem_blockSwap (i j r : ℕ) (a : List ℕ) (k : ℕ) (hk : k < (blockSwap i j r a).length) :
-    (blockSwap i j r a)[k] = a.getD (bsIdx i j r k) 0 := getElem_permIdx _ _ _ _
-
-lemma bsIdx_left {i j r k : ℕ} (hij : i + r ≤ j) (hk : k < r) : bsIdx i j r (i + k) = j + k := by
-  unfold bsIdx; split_ifs <;> omega
-
-lemma bsIdx_right {i j r k : ℕ} (hij : i + r ≤ j) (hk : k < r) : bsIdx i j r (j + k) = i + k := by
-  unfold bsIdx; split_ifs <;> omega
-
-lemma bsIdx_out {i j r k : ℕ} (h1 : ¬ (i ≤ k ∧ k < i + r)) (h2 : ¬ (j ≤ k ∧ k < j + r)) :
-    bsIdx i j r k = k := by
-  unfold bsIdx; rw [if_neg h1, if_neg h2]
-
-lemma bsIdx_lt {i j r k L : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ L) (hk : k < L) :
-    bsIdx i j r k < L := by
-  unfold bsIdx; split_ifs <;> omega
-
-lemma valid_blockSwap {sh : Shape} {i j r : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ sh.length)
-    (hsz : ∀ k < r, sh.getD (i + k) 0 = sh.getD (j + k) 0) {a : List ℕ} (ha : AModel.Valid sh a) :
-    AModel.Valid sh (blockSwap i j r a) := by
-  refine valid_permIdx ha fun k hk => ⟨bsIdx_lt hij hj hk, ?_⟩
-  by_cases h1 : i ≤ k ∧ k < i + r
-  · obtain ⟨m, rfl⟩ : ∃ m, k = i + m := ⟨k - i, by omega⟩
-    rw [bsIdx_left hij (by omega), hsz m (by omega)]
-  · by_cases h2 : j ≤ k ∧ k < j + r
-    · obtain ⟨m, rfl⟩ : ∃ m, k = j + m := ⟨k - j, by omega⟩
-      rw [bsIdx_right hij (by omega), hsz m (by omega)]
-    · rw [bsIdx_out h1 h2]
-
 section Segments
 variable {i j r : ℕ} {a : List ℕ} (hij : i + r ≤ j) (hj : j + r ≤ a.length)
 include hij hj
 
-lemma blockSwap_take : (blockSwap i j r a).take i = a.take i := by
-  apply List.ext_getElem (by simp)
-  intro k h₁ h₂
-  simp only [List.length_take, length_blockSwap] at h₁
-  rw [List.getElem_take, List.getElem_take, getElem_blockSwap, bsIdx_out (by omega) (by omega),
-    List.getD_eq_getElem]
-
-lemma blockSwap_seg_left : ((blockSwap i j r a).drop i).take r = (a.drop j).take r := by
-  apply List.ext_getElem (by simp; omega)
-  intro k h₁ h₂
-  simp only [List.length_take, List.length_drop, length_blockSwap] at h₁
-  rw [List.getElem_take, List.getElem_drop, List.getElem_take, List.getElem_drop,
-    getElem_blockSwap, bsIdx_left hij (by omega), List.getD_eq_getElem]
-
-lemma blockSwap_seg_right : ((blockSwap i j r a).drop j).take r = (a.drop i).take r := by
-  apply List.ext_getElem (by simp; omega)
-  intro k h₁ h₂
-  simp only [List.length_take, List.length_drop, length_blockSwap] at h₁
-  rw [List.getElem_take, List.getElem_drop, List.getElem_take, List.getElem_drop,
-    getElem_blockSwap, bsIdx_right hij (by omega), List.getD_eq_getElem]
-
-omit hij in
-lemma blockSwap_mid : ((blockSwap i j r a).take j).drop (i + r) = (a.take j).drop (i + r) := by
-  apply List.ext_getElem (by simp)
-  intro k h₁ h₂
-  simp only [List.length_take, List.length_drop, length_blockSwap] at h₁
-  rw [List.getElem_drop, List.getElem_take, List.getElem_drop, List.getElem_take,
-    getElem_blockSwap, bsIdx_out (by omega) (by omega), List.getD_eq_getElem]
-
-omit hj in
-lemma blockSwap_rest : (blockSwap i j r a).drop (j + r) = a.drop (j + r) := by
-  apply List.ext_getElem (by simp)
-  intro k h₁ h₂
-  simp only [List.length_drop, length_blockSwap] at h₁
-  rw [List.getElem_drop, List.getElem_drop, getElem_blockSwap, bsIdx_out (by omega) (by omega),
-    List.getD_eq_getElem]
-
 end Segments
-
-lemma swapPos_append (P M S : List ℕ) (u v : ℕ) :
-    swapPos P.length (P.length + 1 + M.length) (P ++ [u] ++ (M ++ [v] ++ S)) =
-      P ++ [v] ++ (M ++ [u] ++ S) := by
-  have h1 : (P ++ [u] ++ (M ++ [v] ++ S)).getD (P.length + 1 + M.length) 0 = v := by
-    simp only [List.append_assoc, List.singleton_append]
-    rw [List.getD_append_right _ _ _ _ (by omega),
-      show P.length + 1 + M.length - P.length = M.length + 1 by omega]
-    simp
-  have h2 : (P ++ [u] ++ (M ++ [v] ++ S)).getD P.length 0 = u := by simp
-  unfold swapPos
-  rw [h1, h2]
-  simp only [List.append_assoc, List.singleton_append, List.set_append]
-  simp only [lt_self_iff_false, if_false, Nat.sub_self, List.set_cons_zero]
-  rw [List.set_append, if_neg (by omega),
-    show P.length + 1 + M.length - P.length = M.length + 1 by omega]
-  simp
-
-lemma mergeShape_seg {sh : Shape} {i j r : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ sh.length) :
-    ((mergeShape sh j r).drop i).take r = (sh.drop i).take r := by
-  unfold mergeShape
-  rw [List.append_assoc, List.drop_append_of_le_length (by simp; omega),
-    List.take_append_of_le_length (by simp; omega), List.drop_take, List.take_take]
-  congr 1; omega
-
-lemma merge2_form {sh : Shape} {i j r : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ sh.length)
-    {a : List ℕ} (ha : a.length = sh.length) :
-    merge2 sh i j r a = a.take i ++ [encode ((sh.drop i).take r) ((a.drop i).take r)] ++
-      ((a.take j).drop (i + r) ++ [encode ((sh.drop j).take r) ((a.drop j).take r)] ++
-        a.drop (j + r)) := by
-  have hm : mergeAddr sh j r a = a.take j ++
-      ([encode ((sh.drop j).take r) ((a.drop j).take r)] ++ a.drop (j + r)) := by
-    simp [mergeAddr]
-  have hl : i + r ≤ (a.take j).length := by simp; omega
-  unfold merge2
-  rw [mergeAddr, mergeShape_seg hij hj, hm, List.take_append_of_le_length (by omega),
-    List.take_take, List.drop_append_of_le_length (by omega),
-    List.take_append_of_le_length (by simp; omega), List.drop_append_of_le_length hl,
-    List.drop_take, List.take_take, min_eq_left (by omega : i ≤ j),
-    min_eq_left (by omega : r ≤ j - i)]
-  simp only [List.append_assoc]
-
-/-- **Merged block swap.** After merging the runs, the block swap exchanges two single digits. -/
-theorem merge2_blockSwap {sh : Shape} {i j r : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ sh.length)
-    (hsz : ∀ k < r, sh.getD (i + k) 0 = sh.getD (j + k) 0) {a : List ℕ}
-    (ha : a.length = sh.length) :
-    merge2 sh i j r (blockSwap i j r a) = swapPos i (j + 1 - r) (merge2 sh i j r a) := by
-  have hR : (sh.drop i).take r = (sh.drop j).take r := by
-    apply List.ext_getElem (by simp; omega)
-    intro k h₁ h₂
-    simp only [List.length_take, List.length_drop] at h₁
-    have := hsz k (by omega)
-    rw [List.getD_eq_getElem _ _ (by omega), List.getD_eq_getElem _ _ (by omega)] at this
-    simpa using this
-  have haj : j + r ≤ a.length := by omega
-  rw [merge2_form hij hj (by simp [ha]), merge2_form hij hj ha, blockSwap_take hij haj,
-    blockSwap_seg_left hij haj, blockSwap_seg_right hij haj, blockSwap_mid haj,
-    blockSwap_rest hij, hR]
-  have h1 : (a.take i).length = i := by simp; omega
-  have h2 : ((a.take j).drop (i + r)).length = j - (i + r) := by simp; omega
-  have key := swapPos_append (a.take i) ((a.take j).drop (i + r)) (a.drop (j + r))
-    (encode ((sh.drop j).take r) ((a.drop i).take r))
-    (encode ((sh.drop j).take r) ((a.drop j).take r))
-  rw [h1, h2] at key
-  rw [show j + 1 - r = i + 1 + (j - (i + r)) by omega, key]
-
-lemma length_mergeShape2 {sh : Shape} {i j r : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ sh.length) :
-    i + r ≤ (mergeShape sh j r).length := by
-  rw [length_mergeShape hj]; omega
-
-lemma valid_split2 {sh : Shape} {i j r : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ sh.length)
-    {b : List ℕ} (hb : AModel.Valid (mergeShape2 sh i j r) b) : AModel.Valid sh (split2 sh i j r b) :=
-  valid_splitAddr hj (valid_splitAddr (length_mergeShape2 hij hj) hb)
-
-lemma merge2_split2 {sh : Shape} {i j r : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ sh.length)
-    {b : List ℕ} (hb : AModel.Valid (mergeShape2 sh i j r) b) : merge2 sh i j r (split2 sh i j r b) = b := by
-  unfold merge2 split2
-  rw [mergeAddr_splitAddr hj (valid_splitAddr (length_mergeShape2 hij hj) hb),
-    mergeAddr_splitAddr (length_mergeShape2 hij hj) hb]
-
-/-- **Block swap as one merged-field interchange.** The pull of the block swap of the runs
-`[i, i+r)` and `[j, j+r)` (equal field sizes) is the pull, on the shape with both runs merged,
-of the swap of the two merged fields at positions `i` and `j + 1 - r`. -/
-theorem pull_blockSwap {α : Type*} {sh : Shape} {i j r : ℕ} (hij : i + r ≤ j)
-    (hj : j + r ≤ sh.length) (hsz : ∀ k < r, sh.getD (i + k) 0 = sh.getD (j + k) 0)
-    (d : α) (xs : List α) :
-    AModel.pull sh sh (blockSwap i j r) d xs =
-      AModel.pull (mergeShape2 sh i j r) (mergeShape2 sh i j r) (swapPos i (j + 1 - r)) d xs := by
-  have hi := length_mergeShape2 hij hj
-  rw [pull_merge hj _ (fun a ha => valid_blockSwap hij hj hsz ha),
-    pull_merge hi (mergeAddr sh j r ∘ blockSwap i j r ∘ splitAddr sh j r)
-      (fun b hb => valid_mergeAddr (valid_blockSwap hij hj hsz
-      (valid_splitAddr hj hb)))]
-  apply pull_congr
-  intro b hb
-  have hv := valid_split2 hij hj hb
-  have := merge2_blockSwap hij hj hsz hv.length_eq
-  rw [merge2_split2 hij hj hb] at this
-  exact this
 
 end BlockSwap
 
@@ -895,9 +396,6 @@ lemma vec_ext {R : Type*} {x y : Fin (m + m) → R} (h₁ : hv x = hv y) (h₂ :
 
 lemma castAdd_ne_natAdd (i j : Fin m) : Fin.castAdd m i ≠ Fin.natAdd m j := by
   intro h; have := congrArg Fin.val h; simp at this; omega
-
-lemma castAdd_lt_natAdd (i j : Fin m) : Fin.castAdd m i < Fin.natAdd m j := by
-  rw [Fin.lt_def]; simp; omega
 
 lemma blk_mulVec (P B C D : Matrix (Fin m) (Fin m) (ZMod Q)) (x : Fin (m + m) → ZMod Q) :
     hv (AModel.blk P B C D *ᵥ x) = P *ᵥ hv x + B *ᵥ dv x ∧
@@ -1288,44 +786,6 @@ theorem countP_shearSteps (E₁ W E₂ : Matrix (Fin m) (Fin m) (ZMod Q)) :
     countP_addSteps, length_pivots]
   ring
 
-lemma swap_not_mem_of_shifts {n : ℕ} {l : List (AModel.Step n Q)} (hl : ∀ s ∈ l, s.isSwap = false)
-    {a b : Fin n} : Step.swap a b ∉ l := fun h => by simpa [Step.isSwap] using hl _ h
-
-lemma hSteps_shift (E : Matrix (Fin m) (Fin m) (ZMod Q)) : ∀ s ∈ hSteps E, s.isSwap = false := by
-  intro s hs
-  simp only [hSteps, List.mem_map] at hs
-  obtain ⟨_, -, rfl⟩ := hs; rfl
-
-lemma dSteps_shift (E : Matrix (Fin m) (Fin m) (ZMod Q)) : ∀ s ∈ dSteps E, s.isSwap = false := by
-  intro s hs
-  simp only [dSteps, List.mem_map] at hs
-  obtain ⟨_, -, rfl⟩ := hs; rfl
-
-lemma revSteps_shift {n : ℕ} {l : List (AModel.Step n Q)} (hl : ∀ s ∈ l, s.isSwap = false) :
-    ∀ s ∈ revSteps l, s.isSwap = false := by
-  intro s hs
-  simp only [revSteps, List.mem_reverse, List.mem_map] at hs
-  obtain ⟨t, ht, rfl⟩ := hs
-  have := hl t ht
-  cases t with
-  | shift i u c => rfl
-  | swap i j => simp [Step.isSwap] at this
-
-/-- Every interchange of `shearSteps` exchanges an `H` field with a `D` field. -/
-theorem shearSteps_swap_HD {a b : Fin (m + m)} (h : Step.swap a b ∈ shearSteps E₁ W E₂) :
-    ∃ i j : Fin m, a = Fin.castAdd m i ∧ b = Fin.natAdd m j := by
-  simp only [shearSteps, List.mem_append] at h
-  rcases h with (((h | h) | h) | h) | h
-  · exact absurd h (swap_not_mem_of_shifts (dSteps_shift E₂))
-  · exact absurd h (swap_not_mem_of_shifts (revSteps_shift (hSteps_shift E₁)))
-  · simp only [addSteps, List.mem_flatMap] at h
-    obtain ⟨p, -, hp⟩ := h
-    simp only [pivotSteps, List.mem_cons, List.not_mem_nil, or_false, reduceCtorEq, false_or,
-      or_false, Step.swap.injEq] at hp
-    exact ⟨p.1, p.2, hp.1, hp.2⟩
-  · exact absurd h (swap_not_mem_of_shifts (hSteps_shift E₁))
-  · exact absurd h (swap_not_mem_of_shifts (revSteps_shift (dSteps_shift E₂)))
-
 variable {sh : Shape} (Λ : Layout sh (m + m) Q) [NeZero Q]
 
 /-- **Lemma 10 (array model).** For `A = E₁ W E₂` with `E₁, E₂` lower triangular with unit
@@ -1601,38 +1061,6 @@ theorem pull_eq_ofFn_funLeft {R : Type*} [CommRing R] (sh : Shape) (G : List ℕ
   rw [getElem_pull, List.getElem_ofFn]
   rfl
 
-lemma streamΦ_add {R M : Type*} [CommRing R] [AddCommGroup M] (P L : ℕ) (rest : Shape)
-    (π : M → List ℕ → List ℕ) (hπv : ∀ m x, AModel.Valid rest x → AModel.Valid rest (π m x))
-    (hπadd : ∀ a b x, AModel.Valid rest x → π (a + b) x = π a (π b x)) (a b : M) (x) :
-    streamΦ (R := R) P L rest π hπv (a + b) x =
-      streamΦ P L rest π hπv a (streamΦ P L rest π hπv b x) := by
-  funext j
-  simp only [streamΦ, LinearMap.funLeft_apply, addrPerm]
-  congr 1
-  apply Fin.ext
-  simp only
-  have hv := valid_decode j.isLt
-  obtain ⟨p, q, y, hy, hp, hq, hx⟩ := valid_cons2 hv
-  have hv' := valid_rowLift (hπv a) hv
-  rw [decode_encode hv', hy]
-  simp only [rowLift, List.headD_cons, List.tail_cons]
-  rw [add_comm, hπadd b a y hx]
-
-lemma streamΦ_zero {R M : Type*} [CommRing R] [AddCommGroup M] (P L : ℕ) (rest : Shape)
-    (π : M → List ℕ → List ℕ) (hπv : ∀ m x, AModel.Valid rest x → AModel.Valid rest (π m x))
-    (hπ0 : ∀ x, AModel.Valid rest x → π 0 x = x) (x) :
-    streamΦ (R := R) P L rest π hπv 0 x = x := by
-  funext j
-  simp only [streamΦ, LinearMap.funLeft_apply, addrPerm]
-  congr 1
-  apply Fin.ext
-  simp only
-  have hv := valid_decode j.isLt
-  obtain ⟨p, q, y, hy, hp, hq, hx⟩ := valid_cons2 hv
-  have : rowLift (π 0) (decode (P :: L :: rest) j) = decode (P :: L :: rest) j := by
-    rw [hy]; simp [rowLift, hπ0 y hx]
-  rw [this, encode_decode j.isLt]
-
 /-- **Interchange via the network.** Split the rows of `xs` into `W` role streams, run the
 network on them with frames `Φ_M` = pull by `π M` on the `rest` digits, and merge back, returning
 output role `ρ w` to the rows of role `w`. The result is the pull of the whole array by `π I0` on
@@ -1724,22 +1152,6 @@ section ShearAction
 variable {rest : Shape} {m Q : ℕ} {M : Type*} [AddCommGroup M]
 
 variable (Λ : Layout rest (m + m) Q) (φ : M →+ Matrix (Fin m) (Fin m) (ZMod Q))
-
-/-- Hypothesis `hπv` of `network_interchange_shear`. -/
-lemma shearπ_valid [NeZero Q] (a : M) (x : List ℕ) (hx : AModel.Valid rest x) :
-    AModel.Valid rest (shearπ Λ φ a x) :=
-  valid_amap Λ _ hx
-
-/-- Hypothesis `hπadd` of `network_interchange_shear`. -/
-lemma shearπ_add [NeZero Q] (a b : M) (x : List ℕ) (hx : AModel.Valid rest x) :
-    shearπ Λ φ (a + b) x = shearπ Λ φ a (shearπ Λ φ b x) := by
-  simp only [shearπ]
-  rw [amap_shear_comp Λ _ _ hx, map_add, neg_add_rev]
-
-/-- Hypothesis `hπ0` of `network_interchange_shear`. -/
-lemma shearπ_zero (x : List ℕ) (hx : AModel.Valid rest x) : shearπ Λ φ 0 x = x := by
-  simp only [shearπ, map_zero, neg_zero]
-  exact amap_shear_zero Λ hx
 
 /-- **The row-split shear network (Prop. 11, the shear `H ← H + D`).** Split the rows into `W`
 role streams, run the gate network with the physical frame changes `Φ_a` = pull by the shear
@@ -1842,18 +1254,6 @@ lemma hdPos_natAdd (A B : Shape) (m : ℕ) (j : Fin m) :
     AModel.hdPos A B m (Fin.natAdd m j : ℕ) = A.length + B.length + m + j := by
   simp [AModel.hdPos]; omega
 
-lemma vol_replicate (m N : ℕ) : AModel.vol (List.replicate m N) = N ^ m := List.prod_replicate m N
-
-lemma vol_hdShape (A B C : Shape) (m N : ℕ) :
-    AModel.vol (hdShape A B C m N) = AModel.vol (swShape A B C (N ^ m)) := by
-  simp only [hdShape, swShape, vol_append, vol_cons, vol_replicate]
-
-/-- Merging `r = Y.length` fields starting at `X.length`. -/
-lemma mergeShape_append (X Y Z : Shape) {i r : ℕ} (hi : i = X.length) (hr : r = Y.length) :
-    mergeShape (X ++ (Y ++ Z)) i r = X ++ (AModel.vol Y :: Z) := by
-  subst hi hr
-  simp [mergeShape, List.drop_append]
-
 /-- Merging both chunks of `P :: L :: hdShape` gives `P :: L :: swShape` with field `N ^ m`. -/
 lemma mergeShape2_hdShape (P L : ℕ) (A B C : Shape) (m N : ℕ) :
     mergeShape2 (P :: L :: hdShape A B C m N) (A.length + 2) (A.length + B.length + m + 2) m =
@@ -1938,19 +1338,6 @@ end Level
 section Recursion
 
 variable {R : Type*} [CommRing R] {m W : ℕ} [NeZero W]
-
-lemma replicate_split {N i m : ℕ} (hi : i < m) :
-    List.replicate m N = List.replicate i N ++ N :: List.replicate (m - 1 - i) N := by
-  rw [← List.replicate_succ, ← List.replicate_add]; congr 1; omega
-
-/-- The child's shape is the stream shape. -/
-lemma swShape_child (A B Cs : Shape) {m N : ℕ} (i j : Fin m) :
-    swShape (A ++ List.replicate i N) (List.replicate (m - 1 - i) N ++ (B ++ List.replicate j N))
-      (List.replicate (m - 1 - j) N ++ Cs) N = hdShape A B Cs m N := by
-  simp only [swShape, hdShape, List.append_assoc]
-  nth_rw 1 [replicate_split (N := N) i.2]
-  rw [replicate_split (N := N) j.2]
-  simp [List.append_assoc]
 
 end Recursion
 
@@ -2131,8 +1518,6 @@ end Rational
 
 section Reduction
 
-lemma redHom_apply (N : ℕ) (r : goodSub N) : redHom N r = redFun N r := rfl
-
 lemma isUnit_redFun {N : ℕ} {r : ℚ} (h : Nat.Coprime r.den N)
     (hn : Nat.Coprime r.num.natAbs N) : IsUnit (redFun N r) := by
   have hu : IsUnit ((r.num.natAbs : ℕ) : ZMod N) := (ZMod.isUnit_iff_coprime _ _).2 hn
@@ -2142,19 +1527,6 @@ lemma isUnit_redFun {N : ℕ} {r : ℚ} (h : Nat.Coprime r.den N)
     · rw [e, Int.cast_neg, Int.cast_natCast]; exact hu.neg
   rw [← redFun_mul_den h] at hnum
   exact isUnit_of_mul_isUnit_left hnum
-
-lemma toGood_val {N : ℕ} {r : ℚ} (h : Nat.Coprime r.den N) : (toGood N r : ℚ) = r := by
-  rw [toGood, dif_pos h]
-
-lemma redQ_eq {N : ℕ} {r : ℚ} (h : Nat.Coprime r.den N) : redQ N r = redFun N r := by
-  simp only [redQ, toGood, dif_pos h, redHom_apply]
-
-lemma redQ_intCast (N : ℕ) (z : ℤ) : redQ N z = z := by
-  have hc : Nat.Coprime ((z : ℚ).den) N := by simp
-  rw [redQ_eq hc]
-  simpa using redFun_spec hc z 1 (by simp)
-
-lemma redQ_zero (N : ℕ) : redQ N 0 = 0 := by simpa using redQ_intCast N 0
 
 lemma isUnit_redQ {N : ℕ} {r : ℚ} (h : Nat.Coprime r.den N)
     (hn : Nat.Coprime r.num.natAbs N) : IsUnit (redQ N r) := by
@@ -2186,19 +1558,11 @@ section Bridge
 
 variable {m : ℕ}
 
-lemma cast_liftZ {Q N : ℕ} [NeZero Q] (h : N ∣ Q) (r : ℚ) :
-    ((liftZ Q r : ℤ) : ZMod N) = ZMod.castHom h (ZMod N) (redQ Q r) := by
-  simp [liftZ, ZMod.castHom_apply, ZMod.natCast_val]
-
 lemma liftZ_zero (Q : ℕ) : liftZ Q 0 = 0 := by simp [liftZ, redQ_zero]
 
 lemma castM_eq_redQ {Q N : ℕ} [NeZero Q] (h : N ∣ Q) (X : IMat m) :
     castM N X = ((ratM X).map (redQ Q)).map (ZMod.castHom h (ZMod N)) := by
   ext i j; simp [castM, ratM, redQ_intCast]
-
-lemma castM_liftZ {Q N : ℕ} [NeZero Q] (h : N ∣ Q) (E : QMat m) :
-    castM N (E.map (liftZ Q)) = (E.map (redQ Q)).map (ZMod.castHom h (ZMod N)) := by
-  ext i j; simp only [castM, Matrix.map_apply, eq_intCast, cast_liftZ h]
 
 end Bridge
 
@@ -2315,10 +1679,6 @@ section Binary
 
 variable {α : Type*}
 
-lemma vol_binShape_q (Pre G Suf : Shape) (q e : ℕ) :
-    AModel.vol (binShape Pre G Suf (q ^ e)) = AModel.vol (qShape Pre G Suf q e) := by
-  simp [binShape, qShape, restShape, vol_append, vol_replicate]
-
 end Binary
 
 end AModelL12
@@ -2334,8 +1694,6 @@ open Matrix AModel AModelFac
 section RatFac
 
 variable {m : ℕ}
-
-lemma ratFacQ_spec (A : QMat m) : RatFacSpec A (ratFacQ A) := (exists_ratFacQ A).choose_spec
 
 lemma goodAtQ_of_lt (A : QMat m) {q : ℕ} (hq : q.Prime) (hlt : facBoundQ A < q) :
     GoodAtQ q A := by
@@ -2371,9 +1729,6 @@ lemma piQ_spec (A : QMat m) : (ratFacQ A).2.1 = ratM (piQ A) := by
   ext i j
   rcases (ratFacQ_spec A).2.2.2.2.1 i j with h | h <;> simp [ratM, piQ, h]
 
-lemma piQ_01 (A : QMat m) (i j : Fin m) : piQ A i j = 0 ∨ piQ A i j = 1 := by
-  unfold piQ; split_ifs <;> simp
-
 lemma card_piQ (A : QMat m) :
     (Finset.univ.filter fun p : Fin m × Fin m => piQ A p.1 p.2 = 1).card = A.rank := by
   rw [← (ratFacQ_spec A).2.2.2.2.2.2.2.1]
@@ -2381,13 +1736,6 @@ lemma card_piQ (A : QMat m) :
   apply Finset.filter_congr
   intro p _
   unfold piQ; split_ifs with h <;> simp [h]
-
-lemma redQ_mul {N : ℕ} {a b : ℚ} (ha : Nat.Coprime a.den N) (hb : Nat.Coprime b.den N) :
-    redQ N (a * b) = redQ N a * redQ N b := by
-  have hab : Nat.Coprime (a * b).den N := (goodSub N).mul_mem ha hb
-  have e : toGood N (a * b) = toGood N a * toGood N b := Subtype.ext (by
-    simp only [Subring.coe_mul, toGood_val hab, toGood_val ha, toGood_val hb])
-  simp only [redQ, e, map_mul]
 
 /-- **The bridge.** If `X = D • A` over `ℚ`, `q` is a prime coprime to `D` and good for `A`, then
 for every `N ∣ q ^ b` the data `facD (q ^ b) D` satisfies `FacAtφ N (phiD N D)` at `X`. -/
@@ -2864,27 +2212,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -2916,8 +2246,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -2933,12 +2261,6 @@ section
 -- Source module: NLogN.Costs
 namespace NLogN
 
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
-
 end NLogN
 
 end
@@ -2950,9 +2272,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-
-theorem zsz_natCast_le {j k : ℕ} (h : j ≤ k) : zsz (j : ℤ) ≤ zsz (k : ℤ) :=
-  zsz_mono (by simpa using h)
 
 end NLogN
 
@@ -2973,8 +2292,6 @@ variable (s : IState HS) (f : Fin HS → List ℤ)
 
 end
 
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
-
 end KIL
 
 end NLogN
@@ -2990,9 +2307,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-theorem one_le_vol {S : Shape} (h : ∀ a ∈ S, 1 ≤ a) : 1 ≤ vol S := by
-  unfold vol; exact Nat.one_le_iff_ne_zero.2 (List.prod_ne_zero (fun h0 => by have := h 0 h0; omega))
-
 end NLogN.KIL
 
 end
@@ -3006,10 +2320,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-theorem vol_binShape (Pre G Suf : Shape) (F : ℕ) :
-    vol (binShape Pre G Suf F) = vol Pre * (F * (vol G * (F * vol Suf))) := by
-  simp [binShape, vol_append, vol_cons]
-
 end NLogN.KIL
 
 end
@@ -3022,35 +2332,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12 Finset
-
-theorem one_le_e {q u : ℕ} (hq : 2 ≤ q) (hu : 1 ≤ u) : 1 ≤ Nat.clog q (2 ^ u) := by
-  have hTQ : 2 ^ u ≤ q ^ Nat.clog q (2 ^ u) := Nat.le_pow_clog (by omega) _
-  by_contra h0
-  have h : Nat.clog q (2 ^ u) = 0 := by omega
-  rw [h, pow_zero] at hTQ
-  have : 2 ≤ 2 ^ u := by
-    calc 2 = 2 ^ 1 := rfl
-      _ ≤ 2 ^ u := Nat.pow_le_pow_right (by omega) hu
-  omega
-
-theorem qe_le {q u : ℕ} (hq : 2 ≤ q) (hu : 1 ≤ u) : q ^ Nat.clog q (2 ^ u) ≤ q * 2 ^ u := by
-  have h1 := one_le_e hq hu
-  have h2 : 1 < 2 ^ u := Nat.one_lt_two_pow (by omega)
-  have h3 := Nat.pow_pred_clog_lt_self (show 1 < q by omega) h2
-  obtain ⟨d, hd⟩ : ∃ d, Nat.clog q (2 ^ u) = d + 1 := ⟨Nat.clog q (2 ^ u) - 1, by omega⟩
-  rw [hd] at h3 ⊢
-  simp only [Nat.pred_succ] at h3
-  rw [pow_succ, mul_comm]
-  exact Nat.mul_le_mul_left _ h3.le
-
-theorem vq_le_vb {q u : ℕ} (hq : 2 ≤ q) (hu : 1 ≤ u) (Pre G Suf : Shape) :
-    vol (qShape Pre G Suf q (Nat.clog q (2 ^ u))) ≤ q ^ 2 * vol (binShape Pre G Suf (2 ^ u)) := by
-  rw [← vol_binShape_q, NLogN.KIL.vol_binShape, NLogN.KIL.vol_binShape]
-  have h := qe_le hq hu
-  set Q := q ^ Nat.clog q (2 ^ u)
-  calc vol Pre * (Q * (vol G * (Q * vol Suf)))
-      ≤ vol Pre * ((q * 2 ^ u) * (vol G * ((q * 2 ^ u) * vol Suf))) := by gcongr
-    _ = q ^ 2 * (vol Pre * (2 ^ u * (vol G * (2 ^ u * vol Suf)))) := by ring
 
 end NLogN.KIL
 

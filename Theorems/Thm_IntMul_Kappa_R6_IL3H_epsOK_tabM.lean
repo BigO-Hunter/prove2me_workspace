@@ -20,6 +20,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs19
 import Definitions.Def_IntMul_Kappa_K_Defs20
 import Definitions.Def_IntMul_Kappa_K_Defs23
 import Definitions.Def_IntMul_Kappa_K_Defs1
+import Definitions.Def_IntMul_Kappa_R6_Defs16
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -104,12 +105,6 @@ open IntMul RS AModel KIL KFD KFB Complex
 /-! ## The layer layout -/
 
 variable {P K D S ρ : ℕ}
-
-/-! ## The kernel pass on records -/
-
-theorem RecRep.getD {r F : ℕ} {zs : List GI} {xs : List (Fin r → ℂ)} (h : RecRep r F zs xs)
-    {j : ℕ} (hj : j < xs.length) (c : Fin r) :
-    toC (zs.getD (j * r + c) 0) = 2 ^ F * xs.getD j 0 c := h.2 j c hj
 
 /-! ## The self-contained pass -/
 
@@ -207,26 +202,6 @@ theorem lookL_mem : ∀ (l : List ℕ) (i0 : ℕ) (x : Ex HS), l ≠ [] → ∀ 
   | v :: l, i0, x, _, j, hj => by
     simp only [lookL, Ex.regs, List.mem_append, List.append_nil]
     tauto
-
-/-- `sel` with a negative test. -/
-theorem selP {c x y : Ex HS} {s : IState HS} {B : ℕ} (h : c.eval s < 0) :
-    (Ex.sel c x y).eval s = x.eval s ∧ ((Ex.sel c x y).ok s ↔ c.ok s ∧ x.ok s) ∧
-    ((Ex.sel c x y).Bnd s B ↔ c.Bnd s B ∧ x.Bnd s B) := by
-  refine ⟨if_pos h, ?_, ?_⟩
-  · show (_ ∧ ite _ _ _) ↔ _
-    rw [if_pos h]
-  · show (_ ∧ ite _ _ _) ↔ _
-    rw [if_pos h]
-
-/-- `sel` with a nonnegative test. -/
-theorem selN {c x y : Ex HS} {s : IState HS} {B : ℕ} (h : ¬ c.eval s < 0) :
-    (Ex.sel c x y).eval s = y.eval s ∧ ((Ex.sel c x y).ok s ↔ c.ok s ∧ y.ok s) ∧
-    ((Ex.sel c x y).Bnd s B ↔ c.Bnd s B ∧ y.Bnd s B) := by
-  refine ⟨if_neg h, ?_, ?_⟩
-  · show (_ ∧ ite _ _ _) ↔ _
-    rw [if_neg h]
-  · show (_ ∧ ite _ _ _) ↔ _
-    rw [if_neg h]
 
 theorem lookL_spec (s : IState HS) (x : Ex HS) (q B : ℕ) (hx : x.ok s) (hq : x.eval s = q)
     (hB : x.Bnd s B) (hqB : zsz ((q + 1 : ℕ) : ℤ) ≤ B) (h3 : zsz (3 : ℤ) ≤ B) :

@@ -16,27 +16,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -68,8 +50,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -87,8 +67,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem zbits_neg (z : ℤ) : zbits (-z) = zbits z := by simp [zbits]
-
 end NLogN
 
 namespace NLogN
@@ -105,16 +83,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_two_pow (m : ℕ) : nbits (2 ^ m) = List.replicate m false ++ [true] := by
-  induction m with
-  | zero => rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-  | succ m ih =>
-    rw [nbits_pos (by positivity), pow_succ, List.replicate_succ]
-    simp [ih, Nat.mul_mod_left]
-
-theorem zbits_two_pow (m : ℕ) : zbits (2 ^ m : ℕ) = List.replicate m false ++ [true] := by
-  simp [zbits, nbits_two_pow]
-
 end NLogN
 
 namespace NLogN
@@ -128,9 +96,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
 
 theorem zsz_le_iff {z : ℤ} {m : ℕ} : zsz z ≤ m ↔ z.natAbs < 2 ^ m :=
   ⟨fun h => lt_of_lt_of_le (natAbs_lt_zsz z) (Nat.pow_le_pow_right (by norm_num) h),
@@ -149,19 +114,10 @@ theorem zsz_add_le (a b : ℤ) : zsz (a + b) ≤ max (zsz a) (zsz b) + 1 := by
   have := Int.natAbs_add_le a b
   rw [pow_succ]; omega
 
-theorem zsz_two_pow (m : ℕ) : zsz ((2 : ℤ) ^ m) = m + 1 := by
-  have : ((2 : ℤ) ^ m) = ((2 ^ m : ℕ) : ℤ) := by push_cast; rfl
-  rw [this, zsz, zbits_two_pow]; simp
-
-theorem zsz_neg (z : ℤ) : zsz (-z) = zsz z := by simp [zsz, zbits_neg]
-
 theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
 
 theorem zsz_one : zsz 1 = 1 := by
   simp [zsz, zbits]; rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
 
 end NLogN
 
@@ -183,11 +139,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem zsz_le_of_abs {z : ℤ} {m : ℕ} (h : |z| < 2 ^ m) : zsz z ≤ m := by
-  apply zsz_le_of_lt
-  have : ((z.natAbs : ℕ) : ℤ) < ((2 ^ m : ℕ) : ℤ) := by push_cast; exact h
-  exact_mod_cast this
-
 end NLogN
 
 end
@@ -206,9 +157,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 theorem zsz_add_le' (a b : ℤ) : zsz (a + b) ≤ zsz a + zsz b + 1 := by
   have := zsz_add_le a b; omega
-
-theorem zsz_natCast_le_self' (k : ℕ) : zsz (k : ℤ) ≤ k :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
 
 end NLogN
 
@@ -395,16 +343,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN
 
 open IntMul RS IntMul.HvdH
-
-theorem abs_ediv_le (a d : ℤ) (hd : 1 ≤ d) : |a / d| ≤ |a| := by
-  have h1 := Int.ediv_mul_le a (show d ≠ 0 by omega)
-  have h2 := Int.lt_ediv_add_one_mul_self a (show 0 < d by omega)
-  rw [abs_le]
-  rcases le_or_gt 0 a with ha | ha
-  · rw [abs_of_nonneg ha]
-    constructor <;> nlinarith
-  · rw [abs_of_neg ha]
-    constructor <;> nlinarith
 
 end NLogN
 

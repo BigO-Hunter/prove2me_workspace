@@ -68,19 +68,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-/-! ## Tables -/
-
-/-! ## Moves with literal counts -/
-
-/-! ## Applying a stream code in place -/
-
-/-! ## Cost unit -/
-
-/-! ## Copying a stream -/
-
-theorem TabB.le {W v Bb : ℕ} (h : TabB W v Bb) {n : ℕ} (hn : n ≤ W * v) : zsz (n : ℤ) ≤ Bb :=
-  le_trans (zsz_natCast_le' hn) h.vol
-
 /-! ## Accumulating a stream on stack `20` -/
 
 /-! ## Building a summed stream, rebuilding the table -/
@@ -108,13 +95,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -154,50 +134,6 @@ section
 open Finset
 
 namespace IntMul.OpenAI.RP
-
-/-! ### (38) and (45) -/
-
-/-! ### Axis lengths of the padded box -/
-
-lemma ell_spec (L d : ℕ) (hd : 0 < d) : L ≤ d * ell L d ∧ d * ell L d ≤ L + d - 1 := by
-  unfold ell
-  constructor
-  · have := Nat.lt_div_mul_add (a := L + d - 1) hd
-    rw [mul_comm]; omega
-  · have := Nat.div_mul_le_self (L + d - 1) d
-    rw [mul_comm]; exact this
-
-lemma mcnt_lt (L d : ℕ) (hd : 0 < d) : mcnt L d < d := by
-  have := ell_spec L d hd; unfold mcnt; omega
-
-lemma axExp_sum (L d : ℕ) (hd : 0 < d) : ∑ i : Fin d, axExp L d i = L := by
-  have hs := ell_spec L d hd
-  have hm := mcnt_lt L d hd
-  have hl : 0 < mcnt L d → 1 ≤ ell L d := by
-    intro hpos
-    by_contra h; push Not at h
-    have : ell L d = 0 := by omega
-    unfold mcnt at hpos; rw [this] at hpos; simp at hpos
-  have key : ∀ i : Fin d, (axExp L d i : ℤ) =
-      (ell L d : ℤ) - (if (i : ℕ) < mcnt L d then 1 else 0) := by
-    intro i; unfold axExp
-    split_ifs with h
-    · have := hl (by omega); push_cast [Nat.cast_sub this]; ring
-    · simp
-  zify
-  rw [Finset.sum_congr rfl (fun i _ => key i), Finset.sum_sub_distrib,
-    Fin.sum_univ_eq_sum_range (fun i => if i < mcnt L d then (1 : ℤ) else 0), Finset.sum_boole]
-  have hf : (Finset.range d).filter (fun i => i < mcnt L d) = Finset.range (mcnt L d) := by
-    ext x; simp only [Finset.mem_filter, Finset.mem_range]; omega
-  rw [hf]
-  simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, Finset.card_range, nsmul_eq_mul]
-  unfold mcnt
-  push_cast [Nat.cast_sub hs.1]
-  ring
-
-/-- `∏ t_i = T` with `t_i = 2^{axExp}`. -/
-lemma axLen_prod (L d : ℕ) (hd : 0 < d) : ∏ i : Fin d, 2 ^ axExp L d i = 2 ^ L := by
-  rw [Finset.prod_pow_eq_pow_sum, axExp_sum L d hd]
 
 /-! ### Source lengths, resampling margins -/
 
@@ -269,31 +205,6 @@ namespace NLogN.KFQ
 
 open IntMul IntMul.HvdH IntMul.OpenAI.Glue IntMul.OpenAI.RP NLogN.KFM
 
-theorem ell_ge {n D : ℕ} (hn : n0 ≤ n) (hD : dP n = D + 1) : 2 ≤ ell (LP n) (D + 1) := by
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, hr64, -⟩ := setup_facts hn
-  have hr : rP n = 2 ^ ell (LP n) (D + 1) := by unfold rP ℓP; rw [hD]
-  by_contra h
-  push Not at h
-  have : 2 ^ ell (LP n) (D + 1) ≤ 2 ^ 1 := Nat.pow_le_pow_right (by norm_num) (by omega)
-  omega
-
-theorem tBD_eq {n D : ℕ} (hn : n0 ≤ n) (hD : dP n = D + 1) (i : Fin (D + 1)) :
-    tBD n D i = 2 ^ axExp (LP n) (D + 1) i := by
-  have hdp : dpN n = mcnt (LP n) (D + 1) := by unfold dpN; rw [hD]
-  have hr : rP n = 2 ^ ell (LP n) (D + 1) := by unfold rP ℓP; rw [hD]
-  have hl := ell_ge hn hD
-  unfold tBD axExp
-  rw [hdp, hr]
-  by_cases h : mcnt (LP n) (D + 1) ≤ i.val
-  · rw [if_pos h, if_neg (by omega)]
-  · obtain ⟨m, hm⟩ : ∃ m, ell (LP n) (D + 1) = m + 1 := ⟨ell (LP n) (D + 1) - 1, by omega⟩
-    rw [if_neg h, if_pos (by omega), hm, pow_succ, Nat.mul_div_cancel _ (by norm_num)]
-    simp
-
-theorem prod_tBD {n D : ℕ} (hn : n0 ≤ n) (hD : dP n = D + 1) : ∏ i, tBD n D i = TP n := by
-  rw [Finset.prod_congr rfl (fun i _ => tBD_eq hn hD i), axLen_prod _ _ (by omega)]
-  rfl
-
 end NLogN.KFQ
 
 end
@@ -322,19 +233,6 @@ open AModel AModelL12 IntMul KIL KFB KFT KFU RS IntMul.HvdH IntMul.OpenAI.RT Int
   IntMul.OpenAI.RCost
 
 noncomputable section
-
-/-! ## Facts -/
-
-theorem sCmp_eq {n D : ℕ} (hn : n0 ≤ n) (hD : dP n = D + 1) (hlt : ∀ i, sBD n D i < tBD n D i) :
-    sCmp n = ∏ i, sBD n D i := by
-  have hLb := (setup_facts hn).2.2.2.2.2.1
-  have e1 : ∏ j ∈ Finset.range (dP n), srcN n j = ∏ i, sBD n D i := by
-    rw [hD, ← Fin.prod_univ_eq_prod_range]; rfl
-  have h2 : ∏ i, sBD n D i ≤ ∏ i, tBD n D i :=
-    Finset.prod_le_prod (fun i _ => Nat.zero_le _) (fun i _ => (hlt i).le)
-  rw [KFQ.prod_tBD hn hD, TP] at h2
-  have h3 : 2 ^ LP n < 2 ^ bP n := Nat.pow_lt_pow_right (by norm_num) hLb
-  unfold sCmp; rw [e1]; exact Nat.mod_eq_of_lt (by omega)
 
 /-! ## The digit cut -/
 
@@ -379,9 +277,6 @@ noncomputable section
 variable {E : ℕ} {ix : Ix (7 + E)} {Isym : List Sym} {extM : Fin E → IStmt HS (7 + E)} {n D : ℕ}
   [instS : ∀ i, NeZero (sBD n D i)] [instT : ∀ i, NeZero (tBD n D i)]
 
-theorem BigCtx.hS (C : BigCtx ix Isym extM n D) : sCmp n = ∏ i, sBD n D i :=
-  sCmp_eq C.hn C.hD C.hlt
-
 end
 
 end NLogN.KFM
@@ -407,11 +302,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFW
 
 open IntMul NLogN.RS KFD
-
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
 
 end NLogN.KFW
 
@@ -497,40 +387,6 @@ namespace IntMul.Kappa.R6
 
 noncomputable section
 
-/-! ## 1. The parameter map -/
-
-/-! ## 2. Elementary facts about `lg` -/
-
-lemma lg_ge (B : ℕ) {n : ℕ} (hn : 2 ^ B ≤ n) : B ≤ bP6 n := by
-  have h := Nat.clog_mono_right 2 hn
-  rw [Nat.clog_pow 2 B (by norm_num)] at h
-  exact h.trans (le_max_left _ _)
-
-/-- `b^k` is eventually below `2^(b/2)/8`. -/
-lemma poly_le_two_pow_half (k : ℕ) : ∃ B₀ : ℕ, ∀ b : ℕ, B₀ ≤ b → 8 * b ^ k ≤ 2 ^ (b / 2) := by
-  have ht := tendsto_pow_const_div_const_pow_of_one_lt k (r := (2 : ℝ)) (by norm_num)
-  have hpos : (0 : ℝ) < 1 / (8 * 3 ^ k) := by positivity
-  obtain ⟨M, hM⟩ := Filter.eventually_atTop.1 (ht.eventually (gt_mem_nhds hpos))
-  refine ⟨2 * (M + 1), fun b hb => ?_⟩
-  set m := b / 2 with hm
-  have hmM : M ≤ m := by omega
-  have hm1 : 1 ≤ m := by omega
-  have hb3 : b ≤ 3 * m := by omega
-  have h := hM m hmM
-  have h2 : (0 : ℝ) < 2 ^ m := by positivity
-  rw [div_lt_iff₀ h2] at h
-  have hreal : (8 : ℝ) * (b : ℝ) ^ k ≤ 2 ^ m := by
-    have hb3r : (b : ℝ) ≤ 3 * m := by exact_mod_cast hb3
-    have : (b : ℝ) ^ k ≤ (3 * (m : ℝ)) ^ k := pow_le_pow_left₀ (Nat.cast_nonneg _) hb3r k
-    rw [mul_pow] at this
-    have h3 : (0 : ℝ) < 3 ^ k := by positivity
-    have : (m : ℝ) ^ k * (8 * 3 ^ k) ≤ 2 ^ m := by
-      have := mul_lt_mul_of_pos_right h (by positivity : (0 : ℝ) < 8 * 3 ^ k)
-      rw [show 1 / (8 * 3 ^ k) * (2 : ℝ) ^ m * (8 * 3 ^ k) = 2 ^ m by field_simp] at this
-      linarith
-    nlinarith
-  exact_mod_cast hreal
-
 /-! ## 3. Facts valid as soon as `b ≥ 4` -/
 
 /-! ## 4. Eventual facts (box exponent and volume) -/
@@ -562,25 +418,6 @@ namespace IntMul.Kappa.R6
 open IntMul NLogN NLogN.KIL NLogN.KFB NLogN.KFM IntMul.OpenAI.RT AModel
 
 noncomputable section
-
-theorem tF6_eq (P : Prm) (n : ℕ) (hl : 1 ≤ ℓP6 P n) (j : ℕ) (hj : j < dP6 P n) :
-    tF6 P n j = 2 ^ OpenAI.RP.axExp (LP6 P n) (dP6 P n) ⟨j, hj⟩ := by
-  have hl' : 1 ≤ OpenAI.RP.ell (LP6 P n) (dP6 P n) := hl
-  unfold tF6 OpenAI.RP.axExp bL6
-  have e1 : hN6 P n = OpenAI.RP.ell (LP6 P n) (dP6 P n) - 1 := rfl
-  have e2 : dpN6 P n = OpenAI.RP.mcnt (LP6 P n) (dP6 P n) := rfl
-  rw [e1, e2]
-  simp only [decide_eq_true_eq]
-  by_cases h : OpenAI.RP.mcnt (LP6 P n) (dP6 P n) ≤ j
-  · rw [if_pos h, if_neg (by omega), ← pow_succ]; congr 1; omega
-  · rw [if_neg h, if_pos (by omega)]
-
-theorem prod_tF6 (P : Prm) (n : ℕ) (hd : 1 ≤ dP6 P n) (hl : 1 ≤ ℓP6 P n) :
-    ∏ j ∈ Finset.range (dP6 P n), tF6 P n j = 2 ^ LP6 P n := by
-  have e := OpenAI.RP.axLen_prod (LP6 P n) (dP6 P n) (by omega)
-  rw [← e, ← Fin.prod_univ_eq_prod_range]
-  refine Finset.prod_congr rfl fun j _ => ?_
-  exact tF6_eq P n hl j.val j.isLt
 
 /-- Eventually `4 b^ε ≤ b`. -/
 theorem eps_room (P : Prm) (hP : P.Ok) : ∃ B : ℕ, ∀ b : ℕ, B ≤ b → 4 * (b : ℝ) ^ P.ε ≤ b := by

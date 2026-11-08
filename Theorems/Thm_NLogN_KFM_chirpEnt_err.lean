@@ -19,9 +19,6 @@ open Complex KFB
 
 noncomputable section
 
-theorem vP_oneP (P : ℕ) : vP P (oneP P) = 1 := by
-  simp [vP, oneP, NLogN.KFB.toC]
-
 theorem prodF_err (P : ℕ) {e : ℝ} (he : 0 ≤ e) :
     ∀ (n : ℕ) (x : Fin n → GI) (X : Fin n → ℂ), (∀ i, ‖X i‖ ≤ 1) →
       (∀ i, ‖vP P (x i) - X i‖ ≤ e) → n * (2 * e + 2 * (2 : ℝ)⁻¹ ^ P) ≤ 1 →
@@ -40,9 +37,6 @@ theorem prodF_err (P : ℕ) {e : ℝ} (he : 0 ≤ e) :
     simp only [prodF]
     refine st.trans (le_of_eq ?_)
     push_cast; ring
-
-theorem norm_exp_phase (x : ℝ) (c : ℂ) (hc : c = (x : ℂ) * I) : ‖exp c‖ ≤ 1 := by
-  rw [hc, Complex.norm_exp_ofReal_mul_I]
 
 end
 

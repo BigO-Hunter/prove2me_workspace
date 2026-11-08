@@ -22,27 +22,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -74,8 +56,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -92,16 +72,6 @@ section
 namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
-
-theorem nbits_two_pow (m : ℕ) : nbits (2 ^ m) = List.replicate m false ++ [true] := by
-  induction m with
-  | zero => rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-  | succ m ih =>
-    rw [nbits_pos (by positivity), pow_succ, List.replicate_succ]
-    simp [ih, Nat.mul_mod_left]
-
-theorem zbits_two_pow (m : ℕ) : zbits (2 ^ m : ℕ) = List.replicate m false ++ [true] := by
-  simp [zbits, nbits_two_pow]
 
 end NLogN
 
@@ -123,36 +93,11 @@ variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 namespace IRuns
 
-theorem mono {p : IStmt S P} {s s' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (hc : c ≤ c') : IRuns I iprog p s s' c' := by
-  obtain ⟨d, hd, h⟩ := h; exact ⟨d, by omega, h⟩
-
-theorem mono' {p : IStmt S P} {s s' s'' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (he : s' = s'') (hc : c ≤ c') : IRuns I iprog p s s'' c' := he ▸ h.mono hc
-
-theorem skip (s : IState S) : IRuns I iprog .skip s s 1 := ⟨1, le_rfl, .skip s⟩
-
-theorem seq {p q : IStmt S P} {s s₁ s₂ : IState S} {c₁ c₂ : ℕ} (h₁ : IRuns I iprog p s s₁ c₁)
-    (h₂ : IRuns I iprog q s₁ s₂ c₂) : IRuns I iprog (.seq p q) s s₂ (c₁ + c₂) := by
-  obtain ⟨d₁, hd₁, h₁⟩ := h₁; obtain ⟨d₂, hd₂, h₂⟩ := h₂
-  exact ⟨d₁ + d₂, by omega, .seq h₁ h₂⟩
-
 end IRuns
 
 namespace IRuns
 
 end IRuns
-
-@[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
-    (s.upd i L).upd i L' = s.upd i L' := by
-  simp [IState.upd]
-
-@[simp] theorem IState.upd_self (s : IState S) (i : Fin S) : s.upd i (s.G i) = s := by
-  simp [IState.upd]
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
 
 end NLogN
 
@@ -161,21 +106,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_two_pow (m : ℕ) : zsz ((2 : ℤ) ^ m) = m + 1 := by
-  have : ((2 : ℤ) ^ m) = ((2 ^ m : ℕ) : ℤ) := by push_cast; rfl
-  rw [this, zsz, zbits_two_pow]; simp
-
-theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
-
-theorem zsz_one : zsz 1 = 1 := by
-  simp [zsz, zbits]; rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
 
 end NLogN
 
@@ -193,9 +123,6 @@ variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
-theorem zsz_natCast_le_self' (k : ℕ) : zsz (k : ℤ) ≤ k :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
-
 end NLogN
 
 end
@@ -207,11 +134,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
-
-theorem ints_append (A B : List ℤ) : ints (A ++ B) = ints A ++ ints B := by simp [ints]
-
-theorem zsz_natCast_le {j k : ℕ} (h : j ≤ k) : zsz (j : ℤ) ≤ zsz (k : ℤ) :=
-  zsz_mono (by simpa using h)
 
 end NLogN
 
@@ -226,13 +148,6 @@ namespace NLogN
 open IntMul RS
 
 namespace KIL
-
-theorem encK_upd (s : IState HS) (f : Fin HS → List ℤ) (i : Fin HS) (l : List ℤ) :
-    (encK s f).upd i (ints l ++ s.G i) = encK s (Function.update f i l) := by
-  refine IState.ext' (fun j => ?_) rfl rfl
-  by_cases h : j = i
-  · subst h; simp
-  · simp [h]
 
 section
 variable (s : IState HS) (f : Fin HS → List ℤ)
@@ -259,12 +174,6 @@ namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-theorem zsz_nat_le (n : ℕ) : zsz (n : ℤ) ≤ n :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
-
-theorem cUL_le (n : ℕ) : cUL n ≤ 1300 * n + 1000 := by
-  have := NLogN.KFC.zsz_nat_le n; unfold cUL; omega
-
 end KFC
 
 end NLogN
@@ -279,11 +188,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
-
-@[simp] theorem length_gflat (zs : List GI) : (gflat zs).length = 2 * zs.length := by
-  induction zs with
-  | nil => rfl
-  | cons z zs ih => simp [ih]; ring
 
 end NLogN.KFB
 
@@ -339,232 +243,20 @@ namespace NLogN.KFL
 
 open AModel
 
-theorem decomp (Q S n : ℕ) : n = n / (Q * S) * (Q * S) + gc Q S n * S + n % S := by
-  unfold gc
-  have h1 := Nat.div_add_mod n S
-  have h2 := Nat.div_add_mod (n / S) Q
-  rw [Nat.div_div_eq_div_mul] at h2
-  rw [mul_comm Q S]
-  nlinarith [h1, h2]
-
-theorem sc_int (Q S v n : ℕ) : (NLogN.KFL.sc Q S v n : ℤ) = n + ((v : ℤ) - gc Q S n) * S := by
-  have h := decomp Q S n
-  unfold NLogN.KFL.sc
-  have h' : (n : ℤ) = (n / (Q * S) * (Q * S) : ℕ) + (gc Q S n * S : ℕ) + (n % S : ℕ) := by
-    exact_mod_cast h
-  push_cast at h' ⊢
-  linarith
-
-theorem gc_lt {Q S : ℕ} (hQ : 0 < Q) (n : ℕ) : gc Q S n < Q := Nat.mod_lt _ hQ
-
-theorem div_sc {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
-    NLogN.KFL.sc Q S v n / (Q * S) = n / (Q * S) := by
-  unfold NLogN.KFL.sc
-  have hQS : 0 < Q * S := Nat.mul_pos (by omega) hS
-  have hr : v * S + n % S < Q * S := by
-    have := Nat.mod_lt n hS
-    have : v * S + S ≤ Q * S := by nlinarith
-    omega
-  rw [add_assoc, Nat.add_comm, Nat.add_mul_div_right _ _ hQS, Nat.div_eq_of_lt hr, zero_add]
-
-theorem gc_sc_self {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
-    gc Q S (NLogN.KFL.sc Q S v n) = v := by
-  unfold gc NLogN.KFL.sc
-  have e : n / (Q * S) * (Q * S) + v * S + n % S = n % S + S * (n / (Q * S) * Q + v) := by ring
-  rw [e, Nat.add_mul_div_left _ _ hS, Nat.div_eq_of_lt (Nat.mod_lt n hS), zero_add,
-    Nat.add_mod, Nat.mul_mod_left, zero_add, Nat.mod_mod, Nat.mod_eq_of_lt hv]
-
-/-- A chunk at a higher stride `S' = Q S m` is unchanged. -/
-theorem gc_sc_hi {Q S Q' S' m : ℕ} (hS : 0 < S) (hm : 0 < m) (hS' : S' = Q * S * m) {v : ℕ}
-    (hv : v < Q) (n : ℕ) : gc Q' S' (NLogN.KFL.sc Q S v n) = gc Q' S' n := by
-  unfold gc
-  subst hS'
-  rw [← Nat.div_div_eq_div_mul (NLogN.KFL.sc Q S v n), ← Nat.div_div_eq_div_mul n, div_sc hS hv]
-
-theorem div_mod_lo {S' Q' m X r : ℕ} (hS' : 0 < S') :
-    (S' * Q' * m * X + r) / S' % Q' = r / S' % Q' := by
-  rw [show S' * Q' * m * X + r = r + S' * (Q' * (m * X)) by ring, Nat.add_mul_div_left _ _ hS',
-    Nat.add_mul_mod_self_left]
-
-/-- A chunk at a lower stride (`S = S' Q' m`) is unchanged. -/
-theorem gc_sc_lo {Q S Q' S' m : ℕ} (hS' : 0 < S') (hS : S = S' * Q' * m) (v n : ℕ) :
-    gc Q' S' (NLogN.KFL.sc Q S v n) = gc Q' S' n := by
-  unfold gc NLogN.KFL.sc
-  have h1 : n / (Q * S) * (Q * S) + v * S + n % S = S' * Q' * m * (n / (Q * S) * Q + v) + n % S := by
-    rw [hS]; ring
-  have h2 : n = S' * Q' * m * (n / S) + n % S := by
-    rw [← hS]; exact (Nat.div_add_mod n S).symm
-  rw [h1, div_mod_lo hS']
-  conv_rhs => rw [h2]
-  rw [div_mod_lo hS']
-
-theorem sc_gc (Q S n : ℕ) : NLogN.KFL.sc Q S (gc Q S n) n = n := (decomp Q S n).symm
-
-theorem sc_lt {Q S m v n : ℕ} (hS : 0 < S) (hv : v < Q) (hn : n < Q * S * m) :
-    NLogN.KFL.sc Q S v n < Q * S * m := by
-  have hQS : 0 < Q * S := Nat.mul_pos (by omega) hS
-  have h1 : n / (Q * S) < m := by
-    rw [Nat.div_lt_iff_lt_mul hQS]; linarith
-  have hr : v * S + n % S < Q * S := by
-    have := Nat.mod_lt n hS
-    have : v * S + S ≤ Q * S := by nlinarith
-    omega
-  unfold NLogN.KFL.sc
-  have : n / (Q * S) * (Q * S) + (Q * S) ≤ Q * S * m := by nlinarith
-  omega
-
-@[simp] theorem length_rix {α : Type*} (V : ℕ) (φ : ℕ → ℕ) (d : α) (xs : List α) :
-    (rix V φ d xs).length = V := by simp [rix]
-
-theorem getD_rix {α : Type*} {V : ℕ} (φ : ℕ → ℕ) (d : α) (xs : List α) {j : ℕ} (hj : j < V) :
-    (rix V φ d xs).getD j d = xs.getD (φ j) d := by
-  simp [rix, List.getD_eq_getElem?_getD, hj]
-
-theorem rix_rix {α : Type*} {V : ℕ} (φ₁ φ₂ : ℕ → ℕ) (h : ∀ j < V, φ₂ j < V) (d : α)
-    (xs : List α) : rix V φ₂ d (rix V φ₁ d xs) = rix V (φ₁ ∘ φ₂) d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h1 h2
-  simp only [length_rix] at h1
-  simp only [rix, List.getElem_map, List.getElem_range, Function.comp]
-  have := getD_rix φ₁ d xs (h j h1)
-  simpa [rix] using this
-
-theorem rix_congr {α : Type*} {V : ℕ} {φ φ' : ℕ → ℕ} (h : ∀ j < V, φ j = φ' j) (d : α)
-    (xs : List α) : rix V φ d xs = rix V φ' d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h1 h2
-  simp only [length_rix] at h1
-  simp [rix, h j h1]
-
-theorem rix_id {α : Type*} {V : ℕ} (d : α) {xs : List α} (h : xs.length = V) :
-    rix V id d xs = xs := by
-  apply List.ext_getElem (by simp [h])
-  intro j h1 h2
-  simp only [length_rix] at h1
-  simp [rix, List.getD_eq_getElem?_getD, List.getElem?_eq_getElem h2]
-
 namespace Geo
 
 variable (g : Geo)
 
 variable {g}
 
-theorem Pos.s2 (h : g.Pos) : 0 < g.S2 := Nat.mul_pos h.n3 h.b
-theorem Pos.s1 (h : g.Pos) : 0 < g.S1 := Nat.mul_pos (Nat.mul_pos h.q h.s2) h.n2
-theorem Pos.s0 (h : g.Pos) : 0 < g.S0 := Nat.mul_pos (Nat.mul_pos h.q h.s1) h.n1
-theorem Pos.v (h : g.Pos) : 0 < g.V := Nat.mul_pos (Nat.mul_pos h.q h.s0) h.n0
-
 end Geo
-
-theorem TV_trOf {g : Geo} (hg : g.Pos) (n : ℕ) : TV g.Q (trOf g n) :=
-  ⟨gc_lt hg.q _, gc_lt hg.q _, gc_lt hg.q _⟩
 
 section Phi
 
 variable {g : Geo} (hg : g.Pos)
 include hg
 
-theorem gc1_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S1 (NLogN.KFL.sc g.Q g.S2 v n) = gc g.Q g.S1 n :=
-  gc_sc_hi hg.s2 hg.n2 rfl hv n
-
-theorem gc0_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (NLogN.KFL.sc g.Q g.S2 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s2 (Nat.mul_pos hg.n2 (Nat.mul_pos hg.q hg.n1))
-    (by simp only [Geo.S0, Geo.S1]; ring) hv n
-
-theorem gc0_sc1 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (NLogN.KFL.sc g.Q g.S1 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s1 hg.n1 rfl hv n
-
-theorem gc1_sc0 (v n : ℕ) : gc g.Q g.S1 (NLogN.KFL.sc g.Q g.S0 v n) = gc g.Q g.S1 n :=
-  gc_sc_lo hg.s1 (m := g.N1) (by simp only [Geo.S0]; ring) v n
-
-theorem gc2_sc0 (v n : ℕ) : gc g.Q g.S2 (NLogN.KFL.sc g.Q g.S0 v n) = gc g.Q g.S2 n :=
-  gc_sc_lo hg.s2 (m := g.N2 * g.Q * g.N1) (by simp only [Geo.S0, Geo.S1]; ring) v n
-
-theorem gc2_sc1 (v n : ℕ) : gc g.Q g.S2 (NLogN.KFL.sc g.Q g.S1 v n) = gc g.Q g.S2 n :=
-  gc_sc_lo hg.s2 (m := g.N2) (by simp only [Geo.S1]; ring) v n
-
-/-- The chunk triple after `phi F` is `F` of the old one. -/
-theorem trOf_phi {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) (n : ℕ) :
-    trOf g (phi g F n) = F (trOf g n) := by
-  obtain ⟨h0, h1, h2⟩ := hF _ (TV_trOf hg n)
-  show trOf g (NLogN.KFL.sc g.Q g.S0 (F (trOf g n)).1 (NLogN.KFL.sc g.Q g.S1 (F (trOf g n)).2.1
-    (NLogN.KFL.sc g.Q g.S2 (F (trOf g n)).2.2 n))) = F (trOf g n)
-  generalize F (trOf g n) = c at h0 h1 h2 ⊢
-  simp only [trOf]
-  refine Prod.ext (gc_sc_self hg.s0 h0 _) (Prod.ext ?_ ?_)
-  · simp only; rw [gc1_sc0 hg, gc_sc_self hg.s1 h1]
-  · simp only; rw [gc2_sc0 hg, gc2_sc1 hg, gc_sc_self hg.s2 h2]
-
-/-- Integer formula of `phi`. -/
-theorem phi_int {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) (n : ℕ) :
-    (phi g F n : ℤ) = n + (((F (trOf g n)).1 : ℤ) - (trOf g n).1) * g.S0 +
-      (((F (trOf g n)).2.1 : ℤ) - (trOf g n).2.1) * g.S1 +
-      (((F (trOf g n)).2.2 : ℤ) - (trOf g n).2.2) * g.S2 := by
-  obtain ⟨h0, h1, h2⟩ := hF _ (TV_trOf hg n)
-  show ((NLogN.KFL.sc g.Q g.S0 (F (trOf g n)).1 (NLogN.KFL.sc g.Q g.S1 (F (trOf g n)).2.1
-    (NLogN.KFL.sc g.Q g.S2 (F (trOf g n)).2.2 n)) : ℕ) : ℤ) = _
-  generalize F (trOf g n) = c at h0 h1 h2 ⊢
-  rw [sc_int, sc_int, sc_int, gc0_sc1 hg _ _ h1, gc0_sc2 hg _ _ h2, gc1_sc2 hg _ _ h2]
-  simp only [trOf]; ring
-
-theorem phi_lt {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) {n : ℕ} (hn : n < g.V) :
-    phi g F n < g.V := by
-  obtain ⟨h0, h1, h2⟩ := hF _ (TV_trOf hg n)
-  have hV : g.V = g.Q * g.S0 * g.N0 := rfl
-  have hS0 : g.Q * g.S0 * g.N0 = g.Q * g.S1 * (g.N1 * g.Q * g.N0) := by
-    simp only [Geo.S0]; ring
-  have hS1 : g.Q * g.S1 * (g.N1 * g.Q * g.N0) = g.Q * g.S2 * (g.N2 * g.Q * g.N1 * g.Q * g.N0) := by
-    simp only [Geo.S0, Geo.S1]; ring
-  simp only [phi]
-  rw [hV]
-  refine sc_lt hg.s0 h0 ?_
-  rw [hS0]
-  refine sc_lt hg.s1 h1 ?_
-  rw [hS1]
-  refine sc_lt hg.s2 h2 ?_
-  rw [← hS1, ← hS0, ← hV]; exact hn
-
-theorem phi_phi {F G : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c))
-    (hG : ∀ c, TV g.Q c → TV g.Q (G c)) (n : ℕ) :
-    phi g F (phi g G n) = phi g (F ∘ G) n := by
-  have hFG : ∀ c, TV g.Q c → TV g.Q ((F ∘ G) c) := fun c hc => hF _ (hG c hc)
-  have e1 := phi_int hg hF (phi g G n)
-  have e2 := phi_int hg hG n
-  have e3 := phi_int hg hFG n
-  rw [trOf_phi hg hG] at e1
-  have : (phi g F (phi g G n) : ℤ) = phi g (F ∘ G) n := by
-    rw [e1, e2, e3]; simp only [Function.comp]; ring
-  exact_mod_cast this
-
 end Phi
-
-theorem phi_id {g : Geo} (n : ℕ) : phi g id n = n := by
-  simp only [phi, id, trOf, sc_gc]
-
-theorem rixT_rixT {g : Geo} (hg : g.Pos) {F G : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c))
-    (hG : ∀ c, TV g.Q c → TV g.Q (G c)) (xs : List ℤ) :
-    rixT g G (rixT g F xs) = rixT g (F ∘ G) xs := by
-  unfold rixT
-  rw [rix_rix _ _ (fun j hj => phi_lt hg hG hj)]
-  exact rix_congr (fun j _ => phi_phi hg hF hG j) _ _
-
-theorem rixT_id {g : Geo} {xs : List ℤ} (h : xs.length = g.V) : rixT g id xs = xs := by
-  unfold rixT
-  rw [rix_congr (φ' := id) (fun j _ => phi_id j)]
-  exact rix_id 0 h
-
-theorem length_rixT (g : Geo) (F : Tr → Tr) (xs : List ℤ) : (rixT g F xs).length = g.V := by
-  simp [rixT]
-
-theorem rixT_congr {g : Geo} (hg : g.Pos) {F F' : Tr → Tr} (h : ∀ c, TV g.Q c → F c = F' c)
-    (xs : List ℤ) : rixT g F xs = rixT g F' xs := by
-  unfold rixT
-  refine rix_congr (fun j _ => ?_) _ _
-  simp only [phi, h _ (TV_trOf hg j)]
-
-theorem TV_sw01 {Q : ℕ} (c : Tr) (h : TV Q c) : TV Q (sw01 c) := ⟨h.2.1, h.1, h.2.2⟩
-theorem TV_sw12 {Q : ℕ} (c : Tr) (h : TV Q c) : TV Q (sw12 c) := ⟨h.1, h.2.2, h.2.1⟩
-theorem TV_sw02 {Q : ℕ} (c : Tr) (h : TV Q c) : TV Q (sw02 c) := ⟨h.2.2, h.2.1, h.1⟩
 
 end NLogN.KFL
 
@@ -579,17 +271,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD KFE KFB AModel AModelL12 NetProp7
 
-theorem bits_rix {V : ℕ} {φ : ℕ → ℕ} {zs : List ℤ} (h : Bits zs) : Bits (rix V φ 0 zs) := by
-  intro z hz
-  simp only [rix, List.mem_map, List.mem_range] at hz
-  obtain ⟨j, -, rfl⟩ := hz
-  simp only [List.getD_eq_getElem?_getD]
-  rcases hj : zs[φ j]? with _ | x
-  · simp
-  · exact h x (List.mem_of_getElem? hj)
-
-theorem bits_rixT {g : Geo} {F : Tr → Tr} {zs : List ℤ} (h : Bits zs) : Bits (rixT g F zs) :=
-  bits_rix h
 end NLogN.KFL
 end
 
@@ -602,15 +283,6 @@ set_option maxRecDepth 20000
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD KFE KFB Butterfly AModel
-
-theorem bnd_bits {zs : List ℤ} (h : Bits zs) : Bnd 1 zs := by
-  intro z hz; rcases h z hz with rfl | rfl
-  · rw [zsz_zero]; omega
-  · rw [zsz_one]
-
-theorem lines_ok : ∀ l ∈ lines, LineOK l := by
-  intro l hl; simp [lines] at hl
-  rcases hl with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> simp [LineOK]
 
 /-- `FSc` is the fold of the eight lines (so `linesI … lines` computes `rixT g (FSc K ρ f)`). -/
 theorem FSc_lines (K ρ f : ℕ) : FSc K ρ f = fun c => lines.foldr (fun l c => lineP K ρ f l c) c := rfl
@@ -629,8 +301,6 @@ open AModel Butterfly
 namespace Geo
 variable (g : Geo)
 
-theorem V_rec : g.V = g.recG.V * g.B := by simp only [NLogN.KFL.Geo.V, S0, S1, S2, Geo.recG]; ring
-theorem Pos.recG {g : Geo} (h : g.Pos) : g.recG.Pos := ⟨h.q, h.n0, h.n1, h.n2, h.n3, Nat.one_pos⟩
 end Geo
 
 section Bad
@@ -670,20 +340,6 @@ section Chunks
 
 end Chunks
 
-theorem V_div_B {g : Geo} (hg : g.Pos) : g.V / g.B = g.recG.V := by
-  rw [Geo.V_rec, Nat.mul_div_cancel _ hg.b]
-
-theorem f_lt_zsz {K f : ℕ} (hK : 1 ≤ K) {g : Geo} (hg : g.Pos) (hQe : g.Q = 2 ^ (f * K)) :
-    f + 1 ≤ zsz (g.V : ℤ) := by
-  have h1 : 2 ^ f ≤ g.V := by
-    calc 2 ^ f ≤ 2 ^ (f * K) := Nat.pow_le_pow_right (by norm_num) (Nat.le_mul_of_pos_right _ hK)
-      _ = g.Q := hQe.symm
-      _ ≤ g.V := by
-        unfold Geo.V
-        exact Nat.le_mul_of_pos_right _ hg.n0 |>.trans' (Nat.le_mul_of_pos_right _ hg.s0)
-  have := zsz_natCast_le h1
-  rwa [Nat.cast_pow, Nat.cast_ofNat, NLogN.zsz_two_pow] at this
-
 end NLogN.KFL
 
 end
@@ -700,29 +356,6 @@ namespace NLogN.KFL
 open IntMul KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-theorem length_encW (w : ℕ) (z : ℤ) : (encW w z).length = w + 1 := by simp [encW]
-
-theorem length_bitsL (w : ℕ) (xs : List ℤ) : (bitsL w xs).length = xs.length * (w + 1) := by
-  induction xs with
-  | nil => simp [bitsL]
-  | cons x xs ih =>
-    simp only [bitsL, List.flatMap_cons, List.length_append, length_encW] at ih ⊢
-    rw [ih, List.length_cons]; ring
-
-theorem bits_encW (w : ℕ) (z : ℤ) : ∀ x ∈ encW w z, x = 0 ∨ x = 1 := by
-  intro x hx
-  simp only [encW, List.mem_cons, List.mem_map, List.mem_range] at hx
-  rcases hx with rfl | ⟨i, -, rfl⟩
-  · unfold sgnB; split_ifs <;> simp
-  · unfold bitN
-    rcases Nat.mod_two_eq_zero_or_one (z.natAbs / 2 ^ i) with h | h <;> rw [h] <;> simp
-
-theorem bits_bitsL (w : ℕ) (xs : List ℤ) : ∀ x ∈ bitsL w xs, x = 0 ∨ x = 1 := by
-  intro x hx
-  simp only [bitsL, List.mem_flatMap] at hx
-  obtain ⟨z, -, hz⟩ := hx
-  exact bits_encW w z x hz
 
 theorem cTo_le (N w : ℕ) : cTo N w ≤ 10 ^ 4 * ((N + 1) * (w + 1)) := by
   have h1 := zsz_natCast_le_self' N
@@ -753,13 +386,6 @@ open IntMul RS KIL KFD KFB KFH AModel Butterfly
 section Geom
 
 variable {N0 N1 N2 N3 L R w : ℕ}
-
-theorem geoB_pos (h0 : 1 ≤ N0) (h1 : 1 ≤ N1) (h2 : 1 ≤ N2) (h3 : 1 ≤ N3) (hR : 1 ≤ R) :
-    (geoB N0 N1 N2 N3 L R w).Pos :=
-  ⟨by simp [geoB], h0, h1, h2, h3, by simp only [geoB]; positivity⟩
-
-theorem vol_rect : vol (rect N0 N1 N2 N3 L) = (geoB N0 N1 N2 N3 L R w).recG.V := by
-  simp [rect, vol, geoB, Geo.recG, Geo.V, Geo.S0, Geo.S1, Geo.S2]; ring
 
 theorem geoB_V : (geoB N0 N1 N2 N3 L R w).V = vol (rect N0 N1 N2 N3 L) * R * (2 * (w + 1)) := by
   rw [Geo.V_rec, ← vol_rect (R := R) (w := w)]; simp [geoB]; ring

@@ -70,10 +70,6 @@ noncomputable section
 
 variable {D : ℕ}
 
-lemma recL_getD (t : Fin (D + 1) → ℕ) (f) {j : ℕ} (hj : j < (tsOf t).prod) :
-    (recL t f).getD j 0 = fun c : Fin (t (Fin.last D)) => f (fullIdx t j c) := by
-  simp [recL, List.getD_eq_getElem?_getD, hj]
-
 theorem boxOf_recL (t : Fin (D + 1) → ℕ) [∀ i, NeZero (t i)] (f) : boxOf t (recL t f) = f := by
   funext K
   simp only [boxOf]

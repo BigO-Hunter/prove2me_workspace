@@ -58,10 +58,6 @@ open IntMul KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-theorem cRpt_le (n : ℕ) : cRpt n ≤ 2000 * (n + 1) := by
-  have h := zsz_natCast_le_self' n
-  unfold cRpt cUL; omega
-
 end NLogN.KFT
 
 end
@@ -123,16 +119,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 theorem cItem_le (N c B : ℕ) : cItem N c B ≤ N * c + 5000 * (N + 1) * (B + 2) := by
   have := cRpt_le N
   unfold cItem; nlinarith
-
-/-! ## Denotation and the FM instance -/
-
-theorem fmB_mono {m n : ℕ} (h : m ≤ n) : fmB m ≤ fmB n := by
-  have e1 : zsz ((m + 1 : ℕ) : ℤ) ≤ zsz ((n + 1 : ℕ) : ℤ) := zsz_natCast_le (by omega)
-  have e2 : zsz (((zsz ((m + 1 : ℕ) : ℤ) + 2) ^ 4 : ℕ) : ℤ) ≤
-      zsz (((zsz ((n + 1 : ℕ) : ℤ) + 2) ^ 4 : ℕ) : ℤ) :=
-    zsz_natCast_le (Nat.pow_le_pow_left (by omega) 4)
-  unfold fmB
-  gcongr
 
 end NLogN.KFM
 
@@ -196,27 +182,6 @@ open IntMul KFC KFB KFT KIL
 section IL
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-/-! ## Repetition with per-iteration costs -/
-
-/-! ## The root-table loop -/
-
-/-! ## Base roots by `twiddleP`, arguments from registers -/
-
-/-! ## Axis and twist tables -/
-
-/-! ## The outer-product round, loop and one level -/
-
-/-! ## One axis step: load the record, run the level, drop the registers -/
-
-/-! ## The uniform chirp-array loop -/
-
-/-! ## The uniform chirp table -/
-
-/-! ## Cost bounds -/
-
-theorem cCnt_le (x : ℕ) : cCnt x ≤ 135 * (x + 2) := by
-  have := zsz_natCast_le_self' x; unfold cCnt; simp only [dupCost, zipCost, moveCost]; omega
 
 theorem cTwGU_le (Δ k j n φ : ℕ) : cTwGU Δ k j n φ ≤ cTwG Δ k j n φ + 10 ^ 4 * (Δ + k + j + n + 3) := by
   have h1 := cCnt_le (Δ + k + j); have h3 := cCnt_le n
@@ -287,25 +252,6 @@ theorem cCmul_le (w q n : ℕ) :
   have h1 := cRepl_le 1 (2 * n) w; have h2 := cCnt_le (2 * n)
   unfold cCmul; nlinarith
 
-theorem cChirpG_le' (n φ w Δ : ℕ) :
-    cChirpG n φ w Δ ≤ (n + 1) * (8 * φ + 10 ^ 6 * (w + Δ + 1)) := by
-  unfold cChirpG; nlinarith
-
-theorem cTw_le' (n k j : ℕ) :
-    cTw n k j ≤ 10 ^ 23 * (n + zsz (j : ℤ) + zsz (k : ℤ) + 30) ^ 5 := by
-  have hn := zsz_natCast_le_self' n
-  unfold cTw twiddleCost
-  have h1 : (zsz (n : ℤ) + zsz (k : ℤ) + zsz (j : ℤ) + 2) ^ 2 ≤
-      (n + zsz (j : ℤ) + zsz (k : ℤ) + 30) ^ 5 := by
-    calc (zsz (n : ℤ) + zsz (k : ℤ) + zsz (j : ℤ) + 2) ^ 2 ≤ (n + zsz (j : ℤ) + zsz (k : ℤ) + 30) ^ 2 :=
-          Nat.pow_le_pow_left (by omega) 2
-      _ ≤ _ := Nat.pow_le_pow_right (by omega) (by norm_num)
-  have h2 : n + 4 ≤ (n + zsz (j : ℤ) + zsz (k : ℤ) + 30) ^ 5 := by
-    calc n + 4 ≤ (n + zsz (j : ℤ) + zsz (k : ℤ) + 30) ^ 1 := by rw [pow_one]; omega
-      _ ≤ _ := Nat.pow_le_pow_right (by omega) (by norm_num)
-  have h3 : (n + zsz (j : ℤ) + zsz (k : ℤ) + 30) ^ 5 = (n + zsz (j : ℤ) + zsz (k : ℤ) + 30) ^ 5 := rfl
-  nlinarith
-
 theorem cM_le (B Bd b len : ℕ) :
     cM B Bd b len ≤ 10 ^ 13 * (B + 2) ^ 2 + 10 ^ 12 * (b + 1) ^ 3 + 400 * (len + 1) * (Bd + 2) := by
   unfold cM KFM.cMv moveCost; nlinarith
@@ -321,13 +267,6 @@ variable {p h D σ B Bd b len P N : ℕ} {sv t : Fin (D + 1) → ℕ}
 
 theorem two_pow_h_le (hdr : (D + 1) * 2 ^ (h + 1) ≤ N) : 2 ^ (h + 1) ≤ N := by
   nlinarith
-
-theorem zsz_tw (h t : ℕ) (ht : t ≤ 2 ^ (h + 1)) : zsz ((2 * t : ℕ) : ℤ) ≤ h + 3 := by
-  apply zsz_le_of_lt
-  have : 2 ^ (h + 3) = 4 * 2 ^ (h + 1) := by rw [pow_add, pow_add]; ring
-  simp only [Int.natAbs_natCast]
-  have : 1 ≤ 2 ^ (h + 1) := Nat.one_le_two_pow
-  omega
 
 theorem pc_chirp (hP : dlV p h (D + 1) + 3 ≤ P) (hst : ∀ i, sv i ≤ t i) (ht2 : ∀ i, 2 ≤ t i)
     (hT : ∀ i, t i ≤ 2 ^ (h + 1)) (hprod : ∏ i, t i = N) (hdr : (D + 1) * 2 ^ (h + 1) ≤ N) :

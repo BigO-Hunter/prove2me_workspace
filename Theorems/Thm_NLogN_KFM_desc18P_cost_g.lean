@@ -50,31 +50,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-/-! ## Frame -/
-
-/-! ## Compilation -/
-
-/-! ## Sequences and reasoning lemmas -/
-
-/-! ## Cost bounds -/
-
-/-- Invariant reasoning for counted loops. -/
-theorem repSt_inv (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (Inv : ℕ → IState HS → Prop)
-    (h0 : Inv 0 (s.upd i (.int (n.eval s) :: s.G i)))
-    (hs : ∀ k < (n.eval s).toNat, Inv k (repSt i n b s k) →
-      Inv (k + 1) (decSt i (b.run (repSt i n b s k)))) :
-    ∀ k ≤ (n.eval s).toNat, Inv k (repSt i n b s k) := by
-  intro k; induction k with
-  | zero => intro _; exact h0
-  | succ k ih =>
-    intro hk
-    have := hs k (by omega) (ih (by omega))
-    simpa [repSt, Function.iterate_succ_apply'] using this
-
-@[simp] theorem decSt_G (i : Fin HS) (t : IState HS) (j : Fin HS) :
-    (decSt i t).G j = if j = i then .int (t.top i - 1) :: (t.G i).tail else t.G j := by
-  simp [decSt, IState.upd_G]
-
 end RS
 
 end NLogN
@@ -100,13 +75,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -202,8 +170,6 @@ set_option maxRecDepth 20000
 namespace NLogN.KFM
 
 open IntMul KFC KFB KFT
-
-theorem ints_cons (a : ℤ) (l : List ℤ) : ints (a :: l) = .int a :: ints l := rfl
 
 section IL
 
@@ -302,32 +268,6 @@ namespace NLogN.KFM
 
 open IntMul RS
 
-theorem lI_step (St : ℕ → IState HS) (s : IState HS) (i : Fin HS) (N k : ℕ) :
-    decSt i ((St (k + 1)).upd i (.int ((N : ℤ) - k) :: s.G i)) = lI St s i N (k + 1) := by
-  apply IState.ext' _ (by simp [decSt, lI]) (by simp [decSt, lI])
-  intro j
-  simp only [decSt_G, lI]
-  by_cases hj : j = i
-  · subst hj
-    have : ((St (k + 1)).upd j (.int ((N : ℤ) - k) :: s.G j)).top j = (N : ℤ) - k :=
-      IState.top_eq (L := s.G j) (by simp)
-    rw [this]; simp; push_cast; ring
-  · simp [IState.upd_G, hj]
-
-theorem loopI_inv (i : Fin HS) (n : Ex HS) (body : RS) (s : IState HS) (N : ℕ)
-    (St : ℕ → IState HS) (hN : n.eval s = N) (h0 : St 0 = s)
-    (hb : ∀ k < N, body.ok (lI St s i N k) ∧
-      body.run (lI St s i N k) = (St (k + 1)).upd i (.int ((N : ℤ) - k) :: s.G i)) :
-    ∀ k ≤ N, repSt i n body s k = lI St s i N k := by
-  have := repSt_inv i n body s (fun k t => t = lI St s i N k)
-    (by rw [hN, lI, h0]; simp)
-    (by
-      intro k hk ht
-      rw [hN, Int.toNat_natCast] at hk
-      rw [ht, (hb k hk).2, lI_step])
-  rw [hN, Int.toNat_natCast] at this
-  exact this
-
 /-- **The invariant loop.** -/
 theorem loopI_run (i : Fin HS) (n : Ex HS) (body : RS) (s : IState HS) (N : ℕ)
     (St : ℕ → IState HS) (hi56 : i.val < 56) (hn : n.Clean) (hnok : n.ok s) (hN : n.eval s = N)
@@ -367,26 +307,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFM
 
 open IntMul RS
-
-/-! ## The product loop -/
-
-/-! ## The sum loop -/
-
-/-! ## One inverse -/
-
-/-! ## Loops that push one value per index -/
-
-theorem pushL_succ (v : ℕ → ℤ) (d k : ℕ) (hk : k < d) :
-    pushL v d (k + 1) = v (d - k - 1) :: pushL v d k := by
-  unfold pushL
-  rw [List.range_succ_eq_map, List.map_cons, List.map_map]
-  congr 1
-  all_goals first
-    | (congr 1; omega)
-    | (apply List.map_congr_left
-       intro t _
-       show v (d - (k + 1) + (t + 1)) = v (d - k + t)
-       congr 1; omega)
 
 theorem pushL_full (v : ℕ → ℤ) (d : ℕ) : pushL v d d = (List.range d).map v := by
   simp [pushL]

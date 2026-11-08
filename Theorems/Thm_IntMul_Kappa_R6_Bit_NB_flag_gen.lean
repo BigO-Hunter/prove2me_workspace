@@ -31,98 +31,8 @@ section Flag
 
 variable {h : ℕ}
 
-lemma sum_sv_mul {n : ℕ} (l : List (ℚ × Pr n)) (f : Pr n → ℚ) :
-    ∑ u, sv l u * f u = (l.map fun s => s.1 * f s.2).sum := by
-  induction l with
-  | nil => simp [sv]
-  | cons s l ih =>
-    simp only [sv, List.map_cons, List.sum_cons, add_mul, Finset.sum_add_distrib] at ih ⊢
-    rw [ih]
-    congr 1
-    simp [ite_mul]
-
-lemma sum_mul_sv {n : ℕ} (l : List (ℚ × Pr n)) (f : Pr n → ℚ) :
-    ∑ u, f u * sv l u = (l.map fun s => f s.2 * s.1).sum := by
-  rw [show (∑ u, f u * sv l u) = ∑ u, sv l u * f u from
-    Finset.sum_congr rfl fun u _ => mul_comm _ _, sum_sv_mul]
-  congr 1
-  exact List.map_congr_left fun s _ => mul_comm _ _
-
-lemma Nm_sq : (Nm : Matrix (Pr (h + 4)) (Pr (h + 4)) ℚ) * Nm = 0 := by
-  ext u w
-  simp only [Matrix.mul_apply, Nm, of_apply, Matrix.zero_apply]
-  refine Finset.sum_eq_zero fun v _ => ?_
-  by_cases h1 : u.1.val = h + 3 ∧ u.2.val < h + 3 ∧ v.1 = u.2 ∧ v.2.val = h + 3
-  · rw [mul_eq_zero]; right
-    rw [if_neg]
-    rintro ⟨e1, -, -, -⟩
-    have := h1.2.2.1
-    rw [this] at e1; omega
-  · rw [if_neg h1, zero_mul]
-
 lemma Tm_Ti : (Tm : Matrix (Pr (h + 4)) (Pr (h + 4)) ℚ) * Ti = 1 := by
   rw [Tm, Ti, sub_mul, one_mul, mul_add, mul_one, Nm_sq]; abel
-
-lemma Ti_Tm : (Ti : Matrix (Pr (h + 4)) (Pr (h + 4)) ℚ) * Tm = 1 := by
-  rw [Tm, Ti, add_mul, one_mul, mul_sub, mul_one, Nm_sq]; abel
-
-/-- Row `aL i` of `T` is `λ/ν_i`. -/
-lemma Tm_row (i : ℕ) (hi : i < 2 * h + 7) (u : Pr (h + 4)) : Tm (aL i) u = sv (Lterms i) u := by
-  obtain ⟨u1, u2⟩ := u
-  simp only [Tm, Nm, Matrix.sub_apply, of_apply, Matrix.one_apply, aL, Lterms, sv]
-  split_ifs <;>
-    simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, add_zero] <;>
-    (try split_ifs) <;> simp only [Prod.ext_iff, Fin.ext_iff, true_and, and_true] at * <;>
-    first | (exfalso; omega) | norm_num
-
-/-- Column `bL j` of `T⁻¹` is `ω/μ_j`. -/
-lemma Ti_col (j : ℕ) (hj : j < 2 * h + 7) (u : Pr (h + 4)) : Ti u (bL j) = sv (Rterms j) u := by
-  obtain ⟨u1, u2⟩ := u
-  simp only [Ti, Nm, Matrix.add_apply, of_apply, Matrix.one_apply, bL, Rterms, sv]
-  split_ifs <;>
-    simp only [List.map_cons, List.map_nil, List.sum_cons, List.sum_nil, add_zero] <;>
-    (try split_ifs) <;> simp only [Prod.ext_iff, Fin.ext_iff, true_and, and_true] at * <;>
-    first | (exfalso; omega) | norm_num
-
-lemma flagEquiv_top (i : ℕ) (hi : i < 2 * h + 7) :
-    flagEquiv ⟨i, by have := two_k_le (h := h); omega⟩ = aL (h := h) i :=
-  (Classical.choose_spec (exists_flagEquiv (h := h))).1 i hi
-
-lemma flagEquiv_bot (j : ℕ) (hj : j < 2 * h + 7) :
-    flagEquiv ⟨(h + 4) * (h + 4) - (2 * h + 7) + j, by have := two_k_le (h := h); omega⟩ =
-      bL (h := h) j :=
-  (Classical.choose_spec (exists_flagEquiv (h := h))).2 j hj
-
-lemma qM_mul (M M' : Matrix (Pr (h + 4)) (Pr (h + 4)) ℚ) : qM M * qM M' = qM (M * M') := by
-  unfold qM
-  rw [submatrix_mul_equiv]
-  congr 1
-  simp only [Matrix.mul_assoc]
-  rw [← Matrix.mul_assoc Ti Tm (M' * Ti), Ti_Tm, Matrix.one_mul]
-
-lemma qM_idem {M : Matrix (Pr (h + 4)) (Pr (h + 4)) ℚ} (hM : M * M = M) : qM M * qM M = qM M := by
-  rw [qM_mul, hM]
-
-lemma qM_trace (M : Matrix (Pr (h + 4)) (Pr (h + 4)) ℚ) : (qM M).trace = M.trace := by
-  unfold qM
-  rw [Matrix.trace]
-  simp only [Matrix.diag_apply, Matrix.submatrix_apply]
-  have hs := Equiv.sum_comp (flagEquiv (h := h))
-    (fun u => (Tm * M * Ti : Matrix (Pr (h + 4)) (Pr (h + 4)) ℚ) u u)
-  rw [hs]
-  change (Tm * M * Ti).trace = M.trace
-  rw [Matrix.trace_mul_cycle, Ti_Tm, Matrix.one_mul]
-
-lemma qM_corner (M : Matrix (Pr (h + 4)) (Pr (h + 4)) ℚ) (i j : ℕ) (hi : i < 2 * h + 7)
-    (hj : j < 2 * h + 7) :
-    qM M ⟨i, by have := two_k_le (h := h); omega⟩
-      ⟨(h + 4) * (h + 4) - (2 * h + 7) + j, by have := two_k_le (h := h); omega⟩ = cor M i j := by
-  unfold qM cor
-  rw [submatrix_apply, flagEquiv_top i hi, flagEquiv_bot j hj, Matrix.mul_apply]
-  simp only [Matrix.mul_apply, Ti_col j hj, Tm_row i hi]
-  rw [show (∑ x, (∑ u, sv (Lterms i) u * M u x) * sv (Rterms j) x) =
-      ∑ x, ((Lterms i).map fun s => s.1 * M s.2 x).sum * sv (Rterms j) x from
-    Finset.sum_congr rfl fun x _ => by rw [sum_sv_mul], sum_mul_sv]
 
 end Flag
 
@@ -148,15 +58,6 @@ open scoped Kronecker
 section Class
 
 variable {h : ℕ}
-
-/-- The rank of an idempotent is its trace. -/
-lemma rank_eq_trace {ι : Type*} [Fintype ι] [DecidableEq ι] (q : Matrix ι ι ℚ) (hq : q * q = q) :
-    (q.rank : ℚ) = q.trace := by
-  have he : IsIdempotentElem (Matrix.toLin' q) := by
-    rw [IsIdempotentElem, Module.End.mul_eq_comp, ← Matrix.toLin'_mul, hq]
-  have := (LinearMap.IsIdempotentElem.isProj_range _ he).trace
-  rw [Matrix.trace_toLin'_eq] at this
-  rw [this, Matrix.rank, Matrix.toLin'_apply']
 
 section Aux
 
@@ -215,11 +116,6 @@ lemma kron_vec2 (A : Matrix (Fin (h + 4)) (Fin (h + 4)) ℚ) (x y : Fin (h + 4) 
   simp only [kronecker_apply, vecMulVec_apply, Matrix.mul_apply, Cx2, Ry2, of_apply, ite_mul,
     zero_mul, mul_ite, mul_zero, Finset.sum_ite_eq, Finset.sum_ite_eq', Finset.mem_univ, if_true]
   ring
-
-lemma qM_eq (M : Matrix (Pr (h + 4)) (Pr (h + 4)) ℚ) : qM M = Te (h := h) * M * Te' (h := h) := by
-  unfold qM Te Te'
-  rw [Matrix.submatrix_mul _ _ flagEquiv id flagEquiv Function.bijective_id,
-    Matrix.submatrix_mul _ _ flagEquiv id id Function.bijective_id, submatrix_id_id]
 
 lemma side_B (C : Matrix (Pr (h + 4)) (Fin (h + 4)) ℚ) (β : ℕ) (hβ : β < 2 * h + 7)
     (a : Fin (h + 4)) :
@@ -356,16 +252,6 @@ open scoped Kronecker
 section Lab
 
 variable {n : ℕ} (x y : Fin n → ℚ)
-
-lemma vmv_idem (hxy : y ⬝ᵥ x = 1) : vecMulVec x y * vecMulVec x y = vecMulVec x y := by
-  rw [vecMulVec_mul_vecMulVec, hxy, one_smul]
-
-lemma one_sub_vmv_idem (hxy : y ⬝ᵥ x = 1) :
-    (1 - vecMulVec x y) * (1 - vecMulVec x y) = 1 - vecMulVec x y := by
-  rw [sub_mul, mul_sub, mul_sub, one_mul, mul_one, one_mul, vmv_idem x y hxy]; abel
-
-lemma trace_one_sub_vmv (hxy : y ⬝ᵥ x = 1) : (1 - vecMulVec x y).trace = (n : ℚ) - 1 := by
-  rw [trace_sub, trace_one, trace_vecMulVec, dotProduct_comm, hxy, Fintype.card_fin]
 
 end Lab
 

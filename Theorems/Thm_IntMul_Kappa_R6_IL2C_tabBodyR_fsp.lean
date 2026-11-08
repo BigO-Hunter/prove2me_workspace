@@ -33,6 +33,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs10
 import Definitions.Def_IntMul_Kappa_K_Defs13
 import Definitions.Def_IntMul_Kappa_K_Defs15
 import Definitions.Def_IntMul_Kappa_K_Defs3
+import Theorems.Thm_NLogN_KFB_qop_fsp
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -64,11 +65,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem zsz_le_of_abs {z : ℤ} {m : ℕ} (h : |z| < 2 ^ m) : zsz z ≤ m := by
-  apply zsz_le_of_lt
-  have : ((z.natAbs : ℕ) : ℤ) < ((2 ^ m : ℕ) : ℤ) := by push_cast; exact h
-  exact_mod_cast this
-
 end NLogN
 
 end
@@ -93,20 +89,6 @@ open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
-
-/-! ## Frame -/
-
-/-! ## Compilation -/
-
-/-! ## Sequences and reasoning lemmas -/
-
-/-! ## Cost bounds -/
-
-theorem asgCost_le (i : Fin HS) (e : Ex HS) (s : IState HS) (B : ℕ) (h : e.Bnd s B)
-    (hi : zsz (s.top i) ≤ B) : asgCost i e s ≤ (e.size + 1) * 10 ^ 7 * (B + 2) ^ 2 := by
-  have h1 := Ex.cost_le s B e h
-  have h2 := Ex.zsz_eval_le s B e h
-  simp only [asgCost, moveCost]; nlinarith
 
 end RS
 
@@ -134,11 +116,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-/-! ## Expressions -/
-
-theorem zsz_le_of_abs {a : ℤ} {Q Bb : ℕ} (h : a.natAbs ≤ 2 * Q) (hQ : zsz ((2 * Q : ℕ) : ℤ) ≤ Bb) :
-    zsz a ≤ Bb := le_trans (zsz_mono (le_of_le_of_eq h (Int.natAbs_natCast _).symm)) hQ
 
 /-! ## The program -/
 
@@ -175,17 +152,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-/-- An assignment of an arbitrary expression on a managed state (quadratic cost). -/
-theorem Sp.asgQ (s : IState HS) (f : Fin HS → List ℤ) {i : Fin HS} {e : Ex HS} {a : ℤ}
-    {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l) (ha : zsz a ≤ B) (hc : e.Clean)
-    (hok : e.ok (encK s f)) (hB : e.Bnd (encK s f) B) :
-    Sp (.asg i e) (encK s f) (encK s (Function.update f i (e.eval (encK s f) :: l)))
-      ((e.size + 1) * 10 ^ 7 * (B + 2) ^ 2) := by
-  refine ⟨⟨hi, hc, hok, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [RS.run]
-    rw [← encK_upd]; simp [hf, ints]
-  · exact asgCost_le i e _ B hB (by rw [top_encK hf]; exact ha)
-
 end NLogN.KIL
 
 end
@@ -210,11 +176,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
-
-/-! ## Gaussian integers -/
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
 
 /-! ## Linear-combination expressions -/
 
@@ -299,29 +260,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD
 
-/-! ## Registers -/
-
-theorem clean_all (e : Ex HS) (h : ∀ i ∈ e.regs, i.val < 56) : e.Clean := fun i hi hz => by
-  have := h i hi
-  simp only [ExSt.all, zX, List.mem_cons, List.not_mem_nil, or_false] at hz
-  rcases hz with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> exact absurd this (by decide)
-
-theorem zsz_le_of_abs {v : ℤ} {B : ℕ} (h : |v| < 2 ^ B) : zsz v ≤ B := by
-  apply zsz_le_of_lt
-  have : (v.natAbs : ℤ) < 2 ^ B := by rw [Int.natCast_natAbs]; exact h
-  exact_mod_cast this
-
-/-! ## The loop -/
-
-theorem zsz_ediv_le {u d : ℤ} (hu : 0 ≤ u) (hd : 0 < d) : zsz (u / d) ≤ zsz u := by
-  apply zsz_mono
-  have h1 := Int.ediv_nonneg hu hd.le
-  have h2 := Int.ediv_le_self d hu
-  rw [← Int.ofNat_le, Int.natCast_natAbs, Int.natCast_natAbs, abs_of_nonneg h1, abs_of_nonneg hu]
-  exact h2
-
-theorem upd_ne {F : Fin HS → List ℤ} {i j : Fin HS} (h : j ≠ i) (x : List ℤ) :
-    Function.update F i x j = F j := Function.update_of_ne h _ _
 end NLogN.KFL
 
 end
@@ -572,67 +510,6 @@ set_option linter.unusedSimpArgs false
 namespace IntMul.Kappa.R6.IL2C
 
 open NLogN NLogN.KFL NLogN.KIL NLogN.KFD IntMul RS
-
-/-! ## Parameter registers -/
-
-theorem ESp.ofG' {t : IState HS} {x : Fin HS} {v : ℤ} {L : List Item} {Bb : ℕ}
-    (h : t.G x = .int v :: L) (hx : x.val < 56) (hb : zsz v ≤ Bb) : ESp (.reg x) t Bb v :=
-  ⟨KFL.clean_all _ (by simp [Ex.regs, hx]), IState.isInt_of h,
-    by show zsz (t.top x) ≤ Bb; rw [IState.top_eq h]; exact hb, IState.top_eq h⟩
-
-/-- A register read through a managed state whose managed part does not touch it. -/
-theorem encK_G_eq {s : IState HS} {F F' : Fin HS → List ℤ} {r : Fin HS} (h : F' r = F r) :
-    (encK s F').G r = (encK s F).G r := by simp [h]
-
-/-! ## The loop -/
-
-theorem segFR_rA (F : Fin HS → List ℤ) (tf : ℤ → ℤ → ℤ) (ru rv rw a u v w : ℤ) (k : ℕ) :
-    segFR F tf ru rv rw a u v w k rA = (a + segSum tf ru rv rw w u v k) :: (F rA).tail := by
-  simp only [segFR]; rw [upd_ne (by decide), upd_ne (by decide), upd_ne (by decide),
-    Function.update_self]
-
-theorem segFR_rU (F : Fin HS → List ℤ) (tf : ℤ → ℤ → ℤ) (ru rv rw a u v w : ℤ) (k : ℕ) :
-    segFR F tf ru rv rw a u v w k rU = (u / ru ^ k) :: (F rU).tail := by
-  simp only [segFR]; rw [upd_ne (by decide), upd_ne (by decide), Function.update_self]
-
-theorem segFR_rV (F : Fin HS → List ℤ) (tf : ℤ → ℤ → ℤ) (ru rv rw a u v w : ℤ) (k : ℕ) :
-    segFR F tf ru rv rw a u v w k rV = (v / rv ^ k) :: (F rV).tail := by
-  simp only [segFR]; rw [upd_ne (by decide), Function.update_self]
-
-theorem segFR_rW (F : Fin HS → List ℤ) (tf : ℤ → ℤ → ℤ) (ru rv rw a u v w : ℤ) (k : ℕ) :
-    segFR F tf ru rv rw a u v w k rW = (w * rw ^ k) :: (F rW).tail := by
-  simp only [segFR]; rw [Function.update_self]
-
-theorem segFR_ne (F : Fin HS → List ℤ) (tf : ℤ → ℤ → ℤ) (ru rv rw a u v w : ℤ) (k : ℕ)
-    {j : Fin HS} (h1 : j ≠ rA) (h2 : j ≠ rU) (h3 : j ≠ rV) (h4 : j ≠ rW) :
-    segFR F tf ru rv rw a u v w k j = F j := by
-  simp only [segFR]; rw [upd_ne h4, upd_ne h3, upd_ne h2, upd_ne h1]
-
-theorem geom_le {r : ℤ} (hr : 2 ≤ r) (k : ℕ) : ∑ i ∈ Finset.range k, r ^ i ≤ r ^ k - 1 := by
-  induction k with
-  | zero => simp
-  | succ k ih =>
-    rw [Finset.sum_range_succ, pow_succ]
-    have : 0 ≤ r ^ k := by positivity
-    nlinarith
-
-theorem segSum_abs {tf : ℤ → ℤ → ℤ} {Tm : ℤ} (htf : ∀ a b, |tf a b| ≤ Tm) {ru rv rw w : ℤ}
-    (hrw : 2 ≤ rw) (hw : 0 ≤ w) (u v : ℤ) (k : ℕ) :
-    |segSum tf ru rv rw w u v k| ≤ Tm * w * (rw ^ k - 1) := by
-  unfold segSum
-  refine le_trans (Finset.abs_sum_le_sum_abs _ _) ?_
-  have h1 : ∀ i ∈ Finset.range k, |w * rw ^ i * tf (u / ru ^ i) (v / rv ^ i)| ≤ Tm * w * rw ^ i := by
-    intro i _
-    rw [abs_mul, abs_of_nonneg (by positivity : 0 ≤ w * rw ^ i)]
-    have := htf (u / ru ^ i) (v / rv ^ i)
-    have hp : (0 : ℤ) ≤ w * rw ^ i := by positivity
-    nlinarith
-  refine le_trans (Finset.sum_le_sum h1) ?_
-  rw [← Finset.mul_sum]
-  have := geom_le hrw k
-  have hT : 0 ≤ Tm := le_trans (abs_nonneg _) (htf 0 0)
-  have h2 : 0 ≤ Tm * w := by positivity
-  nlinarith
 
 theorem segFR_zero (F : Fin HS → List ℤ) (tf : ℤ → ℤ → ℤ) (ru rv rw a u v w : ℤ)
     (hA0 : (F rA).head? = some a) (hU0 : (F rU).head? = some u) (hV0 : (F rV).head? = some v)

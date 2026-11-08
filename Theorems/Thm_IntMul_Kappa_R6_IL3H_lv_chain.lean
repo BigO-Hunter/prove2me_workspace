@@ -54,9 +54,6 @@ namespace AModel
 
 section BlockSwap
 
-lemma getElem_permIdx (f : ℕ → ℕ) (a : List ℕ) (k : ℕ) (hk : k < (permIdx f a).length) :
-    (permIdx f a)[k] = a.getD (f k) 0 := by simp [permIdx]
-
 /-! ### Segments of a block-swapped address -/
 
 /-! ### Merging both runs -/
@@ -92,11 +89,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
 
-/-! ## Gaussian integers -/
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
-
 /-! ## Linear-combination expressions -/
 
 /-! ## Fine moves with the loop overhead bounded by the count -/
@@ -124,13 +116,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -270,20 +255,6 @@ namespace NLogN.KFU
 
 open AModel AModelL12
 
-/-! ## Position permutations -/
-
-theorem POp.getElem {g : List ℕ → List ℕ} {σ : ℕ → ℕ} {n : ℕ} (hP : POp g σ n) {b : List ℕ}
-    (hb : b.length = n) {i : ℕ} (hi : i < (g b).length) :
-    (g b)[i] = b[σ i]'(by rw [hb]; exact hP.lt i (by rw [hP.length hb] at hi; exact hi)) := by
-  have hi' : i < n := by rw [hP.length hb] at hi; exact hi
-  simp only [hP.eq b hb, getElem_permIdx]
-  rw [List.getD_eq_getElem _ _ (by rw [hb]; exact hP.lt i hi')]
-
-theorem POp.mem {g : List ℕ → List ℕ} {σ : ℕ → ℕ} {n : ℕ} (hP : POp g σ n) {l : List ℕ}
-    (hl : l.length = n) {x : ℕ} (hx : x ∈ g l) : x ∈ l := by
-  obtain ⟨i, hi, rfl⟩ := List.getElem_of_mem hx
-  rw [hP.getElem hl hi]; exact List.getElem_mem _
-
 /-! ### `swapPos` -/
 
 /-! ### `swapMid` -/
@@ -315,11 +286,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFW
 
 open IntMul RS KFD
-
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
 
 end NLogN.KFW
 
@@ -445,12 +411,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-theorem one_le_nN {Bn t S0 : ℕ} (hB : 1 ≤ Bn) (hS : 1 ≤ S0) : 1 ≤ nN Bn t S0 := by
-  unfold nN
-  have : 1 ≤ 2 ^ t := Nat.one_le_two_pow
-  have := Nat.mul_le_mul (Nat.mul_le_mul hB this) hS
-  simpa using this
-
 end NLogN.KFW
 
 end
@@ -481,8 +441,6 @@ open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 namespace ExV
 
 variable {σ : Fin HS → Option ℤ} {B : ℕ}
-
-theorem congr {e : Ex HS} {x y : ℤ} (h : ExV σ e x B) (hxy : x = y) : ExV σ e y B := hxy ▸ h
 
 end ExV
 
@@ -515,40 +473,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-/-! ## Reading pushed assignments -/
-
-theorem σPush_ne : ∀ (l : List (Fin HS × ℤ)) (σ : Fin HS → Option ℤ) (i : Fin HS),
-    (∀ p ∈ l, p.1 ≠ i) → σPush σ l i = σ i
-  | [], _, _, _ => rfl
-  | (j, v) :: l, σ, i, h => by
-    simp only [σPush]
-    rw [σPush_ne l _ i (fun p hp => h p (List.mem_cons_of_mem _ hp)),
-      Function.update_of_ne (fun e => h (j, v) List.mem_cons_self e.symm)]
-
-theorem σPush_cases : ∀ (l : List (Fin HS × ℤ)) (σ : Fin HS → Option ℤ) (i : Fin HS) (v : ℤ),
-    σPush σ l i = some v → (∃ p ∈ l, p.1 = i) ∨ σ i = some v
-  | [], _, _, _, h => Or.inr h
-  | (j, u) :: l, σ, i, v, h => by
-    simp only [σPush] at h
-    rcases σPush_cases l _ i v h with ⟨p, hp, hpi⟩ | h'
-    · exact Or.inl ⟨p, List.mem_cons_of_mem _ hp, hpi⟩
-    · by_cases hij : i = j
-      · exact Or.inl ⟨(j, u), List.mem_cons_self, hij.symm⟩
-      · rw [Function.update_of_ne hij] at h'; exact Or.inr h'
-
-theorem σPush_mem : ∀ (l : List (Fin HS × ℤ)) (σ : Fin HS → Option ℤ) (i : Fin HS) (v : ℤ),
-    (l.map Prod.fst).Nodup → (i, v) ∈ l → σPush σ l i = some v
-  | [], _, _, _, _, h => absurd h (by simp)
-  | (j, u) :: l, σ, i, v, hnd, h => by
-    simp only [List.map_cons, List.nodup_cons] at hnd
-    simp only [σPush]
-    rcases List.mem_cons.1 h with e | h'
-    · simp only [Prod.mk.injEq] at e
-      obtain ⟨rfl, rfl⟩ := e
-      rw [σPush_ne l _ i (fun p hp e => hnd.1 (by rw [← e]; exact List.mem_map_of_mem hp)),
-        Function.update_self]
-    · exact σPush_mem l _ i v hnd.2 h'
-
 /-! ## Level registers -/
 
 /-! ## Phase-pass registers and the `ZD` pass -/
@@ -575,11 +499,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-/-! ## The node frame -/
-
-theorem ExC.congr {σ : Fin HS → Option ℤ} {e : Ex HS} {x y : ℤ} {c : ℕ} (h : ExC σ e x c)
-    (hxy : x = y) : ExC σ e y c := hxy ▸ h
 
 end NLogN.KFW
 
@@ -617,9 +536,6 @@ variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
 variable {σ : Fin HS → Option ℤ} {U V : IStmt HS Pp} {f g h : Fin HS → List ℤ} {c c' : ℕ}
 
-theorem RunQ.congr {g' : Fin HS → List ℤ} (H : RunQ I iprog σ U f g c) (he : g = g') :
-    RunQ I iprog σ U f g' c := he ▸ H
-
 end Run
 
 /-! ## From `SImplQ` to a fixed run -/
@@ -647,11 +563,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-/-! ## Natural values of expressions -/
-
-theorem vOf_eq {σ : Fin HS → Option ℤ} {i : Fin HS} {n : ℕ} (h : σ i = some (n : ℤ)) :
-    vOf σ i = n := by simp [vOf, h]
 
 /-! ## Frames of natural pushes -/
 

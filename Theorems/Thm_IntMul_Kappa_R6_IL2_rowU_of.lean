@@ -101,8 +101,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem ints_append (A B : List ℤ) : ints (A ++ B) = ints A ++ ints B := by simp [ints]
-
 end NLogN
 
 end
@@ -131,9 +129,6 @@ namespace AModel
 /-! ## 1. Reshape -/
 
 section Reshape
-
-lemma Valid.drop {sh : Shape} {a : List ℕ} (h : Valid sh a) (k : ℕ) :
-    Valid (sh.drop k) (a.drop k) := List.forall₂_drop k h
 
 end Reshape
 
@@ -251,16 +246,6 @@ open IntMul RS
 
 namespace KIL
 
-/-! ## Elementary statements -/
-
-/-! ## Moving integers between stacks -/
-
-/-! ## Counted loops through a family of managed states -/
-
-/-! ## Expression side conditions on managed states -/
-
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
-
 end KIL
 
 end NLogN
@@ -342,19 +327,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Ghost stacks -/
-
-/-! ## The simulation -/
-
-/-! ## Top level -/
-
-/-! ## Coarse transfer: `fcost ≤ 100 · cost` -/
-
-/-! ## Fine specifications -/
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
-
 /-! ## Loops -/
 
 /-! ## Literal-to-register simulation -/
@@ -388,15 +360,6 @@ namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Prologue / epilogue of a unary counter pair -/
-
-/-! ## The core: blocks, then copy the output back -/
-
-/-! ## The program -/
-
-theorem zsz_nat_le (n : ℕ) : zsz (n : ℤ) ≤ n :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
-
 end KFC
 
 end NLogN
@@ -423,11 +386,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
-
-/-! ## Gaussian integers -/
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
 
 /-! ## Linear-combination expressions -/
 
@@ -463,17 +421,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD
-
-/-! ## Pushing a linear combination -/
-
-/-! ## The zip loop -/
-
-/-! ## One block -/
-
-theorem Cnt.congr {s : IState HS} {f g : Fin HS → List ℤ} {B1 : ℕ} (h : Cnt s f B1)
-    (h1 : g rB = f rB) (h2 : g rB2 = f rB2) (h3 : g rB4 = f rB4) : Cnt s g B1 :=
-  ⟨by simp only [encK_G, h1]; exact h.b, by simp only [encK_G, h2]; exact h.b2,
-    by simp only [encK_G, h3]; exact h.b4⟩
 
 /-! ## A group of blocks, and the whole pass -/
 
@@ -554,16 +501,6 @@ namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
 
-/-! ## Scaled coefficients -/
-
-/-! ## Scaled terms -/
-
-theorem zsz_two_pow (d : ℕ) : zsz ((2 : ℤ) ^ d) ≤ d + 1 := by
-  apply zsz_le_of_lt
-  rw [Int.natAbs_pow]
-  simp only [Int.reduceAbs]
-  rw [pow_succ]; have := Nat.one_le_two_pow (n := d); omega
-
 /-! ## Real and imaginary parts of `p u + q v` -/
 
 /-! ## Bit bounds -/
@@ -595,12 +532,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
-
-theorem PCnt.congr {s : IState HS} {f g : Fin HS → List ℤ} {L P Q : ℕ} (h : PCnt s f L P Q)
-    (h1 : g rB = f rB) (h2 : g rB2 = f rB2) (h3 : g rP = f rP) (h4 : g rQ = f rQ) :
-    PCnt s g L P Q :=
-  ⟨by simp only [encK_G, h1]; exact h.b, by simp only [encK_G, h2]; exact h.b2,
-    by simp only [encK_G, h3]; exact h.p, by simp only [encK_G, h4]; exact h.q⟩
 
 end NLogN.KFG
 
@@ -672,14 +603,6 @@ open IntMul RS AModel KIL KFD KFB Complex
 /-! ## The layer layout -/
 
 variable {P K D S ρ : ℕ}
-
-theorem layerShape_drop (P K D S i : ℕ) (hi : i < D) :
-    (Butterfly.layerShape P K D S).drop (i + 2) = List.replicate (D - (i + 1)) (2 ^ K) ++ [S] := by
-  simp only [Butterfly.layerShape, List.cons_append, List.drop_succ_cons]
-  rw [List.drop_append_of_le_length (by simp; omega), List.drop_replicate]
-
-theorem stS_eq (K D S i : ℕ) (hi : i < D) : stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S := by
-  simp [stS, layerShape_drop 1 K D S i hi, vol]
 
 theorem vol_layer (P K D S : ℕ) :
     vol (Butterfly.layerShape P K D S) = P * (2 ^ K) ^ D * S := by
@@ -778,13 +701,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -1309,44 +1225,6 @@ section Rows
 
 variable {K m k e : ℕ} {pos : Fin m × Fin (m ^ k) → ℕ}
 
-theorem rowE_le (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) :
-    K * (m ^ k * (r.val + 1) - 1) ≤ e := by
-  have hf : 1 ≤ m ^ k := Nat.one_le_pow _ _ (by have := r.isLt; omega)
-  have := he (r, ⟨m ^ k - 1, by omega⟩)
-  simp only at this
-  have e1 : m ^ k - 1 + m ^ k * r.val = m ^ k * (r.val + 1) - 1 := by
-    rw [Nat.mul_succ]; omega
-  rw [e1] at this
-  omega
-
-theorem sR_add (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) :
-    sR K (m ^ k) e r + e % K = e - K * (m ^ k * (r.val + 1) - 1) := by
-  have h1 := rowE_le he r
-  set E := K * (m ^ k * (r.val + 1) - 1)
-  have h2 : (e - E) % K = e % K := by
-    simp only [E]; rw [Nat.sub_mul_mod h1]
-  have h3 : (e - E) % K ≤ e - E := Nat.mod_le _ _
-  unfold sR
-  omega
-
-/-- Rows further down start lower by `fK` per row. -/
-theorem sR_lt (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) {r r' : Fin m}
-    (h : r < r') : sR K (m ^ k) e r' + m ^ k * K * (r'.val - r.val) = sR K (m ^ k) e r := by
-  have h0 := sR_add he r
-  have h1 := sR_add he r'
-  have hf : 1 ≤ m ^ k := Nat.one_le_pow _ _ (by have := r.isLt; omega)
-  have hlt : r.val < r'.val := h
-  have e1 : m ^ k * (r'.val + 1) - 1 = (m ^ k * (r.val + 1) - 1) + m ^ k * (r'.val - r.val) := by
-    have : m ^ k * (r'.val + 1) = m ^ k * (r.val + 1) + m ^ k * (r'.val - r.val) := by
-      rw [← Nat.mul_add]; congr 1; omega
-    have : 1 ≤ m ^ k * (r.val + 1) := Nat.one_le_iff_ne_zero.2 (by positivity)
-    omega
-  have e2 : K * (m ^ k * (r'.val + 1) - 1) =
-      K * (m ^ k * (r.val + 1) - 1) + m ^ k * K * (r'.val - r.val) := by
-    rw [e1, Nat.mul_add]; ring
-  have h2 := rowE_le he r'
-  omega
-
 end Rows
 
 end NLogN.KFR
@@ -1374,43 +1252,12 @@ open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly KFN
 
 variable {K m k e : ℕ} {pos : Fin m × Fin (m ^ k) → ℕ}
 
-theorem sR_top (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) :
-    sR K (m ^ k) e r + m ^ k * K ≤ e - e % K + K := by
-  have h0 := sR_add he r
-  have h1 := rowE_le he r
-  have hf : 1 ≤ m ^ k := Nat.one_le_pow _ _ (by have := r.isLt; omega)
-  have a1 : K * (m ^ k - 1) ≤ K * (m ^ k * (r.val + 1) - 1) :=
-    Nat.mul_le_mul_left _ (by rw [Nat.mul_succ]; omega)
-  have a2 : K * (m ^ k - 1) + K = m ^ k * K := by
-    rw [Nat.mul_comm (m ^ k) K, ← Nat.mul_succ]; congr 1; omega
-  have a3 := Nat.mod_le e K
-  omega
-
-theorem sR_gap (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) {r r' : Fin m}
-    (h : r < r') : sR K (m ^ k) e r' + m ^ k * K ≤ sR K (m ^ k) e r := by
-  have h1 := sR_lt he h
-  have : m ^ k * K ≤ m ^ k * K * (r'.val - r.val) :=
-    Nat.le_mul_of_pos_right _ (by have : r.val < r'.val := h; omega)
-  omega
-
-theorem pow_mul_pow_mul' (x y S : ℕ) : 2 ^ x * (2 ^ y * S) = 2 ^ (x + y) * S := by
-  rw [← mul_assoc, ← pow_add]
-
 section Shape
 
 variable {t S0 B : ℕ} {σ : Fin 3 → Fin m}
   (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (htop : e - e % K + K ≤ t)
   (hσ : σ 0 < σ 1 ∧ σ 1 < σ 2)
 include he htop hσ
-
-theorem shR_vol : vol (shR K (m ^ k) e t S0 B σ) = B * 2 ^ t * S0 := by
-  have g1 := sR_gap he hσ.1
-  have g2 := sR_gap he hσ.2
-  have g0 := sR_top he (σ 0)
-  simp only [shR, rect, vol_cons, vol_nil, mul_one]
-  repeat rw [pow_mul_pow_mul']
-  rw [mul_assoc B, mul_assoc B, pow_mul_pow_mul']
-  congr 3; omega
 
 end Shape
 
@@ -1484,11 +1331,6 @@ namespace NLogN.KFW
 
 open IntMul RS KFD
 
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
-
 end NLogN.KFW
 
 end
@@ -1557,75 +1399,12 @@ section Rows
 variable {i j : ℕ} (hij : i ≠ j)
 include hij
 
-theorem rows_lt : s0R i j < s1R i j ∧ s1R i j < s2R i j := by
-  unfold s1R s0R s2R hR; split_ifs <;> omega
-
-omit hij in
-theorem s2R_le : s2R i j ≤ max 2 (max i j) := by
-  unfold s2R hR; split_ifs <;> omega
-
-omit hij in
-theorem s1R_mid (h0 : i ≠ s0R i j) (h2 : i ≠ s2R i j) : s1R i j = i := by
-  unfold s1R; unfold s0R s2R hR at *; split_ifs at * <;> omega
-
-omit hij in
-theorem s1R_mid' (h0 : j ≠ s0R i j) (h2 : j ≠ s2R i j) : s1R i j = j := by
-  unfold s1R; unfold s0R s2R hR at *; split_ifs at * <;> omega
-
-omit hij in
-theorem σR_px : σR i j (pxR i j) = i := by
-  unfold pxR; split_ifs with h1 h2
-  · show σR i j 0 = _; unfold σR; rw [if_pos rfl]; exact h1.symm
-  · show σR i j 2 = _; unfold σR; rw [if_neg (by decide), if_neg (by decide)]; exact h2.symm
-  · show σR i j 1 = _; unfold σR; rw [if_neg (by decide), if_pos rfl]; exact s1R_mid h1 h2
-
-omit hij in
-theorem σR_py : σR i j (pyR i j) = j := by
-  unfold pyR; split_ifs with h1 h2
-  · show σR i j 0 = _; unfold σR; rw [if_pos rfl]; exact h1.symm
-  · show σR i j 2 = _; unfold σR; rw [if_neg (by decide), if_neg (by decide)]; exact h2.symm
-  · show σR i j 1 = _; unfold σR; rw [if_neg (by decide), if_pos rfl]; exact s1R_mid' h1 h2
-
 end Rows
-
-/-! ## Expression combinators -/
-
-/-! ## The parameter expressions -/
-
-/-! ## Arithmetic of the rows -/
-
-/-! ## The shape factors -/
-
-/-! ## Specifications of the parameter expressions -/
-
-theorem mC_eq : mC = 1000000 := by norm_num [mC]
-
-theorem f1_pos (k : ℕ) : 1 ≤ mC ^ k := Nat.one_le_pow _ _ (by norm_num)
 
 section PFacts
 
 variable {k K e T S0 B r H : ℕ} (hp : PF k K e T S0 B r)
 include hp
-
-theorem PF.eT : e < T := by
-  have := hp.ht; have := Nat.mod_lt e (show 0 < K by have := hp.k1; omega)
-  have := Nat.mod_le e K; omega
-
-theorem PF.mT : mC ^ (k + 1) ≤ T := by
-  have h1 : mC ^ (k + 1) - 1 ≤ K * (mC ^ (k + 1) - 1) := Nat.le_mul_of_pos_left _ hp.k1
-  have := hp.he; have := hp.eT
-  have : 1 ≤ mC ^ (k + 1) := Nat.one_le_pow _ _ (by norm_num)
-  omega
-
-theorem PF.fm : mC ^ k * mC ≤ T := by rw [← pow_succ]; exact hp.mT
-
-theorem PF.fT : mC ^ k ≤ T := by
-  have := hp.fm
-  calc mC ^ k = mC ^ k * 1 := (mul_one _).symm
-    _ ≤ mC ^ k * mC := Nat.mul_le_mul_left _ (by norm_num [mC])
-    _ ≤ T := hp.fm
-
-theorem PF.he' : K * (mC ^ k * mC - 1) ≤ e := by rw [← pow_succ]; exact hp.he
 
 end PFacts
 
@@ -1638,13 +1417,6 @@ variable {k K e T S0 B r H : ℕ} {i j : Fin mC} {u : IState HS} {Bb : ℕ}
 include hp hA hBb
 
 omit hp hA hBb in
-theorem s_lt (hij : (i : ℕ) ≠ j) : s0R i j < mC ∧ s1R i j < mC ∧ s2R i j < mC := by
-  have hi : (i : ℕ) < 1000000 := lt_of_lt_of_eq i.isLt mC_eq
-  have hj : (j : ℕ) < 1000000 := lt_of_lt_of_eq j.isLt mC_eq
-  have := s2R_le (i := (i : ℕ)) (j := (j : ℕ))
-  have hm := mC_eq
-  have := rows_lt hij; omega
-
 end Par
 
 end NLogN.KFX
@@ -1668,41 +1440,6 @@ set_option maxRecDepth 20000
 namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW KFH AModel Butterfly
-
-/-! ## The bit-length loop -/
-
-/-! ## The Lemma 13 core as a hypothesis -/
-
-/-! ## The code -/
-
-/-! ## The masters agree -/
-
-/-! ## The geometry of a row addition -/
-
-theorem σF_val {i j : Fin mC} (hij : (i : ℕ) ≠ j) (x : Fin 3) : (σF i j x : ℕ) = σR i j x := by
-  have hl := s_lt (i := i) (j := j) hij
-  unfold σF; simp only
-  apply Nat.mod_eq_of_lt
-  unfold σR; split_ifs <;> omega
-
-theorem σF_mono {i j : Fin mC} (hij : (i : ℕ) ≠ j) : σF i j 0 < σF i j 1 ∧ σF i j 1 < σF i j 2 := by
-  have h := rows_lt hij
-  constructor <;> rw [Fin.lt_def, σF_val hij, σF_val hij] <;> simp [σR] <;> omega
-
-theorem posR_he {k K e : ℕ} (he : K * (mC ^ k * mC - 1) ≤ e) (p : Fin mC × Fin (mC ^ k)) :
-    posR K e k p + K * (p.2.val + mC ^ k * p.1.val) = e := by
-  have h1 := p.1.isLt; have h2 := p.2.isLt
-  have h3 : mC ^ k * p.1.val ≤ mC ^ k * (mC - 1) := Nat.mul_le_mul_left _ (by omega)
-  have h4 : mC ^ k * (mC - 1) = mC ^ k * mC - mC ^ k := Nat.mul_sub_one _ _
-  have h6 : mC ^ k ≤ mC ^ k * mC := Nat.le_mul_of_pos_right _ (by norm_num [mC])
-  have h5 : p.2.val + mC ^ k * p.1.val ≤ mC ^ k * mC - 1 := by omega
-  have := Nat.mul_le_mul_left K h5
-  unfold posR; omega
-
-theorem shR_eq {k K e T S0 B : ℕ} {i j : Fin mC} (hij : (i : ℕ) ≠ j) :
-    KFR.shR K (mC ^ k) e T S0 B (σF i j) =
-      rect (N0R k K e T B i j) (N1R k K e i j) (N2R k K e i j) (N3R k K e S0 i j) (mC ^ k * K) := by
-  simp only [KFR.shR, N0R, N1R, N2R, N3R, srw, σF_val hij]; rfl
 
 /-! ## Header cost -/
 
@@ -1821,41 +1558,10 @@ namespace IntMul.Kappa.R6.IL2
 open IntMul NLogN RS NLogN.KIL NLogN.KFD NLogN.KFE NLogN.KFB NLogN.KFL NLogN.KFW NLogN.KFH
   NLogN.KFX AModel Butterfly
 
-/-! ## The row-addition parameters for label dimension `m` -/
-
-/-! ## The shape factors -/
-
-/-! ## Specifications of the parameter expressions -/
-
-theorem f1_pos {m : ℕ} (hm : 1 ≤ m) (k : ℕ) : 1 ≤ m ^ k := Nat.one_le_pow _ _ hm
-
-theorem PF.m1 {m k K e T S0 B r : ℕ} (hp : PF m k K e T S0 B r) : 1 ≤ m := by
-  have := hp.m16; omega
-
 section PFacts
 
 variable {m k K e T S0 B r H : ℕ} (hp : PF m k K e T S0 B r)
 include hp
-
-theorem PF.eT : e < T := by
-  have := hp.ht; have := Nat.mod_lt e (show 0 < K by have := hp.k1; omega)
-  have := Nat.mod_le e K; omega
-
-theorem PF.mT : m ^ (k + 1) ≤ T := by
-  have h1 : m ^ (k + 1) - 1 ≤ K * (m ^ (k + 1) - 1) := Nat.le_mul_of_pos_left _ hp.k1
-  have := hp.he; have := hp.eT
-  have : 1 ≤ m ^ (k + 1) := Nat.one_le_pow _ _ hp.m1
-  omega
-
-theorem PF.fm : m ^ k * m ≤ T := by rw [← pow_succ]; exact hp.mT
-
-theorem PF.fT : m ^ k ≤ T := by
-  have := hp.fm
-  calc m ^ k = m ^ k * 1 := (mul_one _).symm
-    _ ≤ m ^ k * m := Nat.mul_le_mul_left _ (by have := hp.m16; omega)
-    _ ≤ T := hp.fm
-
-theorem PF.he' : K * (m ^ k * m - 1) ≤ e := by rw [← pow_succ]; exact hp.he
 
 end PFacts
 
@@ -1885,41 +1591,6 @@ open IntMul NLogN RS NLogN.KIL NLogN.KFD NLogN.KFE NLogN.KFB NLogN.KFL NLogN.KFW
   NLogN.KFX AModel Butterfly IntMul.Kappa.R6.IL
 
 variable {tab : Fin 1 → IStmt HS 1} {l12 : IStmt HS 1} {τ : ℝ} {m : ℕ}
-
-/-! ## The geometry of a row addition -/
-
-theorem s_lt3 {i j : Fin m} (hm : 3 ≤ m) (hij : (i : ℕ) ≠ j) :
-    s0R i j < m ∧ s1R i j < m ∧ s2R i j < m := by
-  have hi := i.isLt
-  have hj := j.isLt
-  have := s2R_le (i := (i : ℕ)) (j := (j : ℕ))
-  have := rows_lt hij; omega
-
-theorem σF_val {i j : Fin m} (hm : 3 ≤ m) (hij : (i : ℕ) ≠ j) (x : Fin 3) :
-    (σF i j x : ℕ) = σR i j x := by
-  have hl := s_lt3 (i := i) (j := j) hm hij
-  unfold σF; simp only
-  apply Nat.mod_eq_of_lt
-  unfold σR; split_ifs <;> omega
-
-theorem σF_mono {i j : Fin m} (hm : 3 ≤ m) (hij : (i : ℕ) ≠ j) : σF i j 0 < σF i j 1 ∧ σF i j 1 < σF i j 2 := by
-  have h := rows_lt hij
-  constructor <;> rw [Fin.lt_def, σF_val hm hij, σF_val hm hij] <;> simp [σR] <;> omega
-
-theorem posR_he {k K e : ℕ} (he : K * (m ^ k * m - 1) ≤ e) (p : Fin m × Fin (m ^ k)) :
-    posR m K e k p + K * (p.2.val + m ^ k * p.1.val) = e := by
-  have h1 := p.1.isLt; have h2 := p.2.isLt
-  have h3 : m ^ k * p.1.val ≤ m ^ k * (m - 1) := Nat.mul_le_mul_left _ (by omega)
-  have h4 : m ^ k * (m - 1) = m ^ k * m - m ^ k := Nat.mul_sub_one _ _
-  have h6 : m ^ k ≤ m ^ k * m := Nat.le_mul_of_pos_right _ (by omega)
-  have h5 : p.2.val + m ^ k * p.1.val ≤ m ^ k * m - 1 := by omega
-  have := Nat.mul_le_mul_left K h5
-  unfold posR; omega
-
-theorem shR_eq {k K e T S0 B : ℕ} {i j : Fin m} (hm : 3 ≤ m) (hij : (i : ℕ) ≠ j) :
-    KFR.shR K (m ^ k) e T S0 B (σF i j) =
-      rect (N0R m k K e T B i j) (N1R m k K e i j) (N2R m k K e i j) (N3R m k K e S0 i j) (m ^ k * K) := by
-  simp only [KFR.shR, N0R, N1R, N2R, N3R, srw, σF_val hm hij]; rfl
 
 /-! ## The Lemma 13 cost with exponent `τ` -/
 

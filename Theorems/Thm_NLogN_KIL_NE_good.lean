@@ -9,6 +9,7 @@ import Definitions.Def_IntMul_HvdH_M_Defs1
 import Definitions.Def_IntMul_Kappa_K_Defs12
 import Definitions.Def_IntMul_HvdH_M_Defs2
 import Definitions.Def_IntMul_Kappa_K_Defs11
+import Theorems.Thm_NLogN_KIL_desc4_sp
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -34,16 +35,6 @@ namespace NLogN
 open IntMul RS
 
 namespace KIL
-
-/-! ## Elementary statements -/
-
-/-! ## Moving integers between stacks -/
-
-/-! ## Counted loops through a family of managed states -/
-
-/-! ## Expression side conditions on managed states -/
-
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
 
 end KIL
 
@@ -80,13 +71,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
 
-/-! ## Push-list hygiene -/
-
-theorem RdOK.lt {r : Fin HS} (h : RdOK r) : r.val < 56 := by
-  rcases h with h | h
-  · rw [h]; decide
-  · exact h.2
-
 /-! ## Templates -/
 
 variable {m : ℕ}
@@ -115,18 +99,6 @@ namespace NLogN.KIL
 open IntMul RS AModel AModelL12
 
 namespace NE
-
-theorem le_of_OK {v : Fin HS → ℕ} {M : ℕ} : ∀ e : NE, e.OK v M → e.val v ≤ M
-  | reg _, h | lit _, h => h
-  | add a b, h | mul a b, h => h.2.2
-  | sub a b, h => le_trans (Nat.sub_le _ _) (le_of_OK a h.1)
-  | div a b, h => le_trans (Nat.div_le_self _ _) (le_of_OK a h.1)
-  | mod a b, h => le_trans (Nat.mod_le _ _) (le_of_OK a h.1)
-  | lt a b x y, h => by
-      simp only [OK] at h; simp only [val]
-      split_ifs at h ⊢ with hc
-      · exact le_of_OK x h.2.2
-      · exact le_of_OK y h.2.2
 
 /-- **Compilation is correct.** -/
 theorem good_sol_aux {t : IState HS} {v : Fin HS → ℕ} {M B : ℕ} (hM : zsz (M : ℤ) ≤ B) :

@@ -111,9 +111,6 @@ variable {d : ℕ}
 section cancel
 variable (s : Fin d → ℕ) [∀ i, NeZero (s i)]
 
-lemma card_pi_eq : (Fintype.card (Π i, ZMod (s i)) : ℂ) = ∏ i, (s i : ℂ) := by
-  simp [Fintype.card_pi, ZMod.card]
-
 variable (t : Fin d → ℕ)
 
 end cancel
@@ -150,37 +147,9 @@ open Complex
 
 noncomputable section
 
-lemma hp_pos (p : ℕ) : 0 < hp p := by unfold hp; positivity
-
 section Arr
 
 variable {ι : Type*} [Fintype ι]
-
-lemma pi_le {f : ι → ℂ} {C : ℝ} (hC : 0 ≤ C) (h : ∀ i, ‖f i‖ ≤ C) : ‖f‖ ≤ C :=
-  (pi_norm_le_iff_of_nonneg hC).2 h
-
-lemma truncNum_grid (p : ℕ) (n : ℤ) : Butterfly.truncNum p ((n : ℝ) / 2 ^ p) = n := by
-  have h2 : (0 : ℝ) < 2 ^ p := by positivity
-  have e : (n : ℝ) / 2 ^ p * 2 ^ p = n := by field_simp
-  unfold Butterfly.truncNum
-  rw [e]
-  split_ifs <;> simp
-
-lemma truncR_idem (p : ℕ) (x : ℝ) : Butterfly.truncR p (Butterfly.truncR p x) = Butterfly.truncR p x := by
-  conv_lhs => rw [Butterfly.truncR]
-  unfold Butterfly.truncR
-  rw [truncNum_grid]
-
-lemma Qp_idem (p : ℕ) (z : ℂ) : Butterfly.Qp p (Butterfly.Qp p z) = Butterfly.Qp p z := by
-  apply Complex.ext <;> simp [Butterfly.Qp, truncR_idem]
-
-lemma QA_grid (p : ℕ) (f : ι → ℂ) : Grid p (QA p f) := by
-  funext i; exact Qp_idem p (f i)
-
-lemma norm_mul_le' (a b : ι → ℂ) : ‖a * b‖ ≤ ‖a‖ * ‖b‖ :=
-  pi_le (by positivity) fun i => by
-    rw [Pi.mul_apply, norm_mul]
-    exact mul_le_mul (norm_le_pi_norm a i) (norm_le_pi_norm b i) (norm_nonneg _) (norm_nonneg _)
 
 end Arr
 
@@ -262,20 +231,6 @@ open Complex IntMul.OpenAI.RT IntMul.OpenAI.RC
 
 noncomputable section
 
-/-! ## Averages -/
-
-lemma avg_le {β : Type*} [Fintype β] [Nonempty β] (z : β → ℂ) {C : ℝ} (hz : ∀ k, ‖z k‖ ≤ C) :
-    ‖((Fintype.card β : ℂ))⁻¹ * ∑ k, z k‖ ≤ C := by
-  have hc : (0 : ℝ) < Fintype.card β := by exact_mod_cast Fintype.card_pos
-  rw [norm_mul, norm_inv, Complex.norm_natCast]
-  have hs : ‖∑ k, z k‖ ≤ Fintype.card β * C := by
-    refine (norm_sum_le _ _).trans ?_
-    calc ∑ k, ‖z k‖ ≤ ∑ _k : β, C := Finset.sum_le_sum fun k _ => hz k
-      _ = _ := by simp
-  calc (Fintype.card β : ℝ)⁻¹ * ‖∑ k, z k‖ ≤ (Fintype.card β : ℝ)⁻¹ * (Fintype.card β * C) :=
-        mul_le_mul_of_nonneg_left hs (by positivity)
-    _ = C := by field_simp
-
 lemma linC_clm {ι κ : Type*} [Fintype ι] [Fintype κ]
     (L : (κ → ℂ) →L[ℂ] (ι → ℂ)) (h : ‖L‖ ≤ 1) : LinC (fun u => L u) :=
   ⟨fun a b => (map_sub L a b).symm, fun a => (L.le_opNorm a).trans (by
@@ -286,9 +241,6 @@ variable {d : ℕ}
 lemma norm_prod_char (s : Fin d → ℕ) [∀ i, NeZero (s i)] (f : (i : Fin d) → ZMod (s i)) :
     ‖∏ i, (ZMod.stdAddChar (f i) : ℂ)‖ = 1 := by
   rw [norm_prod]; exact Finset.prod_eq_one fun i _ => IntMul.OpenAI.RH.norm_stdAddChar _
-
-lemma card_box (s : Fin d → ℕ) [∀ i, NeZero (s i)] :
-    ((Fintype.card ((i : Fin d) → ZMod (s i)) : ℕ) : ℂ) = ∏ i, (s i : ℂ) := card_pi_eq s
 
 /-- `Q F_t` is a linear contraction. -/
 theorem linC_QF (s t : Fin d → ℕ) [∀ i, NeZero (t i)] :

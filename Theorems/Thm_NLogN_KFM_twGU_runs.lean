@@ -20,8 +20,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
 end NLogN
 
 namespace NLogN
@@ -40,50 +38,11 @@ variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 namespace IRuns
 
-theorem mono {p : IStmt S P} {s s' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (hc : c ≤ c') : IRuns I iprog p s s' c' := by
-  obtain ⟨d, hd, h⟩ := h; exact ⟨d, by omega, h⟩
-
-theorem mono' {p : IStmt S P} {s s' s'' : IState S} {c c' : ℕ} (h : IRuns I iprog p s s' c)
-    (he : s' = s'') (hc : c ≤ c') : IRuns I iprog p s s'' c' := he ▸ h.mono hc
-
-theorem op {o : IOp S} {s s' : IState S} {c : ℕ} (h : o.Step I s s' c) :
-    IRuns I iprog (.op o) s s' c := ⟨c, le_rfl, .op h⟩
-
-theorem seq {p q : IStmt S P} {s s₁ s₂ : IState S} {c₁ c₂ : ℕ} (h₁ : IRuns I iprog p s s₁ c₁)
-    (h₂ : IRuns I iprog q s₁ s₂ c₂) : IRuns I iprog (.seq p q) s s₂ (c₁ + c₂) := by
-  obtain ⟨d₁, hd₁, h₁⟩ := h₁; obtain ⟨d₂, hd₂, h₂⟩ := h₂
-  exact ⟨d₁ + d₂, by omega, .seq h₁ h₂⟩
-
 end IRuns
 
 namespace IRuns
 
-theorem dup {s : IState S} {i j : Fin S} {a : ℤ} {L : List Item} (hij : i ≠ j)
-    (hi : s.G i = .int a :: L) :
-    IRuns I iprog (.op (.dup i j)) s (s.upd j (.int a :: s.G j)) (dupCost (zsz a) + 17) :=
-  NLogN.IRuns.op (.dup hij hi)
-
-theorem mv {s : IState S} {i j : Fin S} {a : ℤ} {L : List Item} (hij : i ≠ j)
-    (hi : s.G i = .int a :: L) :
-    IRuns I iprog (.op (.mv i j)) s ((s.upd i L).upd j (.int a :: s.G j))
-      (2 * moveCost (zsz a) + 19) := NLogN.IRuns.op (.mv hij hi)
-
-theorem const {s : IState S} (i : Fin S) (c : ℤ) :
-    IRuns I iprog (.op (.const i c)) s (s.upd i (.int c :: s.G i)) (zsz c + 2) := NLogN.IRuns.op (.const c)
-
 end IRuns
-
-@[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
-    (s.upd i L).upd i L' = s.upd i L' := by
-  simp [IState.upd]
-
-@[simp] theorem IState.upd_self (s : IState S) (i : Fin S) : s.upd i (s.G i) = s := by
-  simp [IState.upd]
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
 
 end NLogN
 
@@ -92,11 +51,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem moveIntCost_le (L : ℕ) : 2 * moveCost L + 19 ≤ 110 * (L + 1) := by
-  simp only [moveCost]; omega
-
-theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
 
 end NLogN
 
@@ -107,9 +61,6 @@ section
 namespace NLogN
 
 open IntMul
-
-@[simp] theorem runsTo_some {S : ℕ} (r : IState S × ℕ) (t : IState S) (c : ℕ) :
-    runsTo (some r) t c ↔ r.1 = t ∧ r.2 ≤ c := Iff.rfl
 
 variable {P : ℕ}
 
@@ -136,9 +87,6 @@ open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-theorem zsz_natCast_le_self' (k : ℕ) : zsz (k : ℤ) ≤ k :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
 
 end NLogN
 
@@ -175,12 +123,6 @@ open Complex KFB
 
 noncomputable section
 
-theorem vP_oneP (P : ℕ) : vP P (oneP P) = 1 := by
-  simp [vP, oneP, NLogN.KFB.toC]
-
-theorem norm_exp_phase (x : ℝ) (c : ℂ) (hc : c = (x : ℂ) * I) : ‖exp c‖ ≤ 1 := by
-  rw [hc, Complex.norm_exp_ofReal_mul_I]
-
 end
 
 end NLogN.KFM
@@ -198,10 +140,6 @@ set_option maxRecDepth 20000
 namespace NLogN.KFM
 
 open IntMul KFC KFB KFT KIL
-
-theorem cst_succ (Δ : ℕ) (c h g : GI) (k : ℕ) :
-    cst Δ c h g (k + 1) = cstep Δ c (cst Δ c h g k) := by
-  simp only [cst, Function.iterate_succ_apply']
 
 theorem chirpL_eq (Δ : ℕ) (c : GI) : ∀ (n : ℕ) (h g : GI),
     chirpL Δ c h g n = (List.range n).map (fun k => (cst Δ c h g k).2)
@@ -226,25 +164,6 @@ theorem geoL_eq_chirpL (Δ : ℕ) (c : GI) : ∀ (n : ℕ) (x : GI),
 section IL
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-theorem mvPB_runs (X Y : Fin HS) (hXU : X ≠ pU) (hYU : Y ≠ pU) (hXY : X ≠ Y) (s : IState HS)
-    (a b : ℤ) (LX : List Item) (hX : s.G X = .int a :: .int b :: LX) :
-    IRuns I iprog (mvPB X Y) s ((s.upd X LX).upd Y (.int a :: .int b :: s.G Y)) (cPair a b) := by
-  have h1 := IRuns.mv (I := I) (iprog := iprog) hXU hX
-  set s1 := (s.upd X (.int b :: LX)).upd pU (.int a :: s.G pU) with hs1
-  have h2 := IRuns.mv (I := I) (iprog := iprog) (s := s1) (i := X) (j := Y) (a := b) (L := LX) hXY
-    (by simp [hs1, hXU])
-  set s2 := (s1.upd X LX).upd Y (.int b :: s1.G Y) with hs2
-  have h3 := IRuns.mv (I := I) (iprog := iprog) (s := s2) (i := pU) (j := Y) (a := a)
-    (L := s.G pU) hYU.symm (by simp [hs2, hs1, hYU.symm, hXU.symm])
-  refine (h1.seq (h2.seq h3)).mono' ?_ ?_
-  · simp only [hs2, hs1]; ((apply NLogN.IState.ext' <;> intros <;>
-                                   simp only [NLogN.IState.upd_G, NLogN.IState.upd_ip, NLogN.IState.upd_out, NLogN.KFC.cf] <;>
-                                 split_ifs <;>
-                               simp_all +decide))
-  · unfold cPair
-    have := moveIntCost_le (zsz a); have := moveIntCost_le (zsz b)
-    omega
 
 theorem outL_succ (Δ : ℕ) (c h g : GI) (k : ℕ) :
     outL Δ c h g (k + 1) = outL Δ c h g k ++ [(cst Δ c h g k).2] := by
@@ -385,9 +304,6 @@ namespace NLogN.KFM
 open IntMul KFC KFB KFT KIL
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-lemma dupCost_mono' {a b : ℕ} (h : a ≤ b) : dupCost a ≤ dupCost b := by
-  unfold dupCost zipCost moveCost; nlinarith
 
 end NLogN.KFM
 

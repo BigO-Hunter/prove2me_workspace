@@ -5,6 +5,9 @@ import Theorems.Thm_NLogN_KFL_segLoop_fsp
 import Theorems.Thm_NLogN_Ex_cost_le
 import Theorems.Thm_NLogN_Ex_zsz_eval_le
 import Theorems.Thm_NLogN_zsz_le_of_lt
+import Theorems.Thm_NLogN_KFL_card_moved
+import Definitions.Def_IntMul_Kappa_R6_Defs12
+import Definitions.Def_IntMul_Kappa_R6_Defs14
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -225,11 +228,6 @@ theorem Sp.pop {i : Fin HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56)
 
 end
 
-theorem clean_neg {a : Ex HS} (ha : a.Clean) : (Ex.neg a).Clean := by
-  intro j hj
-  simp only [Ex.regs] at hj
-  exact ha j hj
-
 end KIL
 
 end NLogN
@@ -245,20 +243,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-theorem clean_ndiv {a b : Ex HS} (ha : a.Clean) (hb : b.Clean) : (Ex.ndiv a b).Clean := by
-  intro j hj
-  simp only [Ex.regs, List.mem_append] at hj
-  rcases hj with hj | hj
-  · exact ha j hj
-  · exact hb j hj
-
-theorem clean_nmod {a b : Ex HS} (ha : a.Clean) (hb : b.Clean) : (Ex.nmod a b).Clean := by
-  intro j hj
-  simp only [Ex.regs, List.mem_append] at hj
-  rcases hj with hj | hj
-  · exact ha j hj
-  · exact hb j hj
-
 end NLogN.KIL
 
 end
@@ -271,44 +255,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-theorem top_congr {s s' : IState HS} {i : Fin HS} (h : s.G i = s'.G i) : s.top i = s'.top i := by
-  simp only [IState.top, h]
-
-theorem isInt_congr {s s' : IState HS} {i : Fin HS} (h : s.G i = s'.G i) :
-    s.IsInt i ↔ s'.IsInt i := by
-  simp only [IState.IsInt, h, NLogN.KIL.top_congr h]
-
-theorem Ex.congrG {s s' : IState HS} : ∀ (e : Ex HS), (∀ r ∈ e.regs, s.G r = s'.G r) →
-    e.eval s = e.eval s' ∧ (e.ok s ↔ e.ok s') ∧ (∀ B, e.Bnd s B ↔ e.Bnd s' B) ∧
-      e.cost s = e.cost s'
-  | .reg i, h => by
-    have hi := h i (by simp [Ex.regs])
-    refine ⟨NLogN.KIL.top_congr hi, NLogN.KIL.isInt_congr hi, fun B => by simp only [Ex.Bnd, NLogN.KIL.top_congr hi], ?_⟩
-    simp only [Ex.cost, NLogN.KIL.top_congr hi]
-  | .lit c, _ => ⟨rfl, Iff.rfl, fun _ => Iff.rfl, rfl⟩
-  | .add a b, h | .mul a b, h | .shl a b, h | .quo a b, h | .rem a b, h | .ndiv a b, h
-  | .nmod a b, h => by
-    have ha := Ex.congrG a (fun r hr => h r (by simp [Ex.regs, hr]))
-    have hb := Ex.congrG b (fun r hr => h r (by simp [Ex.regs, hr]))
-    refine ⟨by simp only [Ex.eval, ha.1, hb.1], ?_, fun B => ?_, ?_⟩
-    · simp only [Ex.ok, ha.1, hb.1, ha.2.1, hb.2.1]
-    · simp only [Ex.Bnd, ha.1, hb.1, ha.2.2.1 B, hb.2.2.1 B]
-    · simp only [Ex.cost, ha.1, hb.1, ha.2.2.2, hb.2.2.2]
-  | .neg a, h | .pow2 a, h => by
-    have ha := Ex.congrG a (fun r hr => h r (by simp [Ex.regs, hr]))
-    refine ⟨by simp only [Ex.eval, ha.1], ?_, fun B => ?_, ?_⟩
-    · simp only [Ex.ok, ha.1, ha.2.1]
-    · simp only [Ex.Bnd, ha.1, ha.2.2.1 B]
-    · simp only [Ex.cost, ha.1, ha.2.2.2]
-  | .sel c a b, h => by
-    have hc := Ex.congrG c (fun r hr => h r (by simp [Ex.regs, hr]))
-    have ha := Ex.congrG a (fun r hr => h r (by simp [Ex.regs, hr]))
-    have hb := Ex.congrG b (fun r hr => h r (by simp [Ex.regs, hr]))
-    refine ⟨by simp only [Ex.eval, ha.1, hb.1, hc.1], ?_, fun B => ?_, ?_⟩
-    · simp only [Ex.ok, hc.1, hc.2.1, ha.2.1, hb.2.1]
-    · simp only [Ex.Bnd, hc.1, hc.2.2.1 B, ha.2.2.1 B, hb.2.2.1 B]
-    · simp only [Ex.cost, hc.1, hc.2.2.2, ha.2.2.2, hb.2.2.2]
 
 end NLogN.KIL
 
@@ -347,18 +293,6 @@ namespace KFD
 open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
-
-theorem FSp.seq {a b : RS} {s t u : IState HS} {c1 c2 : ℕ} (ha : FSp a s t c1) (hb : FSp b t u c2) :
-    FSp (.seq a b) s u (c1 + c2) := by
-  refine ⟨⟨ha.1, ?_⟩, ?_, ?_⟩
-  · rw [ha.2.1]; exact hb.1
-  · simp only [RS.run, ha.2.1, hb.2.1]
-  · simp only [fcost]; rw [ha.2.1]; have := ha.2.2; have := hb.2.2; omega
-
-theorem FSp.skip (s : IState HS) : FSp .skip s s 1 := ⟨trivial, rfl, le_rfl⟩
 
 end KFD
 
@@ -400,82 +334,18 @@ namespace NLogN.KFL
 
 open AModel
 
-theorem decomp (Q S n : ℕ) : n = n / (Q * S) * (Q * S) + gc Q S n * S + n % S := by
-  unfold gc
-  have h1 := Nat.div_add_mod n S
-  have h2 := Nat.div_add_mod (n / S) Q
-  rw [Nat.div_div_eq_div_mul] at h2
-  rw [mul_comm Q S]
-  nlinarith [h1, h2]
-
-theorem sc_int (Q S v n : ℕ) : (NLogN.KFL.sc Q S v n : ℤ) = n + ((v : ℤ) - gc Q S n) * S := by
-  have h := decomp Q S n
-  unfold NLogN.KFL.sc
-  have h' : (n : ℤ) = (n / (Q * S) * (Q * S) : ℕ) + (gc Q S n * S : ℕ) + (n % S : ℕ) := by
-    exact_mod_cast h
-  push_cast at h' ⊢
-  linarith
-
-theorem gc_lt {Q S : ℕ} (hQ : 0 < Q) (n : ℕ) : gc Q S n < Q := Nat.mod_lt _ hQ
-
-theorem div_sc {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
-    NLogN.KFL.sc Q S v n / (Q * S) = n / (Q * S) := by
-  unfold NLogN.KFL.sc
-  have hQS : 0 < Q * S := Nat.mul_pos (by omega) hS
-  have hr : v * S + n % S < Q * S := by
-    have := Nat.mod_lt n hS
-    have : v * S + S ≤ Q * S := by nlinarith
-    omega
-  rw [add_assoc, Nat.add_comm, Nat.add_mul_div_right _ _ hQS, Nat.div_eq_of_lt hr, zero_add]
-
-/-- A chunk at a higher stride `S' = Q S m` is unchanged. -/
-theorem gc_sc_hi {Q S Q' S' m : ℕ} (hS : 0 < S) (hm : 0 < m) (hS' : S' = Q * S * m) {v : ℕ}
-    (hv : v < Q) (n : ℕ) : gc Q' S' (NLogN.KFL.sc Q S v n) = gc Q' S' n := by
-  unfold gc
-  subst hS'
-  rw [← Nat.div_div_eq_div_mul (NLogN.KFL.sc Q S v n), ← Nat.div_div_eq_div_mul n, div_sc hS hv]
-
 namespace Geo
 
 variable (g : Geo)
 
 variable {g}
 
-theorem Pos.s2 (h : g.Pos) : 0 < g.S2 := Nat.mul_pos h.n3 h.b
-theorem Pos.s1 (h : g.Pos) : 0 < g.S1 := Nat.mul_pos (Nat.mul_pos h.q h.s2) h.n2
-theorem Pos.s0 (h : g.Pos) : 0 < g.S0 := Nat.mul_pos (Nat.mul_pos h.q h.s1) h.n1
-
 end Geo
-
-theorem TV_trOf {g : Geo} (hg : g.Pos) (n : ℕ) : TV g.Q (trOf g n) :=
-  ⟨gc_lt hg.q _, gc_lt hg.q _, gc_lt hg.q _⟩
 
 section Phi
 
 variable {g : Geo} (hg : g.Pos)
 include hg
-
-theorem gc1_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S1 (NLogN.KFL.sc g.Q g.S2 v n) = gc g.Q g.S1 n :=
-  gc_sc_hi hg.s2 hg.n2 rfl hv n
-
-theorem gc0_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (NLogN.KFL.sc g.Q g.S2 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s2 (Nat.mul_pos hg.n2 (Nat.mul_pos hg.q hg.n1))
-    (by simp only [Geo.S0, Geo.S1]; ring) hv n
-
-theorem gc0_sc1 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (NLogN.KFL.sc g.Q g.S1 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s1 hg.n1 rfl hv n
-
-/-- Integer formula of `phi`. -/
-theorem phi_int {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) (n : ℕ) :
-    (phi g F n : ℤ) = n + (((F (trOf g n)).1 : ℤ) - (trOf g n).1) * g.S0 +
-      (((F (trOf g n)).2.1 : ℤ) - (trOf g n).2.1) * g.S1 +
-      (((F (trOf g n)).2.2 : ℤ) - (trOf g n).2.2) * g.S2 := by
-  obtain ⟨h0, h1, h2⟩ := hF _ (TV_trOf hg n)
-  show ((NLogN.KFL.sc g.Q g.S0 (F (trOf g n)).1 (NLogN.KFL.sc g.Q g.S1 (F (trOf g n)).2.1
-    (NLogN.KFL.sc g.Q g.S2 (F (trOf g n)).2.2 n)) : ℕ) : ℤ) = _
-  generalize F (trOf g n) = c at h0 h1 h2 ⊢
-  rw [sc_int, sc_int, sc_int, gc0_sc1 hg _ _ h1, gc0_sc2 hg _ _ h2, gc1_sc2 hg _ _ h2]
-  simp only [trOf]; ring
 
 end Phi
 
@@ -492,151 +362,11 @@ namespace NLogN.KFL
 
 open Butterfly
 
-theorem selM_succ (K ρ n : ℕ) : selM K ρ (n + 1) = selM K ρ n + 2 ^ (ρ + n * K) := by
-  simp [selM, List.range_succ]
-
-theorem selM_lt {K : ℕ} (hK : 1 ≤ K) (ρ n : ℕ) : selM K ρ n < 2 ^ (ρ + n * K) := by
-  induction n with
-  | zero => simp [selM]
-  | succ n ih =>
-    rw [selM_succ]
-    have h1 : 2 ^ (ρ + n * K) + 2 ^ (ρ + n * K) ≤ 2 ^ (ρ + (n + 1) * K) := by
-      rw [← two_mul, ← pow_succ']
-      exact Nat.pow_le_pow_right (by norm_num) (by nlinarith)
-    omega
-
-theorem testBit_selM {K : ℕ} (hK : 1 ≤ K) (ρ n i : ℕ) :
-    (selM K ρ n).testBit i = true ↔ ∃ k < n, i = ρ + k * K := by
-  induction n generalizing i with
-  | zero => simp [selM]
-  | succ n ih =>
-    rw [selM_succ, add_comm, show 2 ^ (ρ + n * K) + selM K ρ n = 2 ^ (ρ + n * K) * 1 + selM K ρ n
-      by ring, Nat.testBit_two_pow_mul_add 1 (selM_lt hK ρ n)]
-    split_ifs with h
-    · rw [ih]
-      constructor
-      · rintro ⟨k, hk, rfl⟩; exact ⟨k, by omega, rfl⟩
-      · rintro ⟨k, hk, rfl⟩
-        refine ⟨k, ?_, rfl⟩
-        by_contra hkn
-        have : k = n := by omega
-        subst this; omega
-    · rw [show (1 : ℕ) = 2 ^ 0 from rfl, Nat.testBit_two_pow]
-      constructor
-      · intro h0
-        have : i = ρ + n * K := by simp at h0; omega
-        exact ⟨n, by omega, this⟩
-      · rintro ⟨k, hk, rfl⟩
-        have hkn : k = n := by
-          by_contra hkn
-          have : k * K < n * K := Nat.mul_lt_mul_of_pos_right (by omega) (by omega)
-          omega
-        subst hkn; simp
-
-/-- Setting the bit of weight `2^j`. -/
-theorem testBit_sc2 (j v y i : ℕ) (hv : v < 2) :
-    (NLogN.KFL.sc 2 (2 ^ j) v y).testBit i = if i = j then decide (v = 1) else y.testBit i := by
-  unfold NLogN.KFL.sc
-  have e : y / (2 * 2 ^ j) * (2 * 2 ^ j) + v * 2 ^ j + y % 2 ^ j =
-      2 ^ (j + 1) * (y / 2 ^ (j + 1)) + (2 ^ j * v + y % 2 ^ j) := by
-    rw [pow_succ]; ring
-  have hb : 2 ^ j * v + y % 2 ^ j < 2 ^ (j + 1) := by
-    have := Nat.mod_lt y (show 0 < 2 ^ j by positivity)
-    have : 2 ^ j * v ≤ 2 ^ j * 1 := Nat.mul_le_mul_left (2 ^ j) (by omega)
-    rw [pow_succ]; omega
-  rw [e, Nat.testBit_two_pow_mul_add _ hb, Nat.testBit_two_pow_mul_add _ (Nat.mod_lt _ (by positivity))]
-  split_ifs with h1 h2 h3 h3
-  · omega
-  · rw [Nat.testBit_mod_two_pow]; simp [h2]
-  · subst h3
-    simp only [Nat.sub_self, Nat.testBit_zero]
-    interval_cases v <;> simp
-  · omega
-  · omega
-  · rw [Nat.testBit_div_two_pow]; congr 1; omega
-
-/-- `y ⊕ 2^j` as `sc`. -/
-theorem xor_two_pow_sc (y j : ℕ) : y ^^^ 2 ^ j = NLogN.KFL.sc 2 (2 ^ j) (1 - y / 2 ^ j % 2) y := by
-  apply Nat.eq_of_testBit_eq; intro i
-  rw [testBit_sc2 _ _ _ _ (by omega), Nat.testBit_xor, Nat.testBit_two_pow]
-  by_cases h : i = j
-  · subst h
-    rw [if_pos rfl, Nat.testBit_eq_decide_div_mod_eq]
-    rcases Nat.mod_two_eq_zero_or_one (y / 2 ^ i) with h0 | h0 <;> simp [h0]
-  · rw [if_neg h]; simp [Ne.symm h]
-
-theorem xor_two_pow_int (y j : ℕ) :
-    ((y ^^^ 2 ^ j : ℕ) : ℤ) = y + 2 ^ j * (1 - 2 * ((y / 2 ^ j % 2 : ℕ) : ℤ)) := by
-  rw [xor_two_pow_sc, sc_int]
-  have hb : y / 2 ^ j % 2 < 2 := Nat.mod_lt _ (by norm_num)
-  unfold gc
-  rcases Nat.mod_two_eq_zero_or_one (y / 2 ^ j) with h0 | h0 <;> rw [h0] <;> push_cast <;> ring
-
-theorem bitAt_nat (y j : ℕ) : bitAt (y : ℤ) j = ((y / 2 ^ j % 2 : ℕ) : ℤ) := by
-  simp [bitAt]
-
-theorem T0n_eq {K : ℕ} (hK : 1 ≤ K) (ρ : ℕ) (x y : ℕ) :
-    ∀ n, T0n K ρ n x y = ((y ^^^ (x &&& selM K ρ n) : ℕ) : ℤ)
-  | 0 => by simp [T0n, selM]
-  | n + 1 => by
-    have ih := T0n_eq hK ρ x y n
-    unfold T0n at ih ⊢
-    rw [Finset.sum_range_succ, ← add_assoc, ih]
-    set y' := y ^^^ (x &&& selM K ρ n)
-    have hj : (selM K ρ n).testBit (ρ + n * K) = false := Nat.testBit_lt_two_pow (selM_lt hK ρ n)
-    have hy' : y'.testBit (ρ + n * K) = y.testBit (ρ + n * K) := by
-      simp [y', Nat.testBit_xor, Nat.testBit_and, hj]
-    have hbit : y' / 2 ^ (ρ + n * K) % 2 = y / 2 ^ (ρ + n * K) % 2 := by
-      have h1 := Nat.mod_two_eq_zero_or_one (y' / 2 ^ (ρ + n * K))
-      have h2 := Nat.mod_two_eq_zero_or_one (y / 2 ^ (ρ + n * K))
-      rw [Nat.testBit_eq_decide_div_mod_eq, Nat.testBit_eq_decide_div_mod_eq] at hy'
-      rcases h1 with h1 | h1 <;> rcases h2 with h2 | h2 <;> simp_all
-    have hsel : ∀ i, (selM K ρ (n + 1)).testBit i = ((selM K ρ n).testBit i || decide (i = (ρ + n * K))) := by
-      intro i
-      apply Bool.eq_iff_iff.2
-      rw [Bool.or_eq_true, testBit_selM hK, testBit_selM hK, decide_eq_true_iff]
-      constructor
-      · rintro ⟨k, hk, rfl⟩
-        rcases Nat.lt_succ_iff_lt_or_eq.1 hk with hk | rfl
-        · exact Or.inl ⟨k, hk, rfl⟩
-        · exact Or.inr rfl
-      · rintro (⟨k, hk, rfl⟩ | rfl)
-        · exact ⟨k, by omega, rfl⟩
-        · exact ⟨n, by omega, rfl⟩
-    unfold ctl
-    rw [bitAt_nat, bitAt_nat]
-    by_cases hx : x / 2 ^ (ρ + n * K) % 2 = 1
-    · have hxt : x.testBit (ρ + n * K) = true := by rw [Nat.testBit_eq_decide_div_mod_eq]; simp [hx]
-      have e : y ^^^ (x &&& selM K ρ (n + 1)) = y' ^^^ 2 ^ (ρ + n * K) := by
-        apply Nat.eq_of_testBit_eq; intro i
-        simp only [y', Nat.testBit_xor, Nat.testBit_and, hsel, Nat.testBit_two_pow]
-        by_cases hij : i = (ρ + n * K)
-        · subst hij; simp [hxt, hj]
-        · simp [hij, Ne.symm hij]
-      have hx' : (((x / 2 ^ (ρ + n * K) % 2 : ℕ) : ℤ) = 1) := by exact_mod_cast hx
-      rw [e, xor_two_pow_int, hbit]
-      simp only [hx', decide_true, if_true, ite_true]
-      ring
-    · have hxt : x.testBit (ρ + n * K) = false := by
-        rw [Nat.testBit_eq_decide_div_mod_eq]; simp [hx]
-      have e : y ^^^ (x &&& selM K ρ (n + 1)) = y' := by
-        apply Nat.eq_of_testBit_eq; intro i
-        simp only [y', Nat.testBit_xor, Nat.testBit_and, hsel]
-        by_cases hij : i = (ρ + n * K)
-        · subst hij; simp [hxt, hj]
-        · simp [hij]
-      have hx' : ¬ (((x / 2 ^ (ρ + n * K) % 2 : ℕ) : ℤ) = 1) := by exact_mod_cast hx
-      rw [e]
-      simp only [hx', decide_false, Bool.false_eq_true, if_false, ite_false]
-      ring
-
 section Canon
 
 variable (K ρ f : ℕ)
 
 end Canon
-
-theorem Q_pos (K f : ℕ) : (0 : ℤ) < 2 ^ (f * K) := by positivity
 
 theorem selM_eq_sum (K ρ n : ℕ) : selM K ρ n = ∑ i ∈ Finset.range n, 2 ^ (ρ + i * K) := by
   induction n with
@@ -666,102 +396,6 @@ theorem offset_bounds (hK : 1 ≤ K) (hρK : ρ < K) (hf : 1 ≤ f) (x t b : ℤ
     simp only [Nat.add_sub_cancel]; nlinarith
   have : ((selM K ρ (f - 1) : ℕ) : ℤ) < 2 ^ (f * K) := by exact_mod_cast h3
   linarith
-
-/-- `lineP` is the negated packed line. -/
-theorem lineP_eq (l : Line) (c : Tr) (hc : TV (2 ^ (f * K)) c) :
-    lineP K ρ f l c = (c.1, (pline K ρ f c.1 (negL l) (c.2.1, c.2.2)).1.toNat,
-      (pline K ρ f c.1 (negL l) (c.2.1, c.2.2)).2.toNat) := by
-  have hQ := Q_pos K f
-  have hrot : ∀ (t : ℕ) (o : ℤ), t < 2 ^ (f * K) →
-      (((t + 2 ^ (f * K) - ((l.sgn * o) % 2 ^ (f * K)).toNat) % 2 ^ (f * K) : ℕ) : ℤ) =
-        ((t : ℤ) + -l.sgn * o) % 2 ^ (f * K) := by
-    intro t o ht
-    have h0 := Int.emod_nonneg (l.sgn * o) hQ.ne'
-    have h1 := Int.emod_lt_of_pos (l.sgn * o) hQ
-    have hle : ((l.sgn * o) % 2 ^ (f * K)).toNat ≤ t + 2 ^ (f * K) := by
-      have : ((l.sgn * o) % 2 ^ (f * K)).toNat < 2 ^ (f * K) := by
-        have e := Int.toNat_of_nonneg h0
-        have : ((((l.sgn * o) % 2 ^ (f * K)).toNat : ℕ) : ℤ) < 2 ^ (f * K) := by rw [e]; exact h1
-        exact_mod_cast this
-      omega
-    push_cast [Nat.cast_sub hle]
-    rw [Int.toNat_of_nonneg h0]
-    rw [show (t : ℤ) + 2 ^ (f * K) - l.sgn * o % 2 ^ (f * K) =
-      (t + -l.sgn * o) + (2 ^ (f * K) * 1 + (l.sgn * o - l.sgn * o % 2 ^ (f * K))) by ring]
-    rw [Int.add_emod, show l.sgn * o - l.sgn * o % 2 ^ (f * K) = 2 ^ (f * K) * (l.sgn * o / 2 ^ (f * K))
-      by rw [Int.emod_def]; ring, ← mul_add, Int.mul_emod_right, add_zero, Int.emod_emod_of_dvd _ (dvd_refl _)]
-  unfold lineP amt pline negL
-  by_cases hy : l.tgtY
-  · simp only [hy, if_true]
-    refine Prod.ext rfl (Prod.ext ?_ ?_)
-    · simp only
-      rw [← hrot _ _ hc.2.1, Int.toNat_natCast]
-    · simp
-  · simp only [hy, if_false, Bool.false_eq_true]
-    refine Prod.ext rfl (Prod.ext ?_ ?_)
-    · simp
-    · simp only
-      rw [← hrot _ _ hc.2.2, Int.toNat_natCast]
-
-theorem VP_pline (x : ℤ) (l : Line) (p : ℤ × ℤ) (hp : NLogN.KFL.VP (2 ^ (f * K)) p) :
-    NLogN.KFL.VP (2 ^ (f * K)) (pline K ρ f x l p) := by
-  have hQ := Q_pos K f
-  unfold pline
-  split_ifs
-  · exact ⟨Int.emod_nonneg _ hQ.ne', Int.emod_lt_of_pos _ hQ, hp.2.2⟩
-  · exact ⟨hp.1, hp.2.1, Int.emod_nonneg _ hQ.ne', Int.emod_lt_of_pos _ hQ⟩
-
-theorem VP_foldr (x : ℤ) : ∀ (ls : List Line) (p : ℤ × ℤ), NLogN.KFL.VP (2 ^ (f * K)) p →
-    NLogN.KFL.VP (2 ^ (f * K)) (ls.foldr (fun l p => pline K ρ f x (negL l) p) p)
-  | [], p, hp => hp
-  | l :: ls, p, hp => VP_pline x _ _ (VP_foldr x ls p hp)
-
-theorem VP_nmP (c : Tr) (hc : TV (2 ^ (f * K)) c) : NLogN.KFL.VP (2 ^ (f * K)) (nmP c) := by
-  refine ⟨by simp [nmP], ?_, by simp [nmP], ?_⟩
-  · simp only [nmP]; exact_mod_cast hc.2.1
-  · simp only [nmP]; exact_mod_cast hc.2.2
-
-theorem ofP_nmP (c : Tr) : ofP c.1 (nmP c) = c := by simp [nmP, ofP]
-
-theorem TV_ofP (x : ℕ) (hx : x < 2 ^ (f * K)) (p : ℤ × ℤ) (hp : NLogN.KFL.VP (2 ^ (f * K)) p) :
-    TV (2 ^ (f * K)) (ofP x p) := by
-  refine ⟨hx, ?_, ?_⟩
-  · have e := Int.toNat_of_nonneg hp.1
-    have : ((p.1.toNat : ℕ) : ℤ) < 2 ^ (f * K) := by rw [e]; exact hp.2.1
-    simp only [ofP]; exact_mod_cast this
-  · have e := Int.toNat_of_nonneg hp.2.2.1
-    have : ((p.2.toNat : ℕ) : ℤ) < 2 ^ (f * K) := by rw [e]; exact hp.2.2.2
-    simp only [ofP]; exact_mod_cast this
-
-theorem FSc_eq (c : Tr) (hc : TV (2 ^ (f * K)) c) : FSc K ρ f c = ofP c.1 (FSb K ρ f c.1 (nmP c)) := by
-  unfold FSc FSb
-  suffices H : ∀ ls : List Line, ls.foldr (fun l c => lineP K ρ f l c) c =
-      ofP c.1 (ls.foldr (fun l p => pline K ρ f c.1 (negL l) p) (nmP c)) from H lines
-  intro ls
-  induction ls with
-  | nil => exact (ofP_nmP c).symm
-  | cons l ls ih =>
-    simp only [List.foldr_cons]
-    rw [ih]
-    have hv := VP_foldr (K := K) (ρ := ρ) (f := f) c.1 ls (nmP c) (VP_nmP c hc)
-    rw [lineP_eq l _ (TV_ofP _ hc.1 _ hv)]
-    simp only [ofP]
-    rw [show ((((ls.foldr (fun l p => pline K ρ f c.1 (negL l) p) (nmP c)).1.toNat : ℕ) : ℤ),
-        (((ls.foldr (fun l p => pline K ρ f c.1 (negL l) p) (nmP c)).2.toNat : ℕ) : ℤ)) =
-        ls.foldr (fun l p => pline K ρ f c.1 (negL l) p) (nmP c) from
-      Prod.ext (Int.toNat_of_nonneg hv.1) (Int.toNat_of_nonneg hv.2.2.1)]
-
-theorem TV_FSc (c : Tr) (hc : TV (2 ^ (f * K)) c) : TV (2 ^ (f * K)) (FSc K ρ f c) := by
-  rw [FSc_eq c hc]
-  exact TV_ofP _ hc.1 _ (VP_foldr _ _ _ (VP_nmP c hc))
-
-theorem TV_T0c (c : Tr) (hc : TV (2 ^ (f * K)) c) : TV (2 ^ (f * K)) (T0c K ρ f c) := by
-  refine ⟨hc.1, ?_, hc.2.2⟩
-  simp only [T0c]
-  exact Nat.xor_lt_two_pow hc.2.1 (lt_of_le_of_lt Nat.and_le_left hc.1)
-
-theorem TV_keyc (c : Tr) (hc : TV (2 ^ (f * K)) c) : TV (2 ^ (f * K)) (keyc K ρ f c) :=
-  TV_T0c _ (TV_FSc c hc)
 
 end Facts
 
@@ -1079,36 +713,6 @@ theorem segStep_fsp {K : ℕ} (hK : 1 ≤ K) {T : Ex HS} {tf : ℤ → ℤ → �
 section ESpC
 
 variable {t : IState HS} {Bb : ℕ}
-
-theorem ESp.reg {s : IState HS} {G : Fin HS → List ℤ} {r : Fin HS} {a : ℤ} {l : List ℤ}
-    (hr : r.val < 56) (h : G r = a :: l) (ha : zsz a ≤ Bb) : ESp (.reg r) (encK s G) Bb a :=
-  ⟨clean_reg hr, ok_reg h, bnd_reg h ha, top_encK h⟩
-
-theorem ESp.lit {c : ℤ} (hc : zsz c ≤ Bb) : ESp (.lit c) t Bb c :=
-  ⟨clean_lit c, trivial, hc, rfl⟩
-
-theorem ESp.add {a b : Ex HS} {x y : ℤ} (ha : ESp a t Bb x) (hb : ESp b t Bb y)
-    (h : zsz (x + y) ≤ Bb) : ESp (.add a b) t Bb (x + y) :=
-  ⟨clean_add ha.clean hb.clean, ⟨ha.ok, hb.ok⟩, ⟨ha.bnd, hb.bnd, by rw [ha.ev, hb.ev]; exact h⟩,
-    by simp only [Ex.eval, ha.ev, hb.ev]⟩
-
-theorem ESp.neg {a : Ex HS} {x : ℤ} (ha : ESp a t Bb x) : ESp (.neg a) t Bb (-x) :=
-  ⟨clean_neg ha.clean, ha.ok, ha.bnd, by simp only [Ex.eval, ha.ev]⟩
-
-theorem ESp.mul {a b : Ex HS} {x y : ℤ} (ha : ESp a t Bb x) (hb : ESp b t Bb y)
-    (h : zsz (x * y) ≤ Bb) : ESp (.mul a b) t Bb (x * y) :=
-  ⟨clean_mul ha.clean hb.clean, ⟨ha.ok, hb.ok⟩, ⟨ha.bnd, hb.bnd, by rw [ha.ev, hb.ev]; exact h⟩,
-    by simp only [Ex.eval, ha.ev, hb.ev]⟩
-
-theorem ESp.ndiv {a b : Ex HS} {x y : ℤ} (ha : ESp a t Bb x) (hb : ESp b t Bb y)
-    (hx : 0 ≤ x) (hy : 0 < y) (h : zsz (x / y) ≤ Bb) : ESp (.ndiv a b) t Bb (x / y) :=
-  ⟨clean_ndiv ha.clean hb.clean, ⟨ha.ok, hb.ok, by rw [ha.ev]; exact hx, by rw [hb.ev]; exact hy⟩,
-    ⟨ha.bnd, hb.bnd, by rw [ha.ev, hb.ev]; exact h⟩, by simp only [Ex.eval, ha.ev, hb.ev]⟩
-
-theorem ESp.nmod {a b : Ex HS} {x y : ℤ} (ha : ESp a t Bb x) (hb : ESp b t Bb y)
-    (hx : 0 ≤ x) (hy : 0 < y) (h : zsz (x % y) ≤ Bb) : ESp (.nmod a b) t Bb (x % y) :=
-  ⟨clean_nmod ha.clean hb.clean, ⟨ha.ok, hb.ok, by rw [ha.ev]; exact hx, by rw [hb.ev]; exact hy⟩,
-    ⟨ha.bnd, hb.bnd, by rw [ha.ev, hb.ev]; exact h⟩, by simp only [Ex.eval, ha.ev, hb.ev]⟩
 
 /-- A value of absolute value at most `Y` has at most `Bb` bits when `Y < 2^Bb`. -/
 theorem zsz_of_le {v Y : ℤ} (hY : Y < 2 ^ Bb) (h : |v| ≤ Y) : zsz v ≤ Bb :=

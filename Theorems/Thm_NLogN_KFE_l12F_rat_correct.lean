@@ -13,66 +13,8 @@ namespace AModel
 
 open Matrix
 
-lemma decode_encode {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) : decode sh (encode sh a) = a := by
-  induction h with
-  | nil => rfl
-  | @cons x q as sh hx hr ih =>
-    have he := encode_lt hr
-    have hV : 0 < AModel.vol sh := by omega
-    simp only [encode, List.headD_cons, List.tail_cons, decode]
-    rw [show x * AModel.vol sh + encode sh as = encode sh as + AModel.vol sh * x by ring,
-      Nat.add_mul_div_left _ _ hV, Nat.div_eq_of_lt he, Nat.add_mul_mod_self_left,
-      Nat.mod_eq_of_lt he, ih, zero_add, Nat.mod_eq_of_lt hx]
-
-lemma encode_decode {sh : Shape} {m : ℕ} (h : m < AModel.vol sh) : encode sh (decode sh m) = m := by
-  induction sh generalizing m with
-  | nil => simp at h; subst h; rfl
-  | cons q sh ih =>
-    simp only [vol_cons] at h
-    have hV : 0 < AModel.vol sh := Nat.pos_of_ne_zero (by rintro h'; simp [h'] at h)
-    have hq : m / AModel.vol sh < q := (Nat.div_lt_iff_lt_mul hV).2 h
-    simp only [decode, encode, List.headD_cons, List.tail_cons, Nat.mod_eq_of_lt hq,
-      ih (Nat.mod_lt m hV)]
-    exact Nat.div_add_mod' m (AModel.vol sh)
-
 section Pull
 variable {α : Type*}
-
-@[simp] lemma length_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) :
-    (AModel.pull sh sh' g d xs).length = AModel.vol sh' := by simp [AModel.pull]
-
-lemma getElem_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) (j : ℕ)
-    (hj : j < (AModel.pull sh sh' g d xs).length) :
-    (AModel.pull sh sh' g d xs)[j] = xs.getD (encode sh (g (decode sh' j))) d := by
-  simp [AModel.pull]
-
-/-- `pull` only depends on `g` at valid output addresses. -/
-lemma pull_congr {sh sh' : Shape} {g g' : List ℕ → List ℕ}
-    (h : ∀ a, AModel.Valid sh' a → g a = g' a) (d : α) (xs : List α) :
-    AModel.pull sh sh' g d xs = AModel.pull sh sh' g' d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  rw [getElem_pull, getElem_pull, h _ (valid_decode h₁)]
-
-/-- Composition of pulls. -/
-theorem pull_comp {sh sh' sh'' : Shape} (g g' : List ℕ → List ℕ)
-    (hg' : ∀ a, AModel.Valid sh'' a → AModel.Valid sh' (g' a)) (d : α) (xs : List α) :
-    AModel.pull sh' sh'' g' d (AModel.pull sh sh' g d xs) = AModel.pull sh sh'' (g ∘ g') d xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  have hv := hg' _ (valid_decode h₁)
-  have hlt := encode_lt hv
-  rw [getElem_pull, getElem_pull, List.getD_eq_getElem _ _ (by simpa using hlt), getElem_pull,
-    decode_encode hv, Function.comp_apply]
-
-theorem pull_id {sh : Shape} (d : α) {xs : List α} (h : xs.length = AModel.vol sh) :
-    AModel.pull sh sh id d xs = xs := by
-  apply List.ext_getElem (by simp [h])
-  intro j h₁ h₂
-  simp only [length_pull] at h₁
-  rw [getElem_pull, id, encode_decode h₁, List.getD_eq_getElem]
 
 end Pull
 
@@ -146,35 +88,7 @@ namespace AModel
 
 section Reshape
 
-lemma vol_append (A B : Shape) : AModel.vol (A ++ B) = AModel.vol A * AModel.vol B := List.prod_append
-
 set_option linter.unnecessarySimpa false in
-lemma encode_congr {A : Shape} {c c' : List ℕ} (h : ∀ k < A.length, c.getD k 0 = c'.getD k 0) :
-    encode A c = encode A c' := by
-  induction A generalizing c c' with
-  | nil => rfl
-  | cons q A ih =>
-    simp only [encode]
-    have h0 := h 0 (by simp)
-    have ht : encode A c.tail = encode A c'.tail := by
-      apply ih; intro k hk
-      have := h (k + 1) (by simp; omega)
-      rcases c with _ | ⟨x, c⟩ <;> rcases c' with _ | ⟨y, c'⟩ <;>
-        simpa [List.getD_eq_getElem?_getD] using this
-    have hh : c.headD 0 = c'.headD 0 := by
-      rcases c with _ | ⟨x, c⟩ <;> rcases c' with _ | ⟨y, c'⟩ <;>
-        simpa [List.getD_eq_getElem?_getD] using h0
-    rw [ht, hh]
-
-lemma encode_append (A B : Shape) (c : List ℕ) :
-    encode (A ++ B) c = encode A c * AModel.vol B + encode B (c.drop A.length) := by
-  induction A generalizing c with
-  | nil => simp [encode]
-  | cons q A ih =>
-    simp only [List.cons_append, encode, ih, vol_append, List.length_cons]
-    rw [show c.drop (A.length + 1) = c.tail.drop A.length by cases c <;> simp]
-    ring
-
 lemma encode_append3 (P M S : Shape) (c : List ℕ) :
     encode (P ++ (M ++ S)) c = encode P c * (AModel.vol M * AModel.vol S) +
       encode M (c.drop P.length) * AModel.vol S + encode S (c.drop (P.length + M.length)) := by
@@ -192,11 +106,6 @@ theorem vol_mergeShape (sh : Shape) (i r : ℕ) : AModel.vol (mergeShape sh i r)
   conv_rhs => rw [shape_split sh i r]
   simp only [mergeShape, vol_append, List.append_assoc, List.cons_append, List.nil_append,
     vol_cons]
-
-lemma length_decode (sh : Shape) (m : ℕ) : (decode sh m).length = sh.length := by
-  induction sh generalizing m with
-  | nil => rfl
-  | cons q sh ih => simp [decode, ih]
 
 theorem encode_mergeAddr {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.length) {a : List ℕ}
     (hi : i ≤ a.length) :
@@ -227,15 +136,6 @@ theorem encode_mergeAddr {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.length) {a :
   simp only [List.length_singleton]
   rw [e1, e2, e3, e4]
   simp [encode]
-
-lemma valid_append {A B : Shape} {a b : List ℕ} (ha : AModel.Valid A a) (hb : AModel.Valid B b) :
-    AModel.Valid (A ++ B) (a ++ b) := List.rel_append ha hb
-
-lemma Valid.take {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) (k : ℕ) :
-    AModel.Valid (sh.take k) (a.take k) := List.forall₂_take k h
-
-lemma Valid.drop {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) (k : ℕ) :
-    AModel.Valid (sh.drop k) (a.drop k) := List.forall₂_drop k h
 
 theorem valid_mergeAddr {sh : Shape} {i r : ℕ} {a : List ℕ} (ha : AModel.Valid sh a) :
     AModel.Valid (mergeShape sh i r) (mergeAddr sh i r a) := by
@@ -327,9 +227,6 @@ theorem pull_merge {α : Type*} {sh : Shape} {i r : ℕ} (h : i + r ≤ sh.lengt
 end Reshape
 
 section BlockSwap
-
-@[simp] lemma length_permIdx (f : ℕ → ℕ) (a : List ℕ) : (permIdx f a).length = a.length := by
-  simp [permIdx]
 
 lemma getElem_permIdx (f : ℕ → ℕ) (a : List ℕ) (k : ℕ) (hk : k < (permIdx f a).length) :
     (permIdx f a)[k] = a.getD (f k) 0 := by simp [permIdx]
@@ -468,23 +365,6 @@ lemma blockSwap_rest : (blockSwap i j r a).drop (j + r) = a.drop (j + r) := by
     List.getD_eq_getElem]
 
 end Segments
-
-lemma swapPos_append (P M S : List ℕ) (u v : ℕ) :
-    swapPos P.length (P.length + 1 + M.length) (P ++ [u] ++ (M ++ [v] ++ S)) =
-      P ++ [v] ++ (M ++ [u] ++ S) := by
-  have h1 : (P ++ [u] ++ (M ++ [v] ++ S)).getD (P.length + 1 + M.length) 0 = v := by
-    simp only [List.append_assoc, List.singleton_append]
-    rw [List.getD_append_right _ _ _ _ (by omega),
-      show P.length + 1 + M.length - P.length = M.length + 1 by omega]
-    simp
-  have h2 : (P ++ [u] ++ (M ++ [v] ++ S)).getD P.length 0 = u := by simp
-  unfold swapPos
-  rw [h1, h2]
-  simp only [List.append_assoc, List.singleton_append, List.set_append]
-  simp only [lt_self_iff_false, if_false, Nat.sub_self, List.set_cons_zero]
-  rw [List.set_append, if_neg (by omega),
-    show P.length + 1 + M.length - P.length = M.length + 1 by omega]
-  simp
 
 lemma mergeShape_seg {sh : Shape} {i j r : ℕ} (hij : i + r ≤ j) (hj : j + r ≤ sh.length) :
     ((mergeShape sh j r).drop i).take r = (sh.drop i).take r := by
@@ -635,8 +515,6 @@ end RunChild
 
 section Chunks
 
-lemma vol_replicate (m N : ℕ) : AModel.vol (List.replicate m N) = N ^ m := List.prod_replicate m N
-
 /-- Merging `r = Y.length` fields starting at `X.length`. -/
 lemma mergeShape_append (X Y Z : Shape) {i r : ℕ} (hi : i = X.length) (hr : r = Y.length) :
     mergeShape (X ++ (Y ++ Z)) i r = X ++ (AModel.vol Y :: Z) := by
@@ -703,33 +581,6 @@ open AModel
 
 section Prefix
 
-lemma decode_append (A B : Shape) {n : ℕ} (hn : n < AModel.vol A * AModel.vol B) :
-    decode (A ++ B) n = decode A (n / AModel.vol B) ++ decode B (n % AModel.vol B) := by
-  induction A generalizing n with
-  | nil =>
-    simp only [vol_nil, one_mul] at hn
-    simp [decode, Nat.mod_eq_of_lt hn]
-  | cons q A ih =>
-    simp only [vol_cons] at hn
-    have hAB : 0 < AModel.vol A * AModel.vol B := by
-      rcases Nat.eq_zero_or_pos (AModel.vol A * AModel.vol B) with h | h
-      · rw [mul_assoc, h] at hn; simp at hn
-      · exact h
-    simp only [List.cons_append, decode, vol_append]
-    rw [ih (Nat.mod_lt _ hAB)]
-    congr 2
-    · rw [Nat.div_div_eq_div_mul, mul_comm (AModel.vol B)]
-    · rw [mul_comm (AModel.vol A), Nat.mod_mul_right_div_self]
-    · simp
-
-lemma encode_append_len (X Y : Shape) {u w : List ℕ} (hu : u.length = X.length) :
-    encode (X ++ Y) (u ++ w) = encode X u * AModel.vol Y + encode Y w := by
-  rw [encode_append, List.drop_left' hu]
-  congr 2
-  apply encode_congr
-  intro k hk
-  rw [List.getD_append _ _ _ _ (by omega)]
-
 /-- **Prefix transport.** A pull acting only on the digits after a prefix `X` is the same array
 operation whatever field structure the prefix has (only `vol X` matters). -/
 theorem pull_prefix {α : Type*} (X X' Y : Shape) (hX : AModel.vol X = AModel.vol X')
@@ -789,15 +640,6 @@ end Prefix
 section Embed
 
 variable {α : Type*}
-
-lemma ShapeLE.valid {S T : Shape} (h : ShapeLE S T) {a : List ℕ} (ha : AModel.Valid S a) :
-    AModel.Valid T a := by
-  obtain ⟨hl, hlt⟩ := (valid_iff S a).1 ha
-  refine (valid_iff T a).2 ⟨by rw [hl, h.1], fun k h₁ h₂ => ?_⟩
-  exact lt_of_lt_of_le (hlt k h₁ (by omega)) (h.2 k (by omega) h₂)
-
-@[simp] lemma length_embed (S T : Shape) (d : α) (xs : List α) :
-    (AModelL12.embed S T d xs).length = AModel.vol T := by simp [AModelL12.embed]
 
 /-- **Padding lemma.** Embedding `S` into `T ≥ S`, applying any pull whose address map keeps
 valid `S`-addresses valid `S`-addresses, and extracting, is the same pull on the original
@@ -994,14 +836,6 @@ theorem highSwaps_eq {sh : Shape} {i j r : ℕ} (hij : i + r ≤ j) (hj : j + r 
     intro a ha
     exact blockSwap_swapPos (by omega) (by rw [ha.length_eq]; omega)
 
-/-- The child's shape at a piece is the padded row shape. -/
-lemma hdShape_piece (G Suf : Shape) (q n o w : ℕ) (h : o + w ≤ n) :
-    hdShape (List.replicate o q) (List.replicate (n - o - w) q ++ (G ++ List.replicate o q))
-      (List.replicate (n - o - w) q ++ Suf) w q = restShape G Suf q n := by
-  obtain ⟨r, rfl⟩ : ∃ r, n = o + w + r := ⟨n - o - w, by omega⟩
-  simp only [show o + w + r - o - w = r by omega, hdShape, restShape, List.replicate_add,
-    List.append_assoc]
-
 /-- **Middle part.** Padding, the piece calls, and unpadding together are the pull by the
 interchange of the two remaining chunks on the (unpadded) row shape. -/
 theorem middle_eq {child : Oracle α} {d : α} {W m q Kp : ℕ} (hspec : OracleSpec child d W m q Kp)
@@ -1044,14 +878,6 @@ variable {α : Type*}
 lemma length_binShape (Pre G Suf : Shape) (F : ℕ) :
     (binShape Pre G Suf F).length = Pre.length + G.length + Suf.length + 2 := by
   simp [binShape]; omega
-
-lemma vol_binShape_q (Pre G Suf : Shape) (q e : ℕ) :
-    AModel.vol (binShape Pre G Suf (q ^ e)) = AModel.vol (qShape Pre G Suf q e) := by
-  simp [binShape, qShape, restShape, vol_append, vol_replicate]
-
-lemma shapeLE_of_forall₂ {S T : Shape} (h : List.Forall₂ (· ≤ ·) S T) : ShapeLE S T := by
-  rw [List.forall₂_iff_get] at h
-  exact ⟨h.1, fun k h₁ h₂ => h.2 k h₁ h₂⟩
 
 lemma shapeLE_binShape (Pre G Suf : Shape) {F F' : ℕ} (h : F ≤ F') :
     ShapeLE (binShape Pre G Suf F) (binShape Pre G Suf F') := by
@@ -1232,10 +1058,6 @@ open IntMul RS AModel AModelL12 AModelRat AModelFac
 section Norm
 
 variable {α : Type*}
-
-theorem normO_eq {child : Oracle α} {j P L : ℕ} {A B Cs : Shape} {ys : List α}
-    (h : (child j P L A B Cs ys).length = ys.length) :
-    normO child j P L A B Cs ys = child j P L A B Cs ys := if_pos h
 
 theorem oracleSpec_normO {child : Oracle α} {d : α} {W m q K : ℕ}
     (h : OracleSpec child d W m q K) : OracleSpec (normO child) d W m q K := by

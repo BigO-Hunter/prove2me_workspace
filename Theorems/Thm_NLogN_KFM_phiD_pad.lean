@@ -202,9 +202,6 @@ section Embed
 
 variable {α : Type*}
 
-@[simp] lemma length_embed (S T : Shape) (d : α) (xs : List α) :
-    (embed S T d xs).length = vol T := by simp [embed]
-
 end Embed
 
 /-! ## 3. Pieces: adjacent block swaps compose -/
@@ -998,21 +995,6 @@ theorem updInvs_foldr (x : ℕ → ℕ) :
 
 end Shift
 
-/-! ## Digit addresses and `Φ`-addresses -/
-
-theorem fnL_app (d : ℕ) (g : ℕ → ℕ) (c j : ℕ) :
-    fnL ((List.range d).map g ++ [c]) j = if j < d then g j else if j = d then c else 0 := by
-  simp only [fnL, List.getD_eq_getElem?_getD]
-  by_cases h1 : j < d
-  · rw [List.getElem?_append_left (by simpa using h1)]; simp [h1]
-  · rw [List.getElem?_append_right (by simpa using h1)]
-    simp only [List.length_map, List.length_range, if_neg h1]
-    by_cases h2 : j = d
-    · subst h2; simp
-    · rw [if_neg h2]
-      have : 1 ≤ j - d := by omega
-      rw [List.getElem?_eq_none (by simpa using this)]; rfl
-
 theorem valid_digAddr {d : ℕ} {sF : ℕ → ℕ} (hs : ∀ j < d, 1 ≤ sF j) (k : ℕ) {c : ℕ} (hc : c < 2) :
     Valid (shR d (sP d sF)) (digAddr d sF k c) := by
   refine valid_shR_of (by simp [digAddr]) fun j hj => ?_
@@ -1096,13 +1078,6 @@ theorem getD_pull {S S' : Shape} (g : List ℕ → List ℕ) (xs : List ℤ) {j 
   rw [List.getD_eq_getElem _ _ (by simpa using hj), getElem_pull]
 
 open Classical in
-theorem getD_embed {S T : Shape} (xs : List ℤ) {j : ℕ} (hj : j < vol T) :
-    (embed S T 0 xs).getD j 0 =
-      if Valid S (decode T j) then xs.getD (encode S (decode T j)) 0 else 0 := by
-  classical
-  rw [List.getD_eq_getElem _ _ (by simpa using hj)]
-  simp only [embed, List.getElem_map, List.getElem_range]
-
 theorem Gf_phiAddr {d : ℕ} {sF μ : ℕ → ℕ} (hs : ∀ j < d, 1 ≤ sF j)
     (hμ : ∀ j < d, ((μ j * OpenAI.RCRT.Ppre sF j : ℕ) : ZMod (sF j)) = 1) (k : ℕ) {c : ℕ}
     (hc : c < 2) : Gf sF (csF sF μ) d (phiAddr d sF μ k c) = digAddr d sF k c := by

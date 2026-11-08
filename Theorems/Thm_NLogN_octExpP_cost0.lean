@@ -19,27 +19,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -71,8 +53,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -90,8 +70,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem zbits_neg (z : ℤ) : zbits (-z) = zbits z := by simp [zbits]
-
 end NLogN
 
 namespace NLogN
@@ -108,16 +86,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_two_pow (m : ℕ) : nbits (2 ^ m) = List.replicate m false ++ [true] := by
-  induction m with
-  | zero => rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-  | succ m ih =>
-    rw [nbits_pos (by positivity), pow_succ, List.replicate_succ]
-    simp [ih, Nat.mul_mod_left]
-
-theorem zbits_two_pow (m : ℕ) : zbits (2 ^ m : ℕ) = List.replicate m false ++ [true] := by
-  simp [zbits, nbits_two_pow]
-
 end NLogN
 
 namespace NLogN
@@ -132,39 +100,10 @@ section
 -- Source module: NLogN.Costs
 namespace NLogN
 
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_le_iff {z : ℤ} {m : ℕ} : zsz z ≤ m ↔ z.natAbs < 2 ^ m :=
-  ⟨fun h => lt_of_lt_of_le (natAbs_lt_zsz z) (Nat.pow_le_pow_right (by norm_num) h),
-    zsz_le_of_lt⟩
-
 theorem zsz_mul_le (a b : ℤ) : zsz (a * b) ≤ zsz a + zsz b := by
   apply zsz_le_of_lt
   rw [Int.natAbs_mul, pow_add]
   exact Nat.mul_lt_mul'' (natAbs_lt_zsz a) (natAbs_lt_zsz b)
-
-theorem zsz_add_le (a b : ℤ) : zsz (a + b) ≤ max (zsz a) (zsz b) + 1 := by
-  apply zsz_le_of_lt
-  have ha := natAbs_lt_zsz a; have hb := natAbs_lt_zsz b
-  have ha' : 2 ^ zsz a ≤ 2 ^ max (zsz a) (zsz b) := Nat.pow_le_pow_right (by norm_num) (le_max_left _ _)
-  have hb' : 2 ^ zsz b ≤ 2 ^ max (zsz a) (zsz b) := Nat.pow_le_pow_right (by norm_num) (le_max_right _ _)
-  have := Int.natAbs_add_le a b
-  rw [pow_succ]; omega
-
-theorem zsz_two_pow (m : ℕ) : zsz ((2 : ℤ) ^ m) = m + 1 := by
-  have : ((2 : ℤ) ^ m) = ((2 ^ m : ℕ) : ℤ) := by push_cast; rfl
-  rw [this, zsz, zbits_two_pow]; simp
-
-theorem zsz_neg (z : ℤ) : zsz (-z) = zsz z := by simp [zsz, zbits_neg]
-
-theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
-
-theorem zsz_one : zsz 1 = 1 := by
-  simp [zsz, zbits]; rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
 
 end NLogN
 
@@ -186,11 +125,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem zsz_le_of_abs {z : ℤ} {m : ℕ} (h : |z| < 2 ^ m) : zsz z ≤ m := by
-  apply zsz_le_of_lt
-  have : ((z.natAbs : ℕ) : ℤ) < ((2 ^ m : ℕ) : ℤ) := by push_cast; exact h
-  exact_mod_cast this
-
 end NLogN
 
 end
@@ -210,9 +144,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 theorem zsz_add_le' (a b : ℤ) : zsz (a + b) ≤ zsz a + zsz b + 1 := by
   have := zsz_add_le a b; omega
 
-theorem zsz_natCast_le_self' (k : ℕ) : zsz (k : ℤ) ≤ k :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
-
 end NLogN
 
 end
@@ -226,20 +157,6 @@ open IntMul
 variable {S : ℕ}
 
 namespace Ex
-
-theorem Bnd_mono (s : IState S) {B B' : ℕ} (hB : B ≤ B') : ∀ e : Ex S, e.Bnd s B → e.Bnd s B'
-  | reg _, h | lit _, h => le_trans h hB
-  | add a b, h | mul a b, h | shl a b, h | ndiv a b, h | nmod a b, h =>
-    ⟨Bnd_mono s hB a h.1, Bnd_mono s hB b h.2.1, le_trans h.2.2 hB⟩
-  | quo a b, h | rem a b, h => ⟨Bnd_mono s hB a h.1, Bnd_mono s hB b h.2⟩
-  | neg a, h => Bnd_mono s hB a h
-  | pow2 a, h => ⟨Bnd_mono s hB a h.1, le_trans h.2 hB⟩
-  | sel c x y, h => by
-    refine ⟨Bnd_mono s hB c h.1, ?_⟩
-    have h2 := h.2
-    split_ifs at h2 ⊢
-    · exact Bnd_mono s hB x h2
-    · exact Bnd_mono s hB y h2
 
 end Ex
 
@@ -259,22 +176,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-theorem pushCost_le (e : Ex HS) (s : IState HS) (B : ℕ) (h : e.Bnd s B) :
-    e.cost s + (2 * moveCost (zsz (e.eval s)) + 19) ≤ (e.size + 1) * 10 ^ 7 * (B + 2) ^ 2 := by
-  have h1 := Ex.cost_le s B e h
-  have h2 := Ex.zsz_eval_le s B e h
-  simp only [moveCost]; nlinarith
-
-@[simp] theorem run_push_G (i : Fin HS) (e : Ex HS) (s : IState HS) (j : Fin HS) :
-    ((push i e).run s).G j = if j = i then .int (e.eval s) :: s.G i else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-@[simp] theorem run_pop_G (i : Fin HS) (s : IState HS) (j : Fin HS) :
-    ((pop i).run s).G j = if j = i then (s.G i).tail else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-theorem run_seq (a b : RS) (s : IState HS) : (NLogN.RS.seq a b).run s = b.run (a.run s) := rfl
-
 end RS
 
 end NLogN
@@ -289,28 +190,10 @@ namespace NLogN
 
 open IntMul RS
 
-theorem atanSum_succ (x N : ℕ) (σ : ℤ) (k : ℕ) : atanSum x N σ (k + 1) =
-    atanSum x N σ k + σ ^ k * ((2 ^ N / ((2 * k + 1) * x ^ (2 * k + 1)) : ℕ) : ℤ) := by
-  simp [atanSum, Finset.sum_range_succ]
-
 end NLogN
 
 namespace NLogN
 open IntMul RS
-
-theorem atanSum_abs_le (x N : ℕ) (σ : ℤ) (hσ : |σ| = 1) (k : ℕ) :
-    |atanSum x N σ k| ≤ k * 2 ^ N := by
-  induction k with
-  | zero => simp [atanSum]
-  | succ k ih =>
-    rw [atanSum_succ]
-    have hq : |(((2 ^ N / ((2 * k + 1) * x ^ (2 * k + 1)) : ℕ) : ℤ))| ≤ 2 ^ N := by
-      rw [abs_of_nonneg (by positivity)]
-      exact_mod_cast Nat.div_le_self _ _
-    calc |atanSum x N σ k + σ ^ k * _| ≤ |atanSum x N σ k| + |σ ^ k * _| := abs_add_le _ _
-      _ ≤ k * 2 ^ N + 2 ^ N := by
-        rw [abs_mul, abs_pow, hσ, one_pow, one_mul]; exact add_le_add ih hq
-      _ = ((k + 1 : ℕ) : ℤ) * 2 ^ N := by push_cast; ring
 
 end NLogN
 
@@ -323,54 +206,6 @@ namespace NLogN
 open IntMul
 
 namespace Ex
-
-theorem floor_div_neg (a b : ℤ) (hb : 0 < b) : a / b = -((-a + (b + -1)) / b) := by
-  have h1 := Int.ediv_mul_le (-a + (b + -1)) hb.ne'
-  have h2 := Int.lt_ediv_add_one_mul_self (-a + (b + -1)) hb
-  set q := (-a + (b + -1)) / b
-  have := (Int.ediv_emod_unique'' (a := a) (b := b) (r := a + b * q) (q := -q) hb.ne').2
-    ⟨by ring, by nlinarith, by rw [abs_of_pos hb]; nlinarith⟩
-  exact this.1
-
-theorem fdiv_eval (s : IState HS) (a b : Ex HS) (hb : 0 < b.eval s) :
-    (fdiv a b).eval s = a.eval s / b.eval s := by
-  simp only [fdiv, eval]
-  split_ifs with h
-  · exact (floor_div_neg _ _ hb).symm
-  · rfl
-
-@[simp] theorem fdiv_pow2_eval (s : IState HS) (a b : Ex HS) :
-    (fdiv a (.pow2 b)).eval s = a.eval s / 2 ^ (b.eval s).toNat :=
-  fdiv_eval s a _ (by simp only [eval]; positivity)
-
-theorem fdiv_bnd (s : IState HS) (a b : Ex HS) (B : ℕ) (ha : a.Bnd s B) (hb : b.Bnd s B)
-    (hb0 : 0 < b.eval s) : (fdiv a b).Bnd s (B + 2) := by
-  have za := zsz_eval_le s B a ha
-  have zb := zsz_eval_le s B b hb
-  have zb1 : 1 ≤ zsz (b.eval s) := by
-    by_contra hc
-    have := (zsz_le_iff (z := b.eval s) (m := 0)).1 (by omega)
-    simp at this; omega
-  have ha2 := Bnd_mono s (show B ≤ B + 2 by omega) a ha
-  have hb2 := Bnd_mono s (show B ≤ B + 2 by omega) b hb
-  simp only [fdiv, NLogN.Ex.Bnd, eval]
-  refine ⟨ha2, ?_⟩
-  split_ifs with h
-  · have e1 : zsz (b.eval s + -1) ≤ B + 1 := by
-      have := zsz_add_le (b.eval s) (-1); rw [zsz_neg, zsz_one] at this; omega
-    have e2 : zsz (-a.eval s + (b.eval s + -1)) ≤ B + 2 := by
-      have := zsz_add_le (-a.eval s) (b.eval s + -1); rw [zsz_neg] at this; omega
-    have hn : 0 ≤ -a.eval s + (b.eval s + -1) := by omega
-    refine ⟨⟨ha2, ⟨hb2, by rw [zsz_neg, zsz_one]; omega, le_trans e1 (by omega)⟩, e2⟩, hb2, ?_⟩
-    refine le_trans (zsz_mono ?_) e2
-    have h1 := Int.ediv_nonneg hn hb0.le
-    have h2 := Int.ediv_le_self (eval s b) hn
-    omega
-  · refine ⟨ha2, hb2, le_trans (zsz_mono ?_) (by omega : zsz (a.eval s) ≤ B + 2)⟩
-    have hn : 0 ≤ a.eval s := by omega
-    have h1 := Int.ediv_nonneg hn hb0.le
-    have h2 := Int.ediv_le_self (eval s b) hn
-    omega
 
 end Ex
 
@@ -385,9 +220,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN
 
 open IntMul RS
-
-theorem atanInv_eq (x N K : ℕ) : IntMul.HvdH.atanInv x N K = atanSum x N (-1) K := by
-  simp [IntMul.HvdH.atanInv, atanSum]
 
 end NLogN
 
@@ -406,16 +238,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN
 
 open IntMul RS IntMul.HvdH
-
-theorem abs_ediv_le (a d : ℤ) (hd : 1 ≤ d) : |a / d| ≤ |a| := by
-  have h1 := Int.ediv_mul_le a (show d ≠ 0 by omega)
-  have h2 := Int.lt_ediv_add_one_mul_self a (show 0 < d by omega)
-  rw [abs_le]
-  rcases le_or_gt 0 a with ha | ha
-  · rw [abs_of_nonneg ha]
-    constructor <;> nlinarith
-  · rw [abs_of_neg ha]
-    constructor <;> nlinarith
 
 end NLogN
 

@@ -50,11 +50,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem zsz_le_of_abs {z : ℤ} {m : ℕ} (h : |z| < 2 ^ m) : zsz z ≤ m := by
-  apply zsz_le_of_lt
-  have : ((z.natAbs : ℕ) : ℤ) < ((2 ^ m : ℕ) : ℤ) := by push_cast; exact h
-  exact_mod_cast this
-
 end NLogN
 
 end
@@ -79,49 +74,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-/-! ## Expressions -/
-
-theorem mAdd_lin (Q : ℕ) {x y : Ex HS} (hx : x.Lin) (hy : y.Lin) : (mAdd Q x y).Lin :=
-  ⟨⟨⟨hx, hy⟩, trivial⟩, ⟨hx, hy⟩, ⟨⟨hx, hy⟩, trivial⟩⟩
-
-theorem mAdd_clean (Q : ℕ) {x y : Ex HS} (hx : x.Clean) (hy : y.Clean) : (mAdd Q x y).Clean := by
-  unfold mAdd
-  have h1 := clean_add hx hy
-  have h2 := clean_add h1 (clean_lit (-(Q : ℤ)))
-  intro j hj
-  simp only [Ex.regs, List.mem_append] at hj
-  rcases hj with (hj | hj) | hj
-  · exact h2 j (by simpa [Ex.regs] using hj)
-  · exact h1 j (by simpa [Ex.regs] using hj)
-  · exact h2 j (by simpa [Ex.regs] using hj)
-
-theorem mAdd_eval (Q : ℕ) (x y : Ex HS) (t : IState HS) :
-    (mAdd Q x y).eval t = if x.eval t + y.eval t + -(Q : ℤ) < 0 then x.eval t + y.eval t
-      else x.eval t + y.eval t + -(Q : ℤ) := rfl
-
-theorem zsz_le_of_abs {a : ℤ} {Q Bb : ℕ} (h : a.natAbs ≤ 2 * Q) (hQ : zsz ((2 * Q : ℕ) : ℤ) ≤ Bb) :
-    zsz a ≤ Bb := le_trans (zsz_mono (le_of_le_of_eq h (Int.natAbs_natCast _).symm)) hQ
-
-theorem mAdd_ok {Q : ℕ} {x y : Ex HS} {t : IState HS} (hx : x.ok t) (hy : y.ok t) :
-    (mAdd Q x y).ok t := by
-  refine ⟨⟨⟨hx, hy⟩, trivial⟩, ?_⟩
-  split_ifs
-  · exact ⟨hx, hy⟩
-  · exact ⟨⟨hx, hy⟩, trivial⟩
-
-theorem mAdd_bnd {Q Bb : ℕ} {x y : Ex HS} {t : IState HS} (hx : x.Bnd t Bb) (hy : y.Bnd t Bb)
-    (hx0 : 0 ≤ x.eval t) (hx1 : x.eval t < Q) (hy0 : 0 ≤ y.eval t) (hy1 : y.eval t < Q)
-    (hQ : zsz ((2 * Q : ℕ) : ℤ) ≤ Bb) : (mAdd Q x y).Bnd t Bb := by
-  have e1 : zsz (x.eval t + y.eval t) ≤ Bb := zsz_le_of_abs (by omega) hQ
-  have e2 : zsz (-(Q : ℤ)) ≤ Bb := zsz_le_of_abs (by omega) hQ
-  have e3 : zsz (x.eval t + y.eval t + -(Q : ℤ)) ≤ Bb := zsz_le_of_abs (by omega) hQ
-  refine ⟨⟨⟨hx, hy, e1⟩, e2, e3⟩, ?_⟩
-  split_ifs
-  · exact ⟨hx, hy, e1⟩
-  · exact ⟨⟨hx, hy, e1⟩, e2, e3⟩
-
-theorem mAdd_size (Q : ℕ) (i j : Fin HS) : (mAdd Q (.reg i) (.reg j)).size = 14 := rfl
 
 /-! ## The program -/
 
@@ -152,17 +104,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-/-! ## Dropping `n` integers -/
-
-/-! ## Pushing `n` zeros -/
-
-/-! ## Pointwise addition mod 2 -/
-
-theorem zsz_bit {x : ℤ} (h : x = 0 ∨ x = 1) {Bb : ℕ} (hB : 1 ≤ Bb) : zsz x ≤ Bb := by
-  rcases h with rfl | rfl
-  · simp [zsz_zero]
-  · rw [zsz_one]; exact hB
 
 /-! ## IStmt forms -/
 
@@ -216,19 +157,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Ghost stacks -/
-
-/-! ## The simulation -/
-
-/-! ## Top level -/
-
-/-! ## Coarse transfer: `fcost ≤ 100 · cost` -/
-
-/-! ## Fine specifications -/
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
-
 /-! ## Loops -/
 
 /-! ## Literal-to-register simulation -/
@@ -264,9 +192,6 @@ open KIL
 /-! ## Expression costs -/
 
 theorem cost_lit (t : IState HS) (c : ℤ) : (Ex.lit (S := HS) c).cost t = zsz c + 2 := rfl
-
-theorem cRep_le {N Bb : ℕ} (h : zsz (N : ℤ) ≤ Bb) : cRep N ≤ 400 * (Bb + 2) + 1100 * N + 400 := by
-  unfold cRep; omega
 
 /-- Fine counted loop with a literal count. -/
 theorem FSp.repLit {C : Fin HS} {b : RS} {s : IState HS} {F : ℕ → Fin HS → List ℤ}

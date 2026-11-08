@@ -104,9 +104,6 @@ variable {d : ℕ}
 section cancel
 variable (s : Fin d → ℕ) [∀ i, NeZero (s i)]
 
-lemma card_pi_eq : (Fintype.card (Π i, ZMod (s i)) : ℂ) = ∏ i, (s i : ℂ) := by
-  simp [Fintype.card_pi, ZMod.card]
-
 variable (t : Fin d → ℕ)
 
 end cancel
@@ -143,14 +140,9 @@ open Complex
 
 noncomputable section
 
-lemma hp_pos (p : ℕ) : 0 < hp p := by unfold hp; positivity
-
 section Arr
 
 variable {ι : Type*} [Fintype ι]
-
-lemma pi_le {f : ι → ℂ} {C : ℝ} (hC : 0 ≤ C) (h : ∀ i, ‖f i‖ ≤ C) : ‖f‖ ≤ C :=
-  (pi_norm_le_iff_of_nonneg hC).2 h
 
 end Arr
 

@@ -50,8 +50,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
-theorem zX_all : zX.all = [56, 57, 58, 59, 60, 61, 62, 63] := rfl
-
 namespace Ex
 
 end Ex
@@ -72,12 +70,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-theorem pushCost_le (e : Ex HS) (s : IState HS) (B : ℕ) (h : e.Bnd s B) :
-    e.cost s + (2 * moveCost (zsz (e.eval s)) + 19) ≤ (e.size + 1) * 10 ^ 7 * (B + 2) ^ 2 := by
-  have h1 := Ex.cost_le s B e h
-  have h2 := Ex.zsz_eval_le s B e h
-  simp only [moveCost]; nlinarith
-
 theorem rep_cost_le (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (B C : ℕ)
     (hn : n.Bnd s B)
     (hb : ∀ k < (n.eval s).toNat, b.cost (NLogN.RS.repSt i n b s k) +
@@ -92,12 +84,6 @@ theorem rep_cost_le (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (B C : ℕ
     simpa using this
   simp only [NLogN.RS.cost]; omega
 
-@[simp] theorem run_push_G (i : Fin HS) (e : Ex HS) (s : IState HS) (j : Fin HS) :
-    ((push i e).run s).G j = if j = i then .int (e.eval s) :: s.G i else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-theorem run_seq (a b : RS) (s : IState HS) : (NLogN.RS.seq a b).run s = b.run (a.run s) := rfl
-
 end RS
 
 end NLogN
@@ -111,79 +97,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN
 
 open IntMul RS IntMul.HvdH
-
-theorem abs_ediv_le (a d : ℤ) (hd : 1 ≤ d) : |a / d| ≤ |a| := by
-  have h1 := Int.ediv_mul_le a (show d ≠ 0 by omega)
-  have h2 := Int.lt_ediv_add_one_mul_self a (show 0 < d by omega)
-  rw [abs_le]
-  rcases le_or_gt 0 a with ha | ha
-  · rw [abs_of_nonneg ha]
-    constructor <;> nlinarith
-  · rw [abs_of_neg ha]
-    constructor <;> nlinarith
-
-theorem expTerm_abs_le (N : ℕ) (X Y W : ℤ) (hW : |X| + |Y| ≤ W) (k : ℕ) :
-    |(expTerm N X Y k).1| ≤ 2 ^ N * W ^ k ∧ |(expTerm N X Y k).2| ≤ 2 ^ N * W ^ k := by
-  induction k with
-  | zero => simp [expTerm]
-  | succ k ih =>
-    obtain ⟨h1, h2⟩ := ih
-    have hd : (1 : ℤ) ≤ ((k : ℤ) + 1) * 2 ^ N := by
-      have : (1 : ℤ) ≤ 2 ^ N := one_le_pow₀ (by norm_num)
-      nlinarith
-    have hX := abs_nonneg X
-    have hY := abs_nonneg Y
-    have hT : (0 : ℤ) ≤ 2 ^ N * W ^ k := le_trans (abs_nonneg _) h1
-    have e : (2 : ℤ) ^ N * W ^ (k + 1) = 2 ^ N * W ^ k * W := by ring
-    simp only [expTerm]
-    constructor
-    · refine le_trans (abs_ediv_le _ _ hd) ?_
-      rw [e]
-      calc |(expTerm N X Y k).1 * X - (expTerm N X Y k).2 * Y|
-          ≤ |(expTerm N X Y k).1| * |X| + |(expTerm N X Y k).2| * |Y| := by
-            rw [← abs_mul, ← abs_mul]; exact abs_sub _ _
-        _ ≤ 2 ^ N * W ^ k * |X| + 2 ^ N * W ^ k * |Y| := by
-            apply add_le_add <;> apply mul_le_mul_of_nonneg_right <;> assumption
-        _ ≤ _ := by nlinarith
-    · refine le_trans (abs_ediv_le _ _ hd) ?_
-      rw [e]
-      calc |(expTerm N X Y k).1 * Y + (expTerm N X Y k).2 * X|
-          ≤ |(expTerm N X Y k).1| * |Y| + |(expTerm N X Y k).2| * |X| := by
-            rw [← abs_mul, ← abs_mul]; exact abs_add_le _ _
-        _ ≤ 2 ^ N * W ^ k * |Y| + 2 ^ N * W ^ k * |X| := by
-            apply add_le_add <;> apply mul_le_mul_of_nonneg_right <;> assumption
-        _ ≤ _ := by nlinarith
-
-theorem exp_pre (n : ℕ) (x y : ℤ) (s : IState HS) (L5 L6 L7 : List Item)
-    (h5 : s.G 5 = .int n :: L5) (h6 : s.G 6 = .int x :: L6) (h7 : s.G 7 = .int y :: L7) :
-    expPre.ok s ∧
-    (expPre.run s).G 30 = .int (x * 2 ^ (n + 9)) :: s.G 30 ∧
-    (expPre.run s).G 31 = .int (y * 2 ^ (n + 9)) :: s.G 31 ∧
-    (expPre.run s).G 32 = .int (2 ^ (2 * n + 9)) :: s.G 32 ∧
-    (expPre.run s).G 33 = .int 0 :: s.G 33 ∧
-    (expPre.run s).G 34 = .int (2 ^ (2 * n + 9)) :: s.G 34 ∧
-    (expPre.run s).G 35 = .int 0 :: s.G 35 ∧
-    (expPre.run s).G 36 = .int 0 :: s.G 36 ∧
-    (expPre.run s).G 37 = .int 0 :: s.G 37 ∧
-    (expPre.run s).G 38 = .int (2 ^ (2 * n + 9)) :: s.G 38 ∧
-    ∀ j : Fin HS, j.val < 30 ∨ 38 < j.val → (expPre.run s).G j = s.G j := by
-  have e9 : ((n : ℤ) + 9).toNat = n + 9 := by omega
-  have eN : ((n : ℤ) + n + 9).toNat = 2 * n + 9 := by omega
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  all_goals simp (config := {decide := true}) [expPre, NLogN.RS.seqL, NLogN.RS.run_seq, RS.ok, Ex.eval, Ex.ok,
-    IState.top, IState.IsInt, Ex.Clean, Ex.regs, zX_all, eXE, eYE, ePE, h5, h6, h7, e9, eN]
-  · omega
-  · intro j hj
-    have : j ≠ 30 ∧ j ≠ 31 ∧ j ≠ 32 ∧ j ≠ 33 ∧ j ≠ 34 ∧ j ≠ 35 ∧ j ≠ 36 ∧ j ≠ 37 ∧ j ≠ 38 := by
-      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;> (rintro rfl; revert hj; decide)
-    simp [this]
-
-theorem exp_K (n : ℕ) (x y : ℤ) (s : IState HS) (L5 L6 L7 : List Item)
-    (h5 : s.G 5 = .int n :: L5) (h6 : s.G 6 = .int x :: L6) (h7 : s.G 7 = .int y :: L7) :
-    eKE.eval (expPre.run s) = ((2 * n + 13 : ℕ) : ℤ) := by
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, gj⟩ := exp_pre n x y s L5 L6 L7 h5 h6 h7
-  simp (config := {decide := true}) [eKE, Ex.eval, IState.top, gj 5 (by decide), h5]
-  ring
 
 set_option maxHeartbeats 2000000 in
 theorem exp_pre_cost (n : ℕ) (x y : ℤ) (s : IState HS) (L5 L6 L7 : List Item)

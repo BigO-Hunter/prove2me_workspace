@@ -29,10 +29,6 @@ namespace IRuns
 
 end IRuns
 
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
 end NLogN
 
 end
@@ -53,11 +49,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem zsz_le_of_abs {z : ℤ} {m : ℕ} (h : |z| < 2 ^ m) : zsz z ≤ m := by
-  apply zsz_le_of_lt
-  have : ((z.natAbs : ℕ) : ℤ) < ((2 ^ m : ℕ) : ℤ) := by push_cast; exact h
-  exact_mod_cast this
-
 end NLogN
 
 end
@@ -69,9 +60,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-
-theorem IState.top_eq {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (h : s.G i = .int a :: L) :
-    s.top i = a := by simp [IState.top, h]
 
 namespace Ex
 
@@ -97,9 +85,6 @@ open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
-theorem IState.isInt_of {s : IState S} {i : Fin S} {a : ℤ} {L : List Item}
-    (h : s.G i = .int a :: L) : s.IsInt i := ⟨L, by rw [IState.top_eq h, h]⟩
-
 namespace Ex
 
 end Ex
@@ -120,9 +105,6 @@ variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
-theorem zsz_natCast_le_self' (k : ℕ) : zsz (k : ℤ) ≤ k :=
-  zsz_le_of_lt (by simpa using Nat.lt_two_pow_self)
-
 end NLogN
 
 end
@@ -136,8 +118,6 @@ namespace NLogN
 open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-theorem zX_all : zX.all = [56, 57, 58, 59, 60, 61, 62, 63] := rfl
 
 namespace Ex
 
@@ -159,127 +139,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-theorem run_G_of_not_mem : ∀ (p : RS) (s : IState HS) (j : Fin HS), j ∉ p.writes →
-    (p.run s).G j = s.G j
-  | skip, s, j, _ => rfl
-  | asg i e, s, j, h | push i e, s, j, h | pop i, s, j, h => by
-    simp only [NLogN.RS.writes, List.mem_singleton] at h; simp [NLogN.RS.run, IState.upd_G, h]
-  | seq a b, s, j, h => by
-    simp only [NLogN.RS.writes, List.mem_append, not_or] at h
-    simp only [NLogN.RS.run]; rw [run_G_of_not_mem b _ j h.2, run_G_of_not_mem a _ j h.1]
-  | ite c a b, s, j, h => by
-    simp only [NLogN.RS.writes, List.mem_append, not_or] at h
-    simp only [NLogN.RS.run]; split_ifs
-    · exact run_G_of_not_mem a _ j h.1
-    · exact run_G_of_not_mem b _ j h.2
-  | rep i n b, s, j, h => by
-    simp only [NLogN.RS.writes, List.mem_cons, not_or] at h
-    simp only [NLogN.RS.run, IState.upd_G, if_neg h.1]
-    suffices H : ∀ k (t : IState HS), ((fun t => decSt i (b.run t))^[k] t).G j = t.G j by
-      rw [H]; simp [IState.upd_G, h.1]
-    intro k; induction k with
-    | zero => intro t; rfl
-    | succ k ih =>
-      intro t
-      rw [Function.iterate_succ_apply']
-      have e := ih t
-      generalize ((fun t => decSt i (b.run t))^[k] t) = X at e ⊢
-      simp only [decSt, IState.upd_G, if_neg h.1]
-      rw [run_G_of_not_mem b _ j h.2, e]
-
-theorem repSt_G (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (hi : i ∉ b.writes) :
-    ∀ k, (NLogN.RS.repSt i n b s k).G i = .int (n.eval s - k) :: s.G i := by
-  intro k; induction k with
-  | zero => simp [NLogN.RS.repSt, IState.upd_G]
-  | succ k ih =>
-    simp only [NLogN.RS.repSt] at ih ⊢
-    rw [Function.iterate_succ_apply']
-    generalize ((fun t => decSt i (b.run t))^[k] (s.upd i (.int (n.eval s) :: s.G i))) = X at ih ⊢
-    have h1 := NLogN.RS.run_G_of_not_mem b X i hi
-    rw [ih] at h1
-    simp only [decSt, IState.upd_G, if_pos rfl, IState.top, h1, List.tail_cons]
-    push_cast; ring_nf
-
-theorem iter_ip (f : IState HS → IState HS) (hf : ∀ t, (f t).ip = t.ip ∧ (f t).out = t.out) :
-    ∀ k t, (f^[k] t).ip = t.ip ∧ (f^[k] t).out = t.out
-  | 0, t => ⟨rfl, rfl⟩
-  | k + 1, t => by
-    rw [Function.iterate_succ_apply']
-    exact ⟨(hf _).1.trans (iter_ip f hf k t).1, (hf _).2.trans (iter_ip f hf k t).2⟩
-
-theorem run_ip_out : ∀ (p : RS) (s : IState HS), (p.run s).ip = s.ip ∧ (p.run s).out = s.out
-  | skip, s => ⟨rfl, rfl⟩
-  | asg i e, s | push i e, s | pop i, s => by simp [NLogN.RS.run]
-  | seq a b, s => by
-    simp only [NLogN.RS.run]
-    exact ⟨(run_ip_out b _).1.trans (run_ip_out a s).1, (run_ip_out b _).2.trans (run_ip_out a s).2⟩
-  | ite c a b, s => by
-    simp only [NLogN.RS.run]; split_ifs
-    · exact run_ip_out a s
-    · exact run_ip_out b s
-  | rep i n b, s => by
-    simp only [NLogN.RS.run, IState.upd_ip, IState.upd_out]
-    have := iter_ip (fun t => decSt i (b.run t))
-      (fun t => by simp only [decSt, IState.upd_ip, IState.upd_out]; exact run_ip_out b t)
-      (n.eval s).toNat (s.upd i (.int (n.eval s) :: s.G i))
-    simpa using this
-
-theorem repSt_ip_out (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (k : ℕ) :
-    (NLogN.RS.repSt i n b s k).ip = s.ip ∧ (NLogN.RS.repSt i n b s k).out = s.out := by
-  have := iter_ip (fun t => decSt i (b.run t))
-    (fun t => by simp only [decSt, IState.upd_ip, IState.upd_out]; exact NLogN.RS.run_ip_out b t)
-    k (s.upd i (.int (n.eval s) :: s.G i))
-  simpa [NLogN.RS.repSt] using this
-
-theorem pushCost_le (e : Ex HS) (s : IState HS) (B : ℕ) (h : e.Bnd s B) :
-    e.cost s + (2 * moveCost (zsz (e.eval s)) + 19) ≤ (e.size + 1) * 10 ^ 7 * (B + 2) ^ 2 := by
-  have h1 := Ex.cost_le s B e h
-  have h2 := Ex.zsz_eval_le s B e h
-  simp only [moveCost]; nlinarith
-
-/-- Two register-program results agree when all their stacks agree. -/
-theorem run_ext {p : RS} {s t : IState HS} (h : ∀ j, (p.run s).G j = t.G j) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : p.run s = t :=
-  IState.ext' h ((NLogN.RS.run_ip_out p s).1.trans hip) ((NLogN.RS.run_ip_out p s).2.trans hout)
-
-@[simp] theorem run_asg_G (i : Fin HS) (e : Ex HS) (s : IState HS) (j : Fin HS) :
-    ((asg i e).run s).G j = if j = i then .int (e.eval s) :: (s.G i).tail else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-@[simp] theorem run_push_G (i : Fin HS) (e : Ex HS) (s : IState HS) (j : Fin HS) :
-    ((push i e).run s).G j = if j = i then .int (e.eval s) :: s.G i else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-@[simp] theorem run_pop_G (i : Fin HS) (s : IState HS) (j : Fin HS) :
-    ((pop i).run s).G j = if j = i then (s.G i).tail else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-theorem run_seq (a b : RS) (s : IState HS) : (NLogN.RS.seq a b).run s = b.run (a.run s) := rfl
-
-/-- Invariant reasoning for counted loops. -/
-theorem repSt_inv (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (Inv : ℕ → IState HS → Prop)
-    (h0 : Inv 0 (s.upd i (.int (n.eval s) :: s.G i)))
-    (hs : ∀ k < (n.eval s).toNat, Inv k (NLogN.RS.repSt i n b s k) →
-      Inv (k + 1) (decSt i (b.run (NLogN.RS.repSt i n b s k)))) :
-    ∀ k ≤ (n.eval s).toNat, Inv k (NLogN.RS.repSt i n b s k) := by
-  intro k; induction k with
-  | zero => intro _; exact h0
-  | succ k ih =>
-    intro hk
-    have := hs k (by omega) (ih (by omega))
-    simpa [NLogN.RS.repSt, Function.iterate_succ_apply'] using this
-
-theorem run_rep (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (hw : i ∉ b.writes)
-    (h0 : 0 ≤ n.eval s) :
-    (NLogN.RS.rep i n b).run s = (NLogN.RS.repSt i n b s (n.eval s).toNat).upd i (s.G i) := by
-  have := NLogN.RS.repSt_G i n b s hw (n.eval s).toNat
-  simp only [NLogN.RS.repSt] at this
-  simp only [NLogN.RS.run, NLogN.RS.repSt, this]; rfl
-
-@[simp] theorem decSt_G (i : Fin HS) (t : IState HS) (j : Fin HS) :
-    (decSt i t).G j = if j = i then .int (t.top i - 1) :: (t.G i).tail else t.G j := by
-  simp [decSt, IState.upd_G]
-
 end RS
 
 end NLogN
@@ -294,129 +153,10 @@ namespace NLogN
 
 open IntMul RS
 
-theorem atanSum_succ (x N : ℕ) (σ : ℤ) (k : ℕ) : atanSum x N σ (k + 1) =
-    atanSum x N σ k + σ ^ k * ((2 ^ N / ((2 * k + 1) * x ^ (2 * k + 1)) : ℕ) : ℤ) := by
-  simp [atanSum, Finset.sum_range_succ]
-
-theorem atan_body (x N K : ℕ) (σ : ℤ) (s0 t : IState HS) (k : ℕ)
-    (h : atanInv' x N K σ s0 k t) (hk : k < K) (hx : 0 < x) :
-    (atanBody x σ).ok t ∧ atanInv' x N K σ s0 (k + 1) (decSt 45 ((atanBody x σ).run t)) := by
-  obtain ⟨h40, h41, h42, h43, h44, h45, hj⟩ := h
-  have hxp : (0 : ℤ) < (x : ℤ) ^ (2 * k + 1) := by positivity
-  refine ⟨?_, ?_⟩
-  · simp only [atanBody, NLogN.RS.seqL, RS.ok, NLogN.RS.run_seq]
-    simp (config := {decide := true}) [Ex.eval, Ex.ok, IState.top, IState.IsInt, Ex.Clean, Ex.regs,
-      zX_all, h40, h41, h42, h43, h44, h45]
-    positivity
-  simp only [atanBody, NLogN.RS.seqL, NLogN.RS.run_seq]
-  refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  all_goals simp (config := {decide := true}) [Ex.eval, IState.top, h40, h41, h42, h43, h44, h45]
-  · rw [atanSum_succ]; push_cast; ring_nf
-  · ring
-  · ring
-  · ring
-  · intro j hj'
-    have : j ≠ 40 ∧ j ≠ 41 ∧ j ≠ 42 ∧ j ≠ 43 ∧ j ≠ 45 := by
-      refine ⟨?_, ?_, ?_, ?_, ?_⟩ <;> (rintro rfl; revert hj'; decide)
-    simp [this, hj j hj']
-
-theorem atanP_spec (x N K : ℕ) (σ : ℤ) (hx : 0 < x) (s : IState HS) (L0 L1 : List Item)
-    (h0 : s.G 0 = .int N :: L0) (h1 : s.G 1 = .int K :: L1) :
-    (atanP x σ).ok s ∧ (atanP x σ).run s = s.upd 2 (.int (atanSum x N σ K) :: s.G 2) := by
-  set t0 := (NLogN.RS.seq atanPre (asg 41 (.lit x))).run s with ht0
-  have g40 : t0.G 40 = .int 0 :: s.G 40 := by
-    simp (config := {decide := true}) [ht0, atanPre, NLogN.RS.seqL, NLogN.RS.run_seq, Ex.eval]
-  have g41 : t0.G 41 = .int x :: s.G 41 := by
-    simp (config := {decide := true}) [ht0, atanPre, NLogN.RS.seqL, NLogN.RS.run_seq, Ex.eval]
-  have g42 : t0.G 42 = .int 0 :: s.G 42 := by
-    simp (config := {decide := true}) [ht0, atanPre, NLogN.RS.seqL, NLogN.RS.run_seq, Ex.eval]
-  have g43 : t0.G 43 = .int 1 :: s.G 43 := by
-    simp (config := {decide := true}) [ht0, atanPre, NLogN.RS.seqL, NLogN.RS.run_seq, Ex.eval]
-  have g44 : t0.G 44 = .int (2 ^ N) :: s.G 44 := by
-    simp (config := {decide := true}) [ht0, atanPre, NLogN.RS.seqL, NLogN.RS.run_seq, Ex.eval, IState.top, h0]
-  have gj : ∀ j : Fin HS, j ≠ 40 → j ≠ 41 → j ≠ 42 → j ≠ 43 → j ≠ 44 → t0.G j = s.G j := by
-    intro j a b c d e
-    simp [ht0, atanPre, NLogN.RS.seqL, NLogN.RS.run_seq, a, b, c, d, e]
-  have hK : (Ex.reg (S := HS) 1).eval t0 = K := by
-    simp (config := {decide := true}) [Ex.eval, IState.top, gj 1 (by decide) (by decide) (by decide) (by decide) (by decide), h1]
-  have hw : (45 : Fin HS) ∉ (atanBody x σ).writes := by simp [atanBody, NLogN.RS.seqL, RS.writes]
-  have hinv := repSt_inv 45 (.reg 1) (atanBody x σ) t0 (atanInv' x N K σ s)
-    (by
-      refine ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩ <;>
-        simp (config := {decide := true}) [g40, g41, g42, g43, g44, gj 45 (by decide) (by decide) (by decide) (by decide) (by decide), hK, atanSum]
-      intro j hj
-      have : j ≠ 40 ∧ j ≠ 41 ∧ j ≠ 42 ∧ j ≠ 43 ∧ j ≠ 44 ∧ j ≠ 45 := by
-        refine ⟨?_, ?_, ?_, ?_, ?_, ?_⟩ <;> (rintro rfl; revert hj; decide)
-      simp [this, gj j this.1 this.2.1 this.2.2.1 this.2.2.2.1 this.2.2.2.2.1])
-    (fun k hk hI => (atan_body x N K σ s _ k hI (by simpa [hK] using hk) hx).2)
-  rw [hK] at hinv
-  simp only [Int.toNat_natCast] at hinv
-  obtain ⟨f40, f41, f42, f43, f44, f45, fj⟩ := hinv K le_rfl
-  have hrun : (NLogN.RS.rep 45 (.reg 1) (atanBody x σ)).run t0 =
-      (NLogN.RS.repSt 45 (.reg 1) (atanBody x σ) t0 K).upd 45 (s.G 45) := by
-    rw [NLogN.RS.run_rep 45 _ _ t0 hw (by rw [hK]; positivity), hK, Int.toNat_natCast, gj 45 (by decide) (by decide) (by decide) (by decide) (by decide)]
-  refine ⟨⟨⟨?_, ?_⟩, ⟨?_, ?_⟩⟩, ?_⟩
-  · simp (config := {decide := true}) [atanPre, NLogN.RS.seqL, RS.ok, NLogN.RS.run_seq, Ex.ok, Ex.eval, Ex.Clean,
-      Ex.regs, IState.IsInt, IState.top, h0]
-  · have : (atanPre.run s).G 41 = .int 0 :: s.G 41 := by
-      simp (config := {decide := true}) [atanPre, NLogN.RS.seqL, NLogN.RS.run_seq, Ex.eval]
-    simp (config := {decide := true}) [RS.ok, Ex.ok, Ex.Clean, Ex.regs, IState.IsInt, IState.top, this]
-  · refine ⟨by decide, by decide, ?_, ?_, hw, ?_⟩
-    · show t0.IsInt 1
-      exact IState.isInt_of (by rw [gj 1 (by decide) (by decide) (by decide) (by decide) (by decide)]; exact h1)
-    · rw [hK]; positivity
-    · intro k hk
-      rw [hK, Int.toNat_natCast] at hk
-      exact (atan_body x N K σ s _ k (hinv k hk.le) hk hx).1
-  · rw [hrun]
-    simp (config := {decide := true}) [atanPost, NLogN.RS.seqL, RS.ok, NLogN.RS.run_seq, Ex.ok, Ex.Clean, Ex.regs,
-      IState.IsInt, IState.top, f40, f41, f42, f43, f44]
-  · show atanPost.run ((NLogN.RS.rep 45 (.reg 1) (atanBody x σ)).run t0) = _
-    rw [hrun]
-    refine run_ext ?_ ?_ ?_
-    rotate_left
-    · simp only [IState.upd_ip]
-      exact (repSt_ip_out _ _ _ _ _).1.trans (NLogN.RS.run_ip_out _ s).1
-    · simp only [IState.upd_out]
-      exact (repSt_ip_out _ _ _ _ _).2.trans (NLogN.RS.run_ip_out _ s).2
-    intro j
-    by_cases hj2 : j = 2
-    · subst hj2
-      simp (config := {decide := true}) [atanPost, NLogN.RS.seqL, NLogN.RS.run_seq, Ex.eval, IState.top, f40,
-        fj 2 (by decide)]
-    by_cases hlo : j.val < 40 ∨ 45 < j.val
-    · have h45 : j ≠ 45 := by rintro rfl; revert hlo; decide
-      have : j ≠ 40 ∧ j ≠ 41 ∧ j ≠ 42 ∧ j ≠ 43 ∧ j ≠ 44 := by
-        refine ⟨?_, ?_, ?_, ?_, ?_⟩ <;> (rintro rfl; revert hlo; decide)
-      simp [atanPost, NLogN.RS.seqL, NLogN.RS.run_seq, hj2, h45, this, fj j hlo]
-    · have : j = 40 ∨ j = 41 ∨ j = 42 ∨ j = 43 ∨ j = 44 ∨ j = 45 := by
-        revert hlo; revert j; decide
-      rcases this with rfl | rfl | rfl | rfl | rfl | rfl <;>
-        simp (config := {decide := true}) [atanPost, NLogN.RS.seqL, NLogN.RS.run_seq, f40, f41, f42, f43, f44]
-
 end NLogN
 
 namespace NLogN
 open IntMul RS
-
-theorem atanSum_abs_le (x N : ℕ) (σ : ℤ) (hσ : |σ| = 1) (k : ℕ) :
-    |atanSum x N σ k| ≤ k * 2 ^ N := by
-  induction k with
-  | zero => simp [atanSum]
-  | succ k ih =>
-    rw [atanSum_succ]
-    have hq : |(((2 ^ N / ((2 * k + 1) * x ^ (2 * k + 1)) : ℕ) : ℤ))| ≤ 2 ^ N := by
-      rw [abs_of_nonneg (by positivity)]
-      exact_mod_cast Nat.div_le_self _ _
-    calc |atanSum x N σ k + σ ^ k * _| ≤ |atanSum x N σ k| + |σ ^ k * _| := abs_add_le _ _
-      _ ≤ k * 2 ^ N + 2 ^ N := by
-        rw [abs_mul, abs_pow, hσ, one_pow, one_mul]; exact add_le_add ih hq
-      _ = ((k + 1 : ℕ) : ℤ) * 2 ^ N := by push_cast; ring
-
-theorem atanP_run (x N K : ℕ) (σ : ℤ) (hx : 0 < x) (s : IState HS) (L0 L1 : List Item)
-    (h0 : s.G 0 = .int N :: L0) (h1 : s.G 1 = .int K :: L1) :
-    (atanP x σ).run s = s.upd 2 (.int (atanSum x N σ K) :: s.G 2) :=
-  (atanP_spec x N K σ hx s L0 L1 h0 h1).2
 
 end NLogN
 

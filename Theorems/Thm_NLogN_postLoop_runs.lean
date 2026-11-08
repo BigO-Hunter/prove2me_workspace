@@ -17,27 +17,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -69,8 +51,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -87,8 +67,6 @@ section
 namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
-
-theorem zbits_neg (z : ℤ) : zbits (-z) = zbits z := by simp [zbits]
 
 end NLogN
 
@@ -115,15 +93,6 @@ theorem nbits_two_pow (m : ℕ) : nbits (2 ^ m) = List.replicate m false ++ [tru
 
 theorem zbits_two_pow (m : ℕ) : zbits (2 ^ m : ℕ) = List.replicate m false ++ [true] := by
   simp [zbits, nbits_two_pow]
-
-theorem nbits_drop (x m : ℕ) : (nbits x).drop m = nbits (x / 2 ^ m) := by
-  induction m generalizing x with
-  | zero => simp
-  | succ m ih =>
-    rcases Nat.eq_zero_or_pos x with rfl | hx
-    · simp [nbits_zero]
-    · rw [nbits_pos hx.ne', List.drop_succ_cons, ih, pow_succ, Nat.div_div_eq_div_mul,
-        mul_comm 2]
 
 theorem zbits_sg (z : ℤ) (n : ℕ) : zbits (sg z n) = nbits n := by
   unfold sg zbits; split_ifs <;> simp
@@ -158,11 +127,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
-
-theorem length_nbits_le {n m : ℕ} (h : n < 2 ^ m) : (nbits n).length ≤ m := by
-  have := nbits_drop n m
-  rw [Nat.div_eq_of_lt h, nbits_zero, List.drop_eq_nil_iff] at this
-  exact this
 
 end NLogN
 
@@ -250,17 +214,6 @@ namespace IRuns
 
 end IRuns
 
-@[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
-    (s.upd i L).upd i L' = s.upd i L' := by
-  simp [IState.upd]
-
-@[simp] theorem IState.upd_self (s : IState S) (i : Fin S) : s.upd i (s.G i) = s := by
-  simp [IState.upd]
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
 end NLogN
 
 end
@@ -280,9 +233,6 @@ theorem shlCost_le (m : ℕ) : shlCost m ≤ 200 * (m + 1) := by
 theorem splitCost_le (m : ℕ) : splitCost m + 17 ≤ 200 * (m + 1) := by
   simp only [splitCost, takeCost, moveCost]; omega
 
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
 theorem zsz_le_iff {z : ℤ} {m : ℕ} : zsz z ≤ m ↔ z.natAbs < 2 ^ m :=
   ⟨fun h => lt_of_lt_of_le (natAbs_lt_zsz z) (Nat.pow_le_pow_right (by norm_num) h),
     zsz_le_of_lt⟩
@@ -292,19 +242,9 @@ theorem zsz_mul_le (a b : ℤ) : zsz (a * b) ≤ zsz a + zsz b := by
   rw [Int.natAbs_mul, pow_add]
   exact Nat.mul_lt_mul'' (natAbs_lt_zsz a) (natAbs_lt_zsz b)
 
-theorem zsz_add_le (a b : ℤ) : zsz (a + b) ≤ max (zsz a) (zsz b) + 1 := by
-  apply zsz_le_of_lt
-  have ha := natAbs_lt_zsz a; have hb := natAbs_lt_zsz b
-  have ha' : 2 ^ zsz a ≤ 2 ^ max (zsz a) (zsz b) := Nat.pow_le_pow_right (by norm_num) (le_max_left _ _)
-  have hb' : 2 ^ zsz b ≤ 2 ^ max (zsz a) (zsz b) := Nat.pow_le_pow_right (by norm_num) (le_max_right _ _)
-  have := Int.natAbs_add_le a b
-  rw [pow_succ]; omega
-
 theorem zsz_two_pow (m : ℕ) : zsz ((2 : ℤ) ^ m) = m + 1 := by
   have : ((2 : ℤ) ^ m) = ((2 ^ m : ℕ) : ℤ) := by push_cast; rfl
   rw [this, zsz, zbits_two_pow]; simp
-
-theorem zsz_neg (z : ℤ) : zsz (-z) = zsz z := by simp [zsz, zbits_neg]
 
 theorem zsz_sg (z : ℤ) (n : ℕ) : zsz (sg z n) = (nbits n).length := by simp [zsz, zbits_sg]
 
@@ -315,9 +255,6 @@ theorem zsz_one : zsz 1 = 1 := by
 
 theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
   zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
-
-theorem natAbs_sg (z : ℤ) (n : ℕ) : (sg z n).natAbs = n := by
-  unfold sg; split_ifs <;> simp
 
 theorem sg_add (z : ℤ) (a b : ℕ) : sg z (a + b) = sg z a + sg z b := by
   unfold sg; split_ifs <;> push_cast <;> ring
@@ -339,11 +276,6 @@ open IntMul
 
 variable {S P : ℕ}
 
-@[simp] theorem rulerExp_two_pow (m : ℕ) : rulerExp ((2 : ℤ) ^ m) = some m := by
-  have h : ((2 : ℤ) ^ m).toNat = 2 ^ m := by
-    rw [show ((2 : ℤ) ^ m) = ((2 ^ m : ℕ) : ℤ) by push_cast; rfl, Int.toNat_natCast]
-  simp [rulerExp, h, Nat.log2_two_pow]
-
 end NLogN
 
 end
@@ -353,12 +285,6 @@ section
 namespace NLogN
 
 open IntMul
-
-@[simp] theorem runsTo_some {S : ℕ} (r : IState S × ℕ) (t : IState S) (c : ℕ) :
-    runsTo (some r) t c ↔ r.1 = t ∧ r.2 ≤ c := Iff.rfl
-
-theorem cls_int (z : ℤ) : cls (some (.int z)) =
-    if z = 0 then .zero else if z < 0 then .neg else .pos := rfl
 
 @[simp] theorem cls_int_zero (z : ℤ) : cls (some (.int z)) = .zero ↔ z = 0 := by
   rw [cls_int]; split_ifs <;> simp_all

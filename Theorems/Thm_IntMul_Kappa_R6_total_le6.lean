@@ -151,19 +151,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-/-! ## Tables -/
-
-/-! ## Moves with literal counts -/
-
-/-! ## Applying a stream code in place -/
-
-/-! ## Cost unit -/
-
-/-! ## Copying a stream -/
-
-theorem TabB.le {W v Bb : ℕ} (h : TabB W v Bb) {n : ℕ} (hn : n ≤ W * v) : zsz (n : ℤ) ≤ Bb :=
-  le_trans (zsz_natCast_le' hn) h.vol
-
 /-! ## Accumulating a stream on stack `20` -/
 
 /-! ## Building a summed stream, rebuilding the table -/
@@ -260,13 +247,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
 
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
-
 /-! ## The generic segment step -/
 
 /-! ## Expression combinators -/
@@ -307,10 +287,6 @@ namespace NLogN.KFT
 open IntMul KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-theorem cRpt_le (n : ℕ) : cRpt n ≤ 2000 * (n + 1) := by
-  have h := zsz_natCast_le_self' n
-  unfold cRpt cUL; omega
 
 end NLogN.KFT
 
@@ -399,36 +375,6 @@ open IntMul KFC KFB KFT KIL
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
-/-! ## One product through `MulOK` -/
-
-/-! ## Combining two products: `(u ± v).tdiv 2^Δ` pushed on `pO` -/
-
-/-! ## One entry -/
-
-/-! ## Moving the results back -/
-
-/-! ## The pass -/
-
-/-! ## Generic per-item pass -/
-
-/-! ## Instances: `× 2^γ`, `Q_Δ(· × S)`, rounding -/
-
-/-! ## The three passes -/
-
-theorem cItem_le (N c B : ℕ) : cItem N c B ≤ N * c + 5000 * (N + 1) * (B + 2) := by
-  have := cRpt_le N
-  unfold cItem; nlinarith
-
-/-! ## Denotation and the FM instance -/
-
-theorem fmB_mono {m n : ℕ} (h : m ≤ n) : fmB m ≤ fmB n := by
-  have e1 : zsz ((m + 1 : ℕ) : ℤ) ≤ zsz ((n + 1 : ℕ) : ℤ) := zsz_natCast_le (by omega)
-  have e2 : zsz (((zsz ((m + 1 : ℕ) : ℤ) + 2) ^ 4 : ℕ) : ℤ) ≤
-      zsz (((zsz ((n + 1 : ℕ) : ℤ) + 2) ^ 4 : ℕ) : ℤ) :=
-    zsz_natCast_le (Nat.pow_le_pow_left (by omega) 4)
-  unfold fmB
-  gcongr
-
 end NLogN.KFM
 
 end
@@ -491,27 +437,6 @@ open IntMul KFC KFB KFT KIL
 section IL
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-/-! ## Repetition with per-iteration costs -/
-
-/-! ## The root-table loop -/
-
-/-! ## Base roots by `twiddleP`, arguments from registers -/
-
-/-! ## Axis and twist tables -/
-
-/-! ## The outer-product round, loop and one level -/
-
-/-! ## One axis step: load the record, run the level, drop the registers -/
-
-/-! ## The uniform chirp-array loop -/
-
-/-! ## The uniform chirp table -/
-
-/-! ## Cost bounds -/
-
-theorem cCnt_le (x : ℕ) : cCnt x ≤ 135 * (x + 2) := by
-  have := zsz_natCast_le_self' x; unfold cCnt; simp only [dupCost, zipCost, moveCost]; omega
 
 end IL
 
@@ -589,50 +514,6 @@ open Finset
 
 namespace IntMul.OpenAI.RP
 
-/-! ### (38) and (45) -/
-
-/-! ### Axis lengths of the padded box -/
-
-lemma ell_spec (L d : ℕ) (hd : 0 < d) : L ≤ d * ell L d ∧ d * ell L d ≤ L + d - 1 := by
-  unfold ell
-  constructor
-  · have := Nat.lt_div_mul_add (a := L + d - 1) hd
-    rw [mul_comm]; omega
-  · have := Nat.div_mul_le_self (L + d - 1) d
-    rw [mul_comm]; exact this
-
-lemma mcnt_lt (L d : ℕ) (hd : 0 < d) : mcnt L d < d := by
-  have := ell_spec L d hd; unfold mcnt; omega
-
-lemma axExp_sum (L d : ℕ) (hd : 0 < d) : ∑ i : Fin d, axExp L d i = L := by
-  have hs := ell_spec L d hd
-  have hm := mcnt_lt L d hd
-  have hl : 0 < mcnt L d → 1 ≤ ell L d := by
-    intro hpos
-    by_contra h; push Not at h
-    have : ell L d = 0 := by omega
-    unfold mcnt at hpos; rw [this] at hpos; simp at hpos
-  have key : ∀ i : Fin d, (axExp L d i : ℤ) =
-      (ell L d : ℤ) - (if (i : ℕ) < mcnt L d then 1 else 0) := by
-    intro i; unfold axExp
-    split_ifs with h
-    · have := hl (by omega); push_cast [Nat.cast_sub this]; ring
-    · simp
-  zify
-  rw [Finset.sum_congr rfl (fun i _ => key i), Finset.sum_sub_distrib,
-    Fin.sum_univ_eq_sum_range (fun i => if i < mcnt L d then (1 : ℤ) else 0), Finset.sum_boole]
-  have hf : (Finset.range d).filter (fun i => i < mcnt L d) = Finset.range (mcnt L d) := by
-    ext x; simp only [Finset.mem_filter, Finset.mem_range]; omega
-  rw [hf]
-  simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, Finset.card_range, nsmul_eq_mul]
-  unfold mcnt
-  push_cast [Nat.cast_sub hs.1]
-  ring
-
-/-- `∏ t_i = T` with `t_i = 2^{axExp}`. -/
-lemma axLen_prod (L d : ℕ) (hd : 0 < d) : ∏ i : Fin d, 2 ^ axExp L d i = 2 ^ L := by
-  rw [Finset.prod_pow_eq_pow_sum, axExp_sum L d hd]
-
 /-! ### Source lengths, resampling margins -/
 
 /-! ### §9.2.3 radix-digit polynomials -/
@@ -695,12 +576,6 @@ namespace NLogN.KFM
 
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
 
-theorem ell_pos {n : ℕ} (hn : n0 ≤ n) : 1 ≤ ℓP n := by
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, hr64, -⟩ := setup_facts hn
-  by_contra h; push Not at h
-  have : ℓP n = 0 := by omega
-  rw [rP, this] at hr64; norm_num at hr64
-
 end NLogN.KFM
 
 end
@@ -721,31 +596,6 @@ For `n ≥ n₀` and `dP n = D + 1`:
 namespace NLogN.KFQ
 
 open IntMul IntMul.HvdH IntMul.OpenAI.Glue IntMul.OpenAI.RP NLogN.KFM
-
-theorem ell_ge {n D : ℕ} (hn : n0 ≤ n) (hD : dP n = D + 1) : 2 ≤ ell (LP n) (D + 1) := by
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, hr64, -⟩ := setup_facts hn
-  have hr : rP n = 2 ^ ell (LP n) (D + 1) := by unfold rP ℓP; rw [hD]
-  by_contra h
-  push Not at h
-  have : 2 ^ ell (LP n) (D + 1) ≤ 2 ^ 1 := Nat.pow_le_pow_right (by norm_num) (by omega)
-  omega
-
-theorem tBD_eq {n D : ℕ} (hn : n0 ≤ n) (hD : dP n = D + 1) (i : Fin (D + 1)) :
-    tBD n D i = 2 ^ axExp (LP n) (D + 1) i := by
-  have hdp : dpN n = mcnt (LP n) (D + 1) := by unfold dpN; rw [hD]
-  have hr : rP n = 2 ^ ell (LP n) (D + 1) := by unfold rP ℓP; rw [hD]
-  have hl := ell_ge hn hD
-  unfold tBD axExp
-  rw [hdp, hr]
-  by_cases h : mcnt (LP n) (D + 1) ≤ i.val
-  · rw [if_pos h, if_neg (by omega)]
-  · obtain ⟨m, hm⟩ : ∃ m, ell (LP n) (D + 1) = m + 1 := ⟨ell (LP n) (D + 1) - 1, by omega⟩
-    rw [if_neg h, if_pos (by omega), hm, pow_succ, Nat.mul_div_cancel _ (by norm_num)]
-    simp
-
-theorem prod_tBD {n D : ℕ} (hn : n0 ≤ n) (hD : dP n = D + 1) : ∏ i, tBD n D i = TP n := by
-  rw [Finset.prod_congr rfl (fun i _ => tBD_eq hn hD i), axLen_prod _ _ (by omega)]
-  rfl
 
 end NLogN.KFQ
 
@@ -775,19 +625,6 @@ open AModel AModelL12 IntMul KIL KFB KFT KFU RS IntMul.HvdH IntMul.OpenAI.RT Int
   IntMul.OpenAI.RCost
 
 noncomputable section
-
-/-! ## Facts -/
-
-theorem sCmp_eq {n D : ℕ} (hn : n0 ≤ n) (hD : dP n = D + 1) (hlt : ∀ i, sBD n D i < tBD n D i) :
-    sCmp n = ∏ i, sBD n D i := by
-  have hLb := (setup_facts hn).2.2.2.2.2.1
-  have e1 : ∏ j ∈ Finset.range (dP n), srcN n j = ∏ i, sBD n D i := by
-    rw [hD, ← Fin.prod_univ_eq_prod_range]; rfl
-  have h2 : ∏ i, sBD n D i ≤ ∏ i, tBD n D i :=
-    Finset.prod_le_prod (fun i _ => Nat.zero_le _) (fun i _ => (hlt i).le)
-  rw [KFQ.prod_tBD hn hD, TP] at h2
-  have h3 : 2 ^ LP n < 2 ^ bP n := Nat.pow_lt_pow_right (by norm_num) hLb
-  unfold sCmp; rw [e1]; exact Nat.mod_eq_of_lt (by omega)
 
 /-! ## The digit cut -/
 
@@ -831,9 +668,6 @@ noncomputable section
 
 variable {E : ℕ} {ix : Ix (7 + E)} {Isym : List Sym} {extM : Fin E → IStmt HS (7 + E)} {n D : ℕ}
   [instS : ∀ i, NeZero (sBD n D i)] [instT : ∀ i, NeZero (tBD n D i)]
-
-theorem BigCtx.hS (C : BigCtx ix Isym extM n D) : sCmp n = ∏ i, sBD n D i :=
-  sCmp_eq C.hn C.hD C.hlt
 
 end
 
@@ -950,30 +784,10 @@ open Finset IntMul KIL KFB KFT KFU RS IntMul.OpenAI.Glue IntMul.OpenAI.RCost
 
 noncomputable section
 
-/-! ## Basic facts (as in `KFZCostR`, without its imports) -/
-
-/-! ## Primitive costs -/
-
-theorem cW_le' (a : ℤ) : cW a ≤ 200 * (zsz a + 1) := by
-  unfold cW; simp only [dupCost, zipCost, moveCost]; omega
-
-theorem cW_nat (m : ℕ) : cW (m : ℤ) ≤ 200 * (m + 1) := by
-  have := cW_le' (m : ℤ); have := zsz_natCast_le_self' m; omega
-
-theorem cW_pow (k : ℕ) : cW ((2 : ℤ) ^ k) ≤ 200 * (k + 2) := by
-  have := cW_le' ((2 : ℤ) ^ k); rw [NLogN.zsz_two_pow] at this; omega
-
 theorem cMvN_le' (N B : ℕ) : cMvN N B ≤ 3000 * (N + 1) * (B + 2) := by
   have h1 := cRpt_le N
   have h2 := zsz_natCast_le_self' N
   unfold cMvN; simp only [dupCost, zipCost, moveCost]; nlinarith
-
-theorem cConj_le (N B : ℕ) : cConj N B ≤ 10000 * (N + 1) * (B + 2) := by
-  have h1 := cRpt_le N
-  have h1' := cRpt_le (2 * N)
-  have h2 := zsz_natCast_le_self' N
-  have h2' := zsz_natCast_le_self' (2 * N)
-  unfold cConj; simp only [dupCost, zipCost, moveCost]; nlinarith
 
 /-! ## Sizes -/
 
@@ -1015,11 +829,6 @@ namespace NLogN.KFW
 
 open IntMul NLogN.RS KFD
 
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
-
 end NLogN.KFW
 
 end
@@ -1060,10 +869,6 @@ section PFacts
 
 variable {k K e T S0 B r H : ℕ} (hp : PF k K e T S0 B r)
 include hp
-
-theorem PF.eT : e < T := by
-  have := hp.ht; have := Nat.mod_lt e (show 0 < K by have := hp.k1; omega)
-  have := Nat.mod_le e K; omega
 
 end PFacts
 
@@ -1200,10 +1005,6 @@ section PFacts
 variable {m k K e T S0 B r H : ℕ} (hp : PF m k K e T S0 B r)
 include hp
 
-theorem PF.eT : e < T := by
-  have := hp.ht; have := Nat.mod_lt e (show 0 < K by have := hp.k1; omega)
-  have := Nat.mod_le e K; omega
-
 end PFacts
 
 end IntMul.Kappa.R6.IL2
@@ -1239,10 +1040,6 @@ namespace Q6
 
 variable (Q : Q6)
 
-theorem p_eq : Q.p = 6 * Q.b := rfl
-
-theorem ℓ_eq : Q.ℓ = OpenAI.RP.ell Q.L Q.d := rfl
-
 end Q6
 
 namespace QOk
@@ -1252,53 +1049,12 @@ include hQ
 
 theorem hb1 : 1 ≤ Q.b := by have := hQ.hb; omega
 
-theorem hp1 : 1 ≤ Q.p := by have := hQ.hb; rw [Q.p_eq]; omega
-
-theorem hbp : Q.b + 2 ≤ Q.p := by have := hQ.hb; rw [Q.p_eq]; omega
-
-theorem ell_pos : 1 ≤ OpenAI.RP.ell Q.L Q.d := by have := hQ.hℓ2; rw [← Q.ℓ_eq]; omega
-
 theorem h_succ : Q.h + 1 = Q.ℓ := by
   have : 2 ≤ ℓP6 Q.P Q.n := hQ.hℓ2
   show hN6 Q.P Q.n + 1 = ℓP6 Q.P Q.n
   unfold hN6; omega
 
-/-- The axis lengths are `2^{axExp}`. -/
-theorem tF_eq (j : ℕ) (hj : j < Q.d) :
-    tF6 Q.P Q.n j = 2 ^ OpenAI.RP.axExp Q.L Q.d ⟨j, hj⟩ := by
-  have hl := hQ.ell_pos
-  unfold tF6 OpenAI.RP.axExp bL6
-  have e1 : hN6 Q.P Q.n = OpenAI.RP.ell Q.L Q.d - 1 := rfl
-  have e2 : dpN6 Q.P Q.n = OpenAI.RP.mcnt Q.L Q.d := rfl
-  rw [e1, e2]
-  simp only [decide_eq_true_eq]
-  by_cases h : OpenAI.RP.mcnt Q.L Q.d ≤ j
-  · rw [if_pos h, if_neg (by omega), ← pow_succ]; congr 1; omega
-  · rw [if_neg h, if_pos (by omega)]
-
-theorem prod_tB {D : ℕ} (hD : Q.d = D + 1) : ∏ i, Q.tB D i = 2 ^ Q.L := by
-  have e : ∏ j ∈ Finset.range Q.d, (2 : ℕ) ^ (if j < OpenAI.RP.mcnt Q.L Q.d then
-      OpenAI.RP.ell Q.L Q.d - 1 else OpenAI.RP.ell Q.L Q.d) = 2 ^ Q.L := by
-    rw [← Fin.prod_univ_eq_prod_range (fun j => (2 : ℕ) ^ (if j < OpenAI.RP.mcnt Q.L Q.d then
-      OpenAI.RP.ell Q.L Q.d - 1 else OpenAI.RP.ell Q.L Q.d))]
-    exact OpenAI.RP.axLen_prod Q.L Q.d (by have := hQ.hd1; omega)
-  rw [show ∏ i, Q.tB D i = ∏ j ∈ Finset.range (D + 1), tF6 Q.P Q.n j from
-    Fin.prod_univ_eq_prod_range (fun j => tF6 Q.P Q.n j) (D + 1), ← hD, ← e]
-  refine Finset.prod_congr rfl fun j hj => ?_
-  rw [hQ.tF_eq j (Finset.mem_range.1 hj)]; rfl
-
-theorem sB_lt {D : ℕ} (hD : Q.d = D + 1) (i : Fin (D + 1)) : Q.sB D i < Q.tB D i :=
-  hQ.hlt i.val (by omega)
-
 theorem src_pos (j : ℕ) (hj : j < Q.d) : 1 ≤ Q.src j := (hQ.src.odd j hj).pos
-
-theorem S_eq {D : ℕ} (hD : Q.d = D + 1) : Q.S = ∏ i, Q.sB D i := by
-  show ∏ j ∈ Finset.range (dP6 Q.P Q.n), Q.src j = _
-  rw [show dP6 Q.P Q.n = D + 1 from hD, ← Fin.prod_univ_eq_prod_range]; rfl
-
-theorem S_le_T {D : ℕ} (hD : Q.d = D + 1) : Q.S ≤ 2 ^ Q.L := by
-  rw [hQ.S_eq hD, ← hQ.prod_tB hD]
-  exact Finset.prod_le_prod (fun i _ => Nat.zero_le _) (fun i _ => (hQ.sB_lt hD i).le)
 
 end QOk
 
@@ -1348,8 +1104,6 @@ noncomputable section
 variable {E : ℕ} {ix : Ix6 (7 + E)} {Isym : List Sym} {tab : Fin 1 → IStmt HS 1}
   {extM : Fin E → IStmt HS (7 + E)} {Q : Q6} {D : ℕ}
   [instS : ∀ i, NeZero (Q.sB D i)] [instT : ∀ i, NeZero (Q.tB D i)]
-
-theorem BigCtx6.hS (C : BigCtx6 ix Isym tab extM Q D) : Q.S = ∏ i, Q.sB D i := C.hQ.S_eq C.hD
 
 end
 
@@ -1460,27 +1214,6 @@ noncomputable section
 
 attribute [local irreducible] fmA Cfm
 
-theorem Ncost6_ge_one (P : Prm) (hP : P.Ok) (n : ℕ) : 1 ≤ Ncost6 P n := by
-  unfold Ncost6 Ncost6R
-  have hp1 : (1 : ℝ) ≤ pP6 P n := by
-    have := b'P6_pos P n
-    have : 1 ≤ pP6 P n := by unfold pP6; omega
-    exact_mod_cast this
-  have hp0 : (0 : ℝ) ≤ pP6 P n := by linarith
-  have hd : (0 : ℝ) ≤ dP6 P n := Nat.cast_nonneg _
-  have hl : (0 : ℝ) ≤ ℓP6 P n := Nat.cast_nonneg _
-  have t1 : 0 ≤ (ℓP6 P n : ℝ) * (dP6 P n : ℝ) ^ P.lamp := mul_nonneg hl (Real.rpow_nonneg hd _)
-  have t2 : 0 ≤ (dP6 P n : ℝ) * (pP6 P n : ℝ) ^ P.δ := mul_nonneg hd (Real.rpow_nonneg hp0 _)
-  have t3 : 0 ≤ Real.logb 2 (pP6 P n) := Real.logb_nonneg (by norm_num) hp1
-  have t4 : 0 ≤ (pP6 P n : ℝ) ^ P.δ := Real.rpow_nonneg hp0 _
-  have t5 : 0 ≤ (ℓP6 P n : ℝ) * ((dP6 P n : ℝ) * Real.log (pP6 P n)) ^ P.τ :=
-    mul_nonneg hl (Real.rpow_nonneg (mul_nonneg hd (Real.log_nonneg hp1)) _)
-  linarith
-
-theorem lgn_ge (n : ℕ) : 1 ≤ Real.log (IntMul.lg n) + 1 := by
-  have : (1 : ℝ) ≤ IntMul.lg n := by exact_mod_cast bP6_pos n
-  have := Real.log_nonneg this; linarith
-
 end
 
 end IntMul.Kappa.R6
@@ -1517,19 +1250,6 @@ section Passes
 variable {Q : Q6} (hQ : QOk Q) {D : ℕ} (hD : Q.d = D + 1)
 include hQ hD
 
-theorem γ_eq6 : 2 * (D + 1) * Q.α ^ 2 = Q.γ := by rw [← hD]
-
-theorem wU_le6 : wU6 Q D ≤ 2 * Q.p := by
-  have h := hQ.hγ
-  rw [← γ_eq6 hQ hD] at h
-  have hb := hQ.hb
-  have hp : Q.p = 6 * Q.b := Q.p_eq
-  unfold wU6; omega
-
-theorem eT2_6 : 2 ^ (Q.L + 1) = 2 * Q.T := by rw [pow_succ]; show _ = 2 * 2 ^ Q.L; ring
-
-theorem fmB_le8_6 {m : ℕ} (hm : m ≤ 8 * Q.p) : KFM.fmB m ≤ KFM.fmB (8 * Q.p) := fmB_mono hm
-
 theorem kShl_le6 : kShl6 Q D ≤ 10 ^ 6 * (Q.T * (Q.p + 1) + Q.p + 1) := by
   have hW := wU_le6 hQ hD
   have hb := hQ.hb
@@ -1562,23 +1282,6 @@ theorem kGm_le6 : kGm6 Q D ≤ 10 ^ 8 * (Q.T * (Q.p + 1 + KFM.fmB (8 * Q.p)) + Q
   have m1 := Nat.mul_le_mul_left (4 * T) hF
   have m2 := Nat.mul_le_mul_left (T + 1) hW
   nlinarith
-
-theorem kCj_le6 {B : ℕ} (hB : B ≤ 3 * Q.p) :
-    kCj6 Q B ≤ 10 ^ 6 * (Q.T * (Q.p + 1) + Q.p + 1) := by
-  unfold kCj6
-  have c1 := cConj_le (2 ^ Q.L) B
-  have c4 := cW_nat (2 * 2 ^ Q.L)
-  have c5 := cW_nat (2 ^ Q.L)
-  have eT : 2 ^ Q.L = Q.T := rfl
-  rw [eT] at c1 c4 c5 ⊢
-  set T := Q.T
-  set p := Q.p
-  have m2 := Nat.mul_le_mul_left (T + 1) hB
-  have e1 : (T + 1) * (3 * p) = 3 * (T * p) + 3 * p := by ring
-  have e2 : T * (p + 1) = T * p + T := by ring
-  have e3 : 10000 * (T + 1) * (B + 2) = 10000 * ((T + 1) * B) + 20000 * T + 20000 := by ring
-  rw [e3] at c1; rw [e1] at m2; rw [e2]
-  omega
 
 theorem cCarU_le6 : cCarU Q.b (Q.p + 2) Q.S ≤ 10 ^ 7 * (Q.T * (Q.p + 1) + Q.p + 1) := by
   have hS : Q.S ≤ Q.T := hQ.S_le_T hD
@@ -1762,10 +1465,6 @@ namespace IntMul.Kappa.R6
 open Finset IntMul NLogN NLogN.KIL KFB KFT KFU RS IntMul.OpenAI.Glue IntMul.OpenAI.RCost NLogN.KFM
 
 noncomputable section
-
-theorem cU6_eq (Q : Q6) (A : ℕ) : cU6 Q.P Q.n A =
-    (Q.T : ℝ) * Q.p * Ncost6 Q.P Q.n * (Real.log (IntMul.lg Q.n) + 1) ^ A := by
-  unfold cU6 VP6; rfl
 
 theorem cU6_mono (Q : Q6) (hP : Q.P.Ok) {A A' : ℕ} (h : A ≤ A') :
     cU6 Q.P Q.n A ≤ cU6 Q.P Q.n A' := by

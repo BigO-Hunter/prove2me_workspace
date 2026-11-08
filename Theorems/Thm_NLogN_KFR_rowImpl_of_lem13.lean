@@ -28,17 +28,6 @@ lemma decode_encode {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) : decode
       Nat.add_mul_div_left _ _ hV, Nat.div_eq_of_lt he, Nat.add_mul_mod_self_left,
       Nat.mod_eq_of_lt he, ih, zero_add, Nat.mod_eq_of_lt hx]
 
-lemma encode_decode {sh : Shape} {m : ℕ} (h : m < AModel.vol sh) : encode sh (decode sh m) = m := by
-  induction sh generalizing m with
-  | nil => simp at h; subst h; rfl
-  | cons q sh ih =>
-    simp only [vol_cons] at h
-    have hV : 0 < AModel.vol sh := Nat.pos_of_ne_zero (by rintro h'; simp [h'] at h)
-    have hq : m / AModel.vol sh < q := (Nat.div_lt_iff_lt_mul hV).2 h
-    simp only [decode, encode, List.headD_cons, List.tail_cons, Nat.mod_eq_of_lt hq,
-      ih (Nat.mod_lt m hV)]
-    exact Nat.div_add_mod' m (AModel.vol sh)
-
 section Pull
 variable {α : Type*}
 
@@ -116,28 +105,12 @@ open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
 
-theorem layerShape_drop (P K D S i : ℕ) (hi : i < D) :
-    (Butterfly.layerShape P K D S).drop (i + 2) = List.replicate (D - (i + 1)) (2 ^ K) ++ [S] := by
-  simp only [Butterfly.layerShape, List.cons_append, List.drop_succ_cons]
-  rw [List.drop_append_of_le_length (by simp; omega), List.drop_replicate]
-
 theorem stS_eq (K D S i : ℕ) (hi : i < D) : stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S := by
   simp [stS, layerShape_drop 1 K D S i hi, vol]
 
 theorem vol_layer (P K D S : ℕ) :
     vol (Butterfly.layerShape P K D S) = P * (2 ^ K) ^ D * S := by
   simp [Butterfly.layerShape, vol]; ring
-
-theorem setBit_sub (ρ v : ℕ) (b : Fin 2) :
-    (Butterfly.setBit ρ v b : ℤ) - v = ((b : ℤ) - (Butterfly.getBit ρ v : ℕ)) * 2 ^ ρ := by
-  have h1 := Butterfly.setBit_eq ρ v b
-  have h2 := Butterfly.setBit_eq ρ v (Butterfly.getBit ρ v)
-  rw [Butterfly.setBit_getBit] at h2
-  have : ((Butterfly.setBit ρ v b : ℕ) : ℤ) - ((v : ℕ) : ℤ) =
-      (((2 * (v / 2 ^ (ρ + 1)) + b) * 2 ^ ρ + v % 2 ^ ρ : ℕ) : ℤ) -
-      (((2 * (v / 2 ^ (ρ + 1)) + (Butterfly.getBit ρ v : ℕ)) * 2 ^ ρ + v % 2 ^ ρ : ℕ) : ℤ) := by
-    rw [← h1]; nth_rewrite 2 [h2]; rfl
-  rw [this]; push_cast; ring
 
 end NLogN.KFH
 
@@ -385,44 +358,6 @@ section Rows
 
 variable {K m k e : ℕ} {pos : Fin m × Fin (m ^ k) → ℕ}
 
-theorem rowE_le (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) :
-    K * (m ^ k * (r.val + 1) - 1) ≤ e := by
-  have hf : 1 ≤ m ^ k := Nat.one_le_pow _ _ (by have := r.isLt; omega)
-  have := he (r, ⟨m ^ k - 1, by omega⟩)
-  simp only at this
-  have e1 : m ^ k - 1 + m ^ k * r.val = m ^ k * (r.val + 1) - 1 := by
-    rw [Nat.mul_succ]; omega
-  rw [e1] at this
-  omega
-
-theorem sR_add (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) :
-    sR K (m ^ k) e r + e % K = e - K * (m ^ k * (r.val + 1) - 1) := by
-  have h1 := rowE_le he r
-  set E := K * (m ^ k * (r.val + 1) - 1)
-  have h2 : (e - E) % K = e % K := by
-    simp only [E]; rw [Nat.sub_mul_mod h1]
-  have h3 : (e - E) % K ≤ e - E := Nat.mod_le _ _
-  unfold sR
-  omega
-
-/-- Rows further down start lower by `fK` per row. -/
-theorem sR_lt (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) {r r' : Fin m}
-    (h : r < r') : sR K (m ^ k) e r' + m ^ k * K * (r'.val - r.val) = sR K (m ^ k) e r := by
-  have h0 := sR_add he r
-  have h1 := sR_add he r'
-  have hf : 1 ≤ m ^ k := Nat.one_le_pow _ _ (by have := r.isLt; omega)
-  have hlt : r.val < r'.val := h
-  have e1 : m ^ k * (r'.val + 1) - 1 = (m ^ k * (r.val + 1) - 1) + m ^ k * (r'.val - r.val) := by
-    have : m ^ k * (r'.val + 1) = m ^ k * (r.val + 1) + m ^ k * (r'.val - r.val) := by
-      rw [← Nat.mul_add]; congr 1; omega
-    have : 1 ≤ m ^ k * (r.val + 1) := Nat.one_le_iff_ne_zero.2 (by positivity)
-    omega
-  have e2 : K * (m ^ k * (r'.val + 1) - 1) =
-      K * (m ^ k * (r.val + 1) - 1) + m ^ k * K * (r'.val - r.val) := by
-    rw [e1, Nat.mul_add]; ring
-  have h2 := rowE_le he r'
-  omega
-
 end Rows
 
 end NLogN.KFR
@@ -441,43 +376,12 @@ open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly KFN
 
 variable {K m k e : ℕ} {pos : Fin m × Fin (m ^ k) → ℕ}
 
-theorem sR_top (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) :
-    sR K (m ^ k) e r + m ^ k * K ≤ e - e % K + K := by
-  have h0 := sR_add he r
-  have h1 := rowE_le he r
-  have hf : 1 ≤ m ^ k := Nat.one_le_pow _ _ (by have := r.isLt; omega)
-  have a1 : K * (m ^ k - 1) ≤ K * (m ^ k * (r.val + 1) - 1) :=
-    Nat.mul_le_mul_left _ (by rw [Nat.mul_succ]; omega)
-  have a2 : K * (m ^ k - 1) + K = m ^ k * K := by
-    rw [Nat.mul_comm (m ^ k) K, ← Nat.mul_succ]; congr 1; omega
-  have a3 := Nat.mod_le e K
-  omega
-
-theorem sR_gap (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) {r r' : Fin m}
-    (h : r < r') : sR K (m ^ k) e r' + m ^ k * K ≤ sR K (m ^ k) e r := by
-  have h1 := sR_lt he h
-  have : m ^ k * K ≤ m ^ k * K * (r'.val - r.val) :=
-    Nat.le_mul_of_pos_right _ (by have : r.val < r'.val := h; omega)
-  omega
-
-theorem pow_mul_pow_mul' (x y S : ℕ) : 2 ^ x * (2 ^ y * S) = 2 ^ (x + y) * S := by
-  rw [← mul_assoc, ← pow_add]
-
 section Shape
 
 variable {t S0 B : ℕ} {σ : Fin 3 → Fin m}
   (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (htop : e - e % K + K ≤ t)
   (hσ : σ 0 < σ 1 ∧ σ 1 < σ 2)
 include he htop hσ
-
-theorem shR_vol : vol (NLogN.KFR.shR K (m ^ k) e t S0 B σ) = B * 2 ^ t * S0 := by
-  have g1 := sR_gap he hσ.1
-  have g2 := sR_gap he hσ.2
-  have g0 := sR_top he (σ 0)
-  simp only [NLogN.KFR.shR, rect, vol_cons, vol_nil, mul_one]
-  repeat rw [pow_mul_pow_mul']
-  rw [mul_assoc B, mul_assoc B, pow_mul_pow_mul']
-  congr 3; omega
 
 end Shape
 

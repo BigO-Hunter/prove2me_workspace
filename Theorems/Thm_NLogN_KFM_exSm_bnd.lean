@@ -37,14 +37,6 @@ namespace NLogN.KFM
 
 open IntMul RS
 
-theorem exDg_pos : ∀ e : Ex HS, 1 ≤ exDg e
-  | .reg _ | .lit _ => le_rfl
-  | .add _ _ => by simp [exDg]
-  | .mul a _ => by have := exDg_pos a; simp only [exDg]; omega
-  | .neg a | .pow2 a => exDg_pos a
-  | .ndiv a _ | .nmod a _ => by have := exDg_pos a; simp only [exDg]; omega
-  | .shl _ _ | .quo _ _ | .rem _ _ | .sel _ _ _ => le_rfl
-
 theorem zsz_of_abs {z : ℤ} {A B k : ℕ} (h : |z| ≤ (A : ℤ) ^ k) (hB : A ^ k < 2 ^ B) : zsz z ≤ B :=
   zsz_le_of_natAbs_le (M := A ^ k) (by rw [Int.abs_eq_natAbs] at h; exact_mod_cast h) hB
 

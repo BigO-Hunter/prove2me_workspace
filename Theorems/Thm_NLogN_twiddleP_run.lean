@@ -16,27 +16,9 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
-theorem wval_nbits (m : ℕ) : wval (nbits m) = m := by
-  induction m using Nat.strong_induction_on with
-  | _ m ih =>
-    rcases Nat.eq_zero_or_pos m with rfl | hm
-    · simp [nbits_zero, wval]
-    · rw [nbits_pos hm.ne', wval, ih _ (Nat.div_lt_self hm (by norm_num))]
-      by_cases h : m % 2 = 1 <;> simp [h] <;> omega
-
 end NLogN
 
 namespace NLogN
-
-theorem wval_lt_pow (A : List Bool) : wval A < 2 ^ A.length := by
-  induction A with
-  | nil => simp [wval]
-  | cons b A ih => simp only [wval, List.length_cons, pow_succ]; cases b <;> simp <;> omega
 
 end NLogN
 
@@ -68,8 +50,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem wval_zbits (z : ℤ) : wval (zbits z) = z.natAbs := wval_nbits _
-
 section
 variable {q i j k t1 t2 : Fin S} (hqi : q ≠ i) (hqj : q ≠ j) (hqt1 : q ≠ t1) (hqt2 : q ≠ t2)
   (hij : i ≠ j) (hit1 : i ≠ t1) (hit2 : i ≠ t2) (hjt1 : j ≠ t1) (hjt2 : j ≠ t2) (ht12 : t1 ≠ t2)
@@ -97,10 +77,6 @@ namespace IRuns
 
 end IRuns
 
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
 end NLogN
 
 end
@@ -108,19 +84,6 @@ end
 section
 -- Source module: NLogN.Costs
 namespace NLogN
-
-theorem natAbs_lt_zsz (z : ℤ) : z.natAbs < 2 ^ zsz z := by
-  have := wval_lt_pow (zbits z); rwa [wval_zbits] at this
-
-theorem zsz_mul_le (a b : ℤ) : zsz (a * b) ≤ zsz a + zsz b := by
-  apply zsz_le_of_lt
-  rw [Int.natAbs_mul, pow_add]
-  exact Nat.mul_lt_mul'' (natAbs_lt_zsz a) (natAbs_lt_zsz b)
-
-theorem zsz_zero : zsz 0 = 0 := by simp [zsz, zbits, nbits_zero]
-
-theorem zsz_mono {a b : ℤ} (h : a.natAbs ≤ b.natAbs) : zsz a ≤ zsz b :=
-  zsz_le_of_lt (lt_of_le_of_lt h (natAbs_lt_zsz b))
 
 end NLogN
 
@@ -142,11 +105,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem zsz_le_of_abs {z : ℤ} {m : ℕ} (h : |z| < 2 ^ m) : zsz z ≤ m := by
-  apply zsz_le_of_lt
-  have : ((z.natAbs : ℕ) : ℤ) < ((2 ^ m : ℕ) : ℤ) := by push_cast; exact h
-  exact_mod_cast this
-
 end NLogN
 
 end
@@ -163,43 +121,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-theorem iter_ip (f : IState HS → IState HS) (hf : ∀ t, (f t).ip = t.ip ∧ (f t).out = t.out) :
-    ∀ k t, (f^[k] t).ip = t.ip ∧ (f^[k] t).out = t.out
-  | 0, t => ⟨rfl, rfl⟩
-  | k + 1, t => by
-    rw [Function.iterate_succ_apply']
-    exact ⟨(hf _).1.trans (iter_ip f hf k t).1, (hf _).2.trans (iter_ip f hf k t).2⟩
-
-theorem run_ip_out : ∀ (p : RS) (s : IState HS), (p.run s).ip = s.ip ∧ (p.run s).out = s.out
-  | skip, s => ⟨rfl, rfl⟩
-  | asg i e, s | push i e, s | pop i, s => by simp [NLogN.RS.run]
-  | seq a b, s => by
-    simp only [NLogN.RS.run]
-    exact ⟨(run_ip_out b _).1.trans (run_ip_out a s).1, (run_ip_out b _).2.trans (run_ip_out a s).2⟩
-  | ite c a b, s => by
-    simp only [NLogN.RS.run]; split_ifs
-    · exact run_ip_out a s
-    · exact run_ip_out b s
-  | rep i n b, s => by
-    simp only [NLogN.RS.run, IState.upd_ip, IState.upd_out]
-    have := iter_ip (fun t => decSt i (b.run t))
-      (fun t => by simp only [decSt, IState.upd_ip, IState.upd_out]; exact run_ip_out b t)
-      (n.eval s).toNat (s.upd i (.int (n.eval s) :: s.G i))
-    simpa using this
-
-@[simp] theorem run_ip (p : RS) (s : IState HS) : (p.run s).ip = s.ip := (NLogN.RS.run_ip_out p s).1
-@[simp] theorem run_out (p : RS) (s : IState HS) : (p.run s).out = s.out := (NLogN.RS.run_ip_out p s).2
-
-@[simp] theorem run_push_G (i : Fin HS) (e : Ex HS) (s : IState HS) (j : Fin HS) :
-    ((push i e).run s).G j = if j = i then .int (e.eval s) :: s.G i else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-@[simp] theorem run_pop_G (i : Fin HS) (s : IState HS) (j : Fin HS) :
-    ((pop i).run s).G j = if j = i then (s.G i).tail else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-theorem run_seq (a b : RS) (s : IState HS) : (NLogN.RS.seq a b).run s = b.run (a.run s) := rfl
-
 end RS
 
 end NLogN
@@ -214,28 +135,10 @@ namespace NLogN
 
 open IntMul RS
 
-theorem atanSum_succ (x N : ℕ) (σ : ℤ) (k : ℕ) : atanSum x N σ (k + 1) =
-    atanSum x N σ k + σ ^ k * ((2 ^ N / ((2 * k + 1) * x ^ (2 * k + 1)) : ℕ) : ℤ) := by
-  simp [atanSum, Finset.sum_range_succ]
-
 end NLogN
 
 namespace NLogN
 open IntMul RS
-
-theorem atanSum_abs_le (x N : ℕ) (σ : ℤ) (hσ : |σ| = 1) (k : ℕ) :
-    |atanSum x N σ k| ≤ k * 2 ^ N := by
-  induction k with
-  | zero => simp [atanSum]
-  | succ k ih =>
-    rw [atanSum_succ]
-    have hq : |(((2 ^ N / ((2 * k + 1) * x ^ (2 * k + 1)) : ℕ) : ℤ))| ≤ 2 ^ N := by
-      rw [abs_of_nonneg (by positivity)]
-      exact_mod_cast Nat.div_le_self _ _
-    calc |atanSum x N σ k + σ ^ k * _| ≤ |atanSum x N σ k| + |σ ^ k * _| := abs_add_le _ _
-      _ ≤ k * 2 ^ N + 2 ^ N := by
-        rw [abs_mul, abs_pow, hσ, one_pow, one_mul]; exact add_le_add ih hq
-      _ = ((k + 1 : ℕ) : ℤ) * 2 ^ N := by push_cast; ring
 
 end NLogN
 
@@ -248,21 +151,6 @@ namespace NLogN
 open IntMul
 
 namespace Ex
-
-theorem floor_div_neg (a b : ℤ) (hb : 0 < b) : a / b = -((-a + (b + -1)) / b) := by
-  have h1 := Int.ediv_mul_le (-a + (b + -1)) hb.ne'
-  have h2 := Int.lt_ediv_add_one_mul_self (-a + (b + -1)) hb
-  set q := (-a + (b + -1)) / b
-  have := (Int.ediv_emod_unique'' (a := a) (b := b) (r := a + b * q) (q := -q) hb.ne').2
-    ⟨by ring, by nlinarith, by rw [abs_of_pos hb]; nlinarith⟩
-  exact this.1
-
-theorem fdiv_eval (s : IState HS) (a b : Ex HS) (hb : 0 < b.eval s) :
-    (fdiv a b).eval s = a.eval s / b.eval s := by
-  simp only [fdiv, eval]
-  split_ifs with h
-  · exact (floor_div_neg _ _ hb).symm
-  · rfl
 
 end Ex
 
@@ -277,9 +165,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN
 
 open IntMul RS
-
-theorem atanInv_eq (x N K : ℕ) : IntMul.HvdH.atanInv x N K = atanSum x N (-1) K := by
-  simp [IntMul.HvdH.atanInv, atanSum]
 
 end NLogN
 
@@ -299,16 +184,6 @@ namespace NLogN
 
 open IntMul RS IntMul.HvdH
 
-theorem abs_ediv_le (a d : ℤ) (hd : 1 ≤ d) : |a / d| ≤ |a| := by
-  have h1 := Int.ediv_mul_le a (show d ≠ 0 by omega)
-  have h2 := Int.lt_ediv_add_one_mul_self a (show 0 < d by omega)
-  rw [abs_le]
-  rcases le_or_gt 0 a with ha | ha
-  · rw [abs_of_nonneg ha]
-    constructor <;> nlinarith
-  · rw [abs_of_neg ha]
-    constructor <;> nlinarith
-
 end NLogN
 
 end
@@ -323,18 +198,6 @@ open IntMul RS IntMul.HvdH
 
 namespace Ex
 
-@[simp] theorem ediv_eval (s : IState HS) (a b : Ex HS) :
-    (ediv a b).eval s = a.eval s / b.eval s := by
-  rcases lt_trichotomy (b.eval s) 0 with h | h | h
-  · have h1 : ¬ (-b.eval s < 0) := by omega
-    simp only [ediv, eval, h1, h, if_false, if_true]
-    rw [fdiv_eval s a _ (by simp only [eval]; linarith)]
-    simp only [eval, Int.ediv_neg, neg_neg]
-  · simp [ediv, eval, h]
-  · have h1 : -b.eval s < 0 := by omega
-    simp only [ediv, eval, h1, if_true]
-    exact fdiv_eval s a b h
-
 @[simp] theorem emod_eval (s : IState HS) (a b : Ex HS) :
     (emod a b).eval s = a.eval s % b.eval s := by
   simp only [emod, eval, ediv_eval]
@@ -348,53 +211,6 @@ namespace Ex
   · simp; omega
 
 end Ex
-
-theorem top_toNat_G {s : IState HS} {i : Fin HS} (h : s.IsInt i) (h0 : 0 ≤ s.top i) :
-    ∃ L, s.G i = .int (((s.top i).toNat : ℕ) : ℤ) :: L := by
-  obtain ⟨L, hL⟩ := h
-  exact ⟨L, by rw [Int.toNat_of_nonneg h0]; exact hL⟩
-
-theorem abs_ediv_le_of (x d c : ℤ) (hd : 0 < d) (h : |x| ≤ c * d) : |x / d| ≤ c := by
-  have h1 := Int.ediv_mul_le x hd.ne'
-  have h2 := Int.lt_ediv_add_one_mul_self x hd
-  rw [abs_le] at h ⊢
-  constructor
-  · by_contra hc
-    have : x / d + 1 ≤ -c := by omega
-    nlinarith
-  · by_contra hc
-    have : c + 1 ≤ x / d := by omega
-    nlinarith
-
-theorem piApprox_abs_le (M : ℕ) : |piApprox M| ≤ 20 * M * 2 ^ M := by
-  have h1 := atanSum_abs_le 5 M (-1) (by norm_num) M
-  have h2 := atanSum_abs_le 239 M (-1) (by norm_num) M
-  simp only [piApprox, atanInv_eq]
-  calc |16 * atanSum 5 M (-1) M - 4 * atanSum 239 M (-1) M|
-      ≤ |16 * atanSum 5 M (-1) M| + |4 * atanSum 239 M (-1) M| := abs_sub _ _
-    _ ≤ 16 * (M * 2 ^ M) + 4 * (M * 2 ^ M) := by
-        rw [abs_mul, abs_mul]; norm_num; linarith
-    _ = _ := by ring
-
-theorem round_abs_le (A : ℤ) (m : ℕ) (hA : |A| ≤ 20 * ((2 * m + 9 : ℕ) : ℤ) * 2 ^ (2 * m + 9)) :
-    |(A + 2 ^ (m + 8)) / 2 ^ (m + 9)| ≤ 21 * ((2 * m + 9 : ℕ) : ℤ) * 2 ^ m := by
-  apply abs_ediv_le_of _ _ _ (by positivity)
-  have e1 : (2 : ℤ) ^ (2 * m + 9) = 2 ^ m * 2 ^ (m + 9) := by rw [← pow_add]; ring_nf
-  have e2 : (2 : ℤ) ^ (m + 9) = 2 ^ (m + 8) * 2 := by rw [pow_succ]
-  have hM : (1 : ℤ) ≤ ((2 * m + 9 : ℕ) : ℤ) := by push_cast; omega
-  have hq : (1 : ℤ) ≤ 2 ^ m := one_le_pow₀ (by norm_num)
-  have hd : (0 : ℤ) ≤ 2 ^ (m + 8) := by positivity
-  calc |A + 2 ^ (m + 8)| ≤ |A| + 2 ^ (m + 8) := by
-        refine le_trans (abs_add_le _ _) ?_; rw [abs_of_nonneg hd]
-    _ ≤ _ := by
-        rw [e1] at hA; rw [e2] at hA ⊢
-        have : (2 : ℤ) ^ (m + 8) ≤ ((2 * m + 9 : ℕ) : ℤ) * 2 ^ m * (2 ^ (m + 8) * 2) := by
-          have : (1 : ℤ) ≤ ((2 * m + 9 : ℕ) : ℤ) * 2 ^ m := by nlinarith
-          nlinarith
-        nlinarith
-
-theorem piBits_abs_le (m : ℕ) : |piBits m| ≤ 21 * ((2 * m + 9 : ℕ) : ℤ) * 2 ^ m :=
-  round_abs_le _ m (piApprox_abs_le _)
 
 end NLogN
 
@@ -433,17 +249,6 @@ namespace NLogN
 
 open IntMul RS IntMul.HvdH
 
-theorem zsz_ediv_le (a d : ℤ) (hd : 1 ≤ d) : zsz (a / d) ≤ zsz a := by
-  apply zsz_mono
-  have h := abs_ediv_le a d hd
-  rw [Int.abs_eq_natAbs, Int.abs_eq_natAbs] at h
-  exact_mod_cast h
-
-theorem zsz_ediv_le' (a d : ℤ) (hd : 0 ≤ d) : zsz (a / d) ≤ zsz a := by
-  rcases eq_or_lt_of_le hd with h | h
-  · rw [← h, Int.ediv_zero, zsz_zero]; exact Nat.zero_le _
-  · exact zsz_ediv_le a d (by omega)
-
 end NLogN
 
 end
@@ -455,16 +260,6 @@ set_option linter.unusedSimpArgs false
 namespace NLogN
 
 open IntMul RS IntMul.HvdH
-
-theorem piBits_zsz (m : ℕ) : zsz (piBits m) ≤ 3 * m + 14 := by
-  apply NLogN.zsz_le_of_abs
-  have h := piBits_abs_le m
-  have h1 : ((2 * m + 9 : ℕ) : ℤ) < 2 ^ (2 * m + 9) := by exact_mod_cast Nat.lt_two_pow_self
-  have e : (2 : ℤ) ^ (3 * m + 14) = 32 * 2 ^ (2 * m + 9) * 2 ^ m := by
-    rw [show 3 * m + 14 = 5 + (2 * m + 9) + m by omega, pow_add, pow_add]; norm_num
-  rw [e]
-  have : (0 : ℤ) < 2 ^ m := by positivity
-  nlinarith
 
 set_option maxHeartbeats 1000000 in
 theorem octExpP_cost (n k a : ℕ) (s : IState HS) (L48 L49 L50 : List Item)

@@ -79,11 +79,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt NS P}
 
-theorem zsz_le_of_abs {z : ℤ} {m : ℕ} (h : |z| < 2 ^ m) : zsz z ≤ m := by
-  apply zsz_le_of_lt
-  have : ((z.natAbs : ℕ) : ℤ) < ((2 ^ m : ℕ) : ℤ) := by push_cast; exact h
-  exact_mod_cast this
-
 end NLogN
 
 end
@@ -111,30 +106,7 @@ section Inj
 variable {f : Fin S → Fin S'} (hf : Function.Injective f)
 include hf
 
-theorem IState.embed_pull (t : IState S') : IState.embed f (IState.pull f t) t = t := by
-  refine IState.ext' (fun y => ?_) rfl rfl
-  by_cases hy : ∃ x, f x = y
-  · obtain ⟨x, rfl⟩ := hy; rw [IState.embed_G hf]; rfl
-  · push Not at hy; rw [IState.embed_G_of_not _ _ _ hy]
-
-/-- If `t` agrees with `s` through `f` (stacks, `ip`, `out`), then `embed f s t = t`. -/
-theorem IState.embed_eq_self (s : IState S) (t : IState S') (hG : ∀ x, t.G (f x) = s.G x)
-    (hip : t.ip = s.ip) (hout : t.out = s.out) : IState.embed f s t = t := by
-  have : s = IState.pull f t := by
-    cases s; simp only [IState.pull, IState.mk.injEq]; exact ⟨funext fun x => (hG x).symm,
-      hip.symm, hout.symm⟩
-  subst this; exact IState.embed_pull hf t
-
 variable {I : List Sym}
-
-/-- Simulation started from a state `t` that agrees with `s` through `f`. -/
-theorem IRuns.ren' {iprog : Fin P → IStmt S P} {iprog' : Fin P' → IStmt S' P'}
-    {g : Fin P → Fin P'} (hprog : ∀ j, iprog' (g j) = (iprog j).ren f g) {p : IStmt S P}
-    {s s' : IState S} {c : ℕ} (h : IRuns I iprog p s s' c) (t : IState S')
-    (hG : ∀ x, t.G (f x) = s.G x) (hip : t.ip = s.ip) (hout : t.out = s.out) :
-    IRuns I iprog' (p.ren f g) t (IState.embed f s' t) c := by
-  have := IRuns.ren hf hprog h t
-  rwa [IState.embed_eq_self hf s t hG hip hout] at this
 
 end Inj
 
@@ -462,11 +434,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-/-! ## Expressions -/
-
-theorem zsz_le_of_abs {a : ℤ} {Q Bb : ℕ} (h : a.natAbs ≤ 2 * Q) (hQ : zsz ((2 * Q : ℕ) : ℤ) ≤ Bb) :
-    zsz a ≤ Bb := le_trans (zsz_mono (le_of_le_of_eq h (Int.natAbs_natCast _).symm)) hQ
-
 /-! ## The program -/
 
 /-! ## Denotation -/
@@ -515,19 +482,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-/-! ## Tables -/
-
-/-! ## Moves with literal counts -/
-
-/-! ## Applying a stream code in place -/
-
-/-! ## Cost unit -/
-
-/-! ## Copying a stream -/
-
-theorem TabB.le {W v Bb : ℕ} (h : TabB W v Bb) {n : ℕ} (hn : n ≤ W * v) : zsz (n : ℤ) ≤ Bb :=
-  le_trans (zsz_natCast_le' hn) h.vol
-
 /-! ## Accumulating a stream on stack `20` -/
 
 /-! ## Building a summed stream, rebuilding the table -/
@@ -556,13 +510,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
-
-/-! ## Gaussian integers -/
-
-@[simp] theorem length_gflat (zs : List GI) : (gflat zs).length = 2 * zs.length := by
-  induction zs with
-  | nil => rfl
-  | cons z zs ih => simp [ih]; ring
 
 /-! ## Linear-combination expressions -/
 
@@ -594,13 +541,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD
 
-/-! ## Registers -/
-
-theorem zsz_le_of_abs {v : ℤ} {B : ℕ} (h : |v| < 2 ^ B) : zsz v ≤ B := by
-  apply zsz_le_of_lt
-  have : (v.natAbs : ℤ) < 2 ^ B := by rw [Int.natCast_natAbs]; exact h
-  exact_mod_cast this
-
 /-! ## The loop -/
 end NLogN.KFL
 
@@ -625,13 +565,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -672,19 +605,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD KFB KFH AModel Butterfly
-
-/-! ## Sequences of slot swaps -/
-
-/-! ## Cost bounds of the rotations -/
-
-/-! ## The program -/
-
-theorem zsz_gflat {w : ℕ} {zs : List GI} (h : GB w zs) : ∀ x ∈ gflat zs, zsz x ≤ w := by
-  intro x hx
-  simp only [gflat, List.mem_flatMap, List.mem_cons, List.not_mem_nil, or_false] at hx
-  obtain ⟨z, hz, rfl | rfl⟩ := hx
-  · exact (h z hz).1
-  · exact (h z hz).2
 
 /-! ## Lemma 13: denotation and the cost pieces -/
 
@@ -809,50 +729,6 @@ section
 open Finset
 
 namespace IntMul.OpenAI.RP
-
-/-! ### (38) and (45) -/
-
-/-! ### Axis lengths of the padded box -/
-
-lemma ell_spec (L d : ℕ) (hd : 0 < d) : L ≤ d * ell L d ∧ d * ell L d ≤ L + d - 1 := by
-  unfold ell
-  constructor
-  · have := Nat.lt_div_mul_add (a := L + d - 1) hd
-    rw [mul_comm]; omega
-  · have := Nat.div_mul_le_self (L + d - 1) d
-    rw [mul_comm]; exact this
-
-lemma mcnt_lt (L d : ℕ) (hd : 0 < d) : mcnt L d < d := by
-  have := ell_spec L d hd; unfold mcnt; omega
-
-lemma axExp_sum (L d : ℕ) (hd : 0 < d) : ∑ i : Fin d, axExp L d i = L := by
-  have hs := ell_spec L d hd
-  have hm := mcnt_lt L d hd
-  have hl : 0 < mcnt L d → 1 ≤ ell L d := by
-    intro hpos
-    by_contra h; push Not at h
-    have : ell L d = 0 := by omega
-    unfold mcnt at hpos; rw [this] at hpos; simp at hpos
-  have key : ∀ i : Fin d, (axExp L d i : ℤ) =
-      (ell L d : ℤ) - (if (i : ℕ) < mcnt L d then 1 else 0) := by
-    intro i; unfold axExp
-    split_ifs with h
-    · have := hl (by omega); push_cast [Nat.cast_sub this]; ring
-    · simp
-  zify
-  rw [Finset.sum_congr rfl (fun i _ => key i), Finset.sum_sub_distrib,
-    Fin.sum_univ_eq_sum_range (fun i => if i < mcnt L d then (1 : ℤ) else 0), Finset.sum_boole]
-  have hf : (Finset.range d).filter (fun i => i < mcnt L d) = Finset.range (mcnt L d) := by
-    ext x; simp only [Finset.mem_filter, Finset.mem_range]; omega
-  rw [hf]
-  simp only [Finset.sum_const, Finset.card_univ, Fintype.card_fin, Finset.card_range, nsmul_eq_mul]
-  unfold mcnt
-  push_cast [Nat.cast_sub hs.1]
-  ring
-
-/-- `∏ t_i = T` with `t_i = 2^{axExp}`. -/
-lemma axLen_prod (L d : ℕ) (hd : 0 < d) : ∏ i : Fin d, 2 ^ axExp L d i = 2 ^ L := by
-  rw [Finset.prod_pow_eq_pow_sum, axExp_sum L d hd]
 
 /-! ### Source lengths, resampling margins -/
 
@@ -1163,19 +1039,6 @@ namespace NLogN.KFM
 
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
 
-theorem ell_pos {n : ℕ} (hn : n0 ≤ n) : 1 ≤ ℓP n := by
-  obtain ⟨-, -, -, -, -, -, -, -, -, -, hr64, -⟩ := setup_facts hn
-  by_contra h; push Not at h
-  have : ℓP n = 0 := by omega
-  rw [rP, this] at hr64; norm_num at hr64
-
-theorem DescRegs.upd {t : IState HS} {n w : ℕ} {rw : Fin HS} (h : DescRegs t n w rw) (dst : Fin HS)
-    (hdst : DstOk dst) (hrw : dst ≠ rw) (hEl : dst ≠ zEl) (L : List Item) :
-    DescRegs (t.upd dst L) n w rw := by
-  obtain ⟨hs, ⟨L1, h1⟩, ⟨L2, h2⟩, ⟨L3, h3⟩⟩ := h
-  exact ⟨hs.upd dst hdst.ne.2 L, ⟨L1, by simp [IState.upd_G, Ne.symm hdst.ne.1, h1]⟩,
-    ⟨L2, by simp [IState.upd_G, Ne.symm hEl, h2]⟩, ⟨L3, by simp [IState.upd_G, Ne.symm hrw, h3]⟩⟩
-
 theorem ints_append (a b : List ℤ) : ints (a ++ b) = ints a ++ ints b := by
   simp [ints, List.map_append]
 
@@ -1335,14 +1198,6 @@ namespace NLogN.KFM
 
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
 
-theorem D18Regs.upd {t : IState HS} {n : ℕ} (h : D18Regs t n) (dst : Fin HS) (hd : D18Ok dst)
-    (L : List Item) : D18Regs (t.upd dst L) n := by
-  obtain ⟨-, h1, h2, h3, h4, h5, h6⟩ := hd.ne
-  obtain ⟨⟨L1, e1⟩, ⟨L2, e2⟩, ⟨L3, e3⟩, ⟨L4, e4⟩, ⟨L5, e5⟩, ⟨L6, e6⟩⟩ := h
-  exact ⟨⟨L1, by simp [Ne.symm h1, e1]⟩, ⟨L2, by simp [Ne.symm h2, e2]⟩,
-    ⟨L3, by simp [Ne.symm h3, e3]⟩, ⟨L4, by simp [Ne.symm h4, e4]⟩,
-    ⟨L5, by simp [Ne.symm h5, e5]⟩, ⟨L6, by simp [Ne.symm h6, e6]⟩⟩
-
 end NLogN.KFM
 
 end
@@ -1364,14 +1219,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFM
 
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
-
-theorem LRegs.upd {t : IState HS} {n : ℕ} (h : LRegs t n) (dst : Fin HS) (hd : LOk dst)
-    (L : List Item) : LRegs (t.upd dst L) n := by
-  obtain ⟨h1, h2, h3, h4⟩ := hd.ne
-  obtain ⟨hs, ⟨L1, e1⟩, ⟨L2, e2⟩, ⟨L3, e3⟩, ⟨L4, e4⟩, ⟨L5, e5⟩⟩ := h
-  exact ⟨hs.upd dst hd.d.ne.2 L, ⟨L1, by simp [Ne.symm hd.d.ne.1, e1]⟩,
-    ⟨L2, by simp [Ne.symm h1, e2]⟩, ⟨L3, by simp [Ne.symm h2, e3]⟩,
-    ⟨L4, by simp [Ne.symm h3, e4]⟩, ⟨L5, by simp [Ne.symm h4, e5]⟩⟩
 
 end NLogN.KFM
 
@@ -1606,30 +1453,6 @@ open IntMul KIL KFT KFB
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
-/-! ## Registers of `bigE` -/
-
-theorem Hold.upd {t : IState HS} {r : Fin HS} {a : ℤ} (h : Hold t r a) (j : Fin HS) (hj : j ≠ r)
-    (L : List Item) : Hold (t.upd j L) r a := by
-  obtain ⟨L', h'⟩ := h
-  exact ⟨L', by simp [IState.upd_G, Ne.symm hj, h']⟩
-
-/-! ## The wrapper -/
-
-theorem withD_runs {src dst : Fin HS} (hsd : src ≠ dst) (hd0 : dst ≠ 0) {p : IStmt HS P}
-    {t : IState HS} {a : ℤ} (hs : Hold t src a) {X : List Item} {c : ℕ}
-    (hp : IRuns I iprog p (t.upd dst (.int a :: t.G dst))
-      ((t.upd dst (.int a :: t.G dst)).upd 0 X) c) :
-    IRuns I iprog (withD src dst p) t (t.upd 0 X) (c + cW a) := by
-  obtain ⟨L, hL⟩ := hs
-  have r1 := IRuns.dup (I := I) (iprog := iprog) hsd hL
-  have r3 := IRuns.drop (I := I) (iprog := iprog)
-    (s := (t.upd dst (.int a :: t.G dst)).upd 0 X) (i := dst) (a := a) (L := t.G dst)
-    (by simp [IState.upd_G, hd0])
-  refine (r1.seq (hp.seq r3)).mono' ?_ (by unfold cW; omega)
-  refine IState.ext' (fun j => ?_) (by simp) (by simp)
-  simp only [IState.upd_G]
-  split_ifs <;> simp_all
-
 /-! ## Wrapped passes -/
 
 end NLogN.KFM
@@ -1667,21 +1490,6 @@ namespace NLogN.KFM
 
 open IntMul IntMul.OpenAI.Glue RS
 
-/-! ## RS chaining helpers -/
-
-/-! ## The product `S` -/
-
-/-! ## The other parameters -/
-
-theorem QRegs.upd {t : IState HS} {n S : ℕ} (h : QRegs t n S) (j : Fin HS)
-    (hj : j ≠ zL ∧ j ≠ zN ∧ j ≠ zB ∧ j ≠ zD ∧ j ≠ zAl ∧ j ≠ rS) (L : List Item) :
-    QRegs (t.upd j L) n S :=
-  ⟨h.hL.upd j hj.1 L, h.hN.upd j hj.2.1 L, h.hB.upd j hj.2.2.1 L, h.hD.upd j hj.2.2.2.1 L,
-    h.hA.upd j hj.2.2.2.2.1 L, h.hS.upd j hj.2.2.2.2.2 L⟩
-
-theorem Hold.top {t : IState HS} {r : Fin HS} {a : ℤ} (h : Hold t r a) : t.top r = a := by
-  obtain ⟨L, hL⟩ := h; exact IState.top_eq hL
-
 end NLogN.KFM
 
 end
@@ -1712,33 +1520,6 @@ namespace NLogN.KFM
 open IntMul IntMul.OpenAI.Glue RS KFT
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-/-! ## Step 1 -/
-
-/-! ## Step 4 -/
-
-/-! ## The whole setup -/
-
-/-! ## The base state -/
-
-theorem Hold.of_agree {t u : IState HS} {r : Fin HS} {a : ℤ} (h : Hold u r a) (e : t.G r = u.G r) :
-    Hold t r a := by
-  obtain ⟨L, hL⟩ := h; exact ⟨L, by rw [e, hL]⟩
-
-theorem BaseOK.of_agree {t u : IState HS} {n : ℕ} (h : BaseOK u n)
-    (ha : ∀ r ∈ regIdx, t.G r = u.G r) : BaseOK t n := by
-  have e : ∀ r, r ∈ regIdx → ∀ a, Hold u r a → Hold t r a := fun r hr a h' =>
-    h'.of_agree (ha r hr)
-  obtain ⟨⟨⟨h1, h2, h3, h4⟩, h5, h6, h7, h8, h9⟩, ⟨-, -, -, h10⟩, h11, h12, h13, h14, h15, h16, h17,
-    h18, h19, h20, h21, h22, h23⟩ := h
-  refine ⟨⟨⟨?_, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_⟩, ⟨⟨?_, ?_, ?_, ?_⟩, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_,
-    ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩
-  all_goals first
-    | exact e _ (by decide) _ ‹_›
-    | exact e _ (by decide) _ h1 | exact e _ (by decide) _ h2 | exact e _ (by decide) _ h3
-    | exact e _ (by decide) _ h4 | exact e _ (by decide) _ h5 | exact e _ (by decide) _ h6
-    | exact e _ (by decide) _ h7 | exact e _ (by decide) _ h8 | exact e _ (by decide) _ h9
-    | exact e _ (by decide) _ h10
 
 end NLogN.KFM
 
@@ -1948,21 +1729,6 @@ theorem fn_Gb (hs : ∀ j < d, 1 ≤ sF j) :
     rfl
 
 end Shift
-
-/-! ## Digit addresses and `Φ`-addresses -/
-
-theorem fnL_app (d : ℕ) (g : ℕ → ℕ) (c j : ℕ) :
-    fnL ((List.range d).map g ++ [c]) j = if j < d then g j else if j = d then c else 0 := by
-  simp only [fnL, List.getD_eq_getElem?_getD]
-  by_cases h1 : j < d
-  · rw [List.getElem?_append_left (by simpa using h1)]; simp [h1]
-  · rw [List.getElem?_append_right (by simpa using h1)]
-    simp only [List.length_map, List.length_range, if_neg h1]
-    by_cases h2 : j = d
-    · subst h2; simp
-    · rw [if_neg h2]
-      have : 1 ≤ j - d := by omega
-      rw [List.getElem?_eq_none (by simpa using this)]; rfl
 
 theorem valid_digAddr {d : ℕ} {sF : ℕ → ℕ} (hs : ∀ j < d, 1 ≤ sF j) (k : ℕ) {c : ℕ} (hc : c < 2) :
     Valid (shR d (sP d sF)) (digAddr d sF k c) := by
@@ -2500,12 +2266,6 @@ open AModel AModelL12 IntMul KIL KFB KFT RS IntMul.HvdH IntMul.OpenAI.RT IntMul.
 
 noncomputable section
 
-theorem BaseOK.upd {t : IState HS} {n : ℕ} (h : BaseOK t n) (j : Fin HS) (hj : j ∉ regIdx)
-    (L : List Item) : BaseOK (t.upd j L) n :=
-  h.of_agree fun r hr => by
-    simp only [IState.upd_G]
-    rw [if_neg (fun e : r = j => hj (e ▸ hr))]
-
 end
 
 end NLogN.KFM
@@ -2794,11 +2554,6 @@ namespace NLogN.KFW
 
 open IntMul NLogN.RS KFD
 
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
-
 theorem Agree.run {σ : Fin HS → Option ℤ} {p : RS} (hw : NoW σ p) {s : IState HS}
     (hs : Agree σ s) : Agree σ (p.run s) :=
   hs.congr fun i hi => run_G_of_not_mem p s i (fun h => by
@@ -2905,10 +2660,6 @@ section PFacts
 variable {k K e T S0 B r H : ℕ} (hp : PF k K e T S0 B r)
 include hp
 
-theorem PF.eT : e < T := by
-  have := hp.ht; have := Nat.mod_lt e (show 0 < K by have := hp.k1; omega)
-  have := Nat.mod_le e K; omega
-
 end PFacts
 
 end NLogN.KFX
@@ -2949,10 +2700,6 @@ section PFacts
 variable {m k K e T S0 B r H : ℕ} (hp : PF m k K e T S0 B r)
 include hp
 
-theorem PF.eT : e < T := by
-  have := hp.ht; have := Nat.mod_lt e (show 0 < K by have := hp.k1; omega)
-  have := Nat.mod_le e K; omega
-
 end PFacts
 
 end IntMul.Kappa.R6.IL2
@@ -2988,10 +2735,6 @@ namespace Q6
 
 variable (Q : Q6)
 
-theorem p_eq : Q.p = 6 * Q.b := rfl
-
-theorem ℓ_eq : Q.ℓ = OpenAI.RP.ell Q.L Q.d := rfl
-
 end Q6
 
 namespace QOk
@@ -3001,52 +2744,12 @@ include hQ
 
 theorem hp1 : 1 ≤ Q.p := by have := hQ.hb; rw [Q.p_eq]; omega
 
-theorem ell_pos : 1 ≤ OpenAI.RP.ell Q.L Q.d := by have := hQ.hℓ2; rw [← Q.ℓ_eq]; omega
-
-/-- The axis lengths are `2^{axExp}`. -/
-theorem tF_eq (j : ℕ) (hj : j < Q.d) :
-    tF6 Q.P Q.n j = 2 ^ OpenAI.RP.axExp Q.L Q.d ⟨j, hj⟩ := by
-  have hl := hQ.ell_pos
-  unfold tF6 OpenAI.RP.axExp bL6
-  have e1 : hN6 Q.P Q.n = OpenAI.RP.ell Q.L Q.d - 1 := rfl
-  have e2 : dpN6 Q.P Q.n = OpenAI.RP.mcnt Q.L Q.d := rfl
-  rw [e1, e2]
-  simp only [decide_eq_true_eq]
-  by_cases h : OpenAI.RP.mcnt Q.L Q.d ≤ j
-  · rw [if_pos h, if_neg (by omega), ← pow_succ]; congr 1; omega
-  · rw [if_neg h, if_pos (by omega)]
-
-theorem prod_tB {D : ℕ} (hD : Q.d = D + 1) : ∏ i, Q.tB D i = 2 ^ Q.L := by
-  have e : ∏ j ∈ Finset.range Q.d, (2 : ℕ) ^ (if j < OpenAI.RP.mcnt Q.L Q.d then
-      OpenAI.RP.ell Q.L Q.d - 1 else OpenAI.RP.ell Q.L Q.d) = 2 ^ Q.L := by
-    rw [← Fin.prod_univ_eq_prod_range (fun j => (2 : ℕ) ^ (if j < OpenAI.RP.mcnt Q.L Q.d then
-      OpenAI.RP.ell Q.L Q.d - 1 else OpenAI.RP.ell Q.L Q.d))]
-    exact OpenAI.RP.axLen_prod Q.L Q.d (by have := hQ.hd1; omega)
-  rw [show ∏ i, Q.tB D i = ∏ j ∈ Finset.range (D + 1), tF6 Q.P Q.n j from
-    Fin.prod_univ_eq_prod_range (fun j => tF6 Q.P Q.n j) (D + 1), ← hD, ← e]
-  refine Finset.prod_congr rfl fun j hj => ?_
-  rw [hQ.tF_eq j (Finset.mem_range.1 hj)]; rfl
-
-theorem sB_lt {D : ℕ} (hD : Q.d = D + 1) (i : Fin (D + 1)) : Q.sB D i < Q.tB D i :=
-  hQ.hlt i.val (by omega)
-
 /-- `Φ`'s padded box is `Q.tB D`. -/
 theorem tBox_eq6 {D : ℕ} (hD : Q.d = D + 1) :
     tBox (D + 1) Q.h Q.bL = Q.tB D := by
   funext i
   simp only [tBox, KFU.tP_eq, if_pos i.2]
   rfl
-
-theorem S_eq {D : ℕ} (hD : Q.d = D + 1) : Q.S = ∏ i, Q.sB D i := by
-  show ∏ j ∈ Finset.range (dP6 Q.P Q.n), Q.src j = _
-  rw [show dP6 Q.P Q.n = D + 1 from hD, ← Fin.prod_univ_eq_prod_range]; rfl
-
-theorem S_le_T {D : ℕ} (hD : Q.d = D + 1) : Q.S ≤ 2 ^ Q.L := by
-  rw [hQ.S_eq hD, ← hQ.prod_tB hD]
-  exact Finset.prod_le_prod (fun i _ => Nat.zero_le _) (fun i _ => (hQ.sB_lt hD i).le)
-
-theorem S_lt_b {D : ℕ} (hD : Q.d = D + 1) : Q.S < 2 ^ Q.b :=
-  lt_of_le_of_lt (hQ.S_le_T hD) (Nat.pow_lt_pow_right (by norm_num) (by have := hQ.hLb; omega))
 
 theorem le_bM : Q.n ≤ Q.b * Q.M := by
   have h1 : 0 < Q.b := by have := hQ.hb; omega
@@ -3056,27 +2759,6 @@ theorem le_bM : Q.n ≤ Q.b * Q.M := by
   omega
 
 end QOk
-
-/-! ## The register file -/
-
-theorem BaseOK6.of_agree {P : Prm} {n : ℕ} {s : ℕ → ℕ} {t u : IState HS} (h : BaseOK6 P n s u)
-    (ha : ∀ r ∈ regIdx6, t.G r = u.G r) : BaseOK6 P n s t := by
-  have e : ∀ r, r ∈ regIdx6 → ∀ a, KFM.Hold u r a → KFM.Hold t r a := fun r hr a h' =>
-    KFM.Hold.of_agree h' (ha r hr)
-  have f : ∀ r, r ∈ regIdx6 → ∀ l : List ℤ, (∃ L, u.G r = ints l ++ L) →
-      ∃ L, t.G r = ints l ++ L := fun r hr l ⟨L, hL⟩ => ⟨L, by rw [ha r hr, hL]⟩
-  exact ⟨e _ (by decide) _ h.hS, e _ (by decide) _ h.hT, e _ (by decide) _ h.hT2,
-    e _ (by decide) _ h.hM, e _ (by decide) _ h.hP2, e _ (by decide) _ h.hG,
-    e _ (by decide) _ h.hE2, e _ (by decide) _ h.hB2, e _ (by decide) _ h.hZ,
-    e _ (by decide) _ h.hH, e _ (by decide) _ h.hF, e _ (by decide) _ h.hO,
-    e _ (by decide) _ h.hPw, e _ (by decide) _ h.hOne, e _ (by decide) _ h.hD,
-    f _ (by decide) _ h.hPh, f _ (by decide) _ h.hCh, f _ (by decide) _ h.hLn⟩
-
-theorem BaseOK6.upd {P : Prm} {n : ℕ} {s : ℕ → ℕ} {t : IState HS} (h : BaseOK6 P n s t)
-    (j : Fin HS) (hj : j ∉ regIdx6) (L : List Item) : BaseOK6 P n s (t.upd j L) :=
-  h.of_agree fun r hr => by
-    simp only [IState.upd_G]
-    rw [if_neg (fun e : r = j => hj (e ▸ hr))]
 
 end
 
@@ -3331,8 +3013,6 @@ variable {E : ℕ} {ix : Ix6 (7 + E)} {Isym : List Sym} {tab : Fin 1 → IStmt H
 
 theorem BigCtx6.hst (C : BigCtx6 ix Isym tab extM Q D) : ∀ i, Q.sB D i ≤ Q.tB D i :=
   fun i => (C.hQ.sB_lt C.hD i).le
-
-theorem BigCtx6.hS (C : BigCtx6 ix Isym tab extM Q D) : Q.S = ∏ i, Q.sB D i := C.hQ.S_eq C.hD
 
 end
 

@@ -19,6 +19,7 @@ import Definitions.Def_IntMul_KappaFramework
 import Definitions.Def_IntMul_KappaJainData
 import Definitions.Def_IntMul_Kappa_RG_Defs
 import Theorems.Thm_IntMul_Kappa_R6_rG_normalize
+import Theorems.Thm_IntMul_Kappa_R6_IL3H_p14NeedG_all
 
 set_option autoImplicit false
 
@@ -106,7 +107,44 @@ theorem p14NeedG_cxR6 (P : R6.Prm) (hOK : R6.Prm.Ok P)
     (hm : histMoment Jain.cxR6 576 P.σ < 207387136)
     (hg : 2 + 576 * Real.log (histRankSum Jain.cxR6) ≤ (P.C1 : ℝ)) :
     R6.P14NeedG 207387136 576 Jain.cxR6 P := by
-  sorry
+  -- The recovered round-six complex-network theorem, instantiated at the gate class
+  -- (Wc = 207387136, mc = 576, hc = Jain.cxR6) with wmax = 552 (largest width in `Jain.cxR6`)
+  -- and p₀ = 1024 (inside the window 513..14693).
+  have hS : (Jain.cxR6.map Prod.snd).sum = 916054304 := by decide
+  have hb : ∀ p ∈ Jain.cxR6, 1 ≤ p.1 ∧ p.1 ≤ 552 := by decide
+  have hnum : ∀ e, 1024 ≤ e →
+      2 * ((Jain.cxR6.map Prod.snd).sum * (2 * 552 + 1) ^ e) ≤ (2 * 576) ^ e := by
+    intro e he
+    rw [hS]
+    have key : ∀ m : ℕ, 2 * (916054304 * 1105 ^ (1024 + m)) ≤ 1152 ^ (1024 + m) := by
+      intro m
+      induction m with
+      | zero => norm_num
+      | succ m ih =>
+        have e1 : 1105 ^ (1024 + m + 1) = 1105 ^ (1024 + m) * 1105 := by rw [Nat.pow_succ]
+        have e2 : 1152 ^ (1024 + m + 1) = 1152 ^ (1024 + m) * 1152 := by rw [Nat.pow_succ]
+        rw [e1, e2, Nat.add_assoc]
+        have hshift : 2 * (916054304 * (1105 ^ (1024 + m) * 1105))
+            = (2 * (916054304 * 1105 ^ (1024 + m))) * 1105 := by ring
+        rw [hshift]
+        exact Nat.mul_le_mul ih (by norm_num)
+    have hshift : 1024 + (e - 1024) = e := by omega
+    have := key (e - 1024)
+    rwa [hshift] at this
+  have hp0 : ((1024 : ℕ) : ℝ) ≤ 2 + 576 * Real.log (histRankSum Jain.cxR6) := by
+    have hH : histRankSum Jain.cxR6 = 119453132304 := by decide
+    rw [hH]
+    have hge : ((847288609443 : ℕ) : ℝ) ≤ ((119453132304 : ℕ) : ℝ) := by norm_num
+    have h25 : Real.log ((3 : ℝ) ^ 25) ≤ Real.log 119453132304 :=
+      Real.log_le_log (by norm_num) hge
+    have hlog3 : (1 : ℝ) < Real.log 3 := by
+      have h := Real.log_lt_log (x := Real.exp 1) (y := (3 : ℝ)) Real.exp_one_lt_three
+        (by norm_num)
+      rwa [Real.log_exp] at h
+    rw [Real.log_pow] at h25
+    linarith
+  exact p14NeedG_all_sol_aux 207387136 576 552 1024 Jain.cxR6 (by norm_num) (by norm_num)
+    (by norm_num) (by norm_num) hb hnum hp0 (by norm_num) P hOK
 
 /-- **(D) The subtracted `kappaBound_of_machine6`, parametric in the bit network.**  From a
 bit network whose moment is dominated by the certified histogram, the round-six complex

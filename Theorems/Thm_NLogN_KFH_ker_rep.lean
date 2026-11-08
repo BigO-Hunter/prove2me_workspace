@@ -2,6 +2,8 @@
 
 import Definitions.Def_IntMul_Kappa_K_Defs18
 import Theorems.Thm_NLogN_KFH_layer_partner
+import Theorems.Thm_NLogN_KFB_qop_fsp
+import Definitions.Def_IntMul_Kappa_R6_Defs16
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -201,33 +203,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD
 
-theorem length_pairOut (M : M2G) {u v : List GI} (h : u.length = v.length) :
-    (pairOut M u v).length = 2 * u.length := by
-  simp [pairOut, h]; ring
-
-theorem length_grpOut {B1 : ℕ} : ∀ (Ms : List M2G) (zs : List GI), 2 * B1 * Ms.length ≤ zs.length →
-    (grpOut Ms B1 zs).length = 2 * B1 * Ms.length
-  | [], _, _ => by simp [grpOut]
-  | M :: Ms, zs, h => by
-    simp only [List.length_cons] at h
-    have hB : 2 * B1 ≤ zs.length := le_trans (by nlinarith) h
-    have h1 : (zs.take B1).length = B1 := by simp; omega
-    have h2 : ((zs.drop B1).take B1).length = B1 := by simp; omega
-    rw [grpOut, List.length_append, length_pairOut M (by rw [h1, h2]), h1,
-      length_grpOut Ms _ (by simp; rw [Nat.mul_add, mul_one] at h; omega), List.length_cons]
-    ring
-
-theorem qopL_succ (Ms : List M2G) (B1 G : ℕ) (zs : List GI) :
-    qopL Ms B1 (G + 1) zs = qopL Ms B1 G zs ++ grpOut Ms B1 (zs.drop (G * (2 * B1 * Ms.length))) := by
-  simp [qopL, List.range_succ, List.flatMap_append]
-
-theorem length_qopL (Ms : List M2G) (B1 : ℕ) : ∀ (G : ℕ) (zs : List GI),
-    G * (2 * B1 * Ms.length) ≤ zs.length → (qopL Ms B1 G zs).length = G * (2 * B1 * Ms.length)
-  | 0, _, _ => by simp [qopL]
-  | G + 1, zs, h => by
-    rw [qopL_succ, List.length_append, length_qopL Ms B1 G zs (le_trans (by nlinarith) h)]
-    rw [length_grpOut Ms _ (by simp; rw [Nat.succ_mul] at h; omega)]; ring
-
 end NLogN.KFB
 
 end
@@ -325,10 +300,6 @@ theorem grpG_mul (hρ : ρ < K) (i : ℕ) (hi : i < D) :
 
 theorem toC_lin2 (p q x y : GI) : NLogN.KFB.toC (lin2 p q x y) = NLogN.KFB.toC p * NLogN.KFB.toC x + NLogN.KFB.toC q * NLogN.KFB.toC y := by
   rw [lin2, toC_add, toC_gmul, toC_gmul]
-
-theorem RecRep.getD {r F : ℕ} {zs : List GI} {xs : List (Fin r → ℂ)} (h : RecRep r F zs xs)
-    {j : ℕ} (hj : j < xs.length) (c : Fin r) :
-    NLogN.KFB.toC (zs.getD (j * r + c) 0) = 2 ^ F * xs.getD j 0 c := h.2 j c hj
 
 end NLogN.KFH
 

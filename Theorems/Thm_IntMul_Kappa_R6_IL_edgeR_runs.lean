@@ -174,16 +174,6 @@ open IntMul RS
 
 namespace KIL
 
-/-! ## Elementary statements -/
-
-/-! ## Moving integers between stacks -/
-
-/-! ## Counted loops through a family of managed states -/
-
-/-! ## Expression side conditions on managed states -/
-
-theorem zsz_nat_le {a b : ℕ} (h : a ≤ b) : zsz (a : ℤ) ≤ zsz (b : ℤ) := zsz_natCast_le h
-
 end KIL
 
 end NLogN
@@ -519,14 +509,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-/-! ## Parameter stacks of the uniform shift -/
-
-/-! ## Templates -/
-
-theorem ESim.mAddT {π : PMap} {n n' x x' y y' : Ex HS} (hn : ESim π n n') (hx : ESim π x x')
-    (hy : ESim π y y') : ESim π (mAddT n x y) (mAddT n' x' y') :=
-  .sel (.add (.add hx hy) hn) (.add hx hy) (.add (.add hx hy) hn)
-
 /-! ## The literal stage in stack form -/
 
 /-! ## One uniform stage -/
@@ -708,35 +690,6 @@ open KIL AModel
 section GatherLemmas
 
 variable {rp : ℕ → List ℤ} {Q c B : ℕ}
-
-/-! ## Uniform passes -/
-
-/-- Fine `resSel`: branch on `Q mod c` (per-call costs at the global bound `Bb`). -/
-theorem FSp.resSel {c Q Bb : ℕ} (hc : 0 < c) (br : ℕ → RS) {t u : IState HS} {LQ : List Item}
-    (hQs : t.G sQQ = .int Q :: LQ) (zQ : zsz (Q : ℤ) ≤ Bb) (zc : zsz ((2 * c : ℕ) : ℤ) ≤ Bb)
-    {cv : ℕ} (H : FSp (br (Q % c)) (t.upd sRR (.int ((Q % c : ℕ) : ℤ) :: t.G sRR)) u cv)
-    (hu : u.G sRR = .int ((Q % c : ℕ) : ℤ) :: t.G sRR) :
-    FSp (resSel c br) t (u.upd sRR (t.G sRR))
-      (4 * 10 ^ 7 * (Bb + 2) ^ 2 + (c * cSel Bb + cv + (2 * Bb + 2))) := by
-  have eQ : t.top sQQ = (Q : ℤ) := IState.top_eq hQs
-  have zc' : zsz (c : ℤ) ≤ Bb := le_trans (zsz_nat_le (by omega)) zc
-  have hmod : ((Q : ℤ) % (c : ℤ)) = ((Q % c : ℕ) : ℤ) := by push_cast; rfl
-  have hrc : Q % c < c := Nat.mod_lt _ hc
-  have zr : zsz ((Q % c : ℕ) : ℤ) ≤ Bb := le_trans (zsz_nat_le (by omega)) zc
-  have S1 := Sp.pushE t (i := sRR) (e := .nmod (.reg sQQ) (.lit c)) (B := Bb) (by decide)
-    (clean_nmod (clean_reg (by decide)) (clean_lit _))
-    ⟨IState.isInt_of hQs, trivial, by simp only [Ex.eval, eQ]; positivity, by
-      simp only [Ex.eval]; exact_mod_cast hc⟩
-    ⟨by simp only [Ex.Bnd, eQ]; exact zQ, zc', by simp only [Ex.eval, eQ, hmod]; exact zr⟩
-  have ev : (Ex.nmod (.reg sQQ) (.lit (c : ℤ))).eval t = ((Q % c : ℕ) : ℤ) := by
-    simp only [Ex.eval, eQ, hmod]
-  rw [ev] at S1
-  have S2 := FSp.sel (r := sRR) (by decide) br (s := t.upd sRR (.int ((Q % c : ℕ) : ℤ) :: t.G sRR))
-    (v := Q % c) (L := t.G sRR) (by simp) H
-    (fun x hx => le_trans (zsz_nat_le (by omega)) zc) c 0 (by omega) (by omega)
-  have S3 := Sp.popI u (i := sRR) (by decide) (a := ((Q % c : ℕ) : ℤ)) (L := t.G sRR) hu zr
-  refine ((FSp.of_norep rfl S1).seq (S2.seq (FSp.of_norep rfl S3))).mono (le_of_eq ?_)
-  simp only [Ex.size]
 
 end GatherLemmas
 

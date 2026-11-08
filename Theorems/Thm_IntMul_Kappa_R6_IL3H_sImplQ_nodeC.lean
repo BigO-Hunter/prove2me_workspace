@@ -45,11 +45,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
 
-/-! ## Gaussian integers -/
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
-
 /-! ## Linear-combination expressions -/
 
 /-! ## Fine moves with the loop overhead bounded by the count -/
@@ -138,10 +133,6 @@ theorem SImplQ.mono_dw {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {U : IStmt
   obtain ⟨zs', r1, b1, f1⟩ := h s f zs l xs F w hq hC h0 hx hl hb h1 (by omega)
   exact ⟨zs', r1, b1.mono (by omega), f1⟩
 
-theorem SImplQ.congrC {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {U U' : IStmt HS Pp} {e dw : ℕ}
-    {c : ℕ → ℕ} (h : SImplQ I iprog Q lo hi r st n T U e dw c) (hU : U = U') :
-    SImplQ I iprog Q lo hi r st n T U' e dw c := hU ▸ h
-
 end NLogN.KFW
 
 end
@@ -167,12 +158,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem one_le_nN {Bn t S0 : ℕ} (hB : 1 ≤ Bn) (hS : 1 ≤ S0) : 1 ≤ nN Bn t S0 := by
-  unfold nN
-  have : 1 ≤ 2 ^ t := Nat.one_le_two_pow
-  have := Nat.mul_le_mul (Nat.mul_le_mul hB this) hS
-  simpa using this
 
 end NLogN.KFW
 
@@ -200,16 +185,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-/-! ## Reading pushed assignments -/
-
-theorem σPush_ne : ∀ (l : List (Fin HS × ℤ)) (σ : Fin HS → Option ℤ) (i : Fin HS),
-    (∀ p ∈ l, p.1 ≠ i) → σPush σ l i = σ i
-  | [], _, _, _ => rfl
-  | (j, v) :: l, σ, i, h => by
-    simp only [σPush]
-    rw [σPush_ne l _ i (fun p hp => h p (List.mem_cons_of_mem _ hp)),
-      Function.update_of_ne (fun e => h (j, v) List.mem_cons_self e.symm)]
 
 /-! ## Level registers -/
 
@@ -241,47 +216,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-theorem yu_z (r Z H : ℕ) : (Z + 2) ^ 3 ≤ Yu r Z H := Nat.le_add_left _ _
-
-theorem yu_r (r Z H : ℕ) : r * (2 * H + 21) ≤ Yu r Z H := Nat.le_add_right _ _
-
-theorem yu_z2 (r Z H : ℕ) : (Z + 2) ^ 2 ≤ Yu r Z H := by
-  have : (Z + 2) ^ 2 ≤ (Z + 2) ^ 3 := Nat.pow_le_pow_right (by omega) (by omega)
-  exact this.trans (yu_z r Z H)
-
-theorem yu_z1 (r Z H : ℕ) : Z + 2 ≤ Yu r Z H := by
-  have : Z + 2 ≤ (Z + 2) ^ 2 := by nlinarith
-  exact this.trans (yu_z2 r Z H)
-
-theorem yu_8 (r Z H : ℕ) : 8 ≤ Yu r Z H := by
-  have : 2 ^ 3 ≤ (Z + 2) ^ 3 := Nat.pow_le_pow_left (by omega) 3
-  exact le_trans (by simpa using this) (yu_z r Z H)
-
-theorem moveCost_Y (Z r H : ℕ) : moveCost Z ≤ 50 * Yu r Z H := by
-  unfold moveCost
-  have := yu_z1 r Z H
-  omega
-
-theorem pow2Cost_le (E : ℕ) : pow2Cost E ≤ 2000 * (E + 1) * (zsz (E : ℤ) + 4) := by
-  unfold pow2Cost addIntCost addMagCost subMagCost zipCost moveCost
-  set a := zsz (E : ℤ)
-  nlinarith
-
-/-- `2^E` with `E ≤ H` costs at most a multiple of the unit (records of length `r ≥ Z + 2`). -/
-theorem pow2Cost_Y {E r Z H : ℕ} (hE : E ≤ H) (hEZ : zsz (E : ℤ) ≤ Z) (hZr : Z + 2 ≤ r) :
-    pow2Cost E ≤ 2000 * Yu r Z H := by
-  have h1 := pow2Cost_le E
-  have h2 : (E + 1) * (zsz (E : ℤ) + 4) ≤ r * (2 * H + 21) := by
-    have a : zsz (E : ℤ) + 4 ≤ 2 * r := by omega
-    have b : E + 1 ≤ H + 1 := by omega
-    calc (E + 1) * (zsz (E : ℤ) + 4) ≤ (H + 1) * (2 * r) := Nat.mul_le_mul b a
-      _ = r * (2 * H + 2) := by ring
-      _ ≤ r * (2 * H + 21) := Nat.mul_le_mul_left _ (by omega)
-  have h3 := yu_r r Z H
-  calc pow2Cost E ≤ 2000 * (E + 1) * (zsz (E : ℤ) + 4) := h1
-    _ = 2000 * ((E + 1) * (zsz (E : ℤ) + 4)) := by ring
-    _ ≤ 2000 * Yu r Z H := Nat.mul_le_mul_left _ (h2.trans h3)
-
 end NLogN.KFW
 
 end
@@ -306,20 +240,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem cFrame_Y (N sz r Z H : ℕ) : cFrame N sz Z ≤ N * (sz + 1) * 10 ^ 8 * Yu r Z H + 1 := by
-  unfold cFrame
-  have h1 := yu_z2 r Z H
-  have h2 := moveCost_Y Z r H
-  set Y := Yu r Z H
-  have : sz * 10 ^ 7 * (Z + 2) ^ 2 + (2 * moveCost Z + 19) ≤ (sz + 1) * 10 ^ 8 * Y := by
-    have a : sz * 10 ^ 7 * (Z + 2) ^ 2 ≤ sz * 10 ^ 7 * Y := Nat.mul_le_mul_left _ h1
-    have hY8 := yu_8 r Z H
-    have e : (sz + 1) * 10 ^ 8 * Y = sz * 10 ^ 7 * Y + (9 * sz * 10 ^ 7 * Y + 10 ^ 8 * Y) := by ring
-    omega
-  have := Nat.mul_le_mul_left N this
-  have e : N * ((sz + 1) * 10 ^ 8 * Y) = N * (sz + 1) * 10 ^ 8 * Y := by ring
-  omega
 
 end NLogN.KFW
 
@@ -359,18 +279,6 @@ open Matrix Finset Complex Butterfly P8Lift IntMul.Kappa.R6.Cx
 
 section Scale
 
-theorem le_Ap {A p x : ℕ} (hA : 1 ≤ A) (hp : 1 ≤ p) : x ≤ A * ((x + 1) ^ p - 1) := by
-  have h1 : x + 1 ≤ (x + 1) ^ p := Nat.le_self_pow (by omega) _
-  have h2 : (x + 1) ^ p - 1 ≤ A * ((x + 1) ^ p - 1) := Nat.le_mul_of_pos_left _ hA
-  omega
-
-theorem Gs_le {A p m x : ℕ} (hA : 1 ≤ A) (hp : 1 ≤ p) : Gs A p m x ≤ A * ((x + 1) ^ p - 1) := by
-  unfold Gs; split_ifs
-  · exact le_Ap hA hp
-  · exact le_rfl
-
-theorem Gs_lt {A p m x : ℕ} (h : x < 2 * m) : Gs A p m x = x := by simp [Gs, h]
-
 end Scale
 
 /-! ## The depth -/
@@ -402,11 +310,6 @@ namespace IntMul.Kappa.R6.IL3H
 
 open IntMul NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN.KFN NLogN.KFW
   Complex P8Lift Butterfly IntMul.Kappa.R6.Cx
-
-/-! ## The scale expressions -/
-
-theorem Gs_le_pow {A p m x : ℕ} (hA : 1 ≤ A) (hp : 1 ≤ p) : Gs A p m x ≤ A * (x + 1) ^ p :=
-  le_trans (Gs_le hA hp) (Nat.mul_le_mul_left _ (Nat.sub_le _ _))
 
 /-! ## The child frame -/
 
@@ -502,31 +405,6 @@ namespace IntMul.Kappa.R6.IL3H
 
 open IntMul NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN.KFN NLogN.KFW
   Complex P8Lift Butterfly IntMul.Kappa.R6.Cx
-
-/-! ## The pad scale -/
-
-/-! ## The node registers -/
-
-theorem nodeVL1_keys (c : Cfg) (K S0 r E B : ℕ) (p : Fin HS × ℤ) (hp : p ∈ nodeVL1 c K S0 r E B) :
-    p.1 ∈ [wF, wB, wR0, wKF, w1, vF] := by
-  simp only [nodeVL1, List.mem_cons, List.not_mem_nil, or_false] at hp
-  rcases hp with rfl | rfl | rfl | rfl | rfl | rfl <;> simp
-
-theorem nodeVL2_keys (c : Cfg) (t S0 r E B : ℕ) (p : Fin HS × ℤ) (hp : p ∈ nodeVL2 c t S0 r E B) :
-    p.1 ∈ [(26 : Fin HS), wL, wV, 21, 23, 25] := by
-  simp only [nodeVL2, List.mem_cons, List.not_mem_nil, or_false] at hp
-  rcases hp with rfl | rfl | rfl | rfl | rfl | rfl <;> simp
-
-theorem σNodeH_ne {σ : Fin HS → Option ℤ} {c : Cfg} {K t S0 r E B : ℕ} {i : Fin HS}
-    (hi : i ∉ [wF, wB, wR0, wKF, w1, vF, (26 : Fin HS), wL, wV, 21, 23, 25]) :
-    σNodeH σ c K t S0 r E B i = σ i := by
-  unfold σNodeH
-  rw [σPush_ne _ _ _ (fun p hp hpi => hi (by
-      have := nodeVL2_keys c t S0 r E B p hp; rw [hpi] at this
-      simp only [List.mem_cons, List.not_mem_nil, or_false] at this ⊢; tauto)),
-    σPush_ne _ _ _ (fun p hp hpi => hi (by
-      have := nodeVL1_keys c K S0 r E B p hp; rw [hpi] at this
-      simp only [List.mem_cons, List.not_mem_nil, or_false] at this ⊢; tauto))]
 
 /-! ## The frames -/
 

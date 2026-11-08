@@ -462,17 +462,6 @@ open IntMul RS
 theorem pmOf_cons_self (i : Fin HS) (v : ℤ) (l : List (Fin HS × ℤ)) :
     pmOf ((i, v) :: l) i = some v := by simp [pmOf]
 
-theorem pmOf_some {l : List (Fin HS × ℤ)} {i : Fin HS} {v : ℤ} (h : pmOf l i = some v) :
-    (i, v) ∈ l := by
-  induction l with
-  | nil => simp [pmOf] at h
-  | cons p l ih =>
-    obtain ⟨j, w⟩ := p
-    simp only [pmOf] at h
-    split_ifs at h with hij
-    · cases h; subst hij; exact List.mem_cons_self
-    · exact List.mem_cons_of_mem _ (ih h)
-
 theorem PLow.of_list {l : List (Fin HS × ℤ)} (h : ∀ p ∈ l, p.1.val < 56) : PLow (pmOf l) :=
   fun _ _ hv => h _ (pmOf_some hv)
 
@@ -582,19 +571,6 @@ open KFC (marks marks_zero isMk NM toUL cUL uK uR uY uB)
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-/-! ## Ghost stacks -/
-
-/-! ## The simulation -/
-
-/-! ## Top level -/
-
-/-! ## Coarse transfer: `fcost ≤ 100 · cost` -/
-
-/-! ## Fine specifications -/
-
-theorem FSp.congr {p : RS} {s t t' : IState HS} {c : ℕ} (h : FSp p s t c) (e : t = t') :
-    FSp p s t' c := e ▸ h
-
 /-! ## Loops -/
 
 /-- Per-element cost of a move of an entry of bit size `≤ w`. -/
@@ -691,15 +667,6 @@ open IntMul RS
 namespace KFD
 
 open KIL
-
-/-! ## Expression costs -/
-
-theorem cost_reg_le (t : IState HS) (r : Fin HS) :
-    (Ex.reg r).cost t ≤ 200 * (zsz (t.top r) + 2) := by
-  simp only [Ex.cost, dupCost, zipCost, moveCost]; omega
-
-theorem cRep_le {N Bb : ℕ} (h : zsz (N : ℤ) ≤ Bb) : cRep N ≤ 400 * (Bb + 2) + 1100 * N + 400 := by
-  unfold cRep; omega
 
 /-! ## Moves with a register count -/
 

@@ -18,8 +18,6 @@ open IntMul
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
-theorem zX_all : zX.all = [56, 57, 58, 59, 60, 61, 62, 63] := rfl
-
 namespace Ex
 
 end Ex
@@ -40,16 +38,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-@[simp] theorem run_push_G (i : Fin HS) (e : Ex HS) (s : IState HS) (j : Fin HS) :
-    ((push i e).run s).G j = if j = i then .int (e.eval s) :: s.G i else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-@[simp] theorem run_pop_G (i : Fin HS) (s : IState HS) (j : Fin HS) :
-    ((pop i).run s).G j = if j = i then (s.G i).tail else s.G j := by
-  simp [NLogN.RS.run, IState.upd_G]
-
-theorem run_seq (a b : RS) (s : IState HS) : (NLogN.RS.seq a b).run s = b.run (a.run s) := rfl
-
 end RS
 
 end NLogN
@@ -63,29 +51,6 @@ namespace NLogN
 open IntMul
 
 namespace Ex
-
-theorem floor_div_neg (a b : ℤ) (hb : 0 < b) : a / b = -((-a + (b + -1)) / b) := by
-  have h1 := Int.ediv_mul_le (-a + (b + -1)) hb.ne'
-  have h2 := Int.lt_ediv_add_one_mul_self (-a + (b + -1)) hb
-  set q := (-a + (b + -1)) / b
-  have := (Int.ediv_emod_unique'' (a := a) (b := b) (r := a + b * q) (q := -q) hb.ne').2
-    ⟨by ring, by nlinarith, by rw [abs_of_pos hb]; nlinarith⟩
-  exact this.1
-
-theorem fdiv_eval (s : IState HS) (a b : Ex HS) (hb : 0 < b.eval s) :
-    (fdiv a b).eval s = a.eval s / b.eval s := by
-  simp only [fdiv, eval]
-  split_ifs with h
-  · exact (floor_div_neg _ _ hb).symm
-  · rfl
-
-theorem fdiv_ok (s : IState HS) (a b : Ex HS) (ha : a.ok s) (hb' : b.ok s) (hb : 0 < b.eval s) :
-    (fdiv a b).ok s := by
-  simp only [fdiv, NLogN.Ex.ok, eval]
-  refine ⟨ha, ?_⟩
-  split_ifs with h
-  · exact ⟨⟨ha, hb', trivial⟩, hb', by omega, hb⟩
-  · exact ⟨ha, hb', by omega, hb⟩
 
 end Ex
 

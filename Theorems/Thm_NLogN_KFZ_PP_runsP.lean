@@ -61,16 +61,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
 
-/-! ## Gaussian integers -/
-
-@[simp] theorem length_gflat (zs : List GI) : (gflat zs).length = 2 * zs.length := by
-  induction zs with
-  | nil => rfl
-  | cons z zs ih => simp [ih]; ring
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
-
 /-! ## Linear-combination expressions -/
 
 /-! ## Fine moves with the loop overhead bounded by the count -/
@@ -115,15 +105,6 @@ open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
 
-/-! ## Layer implementations -/
-
-theorem LImpl.mono {hρ : ρ < K} {r : ℕ} {T : Butterfly.Op (Fin D)} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : LImpl (P := P) (S := S) hρ r T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    LImpl (P := P) (S := S) hρ r T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 /-! ## The concrete kernels -/
 
 /-! ## The program -/
@@ -151,13 +132,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -246,13 +220,6 @@ section SImplLemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImpl.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImpl r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImpl r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplLemmas
 
 section RImplDefs
@@ -260,12 +227,6 @@ section RImplDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImpl.mono {A : ROp (Fin W) m κ} {code : RS} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImpl r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) : RImpl r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplDefs
 
@@ -305,13 +266,6 @@ section SImplILemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImplI.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : ℕ → IStmt HS Pp} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImplI I iprog r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImplI I iprog r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplILemmas
 
 section RImplIDefs
@@ -319,13 +273,6 @@ section RImplIDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImplI.mono {A : ROp (Fin W) m κ} {code : ℕ → IStmt HS Pp} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImplI I iprog r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    RImplI I iprog r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplIDefs
 
@@ -441,15 +388,6 @@ namespace NLogN.KFM
 
 open IntMul KFC KFB KFT KIL
 
-/-! ## Outer products -/
-
-/-! ## The chirp array -/
-
-/-! ## Errors and sizes -/
-
-theorem NearU.mono {Δ : ℕ} {e e' : ℝ} {z : GI} (h : NearU Δ e z) (he : e ≤ e') : NearU Δ e' z :=
-  let ⟨Z, hZ, hz⟩ := h; ⟨Z, hZ, hz.trans he⟩
-
 /-! ## Generic list loops (counters `pA, pC, pD`) -/
 
 section IL
@@ -518,17 +456,6 @@ namespace NLogN.KFU
 
 open AModel AModelL12
 
-/-! ## Position permutations -/
-
-/-! ### `swapPos` -/
-
-/-! ### `swapMid` -/
-
-/-! ## Layouts -/
-
-theorem Full.mono {bg : ℕ → Bool} {ax0 l l' : List ℕ} (h : Full bg ax0 l) (hm : ∀ x ∈ l, x ∈ l') :
-    Full bg ax0 l' := fun j hj => ⟨hm _ (h j hj).1, fun hb => hm _ ((h j hj).2 hb)⟩
-
 /-! ## The standard layout -/
 
 end NLogN.KFU
@@ -552,16 +479,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFM
 
 open IntMul IntMul.OpenAI.Glue IntMul.OpenAI.RP RS
-
-theorem DescRegs.upd {t : IState HS} {n w : ℕ} {rw : Fin HS} (h : DescRegs t n w rw) (dst : Fin HS)
-    (hdst : DstOk dst) (hrw : dst ≠ rw) (hEl : dst ≠ zEl) (L : List Item) :
-    DescRegs (t.upd dst L) n w rw := by
-  obtain ⟨hs, ⟨L1, h1⟩, ⟨L2, h2⟩, ⟨L3, h3⟩⟩ := h
-  exact ⟨hs.upd dst hdst.ne.2 L, ⟨L1, by simp [IState.upd_G, Ne.symm hdst.ne.1, h1]⟩,
-    ⟨L2, by simp [IState.upd_G, Ne.symm hEl, h2]⟩, ⟨L3, by simp [IState.upd_G, Ne.symm hrw, h3]⟩⟩
-
-theorem ints_append (a b : List ℤ) : ints (a ++ b) = ints a ++ ints b := by
-  simp [ints, List.map_append]
 
 end NLogN.KFM
 
@@ -600,16 +517,6 @@ noncomputable section
 
 variable {d : ℕ}
 
-theorem prod_ofFn' (t : Fin d → ℕ) : (List.ofFn t).prod = ∏ i, t i := List.prod_ofFn
-
-/-! ## Box points of indices -/
-
-/-! ## Lists as box functions -/
-
-theorem RepFull.length {p : ℕ} {t : Fin d → ℕ} [∀ i, NeZero (t i)] {zs : List GI}
-    {w : ((i : Fin d) → ZMod (t i)) → ℂ} (h : RepFull p t zs w) : zs.length = ∏ i, t i := by
-  rw [h.1, prod_ofFn']
-
 /-! ## Pointwise operations -/
 
 end
@@ -638,20 +545,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFZ
 
 open IntMul NLogN.KIL NLogN.KFM RS
-
-/-! ## Generic pushes and pops -/
-
-/-! ## The registers -/
-
-theorem Regs.upd {F : Fin HS → List ℤ} {p h d σ K : ℕ} (hR : Regs F p h d σ K) (i : Fin HS)
-    (hi : i ∉ regL) (L : List ℤ) : Regs (Function.update F i L) p h d σ K := by
-  simp only [regL, List.mem_cons, List.not_mem_nil, or_false, not_or] at hi
-  obtain ⟨h1, h2, h3, h4, h5⟩ := hi
-  exact ⟨by rw [Function.update_of_ne (Ne.symm h1)]; exact hR.P,
-    by rw [Function.update_of_ne (Ne.symm h2)]; exact hR.H,
-    by rw [Function.update_of_ne (Ne.symm h3)]; exact hR.D,
-    by rw [Function.update_of_ne (Ne.symm h4)]; exact hR.S,
-    by rw [Function.update_of_ne (Ne.symm h5)]; exact hR.K⟩
 
 /-! ## The parameter expressions -/
 
@@ -782,9 +675,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KFZ
 
 open IntMul NLogN.KIL KFB NLogN.KFM IntMul.OpenAI.Glue
-
-theorem X18_mem (d18 : Fin HS) : X18 d18 = 15 ∨ X18 d18 = 16 := by
-  unfold X18; split_ifs <;> simp
 
 end NLogN.KFZ
 

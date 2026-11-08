@@ -24,6 +24,9 @@ import Definitions.Def_IntMul_HvdH_M_Defs1
 import Definitions.Def_IntMul_Kappa_K_Defs10
 import Definitions.Def_IntMul_Kappa_R6_Defs12
 import Definitions.Def_IntMul_Kappa_K_Defs3
+import Definitions.Def_IntMul_Kappa_R6_Defs16
+import Theorems.Thm_NLogN_KFD_bodyF_run
+import Theorems.Thm_NLogN_KFW_mdTQ
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -48,17 +51,6 @@ open IntMul RS
 namespace KFD
 
 open KIL AModel AModelL12
-
-theorem not_contains_of {l : List (Fin HS)} {x : Fin HS} (h : x ∉ l) : l.contains x = false := by
-  simpa using h
-
-theorem fok_mvK_eq (X Y C : Fin HS) (n : Ex HS) :
-    fok (NLogN.mvK X Y C n) = (!([Y, X, X].contains C) && !(scr.contains C)) := by
-  simp [NLogN.mvK, fok, touch, Ex.regs]
-
-theorem touch_mvK (X Y C : Fin HS) (n : Ex HS) :
-    touch (NLogN.mvK X Y C n) = C :: (n.regs ++ (Y :: X :: [X])) := by
-  simp [NLogN.mvK, touch, Ex.regs]
 
 /-! ## Gather / scatter -/
 
@@ -91,20 +83,8 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
 
-/-! ## Gaussian integers -/
-
-theorem gflat_append (a b : List GI) : gflat (a ++ b) = gflat a ++ gflat b := by
-  simp [gflat]
-
 theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
   fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
-
-/-! ## Linear-combination expressions -/
-
-theorem tmE_regs (c : ℤ) (r : Fin HS) : ∀ x ∈ (tmE c r).regs, x = r := by
-  intro x hx
-  unfold tmE at hx
-  split_ifs at hx <;> simp [Ex.regs] at hx <;> exact hx
 
 /-! ## Fine moves with the loop overhead bounded by the count -/
 
@@ -131,11 +111,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD
-
-theorem GB_append {w : ℕ} {a b : List GI} : GB w (a ++ b) ↔ GB w a ∧ GB w b := by
-  unfold GB; simp only [List.mem_append]
-  exact ⟨fun h => ⟨fun z hz => h z (Or.inl hz), fun z hz => h z (Or.inr hz)⟩,
-    fun h z hz => hz.elim (h.1 z) (h.2 z)⟩
 
 /-! ## Index semantics -/
 
@@ -167,24 +142,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
-
-/-! ## Scaled coefficients -/
-
-/-! ## Scaled terms -/
-
-theorem tsE_regs (c : ℤ) (d : ℕ) (r : Fin HS) : ∀ x ∈ (tsE c d r).regs, x = r := by
-  intro x hx
-  simp only [tsE, Ex.regs, List.mem_append, List.not_mem_nil, or_false] at hx
-  exact tmE_regs c r x hx
-
-theorem lsE_regs : ∀ (l : List (ℤ × ℕ × Fin HS)), ∀ x ∈ (lsE l).regs, ∃ t ∈ l, x = t.2.2
-  | [], x, hx => by simp [lsE, Ex.regs] at hx
-  | (c, d, r) :: l, x, hx => by
-    simp only [lsE, Ex.regs, List.mem_append] at hx
-    rcases hx with hx | hx
-    · exact ⟨(c, d, r), List.mem_cons_self, tsE_regs c d r x hx⟩
-    · obtain ⟨t, ht, e⟩ := lsE_regs l x hx
-      exact ⟨t, List.mem_cons_of_mem _ ht, e⟩
 
 /-! ## Real and imaginary parts of `p u + q v` -/
 
@@ -291,11 +248,6 @@ end Atom
 theorem fok_atomP (a : Atom) (e : ℕ → ℕ) (L : ℕ) : fok (a.P e L) = true := by
   unfold Atom.P; split_ifs <;> exact fok_pairW _ _ _ _
 
-theorem cPair_mono {w w' D D' L P P' Q Q' : ℕ} (h1 : w ≤ w') (h2 : D ≤ D') (h3 : P + Q ≤ P' + Q') :
-    cPair w D L P Q ≤ cPair w' D' L P' Q' := by
-  unfold cPair cZS cD
-  gcongr
-
 /-! ## Gates: lists of atoms -/
 
 theorem fok_gateP : ∀ (as : List Atom) (e : ℕ → ℕ) (L : ℕ), fok (gateP as e L) = true
@@ -365,12 +317,6 @@ open IntMul RS AModel KIL KFD KFB Complex
 /-! ## The layer layout -/
 
 variable {P K D S ρ : ℕ}
-
-/-! ## The kernel pass on records -/
-
-theorem RecRep.getD {r F : ℕ} {zs : List GI} {xs : List (Fin r → ℂ)} (h : RecRep r F zs xs)
-    {j : ℕ} (hj : j < xs.length) (c : Fin r) :
-    toC (zs.getD (j * r + c) 0) = 2 ^ F * xs.getD j 0 c := h.2 j c hj
 
 /-! ## The self-contained pass -/
 
@@ -467,9 +413,6 @@ section Basic
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
-
-@[simp] theorem length_selOpF (st : ι → ℕ) (n : ℕ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
-    (xs : List M) : (selOpF st n T xs).length = n := by simp [selOpF]
 
 end Basic
 
@@ -1023,40 +966,6 @@ namespace NLogN.KFW
 
 open IntMul RS KFD
 
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
-
-theorem fok_of_sub (σ : Fin HS → Option ℤ) : ∀ (p : RS), NoW σ p →
-    fok (RS.sub σ p) = true → fok p = true
-  | .skip, _, _ => rfl
-  | .asg _ _, _, _ | .push _ _, _, _ | .pop _, _, _ => rfl
-  | .seq a b, hw, h => by
-    have ha : NoW σ a := fun i h => hw i (by simp [RS.writes, h])
-    have hb : NoW σ b := fun i h => hw i (by simp [RS.writes, h])
-    simp only [RS.sub, fok, Bool.and_eq_true] at h ⊢
-    exact ⟨fok_of_sub σ a ha h.1, fok_of_sub σ b hb h.2⟩
-  | .ite c a b, hw, h => by
-    have ha : NoW σ a := fun i h => hw i (by simp [RS.writes, h])
-    have hb : NoW σ b := fun i h => hw i (by simp [RS.writes, h])
-    simp only [RS.sub, fok, Bool.and_eq_true] at h ⊢
-    exact ⟨fok_of_sub σ a ha h.1, fok_of_sub σ b hb h.2⟩
-  | .rep i n b, hw, h => by
-    have hbw : NoW σ b := fun j h => hw j (by simp [RS.writes, h])
-    have hi : σ i = none := hw i (by simp [RS.writes])
-    simp only [RS.sub, fok, Bool.and_eq_true, Bool.not_eq_true'] at h ⊢
-    obtain ⟨⟨h1, h2⟩, h3⟩ := h
-    refine ⟨⟨?_, h2⟩, fok_of_sub σ b hbw h3⟩
-    rcases hc : (touch b).contains i with _ | _
-    · rfl
-    · exfalso
-      have hm : i ∈ touch b := by simpa using hc
-      rcases RS.touch_sub σ b i hm with h' | h'
-      · have : (touch (RS.sub σ b)).contains i = true := by simpa using h'
-        rw [this] at h1; exact absurd h1 (by simp)
-      · rw [hi] at h'; simp at h'
-
 end NLogN.KFW
 
 end
@@ -1091,60 +1000,6 @@ theorem HRef.writes {p p' : RS} {X : ℕ} (h : HRef p p' X) : p'.writes = p.writ
   | ite _ _ ha hb => simp [RS.writes, ha, hb]
   | push => rfl
   | mono _ _ ih => exact ih
-
-theorem HRef.fok {p p' : RS} {X : ℕ} (h : HRef p p' X) : KFD.fok p = true → KFD.fok p' = true := by
-  induction h with
-  | refl => exact id
-  | seq _ _ ha hb =>
-    intro hf; simp only [KFD.fok, Bool.and_eq_true] at hf ⊢; exact ⟨ha hf.1, hb hf.2⟩
-  | ite _ _ ha hb =>
-    intro hf; simp only [KFD.fok, Bool.and_eq_true] at hf ⊢; exact ⟨ha hf.1, hb hf.2⟩
-  | push => intro _; rfl
-  | mono _ _ ih => exact ih
-
-/-! ## Substitution of untouched registers -/
-
-theorem Ex.sub_id (σ : Fin HS → Option ℤ) : ∀ e : Ex HS, (∀ i ∈ e.regs, σ i = none) →
-    Ex.sub σ e = e
-  | .reg i, h => by simp [Ex.sub, h i (by simp [Ex.regs])]
-  | .lit _, _ => rfl
-  | .add a b, h | .mul a b, h | .shl a b, h | .quo a b, h | .rem a b, h | .ndiv a b, h
-  | .nmod a b, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.sub, Ex.sub_id σ a (fun i hi => h i (Or.inl hi)),
-      Ex.sub_id σ b (fun i hi => h i (Or.inr hi))]
-  | .neg a, h | .pow2 a, h => by
-    simp only [Ex.regs] at h; simp only [Ex.sub, Ex.sub_id σ a h]
-  | .sel c x y, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.sub, Ex.sub_id σ c (fun i hi => h i (Or.inl (Or.inl hi))),
-      Ex.sub_id σ x (fun i hi => h i (Or.inl (Or.inr hi))), Ex.sub_id σ y (fun i hi => h i (Or.inr hi))]
-
-theorem RS.sub_id (σ : Fin HS → Option ℤ) : ∀ p : RS, (∀ i ∈ touch p, σ i = none) → RS.sub σ p = p
-  | .skip, _ => rfl
-  | .asg i e, h | .push i e, h => by
-    simp only [touch, List.mem_cons] at h
-    simp only [RS.sub, Ex.sub_id σ e (fun j hj => h j (Or.inr hj))]
-  | .pop _, _ => rfl
-  | .seq a b, h => by
-    simp only [touch, List.mem_append] at h
-    simp only [RS.sub, RS.sub_id σ a (fun i hi => h i (Or.inl hi)),
-      RS.sub_id σ b (fun i hi => h i (Or.inr hi))]
-  | .ite c a b, h => by
-    simp only [touch, List.mem_append] at h
-    simp only [RS.sub, Ex.sub_id σ c (fun i hi => h i (Or.inl hi)),
-      RS.sub_id σ a (fun i hi => h i (Or.inr (Or.inl hi))),
-      RS.sub_id σ b (fun i hi => h i (Or.inr (Or.inr hi)))]
-  | .rep i n b, h => by
-    simp only [touch, List.mem_cons, List.mem_append] at h
-    simp only [RS.sub, Ex.sub_id σ n (fun j hj => h j (Or.inr (Or.inl hj))),
-      RS.sub_id σ b (fun j hj => h j (Or.inr (Or.inr hj)))]
-
-/-! ## Uniform register programs -/
-
-theorem fok_uni {σ : Fin HS → Option ℤ} {U O : RS} (hw : NoW σ U) {X : ℕ}
-    (hO : HRef O (RS.sub σ U) X) (hf : KFD.fok O = true) : KFD.fok U = true :=
-  fok_of_sub σ U hw (hO.fok hf)
 
 /-! ## Pushed parameters in the background -/
 
@@ -1182,32 +1037,12 @@ theorem Clean0.upd0 {f : Fin HS → List ℤ} (h : Clean0 f) (v : List ℤ) :
     Clean0 (Function.update f 0 v) := by
   intro j hj; rw [Function.update_of_ne hj]; exact h j hj
 
-theorem Clean0.clN {f : Fin HS → List ℤ} (h : Clean0 f) : ClN f := by
-  refine ⟨⟨⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩,
-    ⟨⟨?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩,
-    ⟨?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_, ?_⟩, ?_⟩ <;> exact h _ (by decide)
-
-theorem agree_encK {σ : Fin HS → Option ℤ} {s : IState HS} (hs : Agree σ s)
-    {f : Fin HS → List ℤ} (hf : ∀ j, (σ j).isSome → f j = []) : Agree σ (encK s f) := by
-  intro i v hv
-  obtain ⟨L, hL⟩ := hs i v hv
-  refine ⟨L, ?_⟩
-  rw [encK_G, hf i (by simp [hv]), hL]; rfl
-
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
 section SQ
 
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
-
-theorem SImplQ.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {U : IStmt HS Pp} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImplQ I iprog Q lo hi r st n T U e dw c)
-    (hc : ∀ w, lo ≤ w → w + dw ≤ hi → c w ≤ c' w) :
-    SImplQ I iprog Q lo hi r st n T U e dw c' := by
-  intro s f zs l xs F w hQ hC h0 hx hl hb h1 h2
-  obtain ⟨zs', r1, b1, f1⟩ := h s f zs l xs F w hQ hC h0 hx hl hb h1 h2
-  exact ⟨zs', r1, b1, f1.mono (hc w h1 h2)⟩
 
 end SQ
 
@@ -1502,9 +1337,6 @@ theorem levG_gT (W : ℕ) (ρ ρE : Fin HS) : ∀ k ∈ (levG W ρ ρE).writes, 
     · exact pairWG_gT (writes_zbLev _) _ _ _ k h
     · exact ih k h
 
-theorem NoW.of_gT {σ : Fin HS → Option ℤ} (hσ : OffG σ) {p : RS} (h : ∀ k ∈ p.writes, k ∈ gT) :
-    NoW σ p := fun k hk => hσ k (h k hk)
-
 end NLogN.KFW
 
 end
@@ -1529,10 +1361,6 @@ namespace NLogN.KFW
 open IntMul KIL KFD KFB KFG KFH KFN Complex P8Lift Butterfly
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-theorem agree_clean0 {σ : Fin HS → Option ℤ} (h0 : σ 0 = none) {s : IState HS} (hs : Agree σ s)
-    {f : Fin HS → List ℤ} (hf : Clean0 f) : Agree σ (encK s f) :=
-  agree_encK hs (fun j hj => hf j (by rintro rfl; simp [h0] at hj))
 
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 variable {Q : IState HS → Prop} {lo hi : ℕ}

@@ -17,11 +17,6 @@ namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
 
-theorem nbits_zero : nbits 0 = [] := by rw [nbits]; simp
-
-theorem nbits_pos {m : ℕ} (h : m ≠ 0) : nbits m = decide (m % 2 = 1) :: nbits (m / 2) := by
-  rw [nbits]; simp [h]
-
 end NLogN
 
 namespace NLogN
@@ -35,8 +30,6 @@ section
 namespace NLogN
 
 variable {S P : ℕ} {I : List Sym} {prog : Fin P → Stmt S P}
-
-theorem zbits_neg (z : ℤ) : zbits (-z) = zbits z := by simp [zbits]
 
 end NLogN
 
@@ -122,14 +115,6 @@ namespace IRuns
 
 end IRuns
 
-@[simp] theorem IState.upd_upd_same (s : IState S) (i : Fin S) (L L' : List Item) :
-    (s.upd i L).upd i L' = s.upd i L' := by
-  simp [IState.upd]
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
 end NLogN
 
 end
@@ -148,13 +133,8 @@ theorem shlCost_le (m : ℕ) : shlCost m ≤ 200 * (m + 1) := by
 theorem splitCost_le (m : ℕ) : splitCost m + 17 ≤ 200 * (m + 1) := by
   simp only [splitCost, takeCost, moveCost]; omega
 
-theorem zsz_neg (z : ℤ) : zsz (-z) = zsz z := by simp [zsz, zbits_neg]
-
 theorem zsz_one : zsz 1 = 1 := by
   simp [zsz, zbits]; rw [nbits_pos (by norm_num)]; simp [nbits_zero]
-
-theorem natAbs_sg (z : ℤ) (n : ℕ) : (sg z n).natAbs = n := by
-  unfold sg; split_ifs <;> simp
 
 end NLogN
 
@@ -168,11 +148,6 @@ open IntMul
 
 variable {S P : ℕ}
 
-@[simp] theorem rulerExp_two_pow (m : ℕ) : rulerExp ((2 : ℤ) ^ m) = some m := by
-  have h : ((2 : ℤ) ^ m).toNat = 2 ^ m := by
-    rw [show ((2 : ℤ) ^ m) = ((2 ^ m : ℕ) : ℤ) by push_cast; rfl, Int.toNat_natCast]
-  simp [rulerExp, h, Nat.log2_two_pow]
-
 end NLogN
 
 end
@@ -182,9 +157,6 @@ section
 namespace NLogN
 
 open IntMul
-
-@[simp] theorem runsTo_some {S : ℕ} (r : IState S × ℕ) (t : IState S) (c : ℕ) :
-    runsTo (some r) t c ↔ r.1 = t ∧ r.2 ≤ c := Iff.rfl
 
 variable {P : ℕ}
 

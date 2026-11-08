@@ -14,6 +14,7 @@ import Definitions.Def_IntMul_HvdH_M_Defs1
 import Definitions.Def_IntMul_Kappa_K_Defs10
 import Definitions.Def_IntMul_Kappa_K_Defs13
 import Definitions.Def_IntMul_Kappa_K_Defs15
+import Theorems.Thm_NLogN_KFB_qop_fsp
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
