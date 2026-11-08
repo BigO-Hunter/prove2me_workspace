@@ -286,67 +286,6 @@ namespace NLogN.KFL
 
 open AModel
 
-/-! ## Chunk get / set -/
-
-theorem decomp (Q S n : ℕ) : n = n / (Q * S) * (Q * S) + gc Q S n * S + n % S := by
-  unfold gc
-  have h1 := Nat.div_add_mod n S
-  have h2 := Nat.div_add_mod (n / S) Q
-  rw [Nat.div_div_eq_div_mul] at h2
-  rw [mul_comm Q S]
-  nlinarith [h1, h2]
-
-theorem sc_int (Q S v n : ℕ) : (sc Q S v n : ℤ) = n + ((v : ℤ) - gc Q S n) * S := by
-  have h := decomp Q S n
-  unfold sc
-  have h' : (n : ℤ) = (n / (Q * S) * (Q * S) : ℕ) + (gc Q S n * S : ℕ) + (n % S : ℕ) := by
-    exact_mod_cast h
-  push_cast at h' ⊢
-  linarith
-
-theorem div_sc {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
-    sc Q S v n / (Q * S) = n / (Q * S) := by
-  unfold sc
-  have hQS : 0 < Q * S := Nat.mul_pos (by omega) hS
-  have hr : v * S + n % S < Q * S := by
-    have := Nat.mod_lt n hS
-    have : v * S + S ≤ Q * S := by nlinarith
-    omega
-  rw [add_assoc, Nat.add_comm, Nat.add_mul_div_right _ _ hQS, Nat.div_eq_of_lt hr, zero_add]
-
-theorem gc_sc_self {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
-    gc Q S (sc Q S v n) = v := by
-  unfold gc sc
-  have e : n / (Q * S) * (Q * S) + v * S + n % S = n % S + S * (n / (Q * S) * Q + v) := by ring
-  rw [e, Nat.add_mul_div_left _ _ hS, Nat.div_eq_of_lt (Nat.mod_lt n hS), zero_add,
-    Nat.add_mod, Nat.mul_mod_left, zero_add, Nat.mod_mod, Nat.mod_eq_of_lt hv]
-
-/-- A chunk at a higher stride `S' = Q S m` is unchanged. -/
-theorem gc_sc_hi {Q S Q' S' m : ℕ} (hS : 0 < S) (hm : 0 < m) (hS' : S' = Q * S * m) {v : ℕ}
-    (hv : v < Q) (n : ℕ) : gc Q' S' (sc Q S v n) = gc Q' S' n := by
-  unfold gc
-  subst hS'
-  rw [← Nat.div_div_eq_div_mul (sc Q S v n), ← Nat.div_div_eq_div_mul n, div_sc hS hv]
-
-theorem div_mod_lo {S' Q' m X r : ℕ} (hS' : 0 < S') :
-    (S' * Q' * m * X + r) / S' % Q' = r / S' % Q' := by
-  rw [show S' * Q' * m * X + r = r + S' * (Q' * (m * X)) by ring, Nat.add_mul_div_left _ _ hS',
-    Nat.add_mul_mod_self_left]
-
-/-- A chunk at a lower stride (`S = S' Q' m`) is unchanged. -/
-theorem gc_sc_lo {Q S Q' S' m : ℕ} (hS' : 0 < S') (hS : S = S' * Q' * m) (v n : ℕ) :
-    gc Q' S' (sc Q S v n) = gc Q' S' n := by
-  unfold gc sc
-  have h1 : n / (Q * S) * (Q * S) + v * S + n % S = S' * Q' * m * (n / (Q * S) * Q + v) + n % S := by
-    rw [hS]; ring
-  have h2 : n = S' * Q' * m * (n / S) + n % S := by
-    rw [← hS]; exact (Nat.div_add_mod n S).symm
-  rw [h1, div_mod_lo hS']
-  conv_rhs => rw [h2]
-  rw [div_mod_lo hS']
-
-theorem sc_gc (Q S n : ℕ) : sc Q S (gc Q S n) n = n := (decomp Q S n).symm
-
 /-! ## Reindexing -/
 
 /-! ## Geometry and triple maps -/

@@ -25,6 +25,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs10
 import Definitions.Def_IntMul_Kappa_K_Defs11
 import Definitions.Def_IntMul_Kappa_K_Defs13
 import Definitions.Def_IntMul_Kappa_R6_Defs14
+import Theorems.Thm_NLogN_KFL_corrI_spec
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -478,15 +479,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
 
-/-! ## Stacks and registers of the correction -/
-
-/-! ## List helpers -/
-
-theorem restR_zero (recs : ℕ → List ℤ) (M : ℕ) : restR recs M 0 = flR recs M := rfl
-
-theorem restR_full (recs : ℕ → List ℤ) (M : ℕ) : restR recs M M = [] := by
-  simp [restR, List.drop_of_length_le]
-
 /-! ## The pass-1 state -/
 
 section P1
@@ -494,20 +486,6 @@ section P1
 variable (κ : ℕ → ℕ) (recs : ℕ → List ℤ) (M : ℕ)
 
 end P1
-
-/-! ## The branches -/
-
-/-! ## One record of pass 1 -/
-
-theorem P1_upd (κ : ℕ → ℕ) (recs : ℕ → List ℤ) (M : ℕ) (G0 : Fin HS → List ℤ) (k : ℕ)
-    {j : Fin HS} (h0 : j ≠ 0) (h1 : j ≠ sT) (h2 : j ≠ sKB) (h3 : j ≠ sKK) (h4 : j ≠ sFL)
-    (h5 : j ≠ rm) (h6 : j ≠ rNB) (v : List ℤ) :
-    Function.update (P1 κ recs M G0 k) j v = P1 κ recs M (Function.update G0 j v) k := by
-  funext i
-  by_cases hi : i = j
-  · subst hi; simp [P1, Function.update_apply, h0, h1, h2, h3, h4, h5, h6]
-  · simp only [P1, Function.update_apply, hi, if_false]
-    simp [Ne.symm h0, Ne.symm h1, Ne.symm h2, Ne.symm h3, Ne.symm h4, Ne.symm h5, Ne.symm h6]
 
 end NLogN.KFL
 
@@ -533,60 +511,11 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
 
-/-! ## Pass 3 -/
-
-theorem P3_upd (κ γ : ℕ → ℕ) (recs : ℕ → List ℤ) (M A : ℕ) (G0 : Fin HS → List ℤ) (k : ℕ)
-    {j : Fin HS} (h0 : j ≠ 0) (h1 : j ≠ sT) (h2 : j ≠ sKB) (h3 : j ≠ sKK) (h4 : j ≠ sFL)
-    (v : List ℤ) :
-    Function.update (P3 κ γ recs M A G0 k) j v = P3 κ γ recs M A (Function.update G0 j v) k := by
-  funext i
-  by_cases hi : i = j
-  · subst hi; simp [P3, Function.update_apply, h0, h1, h2, h3, h4]
-  · simp only [P3, Function.update_apply, hi, if_false]
-    simp [Ne.symm h0, Ne.symm h1, Ne.symm h2, Ne.symm h3, Ne.symm h4]
-
-theorem p3_fsp {κ γ : ℕ → ℕ} (hγκ : ∀ m, γ (κ m) = m) {recs : ℕ → List ℤ} {M A B Bb : ℕ}
-    (hB2 : 2 ≤ Bb) (hlen : ∀ m, (recs m).length = B) (hbits : ∀ m, Bnd 1 (recs m))
-    (zB : zsz (B : ℤ) ≤ Bb) (zK : ∀ d < M, zsz ((d / 2 ^ A : ℕ) : ℤ) ≤ Bb)
-    (zM : zsz (M : ℤ) ≤ Bb) (s : IState HS) (G0 : Fin HS → List ℤ) (hc4 : G0 c4 = []) :
-    FSp (p3Prog B M) (encK s (P3 κ γ recs M A G0 M)) (encK s (P3 κ γ recs M A G0 0))
-      (cLp M (cP3 B Bb) Bb) := by
-  have H := FSp.repLit (C := c4) (b := p3B B) (s := s)
-    (F := fun j => P3 κ γ recs M A G0 (M - j)) (N := M) (c := cP3 B Bb) (Bb := Bb) (by decide)
-    (fun j => by simp +decide [P3, Function.update_apply, hc4])
-    (by simp +decide [p3B, NLogN.mvK, RS.writes]) zM ?_
-  · simpa [p3Prog] using H
-  · intro j hj
-    rw [P3_upd _ _ _ _ _ _ _ (by decide) (by decide) (by decide) (by decide) (by decide),
-      P3_upd _ _ _ _ _ _ _ (by decide) (by decide) (by decide) (by decide) (by decide)]
-    have e : M - j = (M - (j + 1)) + 1 := by omega
-    rw [e]
-    exact p3B_fsp hγκ hB2 hlen hbits zB zK s _ (by omega)
-
 /-! ## The whole correction -/
 
 section Lists
 
 variable (κ γ : ℕ → ℕ) (recs : ℕ → List ℤ) (M A : ℕ)
-
-theorem mvP_eq : mvP κ = fun m => !decide (κ m = m) := by funext m; simp [mvP]
-
-theorem stkK_ent0 : stkK (mvP κ) (fun m => (κ m : ℤ)) M = (ent0 κ M recs).map (kh 0) := by
-  simp [stkK, ent0, mvL, mvP_eq, kh, List.map_map, Function.comp_def]
-
-theorem stkF_ent0 : stkF (mvP κ) (fun m => (recs m).reverse) M = (ent0 κ M recs).flatMap Prod.snd := by
-  simp only [stkF, ent0, mvL, mvP_eq, ne_eq, List.flatMap_map, decide_not]
-
-theorem length_ent0 : (ent0 κ M recs).length = nMv κ M := by
-  simp [ent0, mvL, nMv, mvP_eq, List.filter_reverse]
-
-theorem stkK_ent1 : stkK (mvP κ) (fun d => ((d / 2 ^ A : ℕ) : ℤ)) M =
-    (ent1 κ γ M recs).map (kh A) := by
-  simp [stkK, ent1, mvL, mvP_eq, kh, List.map_map, Function.comp_def]
-
-theorem stkF_ent1 : stkF (mvP κ) (fun d => (recs (γ d)).reverse) M =
-    (ent1 κ γ M recs).flatMap Prod.snd := by
-  simp only [stkF, ent1, mvL, mvP_eq, ne_eq, List.flatMap_map, decide_not]
 
 end Lists
 

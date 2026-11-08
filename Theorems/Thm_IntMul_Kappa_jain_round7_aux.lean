@@ -20,6 +20,7 @@ import Definitions.Def_IntMul_KappaJainData
 import Definitions.Def_IntMul_Kappa_RG_Defs
 import Theorems.Thm_IntMul_Kappa_R6_rG_normalize
 import Theorems.Thm_IntMul_Kappa_R6_IL3H_p14NeedG_all
+import Theorems.Thm_IntMul_Kappa_MomentDom_tail
 
 set_option autoImplicit false
 
@@ -97,9 +98,24 @@ late copies, deferred readouts, V leaves, staircase entrance corner): an explici
 powers, whose child-width moment is dominated by `Jain.bitR7` at every exponent in `(0, 1]`.
 This is the new mathematical content of round 7 (round 6 proved the analogous statement at
 `W = 148225616` for `Jain.bitR6`). -/
-theorem bitNetR7_mom : R6.Bit.BitNetMomStmtG 108516254 529 Jain.bitR7 := by
+/- GAP (B′) — reduced from (B). The transitive structure is proved: any round-seven
+`QHNet` whose child-width moments are dominated by `Jain.bitR8` (the r8 lane's certified
+histogram, `850022f`) yields `bitNetR7_mom` via `bitNetMomStmtG_of_bitR8_dom`. What remains
+is only the research-scale witness: an explicit `QHNet` with `RunsOK`, `EdgesOK`/`FormalOK`
+at all large prime powers, and the `bitR8`-domination of its moments. -/
+theorem bitR8_dom_witness :
+    ∃ (T q₀ : ℕ) (C : R6.Bit.QHNet (ZMod 2) 108516254 T 529),
+      C.RunsOK
+        ∧ (∀ q, q.Prime → q₀ < q → ∀ f, C.EdgesOK (q ^ f) ∧ C.FormalOK (q ^ f))
+        ∧ (∀ τ : ℝ, 0 < τ → τ ≤ 1 →
+            histMoment C.hist 529 τ ≤ histMoment Jain.bitR8 529 τ) := by
   sorry
 
+theorem bitNetR7_mom : R6.Bit.BitNetMomStmtG 108516254 529 Jain.bitR7 := by
+  obtain ⟨T, q₀, C, hruns, hok, hdom⟩ := bitR8_dom_witness
+  exact R6.Bit.bitNetMomStmtG_of_bitR8_dom hruns hok hdom
+
+set_option maxRecDepth 1000000 in
 /-- **(C) The subtracted `IL3H.p14Need6_all`.**  The round-six complex network (unchanged from
 round 6) in the gate class, with the moment bound and the crude depth guard, produces the
 uniform Proposition 14 with a polynomial guard. -/
@@ -119,11 +135,15 @@ theorem p14NeedG_cxR6 (P : R6.Prm) (hOK : R6.Prm.Ok P)
     have key : ∀ m : ℕ, 2 * (916054304 * 1105 ^ (1024 + m)) ≤ 1152 ^ (1024 + m) := by
       intro m
       induction m with
-      | zero => norm_num
+      | zero => decide
       | succ m ih =>
-        have e1 : 1105 ^ (1024 + m + 1) = 1105 ^ (1024 + m) * 1105 := by rw [Nat.pow_succ]
-        have e2 : 1152 ^ (1024 + m + 1) = 1152 ^ (1024 + m) * 1152 := by rw [Nat.pow_succ]
-        rw [e1, e2, Nat.add_assoc]
+        have e1 : 1105 ^ (1024 + (m + 1)) = 1105 ^ (1024 + m) * 1105 := by
+          show 1105 ^ ((1024 + m) + 1) = 1105 ^ (1024 + m) * 1105
+          rw [Nat.pow_succ]
+        have e2 : 1152 ^ (1024 + (m + 1)) = 1152 ^ (1024 + m) * 1152 := by
+          show 1152 ^ ((1024 + m) + 1) = 1152 ^ (1024 + m) * 1152
+          rw [Nat.pow_succ]
+        rw [e1, e2]
         have hshift : 2 * (916054304 * (1105 ^ (1024 + m) * 1105))
             = (2 * (916054304 * 1105 ^ (1024 + m))) * 1105 := by ring
         rw [hshift]
@@ -134,16 +154,22 @@ theorem p14NeedG_cxR6 (P : R6.Prm) (hOK : R6.Prm.Ok P)
   have hp0 : ((1024 : ℕ) : ℝ) ≤ 2 + 576 * Real.log (histRankSum Jain.cxR6) := by
     have hH : histRankSum Jain.cxR6 = 119453132304 := by decide
     rw [hH]
-    have hge : ((847288609443 : ℕ) : ℝ) ≤ ((119453132304 : ℕ) : ℝ) := by norm_num
-    have h25 : Real.log ((3 : ℝ) ^ 25) ≤ Real.log 119453132304 :=
-      Real.log_le_log (by norm_num) hge
-    have hlog3 : (1 : ℝ) < Real.log 3 := by
-      have h := Real.log_lt_log (x := Real.exp 1) (y := (3 : ℝ)) Real.exp_one_lt_three
-        (by norm_num)
-      rwa [Real.log_exp] at h
-    rw [Real.log_pow] at h25
+    have h3 : (1 : ℝ) < Real.log 3 := by
+      have h13 : Real.exp 1 < 3 := Real.exp_one_lt_three
+      have hlt := Real.log_lt_log (Real.exp_pos 1) h13
+      rwa [Real.log_exp] at hlt
+    have h9 : (9 : ℕ) ≤ 119453132304 := by norm_num
+    have hle : Real.log 9 ≤ Real.log ((119453132304 : ℕ) : ℝ) :=
+      Real.log_le_log (by norm_num) (by exact_mod_cast h9)
+    have hlog9 : Real.log ((9 : ℕ) : ℝ) = 2 * Real.log 3 := by
+      have h9' : ((9 : ℕ) : ℝ) = (3 : ℝ) ^ 2 := by norm_num
+      rw [h9', Real.log_pow]; ring
+    have h2 : (2 : ℝ) < Real.log ((9 : ℕ) : ℝ) := by rw [hlog9]; linarith
+    have h2' : (2 : ℝ) ≤ Real.log ((119453132304 : ℕ) : ℝ) := le_trans (le_of_lt h2) hle
+    have hc : ((1024 : ℕ) : ℝ) = 1024 := by norm_num
+    rw [hc]
     linarith
-  exact p14NeedG_all_sol_aux 207387136 576 552 1024 Jain.cxR6 (by norm_num) (by norm_num)
+  exact IntMul.Kappa.R6.IL3H.p14NeedG_all_sol_aux 207387136 576 552 1024 Jain.cxR6 (by norm_num) (by norm_num)
     (by norm_num) (by norm_num) hb hnum hp0 (by norm_num) P hOK
 
 /-- **(D) The subtracted `kappaBound_of_machine6`, parametric in the bit network.**  From a

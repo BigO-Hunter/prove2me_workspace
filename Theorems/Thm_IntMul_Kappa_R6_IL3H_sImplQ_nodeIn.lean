@@ -44,6 +44,8 @@ import Theorems.Thm_IntMul_Kappa_R6_IL2_sHr
 import Definitions.Def_IntMul_Kappa_R6_Defs20
 import Definitions.Def_IntMul_Kappa_R6_Defs21
 import Theorems.Thm_IntMul_Kappa_R6_IL3H_kerQ
+import Theorems.Thm_IntMul_Kappa_R6_IL3H_sImplQ_chainC
+import Theorems.Thm_NLogN_KFN_lv_succ
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -375,22 +377,6 @@ open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
 
-/-- Sequential composition: first `T`, then `U`. -/
-theorem LImpl.comp {hρ : ρ < K} {r : ℕ} {T U : Butterfly.Op (Fin D)} {c1 c2 : RS}
-    {e1 e2 d1 d2 : ℕ} {k1 k2 : ℕ → ℕ} (h1 : LImpl (P := P) (S := S) hρ r T c1 e1 d1 k1)
-    (h2 : LImpl (P := P) (S := S) hρ r U c2 e2 d2 k2) :
-    LImpl (P := P) (S := S) hρ r (U * T) (.seq c1 c2) (e1 + e2) (d1 + d2)
-      (fun w => k1 w + k2 (w + d1)) := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs1, r1, b1, f1⟩ := h1 s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs2, r2, b2, f2⟩ := h2 s (Function.update f 0 (gflat zs1 ++ l)) zs1 l _ (F + e1) (w + d1)
-    (hC.upd0 _) (by simp) r1 (Butterfly.length_selOp _ _ _) b1
-  refine ⟨zs2, ?_, ?_, ?_⟩
-  · rw [← Butterfly.selOp_mul, ← add_assoc]; exact r2
-  · rw [← add_assoc]; exact b2
-  · have := f1.seq f2
-    rwa [Function.update_idem] at this
-
 /-! ## The concrete kernels -/
 
 /-! ## The program -/
@@ -415,10 +401,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
 
-/-! ## The table loop -/
-
-theorem zb {v M : ℤ} {Bb : ℕ} (h0 : 0 ≤ v) (h : v ≤ M) (hM : zsz M ≤ Bb) : zsz v ≤ Bb :=
-  le_trans (zsz_mono (by omega)) hM
 end NLogN.KFL
 
 end
@@ -569,40 +551,6 @@ section Role
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ] {M : Type*} [AddCommMonoid M]
   [Module ℂ M]
 
-theorem getD_roleOpF (st : Fin m × κ → ℕ) (n : ℕ) (A : ROp (Fin W) m κ)
-    (X : Fin W → List M) (w : Fin W) {j : ℕ} (hj : j < n) :
-    (roleOpF st n A X w).getD j 0 =
-      ∑ q : Fin W × Addr m κ, A (w, fbit st j) q • (X q.1).getD (fset st j q.2) 0 := by
-  rw [List.getD_eq_getElem _ _ (by simpa using hj)]
-  simp [roleOpF]
-
-theorem roleOpF_mul {st : Fin m × κ → ℕ} {n : ℕ} (h : SLaws st n) (A B : ROp (Fin W) m κ)
-    (X : Fin W → List M) :
-    roleOpF st n A (roleOpF st n B X) = roleOpF st n (A * B) X := by
-  funext w
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_roleOpF] at h₁
-  rw [← List.getD_eq_getElem _ 0, ← List.getD_eq_getElem _ 0, getD_roleOpF _ _ _ _ _ h₁,
-    getD_roleOpF _ _ _ _ _ h₁]
-  have e : ∀ q : Fin W × Addr m κ, (roleOpF st n B X q.1).getD (fset st j q.2) 0 =
-      ∑ q' : Fin W × Addr m κ, B q q' • (X q'.1).getD (fset st j q'.2) 0 := by
-    intro q
-    rw [getD_roleOpF _ _ _ _ _ (h.lt j h₁ q.2), h.bit_set j h₁ q.2, Prod.mk.eta]
-    simp_rw [h.set_set h₁]
-  simp_rw [e, Finset.smul_sum, smul_smul, Matrix.mul_apply, Finset.sum_smul]
-  exact Finset.sum_comm
-
-theorem roleOpF_one {st : Fin m × κ → ℕ} {n : ℕ} {X : Fin W → List M}
-    (hX : ∀ w, (X w).length = n) : roleOpF st n (1 : ROp (Fin W) m κ) X = X := by
-  funext w
-  apply List.ext_getElem (by simp [hX])
-  intro j h₁ h₂
-  simp only [length_roleOpF] at h₁
-  rw [← List.getD_eq_getElem _ 0, ← List.getD_eq_getElem _ 0, getD_roleOpF _ _ _ _ _ h₁]
-  simp only [Matrix.one_apply, ite_smul, one_smul, zero_smul]
-  rw [Finset.sum_ite_eq, if_pos (mem_univ _), fset_fbit]
-
 /-! ## The steps -/
 
 /-! ## The network -/
@@ -649,21 +597,6 @@ section SImplLemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-/-- Sequential composition: first `T`, then `U`. -/
-theorem SImpl.comp (hs : SLaws st n) {T U : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {c1 c2 : RS}
-    {e1 e2 d1 d2 : ℕ} {k1 k2 : ℕ → ℕ} (h1 : SImpl r st n T c1 e1 d1 k1)
-    (h2 : SImpl r st n U c2 e2 d2 k2) :
-    SImpl r st n (U * T) (.seq c1 c2) (e1 + e2) (d1 + d2) (fun w => k1 w + k2 (w + d1)) := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs1, r1, b1, f1⟩ := h1 s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs2, r2, b2, f2⟩ := h2 s (Function.update f 0 (gflat zs1 ++ l)) zs1 l _ (F + e1) (w + d1)
-    (hC.upd0 _) (by simp) r1 (length_selOpF _ _ _ _) b1
-  refine ⟨zs2, ?_, ?_, ?_⟩
-  · rw [← selOpF_mul hs, ← add_assoc]; exact r2
-  · rw [← add_assoc]; exact b2
-  · have := f1.seq f2
-    rwa [Function.update_idem] at this
-
 end SImplLemmas
 
 section RImplDefs
@@ -671,20 +604,6 @@ section RImplDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-/-- Sequential composition: first `A`, then `B`. -/
-theorem RImpl.comp (hs : SLaws st n) {A B : ROp (Fin W) m κ} {c1 c2 : RS} {e1 e2 d1 d2 : ℕ}
-    {k1 k2 : ℕ → ℕ} (h1 : RImpl r n st A c1 e1 d1 k1) (h2 : RImpl r n st B c2 e2 d2 k2) :
-    RImpl r n st (B * A) (.seq c1 c2) (e1 + e2) (d1 + d2) (fun w => k1 w + k2 (w + d1)) := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs1, r1, b1, f1⟩ := h1 s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs2, r2, b2, f2⟩ := h2 s (Function.update f 0 (gflat zs1 ++ l)) zs1 l _ (F + e1)
-    (w + d1) (hC.upd0 _) (by simp) r1 (fun v => length_roleOpF _ _ _ _ _) b1
-  refine ⟨zs2, ?_, ?_, ?_⟩
-  · rw [← roleOpF_mul hs, ← add_assoc]; exact r2
-  · rw [← add_assoc]; exact b2
-  · have := f1.seq f2
-    rwa [Function.update_idem] at this
 
 end RImplDefs
 
@@ -732,22 +651,6 @@ variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
 
-/-- Sequential composition: first `A`, then `B`. -/
-theorem RImplI.comp (hs : SLaws st n) {A B : ROp (Fin W) m κ} {c1 c2 : ℕ → IStmt HS Pp}
-    {e1 e2 d1 d2 : ℕ} {k1 k2 : ℕ → ℕ} (h1 : RImplI I iprog r n st A c1 e1 d1 k1)
-    (h2 : RImplI I iprog r n st B c2 e2 d2 k2) :
-    RImplI I iprog r n st (B * A) (seqI c1 c2 d1) (e1 + e2) (d1 + d2)
-      (fun w => k1 w + k2 (w + d1)) := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs1, r1, b1, f1⟩ := h1 s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs2, r2, b2, f2⟩ := h2 s (Function.update f 0 (gflat zs1 ++ l)) zs1 l _ (F + e1)
-    (w + d1) (hC.upd0 _) (by simp) r1 (fun v => length_roleOpF _ _ _ _ _) b1
-  refine ⟨zs2, ?_, ?_, ?_⟩
-  · rw [← roleOpF_mul hs, ← add_assoc]; exact r2
-  · rw [← add_assoc]; exact b2
-  · have := f1.seq f2
-    rwa [Function.update_idem] at this
-
 end RImplIDefs
 
 end NLogN.KFN
@@ -778,15 +681,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFN
 
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
-
-theorem cAtom_le (w D L W Z : ℕ) (hW : 1 ≤ W) :
-    cAtom w D L W Z ≤ 1000000 * (W * L) * (w + D + 5) + 50000 * (Z + 2) := by
-  simp only [cAtom, cPairW, cPair, cZS, cD]
-  have : W - 0 - 1 + 1 = W := by omega
-  have hL : L ≤ W * L := Nat.le_mul_of_pos_left _ hW
-  have h2 : (W - 0 - 1) * L ≤ W * L := Nat.mul_le_mul_right _ (by omega)
-  nlinarith [Nat.zero_le (W * L * w), Nat.zero_le (W * L * D), Nat.zero_le ((W - 0 - 1) * L * w),
-    Nat.zero_le (L * w), Nat.zero_le (L * D)]
 
 section Node
 
@@ -828,13 +722,6 @@ section Pow
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-theorem dvd_pow_lay (pos : ι → ℕ) (t S0 B : ℕ) (hpos : ∀ i, pos i < t) (i : ι) :
-    2 * (2 ^ pos i * S0) ∣ B * 2 ^ t * S0 := by
-  have : 2 ^ t = 2 * 2 ^ pos i * 2 ^ (t - pos i - 1) := by
-    rw [mul_comm 2, ← pow_succ, ← pow_add]; congr 1; have := hpos i; omega
-  rw [this]
-  exact ⟨B * 2 ^ (t - pos i - 1), by ring⟩
-
 end Pow
 
 /-! ## Transport along an equivalence of bit types -/
@@ -867,21 +754,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFN
 
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
-
-theorem costL_const {α : Type*} (c : ℕ → ℕ) (d : ℕ) (bd : ℕ → ℕ) (hc : ∀ w, c w ≤ bd w)
-    (hbd : Monotone bd) :
-    ∀ (l : List α) (w : ℕ), costL (fun _ => c) (fun _ => d) l w ≤ l.length * bd (w + l.length * d) + 1
-  | [], w => by simp [costL]
-  | a :: l, w => by
-    simp only [costL, List.length_cons]
-    have ih := costL_const c d bd hc hbd l (w + d)
-    have h1 : c w ≤ bd (w + (l.length + 1) * d) := (hc w).trans (hbd (by omega))
-    have h2 : bd (w + d + l.length * d) ≤ bd (w + (l.length + 1) * d) := hbd (by
-      have : w + d + l.length * d = w + (l.length + 1) * d := by ring
-      omega)
-    have h3 : l.length * bd (w + d + l.length * d) ≤ l.length * bd (w + (l.length + 1) * d) :=
-      Nat.mul_le_mul_left _ h2
-    nlinarith
 
 end NLogN.KFN
 
@@ -1182,12 +1054,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-theorem one_le_nN {Bn t S0 : ℕ} (hB : 1 ≤ Bn) (hS : 1 ≤ S0) : 1 ≤ nN Bn t S0 := by
-  unfold nN
-  have : 1 ≤ 2 ^ t := Nat.one_le_two_pow
-  have := Nat.mul_le_mul (Nat.mul_le_mul hB this) hS
-  simpa using this
-
 end NLogN.KFW
 
 end
@@ -1321,11 +1187,6 @@ theorem cAtom_Y {W n x D r Z H : ℕ} (hW : 1 ≤ W) (hn : 1 ≤ n) (hx : x + D 
   have := Nat.mul_le_mul_left 1000000 h2
   omega
 
-theorem moveCost_Y (Z r H : ℕ) : moveCost Z ≤ 50 * Yu r Z H := by
-  unfold moveCost
-  have := yu_z1 r Z H
-  omega
-
 end NLogN.KFW
 
 end
@@ -1385,20 +1246,6 @@ theorem cWrapQ_Y {W n r Z H e dw x : ℕ} (hW : 1 ≤ W) (hn : 1 ≤ n) (c : ℕ
   have e2 : 10 ^ 12 * (W + 2) * P = 10 ^ 12 * (W * P) + 2 * 10 ^ 12 * P := by ring
   have e3 : (W + 2) * (1000000 * P) = 1000000 * (W * P) + 2000000 * P := by ring
   have hWP' : P ≤ W * P := Nat.le_mul_of_pos_left _ hW
-  omega
-
-theorem cFrame_Y (N sz r Z H : ℕ) : cFrame N sz Z ≤ N * (sz + 1) * 10 ^ 8 * Yu r Z H + 1 := by
-  unfold cFrame
-  have h1 := yu_z2 r Z H
-  have h2 := moveCost_Y Z r H
-  set Y := Yu r Z H
-  have : sz * 10 ^ 7 * (Z + 2) ^ 2 + (2 * moveCost Z + 19) ≤ (sz + 1) * 10 ^ 8 * Y := by
-    have a : sz * 10 ^ 7 * (Z + 2) ^ 2 ≤ sz * 10 ^ 7 * Y := Nat.mul_le_mul_left _ h1
-    have hY8 := yu_8 r Z H
-    have e : (sz + 1) * 10 ^ 8 * Y = sz * 10 ^ 7 * Y + (9 * sz * 10 ^ 7 * Y + 10 ^ 8 * Y) := by ring
-    omega
-  have := Nat.mul_le_mul_left N this
-  have e : N * ((sz + 1) * 10 ^ 8 * Y) = N * (sz + 1) * 10 ^ 8 * Y := by ring
   omega
 
 end NLogN.KFW
@@ -2328,23 +2175,6 @@ section Split
 variable {ι κ₁ κ₂ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ₁] [DecidableEq κ₁]
   [Fintype κ₂] [DecidableEq κ₂]
 
-/-- **`tens A` on two complementary subfamilies.** -/
-theorem tens_split {g₁ : κ₁ → ι} {g₂ : κ₂ → ι} (h₁ : Function.Injective g₁)
-    (h₂ : Function.Injective g₂) (hcov : ∀ i, (∃ k, g₁ k = i) ∨ (∃ k, g₂ k = i))
-    (hdis : ∀ k₁ k₂, g₁ k₁ ≠ g₂ k₂) (A : Butterfly.M2) :
-    subOp g₂ (Butterfly.tens A : Matrix (κ₂ → Fin 2) (κ₂ → Fin 2) ℂ) *
-      subOp g₁ (Butterfly.tens A : Matrix (κ₁ → Fin 2) (κ₁ → Fin 2) ℂ) =
-      (Butterfly.tens A : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) := by
-  rw [subOp_tens h₂, subOp_tens h₁, ← tensF_mul]
-  unfold Butterfly.tens
-  congr 1
-  funext i
-  rcases hcov i with ⟨k, rfl⟩ | ⟨k, rfl⟩
-  · have hn : ¬ ∃ k', g₂ k' = g₁ k := fun ⟨k', hk'⟩ => hdis k k' hk'.symm
-    rw [if_neg hn, if_pos ⟨k, rfl⟩, one_mul]
-  · have hn : ¬ ∃ k', g₁ k' = g₂ k := fun ⟨k', hk'⟩ => hdis k' k hk'
-    rw [if_pos ⟨k, rfl⟩, if_neg hn, mul_one]
-
 end Split
 
 /-! ## The node and chain subfamilies -/
@@ -2431,23 +2261,6 @@ namespace IntMul.Kappa.R6.IL3H
 
 open IntMul NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN.KFN NLogN.KFW
   Complex P8Lift Butterfly IntMul.Kappa.R6.Cx
-
-/-- The strides of a level on `E` bits. -/
-theorem slaws_levH {K e E t S0 B : ℕ} (hK : 1 ≤ K) (hKe : K * (E - 1) ≤ e) (het : e - e % K + K ≤ t) :
-    SLaws (fun i : Fin E => 2 ^ (e - K * i.val) * S0) (nN B t S0) := by
-  have hinj : Function.Injective (fun i : Fin E => e - K * i.val) := by
-    intro i j h
-    simp only at h
-    have hi : K * i.val ≤ K * (E - 1) := Nat.mul_le_mul_left _ (by have := i.isLt; omega)
-    have hj : K * j.val ≤ K * (E - 1) := Nat.mul_le_mul_left _ (by have := j.isLt; omega)
-    have : K * i.val = K * j.val := by omega
-    exact Fin.ext (Nat.eq_of_mul_eq_mul_left (by omega) this)
-  have hlt : ∀ i : Fin E, e - K * i.val < t := by
-    intro i
-    have := Nat.mod_lt e (by omega : 0 < K)
-    have := Nat.mod_le e K
-    omega
-  exact slaws_pow (fun i : Fin E => e - K * i.val) hinj t S0 B hlt
 
 theorem nN_W {W B t S0 : ℕ} (h : W ∣ B) : W * nN (B / W) t S0 = nN B t S0 := by
   unfold nN

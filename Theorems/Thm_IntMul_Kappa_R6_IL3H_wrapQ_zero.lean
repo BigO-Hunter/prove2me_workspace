@@ -29,6 +29,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs16
 import Theorems.Thm_NLogN_KFD_bodyF_run
 import Theorems.Thm_NLogN_KFW_mdTQ
 import Theorems.Thm_NLogN_KFN_rImpl_gate
+import Theorems.Thm_NLogN_KFN_rImplI_onRole
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -142,43 +143,6 @@ namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
 
-/-! ## Compilability -/
-
-theorem lsE_regs_ne {l : List (ℤ × ℕ × Fin HS)} {y : Fin HS} (h : ∀ t ∈ l, t.2.2 ≠ y) :
-    y ∉ (lsE l).regs := fun hy => by
-  obtain ⟨t, ht, e⟩ := lsE_regs l y hy
-  exact h t ht e.symm
-
-theorem reS_ne (p q : SC) : ∀ t ∈ reS p q, t.2.2 ≠ c1 := by
-  intro t ht; simp only [reS, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> dsimp only <;> decide
-
-theorem imS_ne (p q : SC) : ∀ t ∈ imS p q, t.2.2 ≠ c1 := by
-  intro t ht; simp only [imS, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> dsimp only <;> decide
-
-theorem touch_zbS (M : M2S) : c1 ∉ touch (zbS M) := by
-  intro h
-  simp only [zbS, touch, List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at h
-  have k1 := lsE_regs_ne (reS_ne M.a M.b); have k2 := lsE_regs_ne (imS_ne M.a M.b)
-  have k3 := lsE_regs_ne (reS_ne M.c M.d); have k4 := lsE_regs_ne (imS_ne M.c M.d)
-  rcases h with (h | h) | (h | h) | (h | h) | (h | h) | h | h | h | h
-  all_goals first | exact absurd h (by decide) | exact k1 h | exact k2 h | exact k3 h | exact k4 h
-
-theorem fok_zipRS (M : M2S) : fok (zipRS M) = true := by
-  have : (touch (zbS M)).contains c1 = false := not_contains_of (touch_zbS M)
-  simp only [zipRS, fok, this]
-  simp +decide [zbS, fok, scr]
-
-theorem fok_pairP (M : M2S) : fok (pairP M) = true := by
-  simp only [pairP, fok, fok_zipRS, Bool.and_true, Bool.true_and, fok_mvK_eq]
-  simp +decide [distB, fok, touch, Ex.regs, scr]
-
-/-! ## The wrapper -/
-
-theorem fok_pairW (M : M2S) (L i j : ℕ) : fok (pairW M L i j) = true := by
-  simp only [pairW, fok, fok_pairP, Bool.and_true, Bool.true_and]
-
 end NLogN.KFG
 
 end
@@ -215,25 +179,6 @@ namespace Atom
 variable (a : Atom) (e : ℕ → ℕ)
 
 end Atom
-
-theorem fok_atomP (a : Atom) (e : ℕ → ℕ) (L : ℕ) : fok (a.P e L) = true := by
-  unfold Atom.P; split_ifs <;> exact fok_pairW _ _ _ _
-
-/-! ## Gates: lists of atoms -/
-
-theorem fok_gateP : ∀ (as : List Atom) (e : ℕ → ℕ) (L : ℕ), fok (gateP as e L) = true
-  | [], _, _ => rfl
-  | a :: as, e, L => by simp [gateP, fok, fok_atomP, fok_gateP as]
-
-/-! ## The gate matrix -/
-
-/-! ## Unit scalings -/
-
-/-! ## Role swaps and permutations -/
-
-theorem fok_swapsP (L : ℕ) : ∀ l, fok (swapsP L l) = true
-  | [] => rfl
-  | (i, j) :: l => by simp [swapsP, fok, fok_pairW, fok_swapsP L l]
 
 end NLogN.KFG
 
@@ -460,49 +405,6 @@ open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 
 section Bounds2
 
-theorem sc_inv2 (lo hi : ℕ) {a : KFG.Atom} {as : List KFG.Atom} {e : ℕ → ℕ}
-    (hts : NoTS (a :: as)) (hs : ∀ b ∈ a :: as, e b.s + b.h ≤ hi)
-    (he : ∀ t, lo ≤ e t ∧ e t ≤ hi) :
-    (∀ b ∈ as, a.sc e b.s + b.h ≤ hi) ∧ (∀ t, lo ≤ a.sc e t ∧ a.sc e t ≤ hi) ∧
-      a.D e ≤ hi - lo := by
-  refine ⟨fun b hb => ?_, fun t => ?_, ?_⟩
-  · rw [sc_src hts e hb]; exact hs b (List.mem_cons_of_mem _ hb)
-  · simp only [KFG.Atom.sc, Function.update_apply, KFG.Atom.E]
-    split_ifs with h
-    · have := hs a List.mem_cons_self; have := he a.t
-      constructor <;> omega
-    · exact he t
-  · have h1 := hs a List.mem_cons_self; have h2 := he a.t; have h3 := he a.s
-    simp only [KFG.Atom.D, KFG.Atom.al, KFG.Atom.be, KFG.Atom.E]
-    omega
-
-theorem gateW_le2 (lo hi : ℕ) : ∀ (as : List KFG.Atom) (e : ℕ → ℕ) (w : ℕ), NoTS as →
-    (∀ a ∈ as, e a.s + a.h ≤ hi) → (∀ t, lo ≤ e t ∧ e t ≤ hi) →
-    gateW as e w ≤ w + (hi - lo + 2) * as.length
-  | [], _, _, _, _, _ => by simp [gateW]
-  | a :: as, e, w, hts, hs, he => by
-    obtain ⟨h1, h2, h3⟩ := sc_inv2 lo hi hts hs he
-    have := gateW_le2 lo hi as (a.sc e) (w + a.D e + 2) (NoTS.tail hts) h1 h2
-    simp only [gateW, List.length_cons]
-    nlinarith
-
-theorem cGate_le2 (lo hi L W Z : ℕ) : ∀ (as : List KFG.Atom) (e : ℕ → ℕ) (w : ℕ), NoTS as →
-    (∀ a ∈ as, e a.s + a.h ≤ hi) → (∀ t, lo ≤ e t ∧ e t ≤ hi) →
-    cGate as e w L W Z ≤
-      as.length * cAtom (w + (hi - lo + 2) * as.length) (hi - lo) L W Z + 1
-  | [], _, _, _, _, _ => by simp [cGate]
-  | a :: as, e, w, hts, hs, he => by
-    obtain ⟨h1, h2, h3⟩ := sc_inv2 lo hi hts hs he
-    have IH := cGate_le2 lo hi L W Z as (a.sc e) (w + a.D e + 2) (NoTS.tail hts) h1 h2
-    have m1 : cAtom w (a.D e) L W Z ≤
-        cAtom (w + (hi - lo + 2) * (as.length + 1)) (hi - lo) L W Z :=
-      cAtom_mono (by nlinarith) h3
-    have m2 : cAtom (w + a.D e + 2 + (hi - lo + 2) * as.length) (hi - lo) L W Z ≤
-        cAtom (w + (hi - lo + 2) * (as.length + 1)) (hi - lo) L W Z :=
-      cAtom_mono (by nlinarith) le_rfl
-    simp only [cGate, List.length_cons]
-    nlinarith
-
 end Bounds2
 
 /-! ## Segments of the encoding -/
@@ -510,12 +412,6 @@ end Bounds2
 /-! ## The wrapper -/
 
 section Wrap
-
-theorem swapsF_swL (w v : ℕ) : swapsF (swL w) v = nsw 0 w v := by
-  unfold swL
-  split_ifs with h
-  · subst h; simp [swapsF, nsw]; split_ifs <;> omega
-  · simp [swapsF]
 
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 

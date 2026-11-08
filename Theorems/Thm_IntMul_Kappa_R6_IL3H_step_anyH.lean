@@ -39,6 +39,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs10
 import Definitions.Def_IntMul_HvdH_M_Defs3
 import Definitions.Def_IntMul_Kappa_K_Defs21
 import Definitions.Def_IntMul_Kappa_K_Defs32
+import Theorems.Thm_NLogN_KFN_lv_succ
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -555,43 +556,6 @@ section Role
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ] {M : Type*} [AddCommMonoid M]
   [Module ℂ M]
 
-theorem roleOpF_mul {st : Fin m × κ → ℕ} {n : ℕ} (h : SLaws st n) (A B : ROp (Fin W) m κ)
-    (X : Fin W → List M) :
-    roleOpF st n A (roleOpF st n B X) = roleOpF st n (A * B) X := by
-  funext w
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_roleOpF] at h₁
-  rw [← List.getD_eq_getElem _ 0, ← List.getD_eq_getElem _ 0, getD_roleOpF _ _ _ _ _ h₁,
-    getD_roleOpF _ _ _ _ _ h₁]
-  have e : ∀ q : Fin W × Addr m κ, (roleOpF st n B X q.1).getD (fset st j q.2) 0 =
-      ∑ q' : Fin W × Addr m κ, B q q' • (X q'.1).getD (fset st j q'.2) 0 := by
-    intro q
-    rw [getD_roleOpF _ _ _ _ _ (h.lt j h₁ q.2), h.bit_set j h₁ q.2, Prod.mk.eta]
-    simp_rw [h.set_set h₁]
-  simp_rw [e, Finset.smul_sum, smul_smul, Matrix.mul_apply, Finset.sum_smul]
-  exact Finset.sum_comm
-
-theorem roleOpF_one {st : Fin m × κ → ℕ} {n : ℕ} {X : Fin W → List M}
-    (hX : ∀ w, (X w).length = n) : roleOpF st n (1 : ROp (Fin W) m κ) X = X := by
-  funext w
-  apply List.ext_getElem (by simp [hX])
-  intro j h₁ h₂
-  simp only [length_roleOpF] at h₁
-  rw [← List.getD_eq_getElem _ 0, ← List.getD_eq_getElem _ 0, getD_roleOpF _ _ _ _ _ h₁]
-  simp only [Matrix.one_apply, ite_smul, one_smul, zero_smul]
-  rw [Finset.sum_ite_eq, if_pos (mem_univ _), fset_fbit]
-
-/-! ## The steps -/
-
-/-! ## The network -/
-
-theorem denListR_cons (T : Butterfly.Op κ) (s : RStep (Fin W) m) (l : List (RStep (Fin W) m)) :
-    denListR T (s :: l) = denListR T l * s.den T := by
-  simp only [denListR, List.foldl_cons]
-  rw [foldl_den_mul, mul_one]
-  rfl
-
 end Role
 
 end NLogN.KFN
@@ -657,20 +621,6 @@ variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
 
-/-- Sequential composition: first `A`, then `B`. -/
-theorem RImpl.comp (hs : SLaws st n) {A B : ROp (Fin W) m κ} {c1 c2 : RS} {e1 e2 d1 d2 : ℕ}
-    {k1 k2 : ℕ → ℕ} (h1 : RImpl r n st A c1 e1 d1 k1) (h2 : RImpl r n st B c2 e2 d2 k2) :
-    RImpl r n st (B * A) (.seq c1 c2) (e1 + e2) (d1 + d2) (fun w => k1 w + k2 (w + d1)) := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs1, r1, b1, f1⟩ := h1 s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs2, r2, b2, f2⟩ := h2 s (Function.update f 0 (gflat zs1 ++ l)) zs1 l _ (F + e1)
-    (w + d1) (hC.upd0 _) (by simp) r1 (fun v => length_roleOpF _ _ _ _ _) b1
-  refine ⟨zs2, ?_, ?_, ?_⟩
-  · rw [← roleOpF_mul hs, ← add_assoc]; exact r2
-  · rw [← add_assoc]; exact b2
-  · have := f1.seq f2
-    rwa [Function.update_idem] at this
-
 end RImplDefs
 
 /-! ## Operators acting inside the role blocks -/
@@ -719,9 +669,6 @@ end Scales
 
 section GateStep
 
-theorem fok_gateC (W L : ℕ) (as : List KFG.Atom) : fok (gateC W L as) = true := by
-  simp [gateC, fok, fok_gateP]
-
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 end GateStep
@@ -768,22 +715,6 @@ variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
 
-/-- Sequential composition: first `A`, then `B`. -/
-theorem RImplI.comp (hs : SLaws st n) {A B : ROp (Fin W) m κ} {c1 c2 : ℕ → IStmt HS Pp}
-    {e1 e2 d1 d2 : ℕ} {k1 k2 : ℕ → ℕ} (h1 : RImplI I iprog r n st A c1 e1 d1 k1)
-    (h2 : RImplI I iprog r n st B c2 e2 d2 k2) :
-    RImplI I iprog r n st (B * A) (seqI c1 c2 d1) (e1 + e2) (d1 + d2)
-      (fun w => k1 w + k2 (w + d1)) := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs1, r1, b1, f1⟩ := h1 s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs2, r2, b2, f2⟩ := h2 s (Function.update f 0 (gflat zs1 ++ l)) zs1 l _ (F + e1)
-    (w + d1) (hC.upd0 _) (by simp) r1 (fun v => length_roleOpF _ _ _ _ _) b1
-  refine ⟨zs2, ?_, ?_, ?_⟩
-  · rw [← roleOpF_mul hs, ← add_assoc]; exact r2
-  · rw [← add_assoc]; exact b2
-  · have := f1.seq f2
-    rwa [Function.update_idem] at this
-
 end RImplIDefs
 
 end NLogN.KFN
@@ -819,41 +750,6 @@ section Node
 
 variable {Pp : ℕ} {Isym : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
-
-/-! ## Phase steps -/
-
-theorem denListR_negSteps (T : Butterfly.Op κ) :
-    ∀ l : List (Fin W), l.Nodup →
-      denListR T (negSteps (m := m) l) = Matrix.diagonal fun p => if p.1 ∈ l then -1 else 1
-  | [], _ => by
-    rw [negSteps, List.map_nil, denListR_nil]
-    ext p q; simp [Matrix.one_apply, Matrix.diagonal]
-  | a :: l, hnd => by
-    have ha : a ∉ l := (List.nodup_cons.1 hnd).1
-    rw [negSteps, List.map_cons, denListR_cons, ← negSteps, denListR_negSteps T l
-      (List.nodup_cons.1 hnd).2]
-    simp only [RStep.den, Matrix.diagonal_mul_diagonal]
-    congr 1; funext p
-    have e2 : I ^ RStep.phExp 2 0 (0 : Fin m → ℕ) p.2 = -1 := by
-      simp [RStep.phExp, I_sq]
-    rw [e2]
-    by_cases h1 : p.1 = a
-    · subst h1; simp [ha]
-    · simp [h1]
-
-theorem den_gate_diag (T : Butterfly.Op κ) (U : Finset (Fin W)) :
-    (RStep.gate (Matrix.diagonal fun w => if w ∈ U then (-1 : ℂ) else 1) : RStep (Fin W) m).den T =
-      Matrix.diagonal fun p => if p.1 ∈ U.toList then -1 else 1 := by
-  ext p q
-  simp only [RStep.den, Matrix.diagonal, Matrix.of_apply, Finset.mem_toList]
-  by_cases h1 : p.1 = q.1
-  · by_cases h2 : p.2 = q.2
-    · have : p = q := Prod.ext h1 h2
-      subst this; simp
-    · have : p ≠ q := fun e => h2 (by rw [e])
-      simp [h2, this]
-  · have : p ≠ q := fun e => h1 (by rw [e])
-    simp [h1, this]
 
 /-! ## Row additions and child calls -/
 

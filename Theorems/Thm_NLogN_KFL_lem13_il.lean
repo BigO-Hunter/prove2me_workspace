@@ -11,6 +11,7 @@ import Theorems.Thm_NLogN_KFL_swI_geo
 import Theorems.Thm_NLogN_KFL_toBitsI_spec
 import Theorems.Thm_NLogN_KFL_xorStep_geo
 import Theorems.Thm_NLogN_zsz_le_of_lt
+import Theorems.Thm_NLogN_KFX_l13U_runs
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -284,8 +285,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD KFE KFB Butterfly AModel
 
-/-- `FSc` is the fold of the eight lines (so `linesI … lines` computes `rixT g (FSc K ρ f)`). -/
-theorem FSc_lines (K ρ f : ℕ) : FSc K ρ f = fun c => lines.foldr (fun l c => lineP K ρ f l c) c := rfl
 end NLogN.KFL
 end
 
@@ -391,16 +390,6 @@ end Geom
 
 theorem length_preL (px py : Fin 3) : (preL px py).length ≤ 2 := by
   fin_cases px <;> fin_cases py <;> simp [preL]
-
-theorem TV_swT {Q : ℕ} (i : Fin 3) (c : Tr) (h : TV Q c) : TV Q (swT i c) := by
-  fin_cases i
-  · exact TV_sw01 c h
-  · exact TV_sw12 c h
-  · exact TV_sw02 c h
-
-theorem TV_compL {Q : ℕ} : ∀ (l : List (Fin 3)) (c : Tr), TV Q c → TV Q (compL l c)
-  | [], c, h => h
-  | i :: l, c, h => TV_swT i _ (TV_compL l c h)
 
 end NLogN.KFL
 
@@ -529,22 +518,6 @@ theorem linesOK_of_spec :
     ∃ q₀ : ℕ, ∀ q, q.Prime → q₀ < q → ∃ Ks : ℝ, 0 ≤ Ks ∧ LinesOK q Ks := by
   obtain ⟨T, q₀, H⟩ := linesI_spec
   exact ⟨q₀, fun q hq hq₀ => H q hq hq₀⟩
-
-theorem mem_permRecs {sh : Shape} {π : List ℕ → List ℕ} {R : ℕ} {zs : List GI} {x : GI}
-    (hx : x ∈ permRecs sh π R zs) : x ∈ zs := by
-  simp only [permRecs, List.mem_flatMap] at hx
-  obtain ⟨_, _, hx⟩ := hx
-  exact List.mem_of_mem_drop (List.mem_of_mem_take hx)
-
-theorem zsz_gflat {w : ℕ} {zs : List GI} (h : NLogN.KFB.GB w zs) : ∀ x ∈ gflat zs, zsz x ≤ w := by
-  intro x hx
-  simp only [gflat, List.mem_flatMap, List.mem_cons, List.not_mem_nil, or_false] at hx
-  obtain ⟨z, hz, rfl | rfl⟩ := hx
-  · exact (h z hz).1
-  · exact (h z hz).2
-
-theorem TV_RAc' {K ρ f L : ℕ} (c : Tr) (hc : TV (2 ^ L) c) : TV (2 ^ L) (RAc K ρ f c) :=
-  ⟨hc.1, Nat.xor_lt_two_pow hc.2.1 (lt_of_le_of_lt Nat.and_le_left hc.1), hc.2.2⟩
 
 /-- The core on the canonical slots. -/
 theorem coreB_runs {q : ℕ} {Ks Kcr : ℝ} (HL : LinesOK q Ks) (HC : CorrOK Kcr)

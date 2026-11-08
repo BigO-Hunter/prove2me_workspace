@@ -27,6 +27,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs14
 import Definitions.Def_IntMul_Kappa_K_Defs16
 import Definitions.Def_IntMul_Kappa_K_Defs13
 import Definitions.Def_IntMul_Kappa_K_Defs10
+import Theorems.Thm_NLogN_KFX_l13U_runs
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -348,11 +349,6 @@ include hg
 
 end Phi
 
-/-! ## Lemma 12 swaps as triple maps -/
-
-theorem TV_sw01 {Q : ℕ} (c : Tr) (h : TV Q c) : TV Q (sw01 c) := ⟨h.2.1, h.1, h.2.2⟩
-theorem TV_sw02 {Q : ℕ} (c : Tr) (h : TV Q c) : TV Q (sw02 c) := ⟨h.2.2, h.2.1, h.1⟩
-
 /-! ## Block rotations (`rotF` views) -/
 
 /-! ## Rotation of one bit field of slot 1 -/
@@ -515,22 +511,6 @@ variable {N0 N1 N2 N3 L R w : ℕ}
 
 end Geom
 
-/-! ## The slot row addition as a triple map -/
-
-/-! ## Records permuted by `rowAddAddr`, in bits -/
-
-/-! ## Conjugation by slot swaps -/
-
-theorem TV_swT {Q : ℕ} (i : Fin 3) (c : Tr) (h : TV Q c) : TV Q (swT i c) := by
-  fin_cases i
-  · exact TV_sw01 c h
-  · exact TV_sw12 c h
-  · exact TV_sw02 c h
-
-theorem TV_compL {Q : ℕ} : ∀ (l : List (Fin 3)) (c : Tr), TV Q c → TV Q (compL l c)
-  | [], c, h => h
-  | i :: l, c, h => TV_swT i _ (TV_compL l c h)
-
 end NLogN.KFL
 
 end
@@ -554,28 +534,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD KFB KFH AModel Butterfly
-
-/-! ## Sequences of slot swaps -/
-
-/-! ## Cost bounds of the rotations -/
-
-/-! ## The program -/
-
-theorem mem_permRecs {sh : Shape} {π : List ℕ → List ℕ} {R : ℕ} {zs : List GI} {x : GI}
-    (hx : x ∈ permRecs sh π R zs) : x ∈ zs := by
-  simp only [permRecs, List.mem_flatMap] at hx
-  obtain ⟨_, _, hx⟩ := hx
-  exact List.mem_of_mem_drop (List.mem_of_mem_take hx)
-
-theorem zsz_gflat {w : ℕ} {zs : List GI} (h : GB w zs) : ∀ x ∈ gflat zs, zsz x ≤ w := by
-  intro x hx
-  simp only [gflat, List.mem_flatMap, List.mem_cons, List.not_mem_nil, or_false] at hx
-  obtain ⟨z, hz, rfl | rfl⟩ := hx
-  · exact (h z hz).1
-  · exact (h z hz).2
-
-theorem TV_RAc' {K ρ f L : ℕ} (c : Tr) (hc : TV (2 ^ L) c) : TV (2 ^ L) (RAc K ρ f c) :=
-  ⟨hc.1, Nat.xor_lt_two_pow hc.2.1 (lt_of_le_of_lt Nat.and_le_left hc.1), hc.2.2⟩
 
 /-! ## Lemma 13: denotation and the cost pieces -/
 
@@ -609,14 +567,6 @@ namespace NLogN.KFV
 open IntMul KIL
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-/-- **Simulation of runs.** -/
-theorem ISim.runs {π : PMap} {c c' : IStmt HS Pp} (hc : ISim I iprog π c c') (hw : NW π c)
-    {s t : IState HS} (hs : PV π s) {n : ℕ} (h : IRuns I iprog c s t n) :
-    IRuns I iprog c' s t (2000 * n) := by
-  obtain ⟨m, hm, e⟩ := h
-  obtain ⟨m', hm', e'⟩ := ISim.exec e hc hw hs
-  exact ⟨m', by nlinarith, e'⟩
 
 /-- Runs of a code that writes no parameter stack keep the parameters. -/
 theorem NW.PV {π : PMap} {c : IStmt HS Pp} (hw : NW π c) {s t : IState HS} (hs : PV π s) {n : ℕ}
@@ -653,22 +603,6 @@ namespace NLogN.KFV
 open IntMul KIL KFD
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-/-! ## Write analysis -/
-
-theorem NW_of {π : PMap} (c : IStmt HS Pp) (hc : nc c = true) (h : ∀ i ∈ wl c, π i = none) :
-    NW π c := by
-  induction c with
-  | skip => trivial
-  | op o => exact h
-  | seq a b iha ihb =>
-    simp only [nc, Bool.and_eq_true] at hc
-    exact ⟨iha hc.1 fun i hi => h i (by simp [wl, hi]), ihb hc.2 fun i hi => h i (by simp [wl, hi])⟩
-  | ite _ _ a b iha ihb =>
-    simp only [nc, Bool.and_eq_true] at hc
-    exact ⟨iha hc.1 fun i hi => h i (by simp [wl, hi]), ihb hc.2 fun i hi => h i (by simp [wl, hi])⟩
-  | loop _ _ a ih => exact ih hc h
-  | call _ => simp [nc] at hc
 
 /-! ## Generalized substitution -/
 
@@ -723,52 +657,6 @@ namespace NLogN.KFW
 open IntMul RS KIL KFD KFE KFB KFL KFS KFV AModel AModelL12 NetProp7
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-/-! ## Conversions -/
-
-theorem πNW_none {N w : ℕ} {i : Fin HS} (h : 7 ≤ i.val ∨ i.val = 0) : πNW N w i = none := by
-  unfold πNW
-  rw [if_neg (by intro e; subst e; revert h; decide), if_neg (by intro e; subst e; revert h; decide)]
-
-theorem PV_πNW {t : IState HS} {N w : ℕ} {L1 L2 : List Item} (h1 : t.G sN = .int (N : ℤ) :: L1)
-    (h2 : t.G sW = .int (w : ℤ) :: L2) : PV (πNW N w) t := by
-  intro i v hv
-  unfold πNW at hv
-  split_ifs at hv with a b
-  · subst a; cases hv; exact ⟨_, h1⟩
-  · subst b; cases hv; exact ⟨_, h2⟩
-
-theorem nw_toBitsI (N w : ℕ) : NW (πNW N w) (toBitsI N w : IStmt HS Pp) := by
-  refine NW_of _ (by rfl) fun i hi => πNW_none ?_
-  have e : wl (toBitsI N w : IStmt HS Pp) = wl (toBitsI 0 0 : IStmt HS 1) := rfl
-  rw [e] at hi
-  revert i hi; decide
-
-theorem nw_fromBitsI (N w : ℕ) : NW (πNW N w) (fromBitsI N w : IStmt HS Pp) := by
-  refine NW_of _ (by rfl) fun i hi => πNW_none ?_
-  have e : wl (fromBitsI N w : IStmt HS Pp) = wl (fromBitsI 0 0 : IStmt HS 1) := rfl
-  rw [e] at hi
-  revert i hi; decide
-
-theorem isim_toBits (N w : ℕ) : ISim I iprog (πNW N w) (toBitsI N w) toBitsU :=
-  .seq (.par (by simp [πNW]) (by decide)) (.seq (.par (by simp +decide [πNW]) (by decide))
-    (ISim.refl _ _))
-
-theorem isim_fromBits (N w : ℕ) : ISim I iprog (πNW N w) (fromBitsI N w) fromBitsU :=
-  .seq (.par (by simp [πNW]) (by decide)) (.seq (.par (by simp +decide [πNW]) (by decide))
-    (ISim.refl _ _))
-
-theorem toBitsU_spec (t : IState HS) (xs : List ℤ) (w : ℕ) (hxs : ∀ x ∈ xs, zsz x ≤ w)
-    (R : List Item) (h0 : t.G 0 = ints xs ++ R) {L1 L2 : List Item}
-    (h1 : t.G sN = .int (xs.length : ℤ) :: L1) (h2 : t.G sW = .int (w : ℤ) :: L2) :
-    IRuns I iprog toBitsU t (t.upd 0 (ints (bitsL w xs) ++ R)) (2000 * cTo xs.length w) :=
-  (isim_toBits xs.length w).runs (nw_toBitsI _ _) (PV_πNW h1 h2) (toBitsI_spec t xs w hxs R h0)
-
-theorem fromBitsU_spec (t : IState HS) (xs : List ℤ) (w : ℕ) (hxs : ∀ x ∈ xs, zsz x ≤ w)
-    (R : List Item) (h0 : t.G 0 = ints (bitsL w xs) ++ R) {L1 L2 : List Item}
-    (h1 : t.G sN = .int (xs.length : ℤ) :: L1) (h2 : t.G sW = .int (w : ℤ) :: L2) :
-    IRuns I iprog fromBitsU t (t.upd 0 (ints xs ++ R)) (2000 * cFrom xs.length w) :=
-  (isim_fromBits xs.length w).runs (nw_fromBitsI _ _) (PV_πNW h1 h2) (fromBitsI_spec t xs w hxs R h0)
 
 /-! ## The Lemma 12 wrapper with register parameters -/
 
@@ -837,39 +725,6 @@ variable {N0 N1 N2 N3 K f ρ R w : ℕ} {px py : Fin 3} {t : IState HS}
 variable (hp : PPos N0 N1 N2 N3 K f ρ R) (hA : Agree (σMR N0 N1 N2 N3 K f ρ R w px py) t)
 include hp hA
 
-theorem sGx : ESp (.reg mGx) t (zsz ((gB N0 N1 N2 N3 K f R w).V : ℤ) + 3) (gxV N2 K f px : ℤ) := by
-  refine ESp.ofAgree hA rfl (by decide) (zdvd hp ?_)
-  unfold gxV; split_ifs
-  · exact ⟨N0 * N1 * 2 ^ (f * K) * 2 ^ (f * K) * (N3 * (R * (2 * (w + 1)))), by rw [gB_V]; ring⟩
-  · exact one_dvd _
-
-theorem sGA : ESp eGA t (zsz ((gB N0 N1 N2 N3 K f R w).V : ℤ) + 3)
-    ((N1 * gxV N2 K f px : ℕ) : ℤ) := by
-  refine ESp.mulN (sN1 hp hA) (sGx hp hA) (dV hp hA ?_)
-  unfold gxV; split_ifs
-  · exact ⟨N0 * 2 ^ (f * K) * 2 ^ (f * K) * (N3 * (R * (2 * (w + 1)))), by rw [gB_V]; ring⟩
-  · exact ⟨N0 * 2 ^ (f * K) * 2 ^ (f * K) * N2 * 2 ^ (f * K) * (N3 * (R * (2 * (w + 1)))),
-      by rw [gB_V]; ring⟩
-
-theorem gx_pos : 0 < gxV N2 K f px := by
-  unfold gxV; split_ifs
-  · exact Nat.mul_pos (by positivity) (by have := hp.n2; omega)
-  · exact Nat.one_pos
-
-theorem sSA : ESp eSA t (zsz ((gB N0 N1 N2 N3 K f R w).V : ℤ) + 3)
-    ((N2 * 2 ^ (f * K) * N3 * (R * (2 * (w + 1))) / gxV N2 K f px : ℕ) : ℤ) := by
-  have hx : N2 * 2 ^ (f * K) * N3 * (R * (2 * (w + 1))) ∣ (gB N0 N1 N2 N3 K f R w).V :=
-    ⟨N0 * 2 ^ (f * K) * N1 * 2 ^ (f * K), by rw [gB_V]; ring⟩
-  refine ESp.ndivN (ESp.mulN (ESp.mulN (ESp.mulN (sN2 hp hA) (sQ hp hA) (dV hp hA
-    ⟨N0 * 2 ^ (f * K) * N1 * 2 ^ (f * K) * (N3 * (R * (2 * (w + 1)))), by rw [gB_V]; ring⟩))
-    (sN3 hp hA) (dV hp hA
-    ⟨N0 * 2 ^ (f * K) * N1 * 2 ^ (f * K) * (R * (2 * (w + 1))), by rw [gB_V]; ring⟩))
-    (sB hp hA) (dV hp hA hx)) (sGx hp hA) (gx_pos hp hA)
-    (dV hp hA (dvd_trans (Nat.div_dvd_of_dvd ?_) hx))
-  unfold gxV; split_ifs
-  · exact ⟨N3 * (R * (2 * (w + 1))), by ring⟩
-  · exact one_dvd _
-
 end Vals
 
 end NLogN.KFX
@@ -880,95 +735,9 @@ namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW KFH AModel Butterfly
 
-/-! ## Swap lists -/
-
-theorem preL_eq (px py : Fin 3) (h : px ≠ py) : preL px py = lA px ++ lB px py := by
-  fin_cases px <;> fin_cases py <;> simp_all [preL, lA, lB, flB]
-
-theorem preL_rev (px py : Fin 3) (h : px ≠ py) : (preL px py).reverse = lB px py ++ lA px := by
-  fin_cases px <;> fin_cases py <;> simp_all [preL, lA, lB, flB]
-
-theorem flB_le (px py : Fin 3) : flB px py ≤ 1 := by
-  fin_cases px <;> fin_cases py <;> simp [flB]
-
-theorem compL_append : ∀ (a b : List (Fin 3)), compL (a ++ b) = compL a ∘ compL b
-  | [], b => rfl
-  | i :: a, b => by simp only [List.cons_append, compL, compL_append a b]; rfl
-
-theorem cl_of_agree {σ : Fin HS → Option ℤ} {t : IState HS} (hA : Agree σ t) {r : Fin HS}
-    {v : ℤ} (h : σ r = some v) : t.cl r = cls (some (.int v)) := by
-  obtain ⟨L, hL⟩ := hA r v h
-  simp [IState.cl, hL]
-
 section Runs
 
 variable {N0 N1 N2 N3 K f ρ R w : ℕ} {px py : Fin 3} {t : IState HS}
-
-theorem nk_N0 : NoK (.reg mN0) := by unfold NoK; decide
-theorem nk_GA : NoK eGA := by unfold NoK; decide
-theorem nk_SA : NoK eSA := by unfold NoK; decide
-
-theorem optA_runs {q : ℕ} {Ksw : ℝ} (hK : 0 ≤ Ksw) (HSw : SwEOK q Ksw)
-    (hp : PPos N0 N1 N2 N3 K f ρ R) (hA : Agree (σMR N0 N1 N2 N3 K f ρ R w px py) t)
-    (I : List Sym) (zs : List ℤ) (R0 : List Item) (hb : KFL.Bits zs) (h0 : t.G 0 = ints zs ++ R0)
-    (hl : zs.length = (gB N0 N1 N2 N3 K f R w).V) :
-    ∃ c : ℕ, IRuns I l12prog (optA q) t
-      (t.upd 0 (ints (rixT (gB N0 N1 N2 N3 K f R w) (compL (lA px)) zs) ++ R0)) c ∧
-      (c : ℝ) ≤ 26 + Ksw * (((gB N0 N1 N2 N3 K f R w).V : ℝ) + 1) * ((f * K : ℕ) : ℝ) ^ (1 - (2 : ℝ)⁻¹ ^ 50) := by
-  have hg : (gB N0 N1 N2 N3 K f R w).Pos := hp.geo
-  have hu : 1 ≤ f * K := Nat.mul_pos hp.f hp.k
-  have hQ : (gB N0 N1 N2 N3 K f R w).Q = 2 ^ (f * K) := rfl
-  have hX : 0 ≤ Ksw * (((gB N0 N1 N2 N3 K f R w).V : ℝ) + 1) * ((f * K : ℕ) : ℝ) ^ (1 - (2 : ℝ)⁻¹ ^ 50) := by positivity
-  have hfa : t.cl mFa = cls (some (.int (flA px : ℕ))) := cl_of_agree hA rfl
-  have hn2 := hp.n2
-  fin_cases px
-  · refine ⟨1 + 25, ?_, by simp only [Nat.cast_add, Nat.cast_ofNat, Nat.cast_one]; linarith⟩
-    refine IRuns.iteF (by rw [hfa]; decide) ?_
-    refine (IRuns.skip t).mono' ?_ le_rfl
-    show t = t.upd 0 (ints (rixT (gB N0 N1 N2 N3 K f R w) id zs) ++ R0)
-    rw [rixT_id hl, ← h0, IState.upd_self]
-  · obtain ⟨c, Hc, hc⟩ := HSw 0 _ hg (f * K) hu hQ I t zs R0 hb h0 hl (.reg mN0) eGA eSA eFK _
-      le_rfl (by decide) nk_N0 nk_GA nk_SA nk_FK (sN0 hp hA)
-      (ESp.of_eq (sGA hp hA) (by simp [gxV, svG, gB, geoB]))
-      (ESp.of_eq (sSA hp hA) (by simp [gxV, svS, vol, gB, geoB] <;> ring)) (sFK hp hA)
-    refine ⟨c + 25, IRuns.iteT (by rw [hfa]; decide) ?_, by simp only [Nat.cast_add, Nat.cast_ofNat, Nat.cast_one]; linarith⟩
-    exact Hc.mono' (by simp [lA, compL]) le_rfl
-  · have hdiv : N2 * 2 ^ (f * K) * N3 * (R * (2 * (w + 1))) / (2 ^ (f * K) * N2) =
-        N3 * (R * (2 * (w + 1))) := by
-      rw [show N2 * 2 ^ (f * K) * N3 * (R * (2 * (w + 1))) =
-        (2 ^ (f * K) * N2) * (N3 * (R * (2 * (w + 1)))) by ring,
-        Nat.mul_div_cancel_left _ (Nat.mul_pos (by positivity) (by omega))]
-    obtain ⟨c, Hc, hc⟩ := HSw 2 _ hg (f * K) hu hQ I t zs R0 hb h0 hl (.reg mN0) eGA eSA eFK _
-      le_rfl (by decide) nk_N0 nk_GA nk_SA nk_FK (sN0 hp hA)
-      (ESp.of_eq (sGA hp hA) (by simp [gxV, svG, vol, gB, geoB] <;> ring))
-      (ESp.of_eq (sSA hp hA) (by simp only [gxV]; rw [if_pos (by decide), hdiv]; simp [svS, vol, gB, geoB])) (sFK hp hA)
-    refine ⟨c + 25, IRuns.iteT (by rw [hfa]; decide) ?_, by simp only [Nat.cast_add, Nat.cast_ofNat, Nat.cast_one]; linarith⟩
-    exact Hc.mono' (by simp [lA, compL]) le_rfl
-
-theorem optB_runs {q : ℕ} {Ksw : ℝ} (hK : 0 ≤ Ksw) (HSw : SwEOK q Ksw)
-    (hp : PPos N0 N1 N2 N3 K f ρ R) (hA : Agree (σMR N0 N1 N2 N3 K f ρ R w px py) t)
-    (I : List Sym) (zs : List ℤ) (R0 : List Item) (hb : KFL.Bits zs) (h0 : t.G 0 = ints zs ++ R0)
-    (hl : zs.length = (gB N0 N1 N2 N3 K f R w).V) :
-    ∃ c : ℕ, IRuns I l12prog (optB q) t
-      (t.upd 0 (ints (rixT (gB N0 N1 N2 N3 K f R w) (compL (lB px py)) zs) ++ R0)) c ∧
-      (c : ℝ) ≤ 26 + Ksw * (((gB N0 N1 N2 N3 K f R w).V : ℝ) + 1) * ((f * K : ℕ) : ℝ) ^ (1 - (2 : ℝ)⁻¹ ^ 50) := by
-  have hg : (gB N0 N1 N2 N3 K f R w).Pos := hp.geo
-  have hu : 1 ≤ f * K := Nat.mul_pos hp.f hp.k
-  have hQ : (gB N0 N1 N2 N3 K f R w).Q = 2 ^ (f * K) := rfl
-  have hX : 0 ≤ Ksw * (((gB N0 N1 N2 N3 K f R w).V : ℝ) + 1) * ((f * K : ℕ) : ℝ) ^ (1 - (2 : ℝ)⁻¹ ^ 50) := by positivity
-  have hfb : t.cl mFb = cls (some (.int (flB px py : ℕ))) := cl_of_agree hA rfl
-  by_cases h1 : flB px py = 1
-  · obtain ⟨c, Hc, hc⟩ := HSw 1 _ hg (f * K) hu hQ I t zs R0 hb h0 hl eP1 (.reg mN2) eS2 eFK _
-      le_rfl (by decide) nk_P1 nk_N2 nk_S2 nk_FK (ESp.of_eq (sP1 hp hA) (by simp [svP, vol, gB, geoB] <;> ring))
-      (sN2 hp hA) (ESp.of_eq (sS2 hp hA) (by simp [svS, vol, gB, geoB])) (sFK hp hA)
-    refine ⟨c + 25, IRuns.iteT (by rw [hfb, h1]; decide) ?_, by simp only [Nat.cast_add, Nat.cast_ofNat, Nat.cast_one]; linarith⟩
-    exact Hc.mono' (by simp [lB, h1, compL]) le_rfl
-  · have h0' : flB px py = 0 := by have := flB_le px py; omega
-    refine ⟨1 + 25, ?_, by simp only [Nat.cast_add, Nat.cast_ofNat, Nat.cast_one]; linarith⟩
-    refine IRuns.iteF (by rw [hfb, h0']; decide) ?_
-    refine (IRuns.skip t).mono' ?_ le_rfl
-    simp only [lB, h1, if_false, compL]
-    rw [rixT_id hl, ← h0, IState.upd_self]
 
 end Runs
 

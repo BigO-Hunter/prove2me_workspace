@@ -365,15 +365,6 @@ namespace NLogN.KFL
 
 open AModel
 
-/-! ## Reindexing -/
-
-@[simp] theorem length_rix {α : Type*} (V : ℕ) (φ : ℕ → ℕ) (d : α) (xs : List α) :
-    (rix V φ d xs).length = V := by simp [rix]
-
-theorem getD_rix {α : Type*} {V : ℕ} (φ : ℕ → ℕ) (d : α) (xs : List α) {j : ℕ} (hj : j < V) :
-    (rix V φ d xs).getD j d = xs.getD (φ j) d := by
-  simp [rix, List.getD_eq_getElem?_getD, hj]
-
 /-! ## Geometry and triple maps -/
 
 namespace Geo
@@ -390,9 +381,6 @@ variable {g : Geo} (hg : g.Pos)
 include hg
 
 end Phi
-
-theorem length_rixT (g : Geo) (F : Tr → Tr) (xs : List ℤ) : (rixT g F xs).length = g.V := by
-  simp [rixT]
 
 /-! ## Lemma 12 swaps as triple maps -/
 
@@ -462,80 +450,7 @@ open AModel Butterfly
 namespace Geo
 variable (g : Geo)
 
-theorem S2_rec : g.S2 = g.recG.S2 * g.B := by simp only [S2, Geo.recG]; ring
-theorem S1_rec : g.S1 = g.recG.S1 * g.B := by simp only [S1, S2, Geo.recG]; ring
-theorem S0_rec : g.S0 = g.recG.S0 * g.B := by simp only [S0, S1, S2, Geo.recG]; ring
 end Geo
-
-theorem gc_mul {Q S B m b : ℕ} (hB : 0 < B) (hb : b < B) : gc Q (S * B) (m * B + b) = gc Q S m := by
-  unfold gc
-  rw [mul_comm S B, ← Nat.div_div_eq_div_mul]
-  congr 2
-  rw [Nat.add_comm, Nat.add_mul_div_right _ _ hB, Nat.div_eq_of_lt hb, zero_add]
-
-theorem trOf_mul {g : Geo} (hg : g.Pos) {m b : ℕ} (hb : b < g.B) :
-    trOf g (m * g.B + b) = trOf g.recG m := by
-  simp only [trOf, Geo.S0_rec g, Geo.S1_rec g, Geo.S2_rec g, gc_mul hg.b hb, Geo.recG_Q]
-
-theorem phi_mul {g : Geo} (hg : g.Pos) {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c))
-    {m b : ℕ} (hb : b < g.B) : phi g F (m * g.B + b) = phi g.recG F m * g.B + b := by
-  have e1 := phi_int hg hF (m * g.B + b)
-  have e2 := phi_int hg.recG (g := g.recG) hF m
-  rw [trOf_mul hg hb] at e1
-  have : (phi g F (m * g.B + b) : ℤ) = phi g.recG F m * g.B + b := by
-    rw [e1, e2, Geo.S0_rec g, Geo.S1_rec g, Geo.S2_rec g]; push_cast; ring
-  exact_mod_cast this
-
-/-! ## Record arrays -/
-
-theorem flR_succ (recs : ℕ → List ℤ) (M : ℕ) : flR recs (M + 1) = flR recs M ++ recs M := by
-  simp [flR, List.range_succ]
-
-theorem length_flR {recs : ℕ → List ℤ} {B : ℕ} (h : ∀ m, (recs m).length = B) (M : ℕ) :
-    (flR recs M).length = M * B := by
-  induction M with
-  | zero => simp [flR]
-  | succ M ih => rw [flR_succ, List.length_append, ih, h]; ring
-
-theorem getD_flR {recs : ℕ → List ℤ} {B : ℕ} (h : ∀ m, (recs m).length = B) {M m b : ℕ}
-    (hm : m < M) (hb : b < B) (d : ℤ) : (flR recs M).getD (m * B + b) d = (recs m).getD b d := by
-  induction M with
-  | zero => omega
-  | succ M ih =>
-    rw [flR_succ]
-    rcases Nat.lt_succ_iff_lt_or_eq.1 hm with h1 | h1
-    · have hl : m * B + b < (flR recs M).length := by
-        rw [length_flR h]; nlinarith
-      rw [List.getD_eq_getElem?_getD, List.getElem?_append_left hl, ← List.getD_eq_getElem?_getD,
-        ih h1]
-    · subst h1
-      rw [List.getD_eq_getElem?_getD, List.getElem?_append_right (by rw [length_flR h]; omega),
-        length_flR h, show m * B + b - m * B = b by omega, ← List.getD_eq_getElem?_getD]
-
-/-- **Triple maps act record-wise.** -/
-theorem rixT_flR {g : Geo} (hg : g.Pos) {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c))
-    {recs : ℕ → List ℤ} (h : ∀ m, (recs m).length = g.B) :
-    rixT g F (flR recs g.recG.V) = flR (fun m => recs (phi g.recG F m)) g.recG.V := by
-  have hB := hg.b
-  have hl' : ∀ m, ((fun m => recs (phi g.recG F m)) m).length = g.B := fun m => h _
-  apply List.ext_getElem (by rw [length_rixT, length_flR hl', Geo.V_rec])
-  intro j h1 h2
-  rw [length_rixT, Geo.V_rec] at h1
-  have hj : j = j / g.B * g.B + j % g.B := (Nat.div_add_mod' j g.B).symm
-  have hm : j / g.B < g.recG.V := by
-    rw [Nat.div_lt_iff_lt_mul hB]; exact h1
-  have hb : j % g.B < g.B := Nat.mod_lt _ hB
-  have e1 : (rixT g F (flR recs g.recG.V))[j] = (rixT g F (flR recs g.recG.V)).getD j 0 := by
-    rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem]; rfl
-  have e2 : (flR (fun m => recs (phi g.recG F m)) g.recG.V)[j] =
-      (flR (fun m => recs (phi g.recG F m)) g.recG.V).getD j 0 := by
-    rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem]; rfl
-  rw [e1, e2]
-  unfold rixT
-  rw [getD_rix _ _ _ (by rw [Geo.V_rec]; exact h1)]
-  conv_lhs => rw [hj, phi_mul hg hF hb]
-  conv_rhs => rw [hj]
-  rw [getD_flR h (phi_lt hg.recG (g := g.recG) hF hm) hb, getD_flR hl' hm hb]
 
 /-! ## Bad records -/
 
@@ -655,131 +570,13 @@ open IntMul RS KIL KFD Butterfly Finset
 
 section Cost
 
-theorem cKey_le (K f Bb : ℕ) : cKey K f Bb ≤ 10 ^ 11 * (f + 1) * (Bb + 2) ^ 2 := by
-  have h1 : (offE (0 : ℤ)).size = 10 := by simp [offE, Ex.size]
-  have h2 : (t0E).size = 12 := by simp [t0E, Ex.size]
-  unfold cKey cLine cT0 cStep cSegIt cLp
-  rw [h1, h2]
-  generalize hb : Bb + 2 = b
-  have hb2 : 2 ≤ b := by omega
-  have hf1 : f - 1 ≤ f := Nat.sub_le f 1
-  have hbb : b ≤ b ^ 2 := by nlinarith
-  generalize f - 1 = e at hf1
-  nlinarith [Nat.mul_le_mul_right (b ^ 2) hf1]
-
-theorem cP1_le (K f B Bb : ℕ) : cP1 K f B Bb ≤ 10 ^ 12 * (f + 1) * (Bb + 2) ^ 2 + 2000 * B := by
-  have := cKey_le K f Bb
-  unfold cP1 cIte cBr cLp
-  generalize cKey K f Bb = k at this
-  have hbb : Bb + 2 ≤ (Bb + 2) ^ 2 := by nlinarith
-  have hF : (Bb + 2) ^ 2 ≤ (f + 1) * (Bb + 2) ^ 2 := Nat.le_mul_of_pos_left _ (by omega)
-  nlinarith
-
-theorem cPass_le (B N Bb : ℕ) :
-    cPass B N Bb ≤ 10 ^ 6 * (Bb + 2) + N * (10 ^ 5 * (Bb + 2) + 6000 * B) := by
-  unfold cPass cEnt cBk cLp
-  generalize hb : Bb + 2 = b
-  have hb2 : 2 ≤ b := by omega
-  ring_nf; nlinarith [Nat.mul_le_mul_left N hb2]
-
-theorem cCorr_le (K f : ℕ) (g : Geo) (A nB Bb : ℕ) (hfb : f + 1 ≤ Bb + 2) (hA : A ≤ Bb + 2)
-    (hM : 1 ≤ g.recG.V) :
-    cCorr K f g A nB Bb ≤ 10 ^ 13 * (g.recG.V * (Bb + 2) ^ 3 + g.recG.V * g.B +
-      A * nB * (g.B + Bb + 2)) := by
-  have h1 := cP1_le K f g.B Bb
-  have h3 := cPass_le g.B nB Bb
-  unfold cCorr
-  generalize cP1 K f g.B Bb = p1 at h1
-  generalize cPass g.B nB Bb = ps at h3
-  unfold cP3 cLp
-  generalize g.recG.V = M at hM ⊢
-  generalize g.B = B at h1 h3 ⊢
-  generalize hb : Bb + 2 = b at hfb hA h1 h3 ⊢
-  have hb2 : 2 ≤ b := by omega
-  have hBb : Bb = b - 2 := by omega
-  subst hBb
-  have hb3 : (f + 1) * b ^ 2 ≤ b ^ 3 := by
-    rw [pow_succ b 2, mul_comm (b ^ 2) b]; exact Nat.mul_le_mul_right _ hfb
-  have hbb : b ≤ b ^ 2 := by nlinarith
-  have hbbb : b ^ 2 ≤ b ^ 3 := by nlinarith
-  have hp1 : M * p1 ≤ M * (10 ^ 12 * b ^ 3 + 2000 * B) := Nat.mul_le_mul_left M (by nlinarith)
-  have hps : A * ps ≤ 10 ^ 6 * b ^ 2 + A * nB * (10 ^ 5 * b + 6000 * B) := by
-    have := Nat.mul_le_mul_left A h3
-    have h4 : A * (10 ^ 6 * b) ≤ 10 ^ 6 * b ^ 2 := by nlinarith
-    nlinarith
-  have hMb : b ^ 3 ≤ M * b ^ 3 := Nat.le_mul_of_pos_left _ hM
-  have hMb' : M * b ≤ M * b ^ 3 := Nat.mul_le_mul_left M (by nlinarith)
-  have hMb'' : M ≤ M * b ^ 3 := Nat.le_mul_of_pos_right _ (by positivity)
-  have hb2M : b ^ 2 ≤ M * b ^ 3 := hbbb.trans hMb
-  have e : B + (b - 2) + 2 = B + b := by omega
-  rw [e]
-  have hbM : b ≤ M * b ^ 3 := hbb.trans hb2M
-  have hAM : A ≤ M * b ^ 3 := hA.trans hbM
-  clear h1 h3 hb3 hfb e hb
-  ring_nf at hp1 hps hMb' hMb'' hb2M hbM hAM ⊢
-  omega
-
 end Cost
 
 /-! ## Cutting a bit array into records -/
 
 section Chunks
 
-theorem length_chunk {B M : ℕ} {zs : List ℤ} (hl : zs.length = M * B) (m : ℕ) :
-    (chunk B M zs m).length = B := by
-  unfold chunk; split_ifs with h
-  · rw [List.length_take, List.length_drop, hl]
-    have : (m + 1) * B ≤ M * B := Nat.mul_le_mul_right _ h
-    rw [Nat.add_mul, one_mul] at this
-    omega
-  · simp
-
-theorem getD_chunk {B M : ℕ} {zs : List ℤ} {m b : ℕ} (hm : m < M) (hb : b < B) :
-    (chunk B M zs m).getD b 0 = zs.getD (m * B + b) 0 := by
-  unfold chunk; rw [if_pos hm]
-  simp only [List.getD_eq_getElem?_getD, List.getElem?_take, if_pos hb, List.getElem?_drop]
-
-theorem flR_chunk {B M : ℕ} (hB : 0 < B) {zs : List ℤ} (hl : zs.length = M * B) :
-    flR (chunk B M zs) M = zs := by
-  have hl' := length_chunk hl
-  apply List.ext_getElem (by rw [length_flR hl', hl])
-  intro j h1 h2
-  rw [length_flR hl'] at h1
-  have hj : j = j / B * B + j % B := (Nat.div_add_mod' j B).symm
-  have hm : j / B < M := by rw [Nat.div_lt_iff_lt_mul hB]; exact h1
-  have hb : j % B < B := Nat.mod_lt _ hB
-  have e1 : (flR (chunk B M zs) M)[j] = (flR (chunk B M zs) M).getD j 0 := by
-    rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem]; rfl
-  have e2 : zs[j] = zs.getD j 0 := by
-    rw [List.getD_eq_getElem?_getD, List.getElem?_eq_getElem]; rfl
-  rw [e1, e2, hj, getD_flR hl' hm hb, getD_chunk hm hb]
-
-theorem bnd_chunk {B M : ℕ} {zs : List ℤ} (hz : Bits zs) (m : ℕ) : Bnd 1 (chunk B M zs m) := by
-  intro a ha
-  unfold chunk at ha
-  split_ifs at ha
-  · rcases hz a (List.mem_of_mem_drop (List.mem_of_mem_take ha)) with rfl | rfl
-    · simp [zsz_zero]
-    · simp [zsz_one]
-  · rw [List.eq_of_mem_replicate ha, zsz_zero]; omega
-
 end Chunks
-
-/-! ## The correction step in IL -/
-
-theorem V_div_B {g : Geo} (hg : g.Pos) : g.V / g.B = g.recG.V := by
-  rw [Geo.V_rec, Nat.mul_div_cancel _ hg.b]
-
-theorem f_lt_zsz {K f : ℕ} (hK : 1 ≤ K) {g : Geo} (hg : g.Pos) (hQe : g.Q = 2 ^ (f * K)) :
-    f + 1 ≤ zsz (g.V : ℤ) := by
-  have h1 : 2 ^ f ≤ g.V := by
-    calc 2 ^ f ≤ 2 ^ (f * K) := Nat.pow_le_pow_right (by norm_num) (Nat.le_mul_of_pos_right _ hK)
-      _ = g.Q := hQe.symm
-      _ ≤ g.V := by
-        unfold Geo.V
-        exact Nat.le_mul_of_pos_right _ hg.n0 |>.trans' (Nat.le_mul_of_pos_right _ hg.s0)
-  have := zsz_natCast_le h1
-  rwa [Nat.cast_pow, Nat.cast_ofNat, zsz_two_pow] at this
 
 end NLogN.KFL
 

@@ -517,8 +517,6 @@ namespace NLogN.KFL
 
 open AModel
 
-theorem sc_gc (Q S n : ℕ) : NLogN.KFL.sc Q S (NLogN.KFL.gc Q S n) n = n := (decomp Q S n).symm
-
 theorem rix_id {α : Type*} {V : ℕ} (d : α) {xs : List α} (h : xs.length = V) :
     rix V id d xs = xs := by
   apply List.ext_getElem (by simp [h])
@@ -540,9 +538,6 @@ variable {g : Geo} (hg : g.Pos)
 include hg
 
 end Phi
-
-theorem phi_id {g : Geo} (n : ℕ) : phi g id n = n := by
-  simp only [phi, id, trOf, sc_gc]
 
 theorem rixT_id {g : Geo} {xs : List ℤ} (h : xs.length = g.V) : rixT g id xs = xs := by
   unfold rixT

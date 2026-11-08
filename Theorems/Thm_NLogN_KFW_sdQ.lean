@@ -18,6 +18,7 @@ import Theorems.Thm_NLogN_zsz_le_of_lt
 import Theorems.Thm_IntMul_Kappa_R6_IL3H_pushSeq_child
 import Theorems.Thm_IntMul_Kappa_R6_IL3H_loopQS
 import Theorems.Thm_IntMul_Kappa_R6_IL3H_nodeRH_of
+import Theorems.Thm_IntMul_Kappa_R6_IL3H_epsOK_tabM
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -326,181 +327,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFN
 
-/-- `sel` with a negative test. -/
-theorem selP {c x y : Ex HS} {s : IState HS} {B : ℕ} (h : c.eval s < 0) :
-    (Ex.sel c x y).eval s = x.eval s ∧ ((Ex.sel c x y).ok s ↔ c.ok s ∧ x.ok s) ∧
-    ((Ex.sel c x y).Bnd s B ↔ c.Bnd s B ∧ x.Bnd s B) := by
-  refine ⟨if_pos h, ?_, ?_⟩
-  · show (_ ∧ ite _ _ _) ↔ _
-    rw [if_pos h]
-  · show (_ ∧ ite _ _ _) ↔ _
-    rw [if_pos h]
-
-/-- `sel` with a nonnegative test. -/
-theorem selN {c x y : Ex HS} {s : IState HS} {B : ℕ} (h : ¬ c.eval s < 0) :
-    (Ex.sel c x y).eval s = y.eval s ∧ ((Ex.sel c x y).ok s ↔ c.ok s ∧ y.ok s) ∧
-    ((Ex.sel c x y).Bnd s B ↔ c.Bnd s B ∧ y.Bnd s B) := by
-  refine ⟨if_neg h, ?_, ?_⟩
-  · show (_ ∧ ite _ _ _) ↔ _
-    rw [if_neg h]
-  · show (_ ∧ ite _ _ _) ↔ _
-    rw [if_neg h]
-
-theorem aEof_equiv {ι : Type*} [Fintype ι] (K e N : ℕ) (hK : 0 < K) (φ : ι ≃ Fin N)
-    (hN : K * (N - 1) ≤ e) (a' : ι → ℕ) (p : ℕ) :
-    aEof (fun i => e - K * (φ i).val) a' p =
-      if h : p ≤ e ∧ (e - p) % K = 0 ∧ (e - p) / K < N then a' (φ.symm ⟨(e - p) / K, h.2.2⟩)
-      else 0 := by
-  have hle : ∀ i, K * (φ i).val ≤ e := fun i => by
-    have := (φ i).isLt
-    exact le_trans (Nat.mul_le_mul_left _ (by omega)) hN
-  unfold aEof
-  rw [Finset.sum_filter]
-  split_ifs with h
-  · obtain ⟨h1, h2, h3⟩ := h
-    have hq : K * ((e - p) / K) = e - p := Nat.mul_div_cancel' (Nat.dvd_of_mod_eq_zero h2)
-    rw [Finset.sum_eq_single (φ.symm ⟨(e - p) / K, h3⟩)]
-    · rw [if_pos]; simp only [Equiv.apply_symm_apply, Fin.val_mk]; omega
-    · intro i _ hi
-      rw [if_neg]
-      intro hp
-      dsimp only at hp
-      apply hi
-      rw [Equiv.eq_symm_apply]
-      apply Fin.ext
-      simp only
-      have := hle i
-      have h5 : K * (φ i).val = K * ((e - p) / K) := by omega
-      exact Nat.eq_of_mul_eq_mul_left hK h5
-    · intro h; exact absurd (Finset.mem_univ _) h
-  · refine Finset.sum_eq_zero (fun i _ => ?_)
-    rw [if_neg]
-    intro hp
-    dsimp only at hp
-    apply h
-    have := hle i
-    have h5 : e - p = K * (φ i).val := by omega
-    refine ⟨by omega, by rw [h5]; simp, ?_⟩
-    rw [h5, Nat.mul_div_cancel_left _ hK]; exact (φ i).isLt
-
-theorem εAff_regs (eR KR NR : Fin HS) (G : Ex HS → Ex HS) (j : Fin HS)
-    (hj : j ∈ (εAff eR KR NR G).regs) :
-    j = eR ∨ j = NLogN.KFW.kS ∨ j = KR ∨ j = NR ∨ j ∈ (G (.ndiv (εD eR) (.reg KR))).regs := by
-  simp only [εAff, εD, Ex.regs, List.mem_append, List.mem_cons, List.not_mem_nil,
-    or_false] at hj
-  tauto
-
-/-- **Evaluation of `εAff`.** -/
-theorem εAff_spec (s : IState HS) (eR KR NR : Fin HS) (G : Ex HS → Ex HS) (e k K N B : ℕ)
-    (hK : 0 < K)
-    (he : s.top eR = e) (hei : s.IsInt eR) (hk : s.top NLogN.KFW.kS = k) (hki : s.IsInt NLogN.KFW.kS)
-    (hKt : s.top KR = K) (hKi : s.IsInt KR) (hN : s.top NR = N) (hNi : s.IsInt NR)
-    (hB : zsz (((e + k + K + N : ℕ)) : ℤ) ≤ B) (gv : ℕ → ℤ)
-    (hG : ∀ (x : Ex HS) (q : ℕ), q < N → x.ok s → x.eval s = q → x.Bnd s B →
-      (G x).ok s ∧ (G x).eval s = gv q ∧ (G x).Bnd s B) :
-    (εAff eR KR NR G).ok s ∧
-    (εAff eR KR NR G).eval s =
-      (if k ≤ e ∧ (e - k) % K = 0 ∧ (e - k) / K < N then gv ((e - k) / K) else 0) ∧
-    (εAff eR KR NR G).Bnd s B := by
-  have hBz : ∀ z : ℤ, z.natAbs ≤ e + k + K + N → zsz z ≤ B := fun z hz =>
-    le_trans (zsz_mono (by rw [Int.natAbs_natCast]; exact hz)) hB
-  have dE : (εD eR).eval s = (e : ℤ) - k := by simp only [εD, Ex.eval, he, hk]; ring
-  have dO : (εD eR).ok s := ⟨hei, hki⟩
-  have dB : (εD eR).Bnd s B := by
-    refine ⟨?_, ?_, ?_⟩
-    · show zsz (s.top eR) ≤ B
-      rw [he]; exact hBz _ (by rw [Int.natAbs_natCast]; omega)
-    · show zsz (s.top NLogN.KFW.kS) ≤ B
-      rw [hk]; exact hBz _ (by rw [Int.natAbs_natCast]; omega)
-    · show zsz (s.top eR + -(s.top NLogN.KFW.kS)) ≤ B
-      rw [he, hk]; exact hBz _ (by omega)
-  have z0 : (Ex.lit 0 : Ex HS).Bnd s B := by
-    show zsz 0 ≤ B
-    rw [zsz_zero]; exact Nat.zero_le _
-  unfold εAff
-  by_cases h1 : k ≤ e
-  swap
-  · have hl : (εD eR).eval s < 0 := by rw [dE]; omega
-    obtain ⟨e1, o1, b1⟩ := selP (x := Ex.lit 0)
-      (y := (Ex.sel (.neg (.nmod (εD eR) (.reg KR))) (.lit 0)
-      (.sel (.add (.ndiv (εD eR) (.reg KR)) (.neg (.reg NR))) (G (.ndiv (εD eR) (.reg KR)))
-        (.lit 0)))) (B := B) hl
-    refine ⟨o1.2 ⟨dO, trivial⟩, ?_, b1.2 ⟨dB, z0⟩⟩
-    rw [e1, if_neg (by omega)]; rfl
-  have hl : ¬ (εD eR).eval s < 0 := by rw [dE]; omega
-  obtain ⟨e1, o1, b1⟩ := selN (x := Ex.lit 0)
-    (y := (Ex.sel (.neg (.nmod (εD eR) (.reg KR))) (.lit 0)
-    (.sel (.add (.ndiv (εD eR) (.reg KR)) (.neg (.reg NR))) (G (.ndiv (εD eR) (.reg KR)))
-      (.lit 0)))) (B := B) hl
-  rw [o1, e1, b1]
-  set d := e - k with hd
-  have dE' : (εD eR).eval s = (d : ℤ) := by rw [dE, hd]; push_cast [h1]; ring
-  have mE : (Ex.nmod (εD eR) (.reg KR)).eval s = ((d % K : ℕ) : ℤ) := by
-    show (εD eR).eval s % s.top KR = _
-    rw [dE', hKt, Int.natCast_mod]
-  have qE : (Ex.ndiv (εD eR) (.reg KR)).eval s = ((d / K : ℕ) : ℤ) := by
-    show (εD eR).eval s / s.top KR = _
-    rw [dE', hKt, Int.natCast_div]
-  have mO : (Ex.nmod (εD eR) (.reg KR)).ok s :=
-    ⟨dO, hKi, by rw [dE']; omega, by show 0 < s.top KR; rw [hKt]; omega⟩
-  have qO : (Ex.ndiv (εD eR) (.reg KR)).ok s :=
-    ⟨dO, hKi, by rw [dE']; omega, by show 0 < s.top KR; rw [hKt]; omega⟩
-  have KB : (Ex.reg KR : Ex HS).Bnd s B := by
-    show zsz (s.top KR) ≤ B
-    rw [hKt]; exact hBz _ (by rw [Int.natAbs_natCast]; omega)
-  have hdle : d ≤ e := by omega
-  have mB : (Ex.nmod (εD eR) (.reg KR)).Bnd s B := by
-    refine ⟨dB, KB, ?_⟩
-    rw [show (εD eR).eval s % (Ex.reg KR).eval s = (Ex.nmod (εD eR) (.reg KR)).eval s from rfl, mE]
-    exact hBz _ (by rw [Int.natAbs_natCast]; exact le_trans (Nat.mod_le d K) (by omega))
-  have qB : (Ex.ndiv (εD eR) (.reg KR)).Bnd s B := by
-    refine ⟨dB, KB, ?_⟩
-    rw [show (εD eR).eval s / (Ex.reg KR).eval s = (Ex.ndiv (εD eR) (.reg KR)).eval s from rfl, qE]
-    exact hBz _ (by rw [Int.natAbs_natCast]; exact le_trans (Nat.div_le_self d K) (by omega))
-  by_cases h2 : d % K = 0
-  swap
-  · have hl2 : (Ex.neg (.nmod (εD eR) (.reg KR))).eval s < 0 := by
-      show -(Ex.nmod (εD eR) (.reg KR)).eval s < 0
-      rw [mE]; omega
-    obtain ⟨e2, o2, b2⟩ := selP (x := Ex.lit 0)
-      (y := (Ex.sel (.add (.ndiv (εD eR) (.reg KR)) (.neg (.reg NR))) (G (.ndiv (εD eR) (.reg KR)))
-        (.lit 0))) (B := B) hl2
-    refine ⟨⟨dO, o2.2 ⟨mO, trivial⟩⟩, ?_, ⟨dB, b2.2 ⟨mB, z0⟩⟩⟩
-    rw [e2, if_neg (by omega)]; rfl
-  have hl2 : ¬ (Ex.neg (.nmod (εD eR) (.reg KR))).eval s < 0 := by
-    show ¬ -(Ex.nmod (εD eR) (.reg KR)).eval s < 0
-    rw [mE]; omega
-  obtain ⟨e2, o2, b2⟩ := selN (x := Ex.lit 0)
-    (y := (Ex.sel (.add (.ndiv (εD eR) (.reg KR)) (.neg (.reg NR))) (G (.ndiv (εD eR) (.reg KR)))
-      (.lit 0))) (B := B) hl2
-  rw [o2, e2, b2]
-  have sE : (Ex.add (.ndiv (εD eR) (.reg KR)) (.neg (.reg NR))).eval s =
-      ((d / K : ℕ) : ℤ) - N := by
-    show (Ex.ndiv (εD eR) (.reg KR)).eval s + -(s.top NR) = _
-    rw [qE, hN]; ring
-  have NB : (Ex.neg (.reg NR) : Ex HS).Bnd s B := by
-    show zsz (s.top NR) ≤ B
-    rw [hN]; exact hBz _ (by rw [Int.natAbs_natCast]; omega)
-  have sB : (Ex.add (.ndiv (εD eR) (.reg KR)) (.neg (.reg NR))).Bnd s B := by
-    refine ⟨qB, NB, ?_⟩
-    rw [show (Ex.ndiv (εD eR) (.reg KR)).eval s + (Ex.neg (.reg NR)).eval s =
-      (Ex.add (.ndiv (εD eR) (.reg KR)) (.neg (.reg NR))).eval s from rfl, sE]
-    have h7 : d / K ≤ e := le_trans (Nat.div_le_self d K) hdle
-    exact hBz _ (by generalize d / K = q at h7 ⊢; omega)
-  have sO : (Ex.add (.ndiv (εD eR) (.reg KR)) (.neg (.reg NR))).ok s := ⟨qO, hNi⟩
-  by_cases h3 : d / K < N
-  · have hl3 : (Ex.add (.ndiv (εD eR) (.reg KR)) (.neg (.reg NR))).eval s < 0 := by
-      rw [sE]; omega
-    obtain ⟨go, ge, gb⟩ := hG _ (d / K) h3 qO qE qB
-    obtain ⟨e3, o3, b3⟩ := selP (x := G (.ndiv (εD eR) (.reg KR))) (y := Ex.lit 0) (B := B) hl3
-    refine ⟨⟨dO, mO, o3.2 ⟨sO, go⟩⟩, ?_, ⟨dB, mB, b3.2 ⟨sB, gb⟩⟩⟩
-    rw [e3, ge, if_pos ⟨h1, h2, h3⟩]
-  · have hl3 : ¬ (Ex.add (.ndiv (εD eR) (.reg KR)) (.neg (.reg NR))).eval s < 0 := by
-      rw [sE]; omega
-    obtain ⟨e3, o3, b3⟩ := selN (x := G (.ndiv (εD eR) (.reg KR))) (y := Ex.lit 0) (B := B) hl3
-    refine ⟨⟨dO, mO, o3.2 ⟨sO, trivial⟩⟩, ?_, ⟨dB, mB, b3.2 ⟨sB, z0⟩⟩⟩
-    rw [e3, if_neg (by omega)]; rfl
-
 theorem εLit_regs (eR KR NR : Fin HS) (c : ℤ) (j : Fin HS) (hj : j ∈ (εLit eR KR NR c).regs) :
     j = eR ∨ j = NLogN.KFW.kS ∨ j = KR ∨ j = NR := by
   rcases εAff_regs _ _ _ _ j hj with h | h | h | h | h
@@ -509,24 +335,6 @@ theorem εLit_regs (eR KR NR : Fin HS) (c : ℤ) (j : Fin HS) (hj : j ∈ (εLit
   · exact Or.inr (Or.inr (Or.inl h))
   · exact Or.inr (Or.inr (Or.inr h))
   · simp [Ex.regs] at h
-
-/-- Reading background registers below an empty managed part. -/
-theorem agree_top_encK {σ : Fin HS → Option ℤ} {s : IState HS} (hs : Agree σ s)
-    {g : Fin HS → List ℤ} {j : Fin HS} {v : ℤ} (hj : σ j = some v) (hg : g j = []) :
-    (NLogN.KIL.encK s g).top j = v ∧ (NLogN.KIL.encK s g).IsInt j := by
-  obtain ⟨L, hL⟩ := hs j v hj
-  have : (NLogN.KIL.encK s g).G j = .int v :: L := by simp [hg, hL, ints]
-  exact ⟨IState.top_eq this, IState.isInt_of this⟩
-
-theorem aff_tops {σ : Fin HS → Option ℤ} {s : IState HS} (hs : Agree σ s) {eR KR NR : Fin HS}
-    {e K N : ℕ} (hR : AffReg σ eR KR NR e K N) {k : ℕ} {g : Fin HS → List ℤ}
-    (hk : g NLogN.KFW.kS = [(k : ℤ)]) (he : g eR = []) (hK : g KR = []) (hN : g NR = []) :
-    (NLogN.KIL.encK s g).top eR = e ∧ (NLogN.KIL.encK s g).IsInt eR ∧ (NLogN.KIL.encK s g).top NLogN.KFW.kS = k ∧
-    (NLogN.KIL.encK s g).IsInt NLogN.KFW.kS ∧ (NLogN.KIL.encK s g).top KR = K ∧ (NLogN.KIL.encK s g).IsInt KR ∧
-    (NLogN.KIL.encK s g).top NR = N ∧ (NLogN.KIL.encK s g).IsInt NR :=
-  ⟨(agree_top_encK hs hR.e he).1, (agree_top_encK hs hR.e he).2, top_encK hk, isInt_encK hk,
-    (agree_top_encK hs hR.K hK).1, (agree_top_encK hs hR.K hK).2,
-    (agree_top_encK hs hR.N hN).1, (agree_top_encK hs hR.N hN).2⟩
 
 /-- **`EpsOK` for a constant exponent** on the bits `pos i = e - K φ(i)`. -/
 theorem epsOK_lit {ι : Type*} [Fintype ι] {σ : Fin HS → Option ℤ} {s : IState HS}

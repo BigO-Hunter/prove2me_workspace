@@ -2,6 +2,7 @@
 
 import Definitions.Def_IntMul_Kappa_K_Defs18
 import Theorems.Thm_NLogN_KFL_T0c_XLc
+import Theorems.Thm_NLogN_KFL_card_moved
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -15,65 +16,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open AModel
-
-theorem decomp (Q S n : ℕ) : n = n / (Q * S) * (Q * S) + gc Q S n * S + n % S := by
-  unfold gc
-  have h1 := Nat.div_add_mod n S
-  have h2 := Nat.div_add_mod (n / S) Q
-  rw [Nat.div_div_eq_div_mul] at h2
-  rw [mul_comm Q S]
-  nlinarith [h1, h2]
-
-theorem sc_int (Q S v n : ℕ) : (NLogN.KFL.sc Q S v n : ℤ) = n + ((v : ℤ) - gc Q S n) * S := by
-  have h := decomp Q S n
-  unfold NLogN.KFL.sc
-  have h' : (n : ℤ) = (n / (Q * S) * (Q * S) : ℕ) + (gc Q S n * S : ℕ) + (n % S : ℕ) := by
-    exact_mod_cast h
-  push_cast at h' ⊢
-  linarith
-
-theorem gc_lt {Q S : ℕ} (hQ : 0 < Q) (n : ℕ) : gc Q S n < Q := Nat.mod_lt _ hQ
-
-theorem div_sc {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
-    NLogN.KFL.sc Q S v n / (Q * S) = n / (Q * S) := by
-  unfold NLogN.KFL.sc
-  have hQS : 0 < Q * S := Nat.mul_pos (by omega) hS
-  have hr : v * S + n % S < Q * S := by
-    have := Nat.mod_lt n hS
-    have : v * S + S ≤ Q * S := by nlinarith
-    omega
-  rw [add_assoc, Nat.add_comm, Nat.add_mul_div_right _ _ hQS, Nat.div_eq_of_lt hr, zero_add]
-
-theorem gc_sc_self {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
-    gc Q S (NLogN.KFL.sc Q S v n) = v := by
-  unfold gc NLogN.KFL.sc
-  have e : n / (Q * S) * (Q * S) + v * S + n % S = n % S + S * (n / (Q * S) * Q + v) := by ring
-  rw [e, Nat.add_mul_div_left _ _ hS, Nat.div_eq_of_lt (Nat.mod_lt n hS), zero_add,
-    Nat.add_mod, Nat.mul_mod_left, zero_add, Nat.mod_mod, Nat.mod_eq_of_lt hv]
-
-/-- A chunk at a higher stride `S' = Q S m` is unchanged. -/
-theorem gc_sc_hi {Q S Q' S' m : ℕ} (hS : 0 < S) (hm : 0 < m) (hS' : S' = Q * S * m) {v : ℕ}
-    (hv : v < Q) (n : ℕ) : gc Q' S' (NLogN.KFL.sc Q S v n) = gc Q' S' n := by
-  unfold gc
-  subst hS'
-  rw [← Nat.div_div_eq_div_mul (NLogN.KFL.sc Q S v n), ← Nat.div_div_eq_div_mul n, div_sc hS hv]
-
-theorem div_mod_lo {S' Q' m X r : ℕ} (hS' : 0 < S') :
-    (S' * Q' * m * X + r) / S' % Q' = r / S' % Q' := by
-  rw [show S' * Q' * m * X + r = r + S' * (Q' * (m * X)) by ring, Nat.add_mul_div_left _ _ hS',
-    Nat.add_mul_mod_self_left]
-
-/-- A chunk at a lower stride (`S = S' Q' m`) is unchanged. -/
-theorem gc_sc_lo {Q S Q' S' m : ℕ} (hS' : 0 < S') (hS : S = S' * Q' * m) (v n : ℕ) :
-    gc Q' S' (NLogN.KFL.sc Q S v n) = gc Q' S' n := by
-  unfold gc NLogN.KFL.sc
-  have h1 : n / (Q * S) * (Q * S) + v * S + n % S = S' * Q' * m * (n / (Q * S) * Q + v) + n % S := by
-    rw [hS]; ring
-  have h2 : n = S' * Q' * m * (n / S) + n % S := by
-    rw [← hS]; exact (Nat.div_add_mod n S).symm
-  rw [h1, div_mod_lo hS']
-  conv_rhs => rw [h2]
-  rw [div_mod_lo hS']
 
 theorem sc_lt {Q S m v n : ℕ} (hS : 0 < S) (hv : v < Q) (hn : n < Q * S * m) :
     NLogN.KFL.sc Q S v n < Q * S * m := by
@@ -117,62 +59,12 @@ variable (g : Geo)
 
 variable {g}
 
-theorem Pos.s2 (h : g.Pos) : 0 < g.S2 := Nat.mul_pos h.n3 h.b
-theorem Pos.s1 (h : g.Pos) : 0 < g.S1 := Nat.mul_pos (Nat.mul_pos h.q h.s2) h.n2
-theorem Pos.s0 (h : g.Pos) : 0 < g.S0 := Nat.mul_pos (Nat.mul_pos h.q h.s1) h.n1
-
 end Geo
-
-theorem TV_trOf {g : Geo} (hg : g.Pos) (n : ℕ) : TV g.Q (trOf g n) :=
-  ⟨gc_lt hg.q _, gc_lt hg.q _, gc_lt hg.q _⟩
 
 section Phi
 
 variable {g : Geo} (hg : g.Pos)
 include hg
-
-theorem gc1_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S1 (NLogN.KFL.sc g.Q g.S2 v n) = gc g.Q g.S1 n :=
-  gc_sc_hi hg.s2 hg.n2 rfl hv n
-
-theorem gc0_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (NLogN.KFL.sc g.Q g.S2 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s2 (Nat.mul_pos hg.n2 (Nat.mul_pos hg.q hg.n1))
-    (by simp only [Geo.S0, Geo.S1]; ring) hv n
-
-theorem gc0_sc1 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (NLogN.KFL.sc g.Q g.S1 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s1 hg.n1 rfl hv n
-
-theorem gc1_sc0 (v n : ℕ) : gc g.Q g.S1 (NLogN.KFL.sc g.Q g.S0 v n) = gc g.Q g.S1 n :=
-  gc_sc_lo hg.s1 (m := g.N1) (by simp only [Geo.S0]; ring) v n
-
-theorem gc2_sc0 (v n : ℕ) : gc g.Q g.S2 (NLogN.KFL.sc g.Q g.S0 v n) = gc g.Q g.S2 n :=
-  gc_sc_lo hg.s2 (m := g.N2 * g.Q * g.N1) (by simp only [Geo.S0, Geo.S1]; ring) v n
-
-theorem gc2_sc1 (v n : ℕ) : gc g.Q g.S2 (NLogN.KFL.sc g.Q g.S1 v n) = gc g.Q g.S2 n :=
-  gc_sc_lo hg.s2 (m := g.N2) (by simp only [Geo.S1]; ring) v n
-
-/-- The chunk triple after `phi F` is `F` of the old one. -/
-theorem trOf_phi {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) (n : ℕ) :
-    trOf g (phi g F n) = F (trOf g n) := by
-  obtain ⟨h0, h1, h2⟩ := hF _ (TV_trOf hg n)
-  show trOf g (NLogN.KFL.sc g.Q g.S0 (F (trOf g n)).1 (NLogN.KFL.sc g.Q g.S1 (F (trOf g n)).2.1
-    (NLogN.KFL.sc g.Q g.S2 (F (trOf g n)).2.2 n))) = F (trOf g n)
-  generalize F (trOf g n) = c at h0 h1 h2 ⊢
-  simp only [trOf]
-  refine Prod.ext (gc_sc_self hg.s0 h0 _) (Prod.ext ?_ ?_)
-  · simp only; rw [gc1_sc0 hg, gc_sc_self hg.s1 h1]
-  · simp only; rw [gc2_sc0 hg, gc2_sc1 hg, gc_sc_self hg.s2 h2]
-
-/-- Integer formula of `phi`. -/
-theorem phi_int {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) (n : ℕ) :
-    (phi g F n : ℤ) = n + (((F (trOf g n)).1 : ℤ) - (trOf g n).1) * g.S0 +
-      (((F (trOf g n)).2.1 : ℤ) - (trOf g n).2.1) * g.S1 +
-      (((F (trOf g n)).2.2 : ℤ) - (trOf g n).2.2) * g.S2 := by
-  obtain ⟨h0, h1, h2⟩ := hF _ (TV_trOf hg n)
-  show ((NLogN.KFL.sc g.Q g.S0 (F (trOf g n)).1 (NLogN.KFL.sc g.Q g.S1 (F (trOf g n)).2.1
-    (NLogN.KFL.sc g.Q g.S2 (F (trOf g n)).2.2 n)) : ℕ) : ℤ) = _
-  generalize F (trOf g n) = c at h0 h1 h2 ⊢
-  rw [sc_int, sc_int, sc_int, gc0_sc1 hg _ _ h1, gc0_sc2 hg _ _ h2, gc1_sc2 hg _ _ h2]
-  simp only [trOf]; ring
 
 theorem phi_lt {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) {n : ℕ} (hn : n < g.V) :
     phi g F n < g.V := by
@@ -190,18 +82,6 @@ theorem phi_lt {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) {n : ℕ}
   rw [hS1]
   refine sc_lt hg.s2 h2 ?_
   rw [← hS1, ← hS0, ← hV]; exact hn
-
-theorem phi_phi {F G : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c))
-    (hG : ∀ c, TV g.Q c → TV g.Q (G c)) (n : ℕ) :
-    phi g F (phi g G n) = phi g (F ∘ G) n := by
-  have hFG : ∀ c, TV g.Q c → TV g.Q ((F ∘ G) c) := fun c hc => hF _ (hG c hc)
-  have e1 := phi_int hg hF (phi g G n)
-  have e2 := phi_int hg hG n
-  have e3 := phi_int hg hFG n
-  rw [trOf_phi hg hG] at e1
-  have : (phi g F (phi g G n) : ℤ) = phi g (F ∘ G) n := by
-    rw [e1, e2, e3]; simp only [Function.comp]; ring
-  exact_mod_cast this
 
 end Phi
 
@@ -245,156 +125,9 @@ variable (K ρ f : ℕ)
 
 end Canon
 
-theorem Q_pos (K f : ℕ) : (0 : ℤ) < 2 ^ (f * K) := by positivity
-
 section Facts
 
 variable {K ρ f : ℕ}
-
-/-- `lineP` is the negated packed line. -/
-theorem lineP_eq (l : Line) (c : Tr) (hc : TV (2 ^ (f * K)) c) :
-    lineP K ρ f l c = (c.1, (pline K ρ f c.1 (negL l) (c.2.1, c.2.2)).1.toNat,
-      (pline K ρ f c.1 (negL l) (c.2.1, c.2.2)).2.toNat) := by
-  have hQ := Q_pos K f
-  have hrot : ∀ (t : ℕ) (o : ℤ), t < 2 ^ (f * K) →
-      (((t + 2 ^ (f * K) - ((l.sgn * o) % 2 ^ (f * K)).toNat) % 2 ^ (f * K) : ℕ) : ℤ) =
-        ((t : ℤ) + -l.sgn * o) % 2 ^ (f * K) := by
-    intro t o ht
-    have h0 := Int.emod_nonneg (l.sgn * o) hQ.ne'
-    have h1 := Int.emod_lt_of_pos (l.sgn * o) hQ
-    have hle : ((l.sgn * o) % 2 ^ (f * K)).toNat ≤ t + 2 ^ (f * K) := by
-      have : ((l.sgn * o) % 2 ^ (f * K)).toNat < 2 ^ (f * K) := by
-        have e := Int.toNat_of_nonneg h0
-        have : ((((l.sgn * o) % 2 ^ (f * K)).toNat : ℕ) : ℤ) < 2 ^ (f * K) := by rw [e]; exact h1
-        exact_mod_cast this
-      omega
-    push_cast [Nat.cast_sub hle]
-    rw [Int.toNat_of_nonneg h0]
-    rw [show (t : ℤ) + 2 ^ (f * K) - l.sgn * o % 2 ^ (f * K) =
-      (t + -l.sgn * o) + (2 ^ (f * K) * 1 + (l.sgn * o - l.sgn * o % 2 ^ (f * K))) by ring]
-    rw [Int.add_emod, show l.sgn * o - l.sgn * o % 2 ^ (f * K) = 2 ^ (f * K) * (l.sgn * o / 2 ^ (f * K))
-      by rw [Int.emod_def]; ring, ← mul_add, Int.mul_emod_right, add_zero, Int.emod_emod_of_dvd _ (dvd_refl _)]
-  unfold lineP amt pline negL
-  by_cases hy : l.tgtY
-  · simp only [hy, if_true]
-    refine Prod.ext rfl (Prod.ext ?_ ?_)
-    · simp only
-      rw [← hrot _ _ hc.2.1, Int.toNat_natCast]
-    · simp
-  · simp only [hy, if_false, Bool.false_eq_true]
-    refine Prod.ext rfl (Prod.ext ?_ ?_)
-    · simp
-    · simp only
-      rw [← hrot _ _ hc.2.2, Int.toNat_natCast]
-
-theorem VP_pline (x : ℤ) (l : Line) (p : ℤ × ℤ) (hp : NLogN.KFL.VP (2 ^ (f * K)) p) :
-    NLogN.KFL.VP (2 ^ (f * K)) (pline K ρ f x l p) := by
-  have hQ := Q_pos K f
-  unfold pline
-  split_ifs
-  · exact ⟨Int.emod_nonneg _ hQ.ne', Int.emod_lt_of_pos _ hQ, hp.2.2⟩
-  · exact ⟨hp.1, hp.2.1, Int.emod_nonneg _ hQ.ne', Int.emod_lt_of_pos _ hQ⟩
-
-theorem negL_pline (x : ℤ) (l : Line) (p : ℤ × ℤ) (hp : NLogN.KFL.VP (2 ^ (f * K)) p) :
-    pline K ρ f x (negL l) (pline K ρ f x l p) = p := by
-  unfold pline negL
-  by_cases hy : l.tgtY
-  · simp only [hy, if_true]
-    refine Prod.ext ?_ rfl
-    simp only
-    rw [Int.emod_add_emod, show p.1 + l.sgn * Butterfly.offset K ρ f x p.2 l.b + -l.sgn * Butterfly.offset K ρ f x p.2 l.b
-      = p.1 by ring, Int.emod_eq_of_lt hp.1 hp.2.1]
-  · simp only [hy, if_false, Bool.false_eq_true]
-    refine Prod.ext rfl ?_
-    simp only
-    rw [Int.emod_add_emod, show p.2 + l.sgn * Butterfly.offset K ρ f x p.1 l.b + -l.sgn * Butterfly.offset K ρ f x p.1 l.b
-      = p.2 by ring, Int.emod_eq_of_lt hp.2.2.1 hp.2.2.2]
-
-theorem VP_foldr (x : ℤ) : ∀ (ls : List Line) (p : ℤ × ℤ), NLogN.KFL.VP (2 ^ (f * K)) p →
-    NLogN.KFL.VP (2 ^ (f * K)) (ls.foldr (fun l p => pline K ρ f x (negL l) p) p)
-  | [], p, hp => hp
-  | l :: ls, p, hp => VP_pline x _ _ (VP_foldr x ls p hp)
-
-theorem VP_foldl (x : ℤ) : ∀ (ls : List Line) (p : ℤ × ℤ), NLogN.KFL.VP (2 ^ (f * K)) p →
-    NLogN.KFL.VP (2 ^ (f * K)) (ls.foldl (fun p l => pline K ρ f x l p) p)
-  | [], p, hp => hp
-  | l :: ls, p, hp => VP_foldl x ls _ (VP_pline x l p hp)
-
-theorem FSb_S0 (x : ℤ) (p : ℤ × ℤ) (hp : NLogN.KFL.VP (2 ^ (f * K)) p) : FSb K ρ f x (S0 K ρ f x p) = p := by
-  unfold S0 FSb
-  suffices H : ∀ (ls : List Line) (p : ℤ × ℤ), NLogN.KFL.VP (2 ^ (f * K)) p →
-      ls.foldr (fun l p => pline K ρ f x (negL l) p) (ls.foldl (fun p l => pline K ρ f x l p) p) = p from
-    H lines p hp
-  intro ls
-  induction ls with
-  | nil => intro p _; rfl
-  | cons l ls ih =>
-    intro p hp
-    simp only [List.foldr_cons, List.foldl_cons]
-    rw [ih _ (VP_pline x l p hp), negL_pline x l p hp]
-
-theorem VP_S0 (x : ℤ) (p : ℤ × ℤ) (hp : NLogN.KFL.VP (2 ^ (f * K)) p) : NLogN.KFL.VP (2 ^ (f * K)) (S0 K ρ f x p) :=
-  VP_foldl x lines p hp
-
-theorem VP_nmP (c : Tr) (hc : TV (2 ^ (f * K)) c) : NLogN.KFL.VP (2 ^ (f * K)) (nmP c) := by
-  refine ⟨by simp [nmP], ?_, by simp [nmP], ?_⟩
-  · simp only [nmP]; exact_mod_cast hc.2.1
-  · simp only [nmP]; exact_mod_cast hc.2.2
-
-theorem nmP_ofP (x : ℕ) (p : ℤ × ℤ) (hp : NLogN.KFL.VP (2 ^ (f * K)) p) : nmP (ofP x p) = p := by
-  simp [nmP, ofP, Int.toNat_of_nonneg hp.1, Int.toNat_of_nonneg hp.2.2.1]
-
-theorem ofP_nmP (c : Tr) : ofP c.1 (nmP c) = c := by simp [nmP, ofP]
-
-theorem TV_ofP (x : ℕ) (hx : x < 2 ^ (f * K)) (p : ℤ × ℤ) (hp : NLogN.KFL.VP (2 ^ (f * K)) p) :
-    TV (2 ^ (f * K)) (ofP x p) := by
-  refine ⟨hx, ?_, ?_⟩
-  · have e := Int.toNat_of_nonneg hp.1
-    have : ((p.1.toNat : ℕ) : ℤ) < 2 ^ (f * K) := by rw [e]; exact hp.2.1
-    simp only [ofP]; exact_mod_cast this
-  · have e := Int.toNat_of_nonneg hp.2.2.1
-    have : ((p.2.toNat : ℕ) : ℤ) < 2 ^ (f * K) := by rw [e]; exact hp.2.2.2
-    simp only [ofP]; exact_mod_cast this
-
-theorem FSc_eq (c : Tr) (hc : TV (2 ^ (f * K)) c) : FSc K ρ f c = ofP c.1 (FSb K ρ f c.1 (nmP c)) := by
-  unfold FSc FSb
-  suffices H : ∀ ls : List Line, ls.foldr (fun l c => lineP K ρ f l c) c =
-      ofP c.1 (ls.foldr (fun l p => pline K ρ f c.1 (negL l) p) (nmP c)) from H lines
-  intro ls
-  induction ls with
-  | nil => exact (ofP_nmP c).symm
-  | cons l ls ih =>
-    simp only [List.foldr_cons]
-    rw [ih]
-    have hv := VP_foldr (K := K) (ρ := ρ) (f := f) c.1 ls (nmP c) (VP_nmP c hc)
-    rw [lineP_eq l _ (TV_ofP _ hc.1 _ hv)]
-    simp only [ofP]
-    rw [show ((((ls.foldr (fun l p => pline K ρ f c.1 (negL l) p) (nmP c)).1.toNat : ℕ) : ℤ),
-        (((ls.foldr (fun l p => pline K ρ f c.1 (negL l) p) (nmP c)).2.toNat : ℕ) : ℤ)) =
-        ls.foldr (fun l p => pline K ρ f c.1 (negL l) p) (nmP c) from
-      Prod.ext (Int.toNat_of_nonneg hv.1) (Int.toNat_of_nonneg hv.2.2.1)]
-
-theorem TV_FSc (c : Tr) (hc : TV (2 ^ (f * K)) c) : TV (2 ^ (f * K)) (FSc K ρ f c) := by
-  rw [FSc_eq c hc]
-  exact TV_ofP _ hc.1 _ (VP_foldr _ _ _ (VP_nmP c hc))
-
-theorem S0c_eq (c : Tr) : S0c K ρ f c = ofP c.1 (S0 K ρ f c.1 (nmP c)) := rfl
-
-theorem TV_S0c (c : Tr) (hc : TV (2 ^ (f * K)) c) : TV (2 ^ (f * K)) (S0c K ρ f c) :=
-  TV_ofP _ hc.1 _ (VP_S0 _ _ (VP_nmP c hc))
-
-theorem FSc_S0c (c : Tr) (hc : TV (2 ^ (f * K)) c) : FSc K ρ f (S0c K ρ f c) = c := by
-  rw [FSc_eq _ (TV_S0c c hc), S0c_eq]
-  simp only [ofP]
-  rw [show nmP (c.1, (S0 K ρ f (↑c.1) (nmP c)).1.toNat, (S0 K ρ f (↑c.1) (nmP c)).2.toNat) =
-    S0 K ρ f c.1 (nmP c) from nmP_ofP c.1 _ (VP_S0 _ _ (VP_nmP c hc))]
-  rw [FSb_S0 _ _ (VP_nmP c hc)]
-  exact ofP_nmP c
-
-theorem TV_T0c (c : Tr) (hc : TV (2 ^ (f * K)) c) : TV (2 ^ (f * K)) (T0c K ρ f c) := by
-  refine ⟨hc.1, ?_, hc.2.2⟩
-  simp only [T0c]
-  exact Nat.xor_lt_two_pow hc.2.1 (lt_of_le_of_lt Nat.and_le_left hc.1)
 
 theorem TV_XLc (c : Tr) (hρK : ρ < K) (hf : 1 ≤ f) (hc : TV (2 ^ (f * K)) c) :
     TV (2 ^ (f * K)) (XLc K ρ f c) := by

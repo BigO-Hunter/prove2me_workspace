@@ -489,49 +489,6 @@ end Bounds2
 
 section Seg
 
-theorem recRep_take {W r n F : ℕ} (hW : 0 < W) {X : Fin W → List (Fin r → ℂ)}
-    (hX : ∀ v, (X v).length = n) {zs : List GI} (h : RecRep r F zs (flatR X)) :
-    RecRep r F (zs.take (n * r)) (X ⟨0, hW⟩) := by
-  have hlen : zs.length = W * n * r := by rw [h.1, length_flatR hX]
-  refine ⟨?_, fun j c hj => ?_⟩
-  · rw [List.length_take, hX]; apply Nat.min_eq_left; rw [hlen]
-    exact Nat.mul_le_mul_right _ (Nat.le_mul_of_pos_left _ hW)
-  · rw [hX] at hj
-    have hjr : j * r + c < n * r := by
-      have := c.isLt
-      have : (j + 1) * r ≤ n * r := Nat.mul_le_mul_right _ hj
-      rw [Nat.succ_mul] at this; omega
-    have hj' : j < (flatR X).length := by
-      rw [length_flatR hX]; exact lt_of_lt_of_le hj (Nat.le_mul_of_pos_left _ hW)
-    rw [List.getD_eq_getElem?_getD, List.getElem?_take, if_pos hjr, ← List.getD_eq_getElem?_getD,
-      h.2 j c hj']
-    have := getD_flatR hX 0 ⟨0, hW⟩ hj
-    simp only [zero_mul, zero_add] at this
-    rw [this]
-
-theorem enc_set0 {W L : ℕ} (hW : 0 < W) {e : ℕ → ℕ} {zs : List GI} {y : ℕ → ℕ → ℂ}
-    (hE : Enc W L e zs y) {seg' : List GI} {F' : ℕ} {y0 : ℕ → ℂ} (hl : seg'.length = L)
-    (hv : ∀ p < L, toC (seg'.getD p 0) = 2 ^ F' * y0 p) :
-    Enc W L (Function.update e 0 F') (seg' ++ zs.drop L) (Function.update y 0 y0) := by
-  refine ⟨?_, fun v hv' p hp => ?_⟩
-  · rw [List.length_append, hl, List.length_drop, hE.1]
-    obtain ⟨W', rfl⟩ : ∃ W', W = W' + 1 := ⟨W - 1, by omega⟩
-    rw [Nat.succ_mul]; omega
-  · by_cases h0 : v = 0
-    · subst h0
-      simp only [zero_mul, zero_add, Function.update_self]
-      rw [List.getD_append _ _ _ _ (by omega)]
-      exact hv p hp
-    · rw [Function.update_of_ne h0, Function.update_of_ne h0]
-      have hvL : L ≤ v * L := Nat.le_mul_of_pos_left _ (by omega)
-      rw [List.getD_append_right _ _ _ _ (by rw [hl]; omega), hl, List.getD_eq_getElem?_getD,
-        List.getElem?_drop, ← List.getD_eq_getElem?_getD]
-      have : L + (v * L + p - L) = v * L + p := by
-        have : L ≤ v * L := Nat.le_mul_of_pos_left _ (by omega)
-        omega
-      rw [this]
-      exact hE.2 v hv' p hp
-
 end Seg
 
 /-! ## The wrapper -/
