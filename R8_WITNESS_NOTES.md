@@ -49,3 +49,6 @@ produce the original r7 staircase witness at W = 108516254 against bitR7.
 Formal side-goal: a proved lemma `FormalOK C → (C.hist.map (·.1)).sum ≥
 529 * W - 1344189` (per-role-frame lower bound) to turn the impossibility
 above into a theorem.
+
+## Wound register (2026-11-08): FD-exhaustion under concurrent lake builds
+"Too many open files in system" from 7+ concurrent lake processes kills elaboration nondeterministically (observed 3x on net0ok builds). Rule: ONE lake build per worker session, detached + retry; coordinate build windows.
