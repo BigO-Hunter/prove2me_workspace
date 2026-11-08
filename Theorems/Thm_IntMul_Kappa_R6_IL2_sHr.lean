@@ -484,14 +484,8 @@ section Par
 variable {k K e T S0 B r H : ℕ} {i j : Fin mC} {u : IState HS} {Bb : ℕ}
   (hp : PF k K e T S0 B r) (hA : Agree (rowσ k K e T S0 B r H i j) u)
   (hBb : zsz ((VbR T S0 B r H : ℕ) : ℤ) ≤ Bb)
-
-omit hA in
-include hp hBb in
-include hp hBb in
-include hp hBb in
 include hp hA hBb
 
-omit hp hBb in
 end Par
 
 end NLogN.KFX
@@ -569,6 +563,13 @@ theorem PF.TV : 2 ^ T ≤ VbR T S0 B r H := by
     _ = 2 * (B * 2 ^ T * S0) * r * (H + 1) := by ring
 
 end PFacts
+
+theorem rowσ_at {m : ℕ} (k K e t S0 B r H : ℕ) (i j : Fin m) (q : Fin 10) :
+    rowσ m k K e t S0 B r H i j (KFW.rowR q) = some (rowVals m k K e t S0 B r H i j q) := by
+  have hq := q.isLt
+  unfold rowσ KFW.rowR
+  rw [dif_pos (by simp only; omega)]
+  congr 2; ext; simp
 
 section Par
 

@@ -322,10 +322,6 @@ section SQ
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImplQ.congrE {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {U : IStmt HS Pp} {e e' dw dw' : ℕ}
-    {c : ℕ → ℕ} (h : SImplQ I iprog Q lo hi r st n T U e dw c) (he : e = e') (hd : dw = dw') :
-    SImplQ I iprog Q lo hi r st n T U e' dw' c := he ▸ hd ▸ h
-
 end SQ
 
 section RQ
@@ -564,11 +560,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-/-! ## Frames of natural pushes -/
-
-theorem frV_keys (σ : Fin HS → Option ℤ) (l : List (Fin HS × NE)) :
-    (frV σ l).map Prod.fst = l.map Prod.fst := by simp [frV, List.map_map, Function.comp_def]
-
 section Frames
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
@@ -616,16 +607,11 @@ open Matrix Finset Complex Butterfly P8Lift IntMul.Kappa.R6.Cx
 
 section Scale
 
-theorem Gs_lt {A p m x : ℕ} (h : x < 2 * m) : Gs A p m x = x := by simp [Gs, h]
-
 end Scale
 
 /-! ## The depth -/
 
 section Dep
-
-theorem dep_lt {m x : ℕ} (h : x < 2 * m) : dep m x = 0 := by
-  rw [dep, dif_neg (by omega)]
 
 end Dep
 
@@ -783,17 +769,6 @@ namespace IntMul.Kappa.R6.IL3H
 open IntMul NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN.KFN NLogN.KFW
   Complex P8Lift Butterfly IntMul.Kappa.R6.Cx
 
-theorem VbH_mono (c : Cfg) {K t S0 r H E e B E' e' B' : ℕ} (hE : E' ≤ E) (he : e' ≤ e)
-    (hB : B' ≤ B) : VbH c K t S0 r H E' e' B' ≤ VbH c K t S0 r H E e B := by
-  unfold VbH
-  have h1 : (E' + 1) ^ c.p ≤ (E + 1) ^ c.p := Nat.pow_le_pow_left (by omega) _
-  have h2 : c.Aw * (E' + 1) ^ c.p ≤ c.Aw * (E + 1) ^ c.p := Nat.mul_le_mul_left _ h1
-  have h3 : K * E' ≤ K * E := Nat.mul_le_mul_left _ hE
-  have h4 : c.Wr * (B' * 2 ^ t * S0 * r) ≤ c.Wr * (B * 2 ^ t * S0 * r) :=
-    Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ (Nat.mul_le_mul_right _
-      (Nat.mul_le_mul_right _ hB)))
-  omega
-
 /-! ## Side lemmas -/
 
 theorem het_sub {e K t : ℕ} (hK : 1 ≤ K) (het : e - e % K + K ≤ t) (j : ℕ) :
@@ -803,11 +778,6 @@ theorem het_sub {e K t : ℕ} (hK : 1 ≤ K) (het : e - e % K + K ≤ t) (j : �
   have h3 : (e - K * j) / K ≤ e / K := Nat.div_le_div_right (Nat.sub_le _ _)
   have h4 := Nat.mul_le_mul_left K h3
   omega
-
-/-- A pushed frame keeps the registers outside its keys. -/
-theorem σPush_frV_ne (σ σ' : Fin HS → Option ℤ) (l : List (Fin HS × NE)) {i : Fin HS}
-    (hi : i ∉ l.map Prod.fst) : σPush σ' (frV σ l) i = σ' i :=
-  σPush_ne _ _ _ (fun p hp e => hi (by rw [← frV_keys σ l, ← e]; exact List.mem_map_of_mem hp))
 
 end IntMul.Kappa.R6.IL3H
 

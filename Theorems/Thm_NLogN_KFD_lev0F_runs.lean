@@ -11,6 +11,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs11
 import Definitions.Def_IntMul_Kappa_R6_Defs12
 import Definitions.Def_IntMul_Kappa_R6_Defs20
 import Theorems.Thm_NLogN_KFD_shFracU_fspec
+import Theorems.Thm_IntMul_Kappa_R6_IL_cLevBody_le
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -702,43 +703,6 @@ namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-theorem cUL_le (n : ℕ) : cUL n ≤ 1300 * n + 1000 := by
-  have := NLogN.KFC.zsz_nat_le n; unfold cUL; omega
-
-/-- All four conversions and the constant are absorbed: `O(V)` total. -/
-theorem cUL4_le (P q M B w : ℕ) (hB1 : 1 ≤ B) (hM1 : 1 ≤ M) (hq1 : 1 ≤ q) (hP1 : 1 ≤ P) :
-    cUL P + cUL q + cUL M + cUL B + 1000 ≤ 51 * kap w * (P * q * M * B) := by
-  have hk : 200 ≤ kap w := by simp [kap]
-  set V := P * q * M * B with hV
-  have h1 : 1 ≤ V := Nat.mul_pos (Nat.mul_pos (Nat.mul_pos hP1 hq1) hM1) hB1
-  have hPV : P ≤ V := by
-    have : P ≤ P * q := Nat.le_mul_of_pos_right _ hq1
-    have : P * q ≤ P * q * M := Nat.le_mul_of_pos_right _ hM1
-    have : P * q * M ≤ V := Nat.le_mul_of_pos_right _ hB1
-    omega
-  have hqV : q ≤ V := by
-    have : q ≤ P * q := Nat.le_mul_of_pos_left _ hP1
-    have : P * q ≤ P * q * M := Nat.le_mul_of_pos_right _ hM1
-    have : P * q * M ≤ V := Nat.le_mul_of_pos_right _ hB1
-    omega
-  have hMV : M ≤ V := by
-    have : M ≤ P * q * M := Nat.le_mul_of_pos_left _ (Nat.mul_pos hP1 hq1)
-    have : P * q * M ≤ V := Nat.le_mul_of_pos_right _ hB1
-    omega
-  have hBV : B ≤ V := Nat.le_mul_of_pos_left _ (Nat.mul_pos (Nat.mul_pos hP1 hq1) hM1)
-  have := cUL_le P; have := cUL_le q; have := cUL_le M; have := cUL_le B
-  have h2 : 200 * V ≤ kap w * V := Nat.mul_le_mul_right _ hk
-  have e : 51 * kap w * V = 51 * (kap w * V) := by ring
-  rw [e]; omega
-
-theorem cFwdF_le (P q M B w : ℕ) (hB1 : 1 ≤ B) (hM1 : 1 ≤ M) (hq1 : 1 ≤ q) (hP1 : 1 ≤ P) :
-    cFwdF P q M B w ≤ (2 * q + 67) * kap w * (P * q * M * B) := by
-  have := cUL4_le P q M B w hB1 hM1 hq1 hP1
-  unfold cFwdF
-  have e : (2 * q + 67) * kap w * (P * q * M * B) =
-      (2 * q + 16) * kap w * (P * q * M * B) + 51 * kap w * (P * q * M * B) := by ring
-  omega
-
 end KFC
 
 end NLogN
@@ -758,14 +722,6 @@ open IntMul AModel
 namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-theorem cBwdF_le (P q M B w : ℕ) (hB1 : 1 ≤ B) (hM1 : 1 ≤ M) (hq1 : 1 ≤ q) (hP1 : 1 ≤ P) :
-    cBwdF P q M B w ≤ (2 * q + 69) * kap w * (P * q * M * B) := by
-  have := cUL4_le P q M B w hB1 hM1 hq1 hP1
-  unfold cBwdF
-  have e : (2 * q + 69) * kap w * (P * q * M * B) =
-      (2 * q + 18) * kap w * (P * q * M * B) + 51 * kap w * (P * q * M * B) := by ring
-  omega
 
 end KFC
 

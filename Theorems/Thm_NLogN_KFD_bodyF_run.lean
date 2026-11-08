@@ -442,10 +442,6 @@ open IntMul RS
 
 namespace KIL
 
-theorem Sp.irun {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P} {p : RS} {s t : IState HS}
-    {c : ℕ} (h : Sp p s t c) : ∃ c' ≤ c, IRuns I iprog p.code s t c' :=
-  ⟨p.cost s, h.2.2, h.2.1 ▸ RS.code_runs p s h.1⟩
-
 section
 variable (s : IState HS) (f : Fin HS → List ℤ)
 
@@ -882,20 +878,6 @@ theorem goodE_ndiv {t : IState HS} {Bb : ℕ} {a b : Ex HS} (ha : GoodE t Bb a) 
     rcases hr with h | h
     · exact ha.rd r h
     · exact hb.rd r h, ⟨ha.ok, hb.ok, h0, h1⟩, ⟨ha.bnd, hb.bnd, hab⟩⟩
-
-theorem goodE_lit {t : IState HS} {Bb : ℕ} {c : ℤ} (hc : zsz c ≤ Bb) : GoodE t Bb (.lit c) :=
-  ⟨by simp [Ex.regs], trivial, by simpa [Ex.Bnd] using hc⟩
-
-theorem pushOK_low {t : IState HS} {Bb : ℕ} (L : List (Fin HS × Ex HS))
-    (hL : ∀ p ∈ L, p.1.val < 22) (hg : ∀ p ∈ L, GoodE t Bb p.2) : PushOK t Bb L := by
-  intro p hp
-  refine ⟨by have := hL p hp; omega, clean_of_rd (hg p hp).rd, ?_, (hg p hp).ok, (hg p hp).bnd⟩
-  intro r hr hm
-  obtain ⟨q, hq, rfl⟩ := List.mem_map.1 hm
-  have h1 := hL q hq
-  rcases (hg p hp).rd q.1 hr with h | h
-  · rw [h] at h1; exact absurd h1 (by decide)
-  · omega
 
 theorem lows4 (a q b c : Ex HS) : ∀ p ∈ ([(1, a), (2, q), (3, b), (4, c)] : List (Fin HS × Ex HS)), p.1.val < 22 := by
   intro p hp; simp only [List.mem_cons, List.not_mem_nil, or_false] at hp

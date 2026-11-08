@@ -100,18 +100,6 @@ variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
 variable (Sb : SelBits sh ι)
 
-/-- Composition of selected-bit operators is the matrix product. -/
-theorem selOp_mul (T U : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) (xs : List M) :
-    selOp Sb T (selOp Sb U xs) = selOp Sb (T * U) xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_selOp] at h₁
-  have hv := valid_decode h₁
-  rw [getElem_selOp, getElem_selOp]
-  simp_rw [getD_selOp_encode Sb U xs (Sb.valid_set _ _ hv), Sb.bits_set _ _ hv,
-    Sb.set_set _ _ _ hv, Finset.smul_sum, smul_smul, Matrix.mul_apply, Finset.sum_smul]
-  exact Finset.sum_comm
-
 theorem selOp_one {xs : List M} (h : xs.length = AModel.vol sh) : selOp Sb 1 xs = xs := by
   apply List.ext_getElem (by simp [h])
   intro j h₁ h₂
@@ -650,13 +638,6 @@ namespace NLogN.KFH
 open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
-
-theorem LImpl.mono {hρ : ρ < K} {r : ℕ} {T : Butterfly.Op (Fin D)} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : LImpl (P := P) (S := S) hρ r T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    LImpl (P := P) (S := S) hρ r T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 theorem LImpl.congrT {hρ : ρ < K} {r : ℕ} {T T' : Butterfly.Op (Fin D)} {code : RS} {e dw : ℕ}
     {c : ℕ → ℕ} (h : LImpl (P := P) (S := S) hρ r T code e dw c) (hT : T = T') :

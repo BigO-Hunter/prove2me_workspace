@@ -12,6 +12,7 @@ import Definitions.Def_IntMul_HvdH_M_Defs1
 import Definitions.Def_IntMul_Kappa_K_Defs13
 import Definitions.Def_IntMul_Kappa_K_Defs10
 import Definitions.Def_IntMul_Kappa_K_Defs11
+import Theorems.Thm_IntMul_Kappa_R6_IL_cLevBody_le
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -38,18 +39,6 @@ namespace NLogN.KIL
 open IntMul RS AModel AModelL12
 
 variable {m : ℕ}
-
-/-! ## The `sub` and `flip` templates -/
-
-/-! ## Per-step cost: a template constant times `(V + 1)(Bb + 2)²` -/
-
-theorem pushCost_eq (Bb : ℕ) : ∀ l : List (Fin HS × Ex HS),
-    pushCost Bb l = pushSz l * 10 ^ 7 * (Bb + 2) ^ 2 + 1
-  | [] => by simp [pushCost, pushSz]
-  | p :: l => by
-    have := pushCost_eq Bb l
-    simp only [pushCost, pushSz, List.map_cons, List.sum_cons] at this ⊢
-    rw [show ∀ a b : ℕ, a + b + 1 = a + (b + 1) from fun a b => by ring, this]; ring
 
 end NLogN.KIL
 

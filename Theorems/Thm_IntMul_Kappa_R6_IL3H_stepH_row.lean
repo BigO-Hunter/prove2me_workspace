@@ -139,9 +139,6 @@ section Basic
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-theorem fset_fbit (st : ι → ℕ) (j : ℕ) : fset st j (fbit st j) = j := by
-  simp [fset, fsetZ]
-
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
 theorem selOpF_one {st : ι → ℕ} {n : ℕ} {xs : List M} (h : xs.length = n) :
@@ -465,20 +462,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFN
 
-/-! ## The lookup expression -/
-
-/-! ## The affine positions -/
-
-/-! ## The affine exponent expression -/
-
-/-! ## The two instances -/
-
-theorem clean_of_lt {e : Ex HS} (h : ∀ j ∈ e.regs, j.val < 56) : e.Clean := by
-  intro j hj hz
-  have := h j hj
-  simp only [zX_all, List.mem_cons, List.not_mem_nil, or_false] at hz
-  rcases hz with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> exact absurd this (by decide)
-
 end NLogN.KFW
 
 end
@@ -661,6 +644,26 @@ theorem NodeRH.wreg1 (hN : NodeRH c σ K t S0 r H E e B) :
 
 theorem rowValsLH_code (K t S0 r H F e Bn G : ℕ) (i j : ℕ) :
     (rowValsLH K t S0 r H F e Bn G i j).map (fun x => (x.1, x.2.1)) = rowPushH i j := rfl
+
+theorem rowσH_ext {m : ℕ} (σ : Fin HS → Option ℤ) (K t S0 r H F e Bn G : ℕ) (i j : Fin m) :
+    SExt (rowσC m F K e t S0 Bn r H G i j)
+      (σPush σ ((rowValsLH K t S0 r H F e Bn G i.val j.val).map fun x => (x.1, x.2.2))) := by
+  intro x v hx
+  obtain ⟨xv, hxv⟩ := x
+  unfold rowσC IL3F.rowσ at hx
+  simp only at hx
+  split_ifs at hx with h1 h2 h3
+  · simp only [Option.some.injEq] at hx
+    subst hx; subst h1
+    simp [rowValsLH, σPush, Function.update_apply, Fin.ext_iff, HS]
+  · simp only [Option.some.injEq] at hx
+    subst hx
+    rcases h2 with rfl | rfl <;> simp [rowValsLH, σPush, Function.update_apply, Fin.ext_iff, HS]
+  · simp only [Option.some.injEq] at hx
+    subst hx
+    obtain ⟨h3a, h3b⟩ := h3
+    interval_cases xv <;>
+      simp [rowValsLH, σPush, IL3F.rowVals, Function.update_apply, Fin.ext_iff, HS]
 
 /-- **A row addition** on the node roles. -/
 theorem stepH_row_sol_aux {rowC : IStmt HS Pp} {aK : ℕ → ℝ} {τ : ℝ} {G : ℕ}

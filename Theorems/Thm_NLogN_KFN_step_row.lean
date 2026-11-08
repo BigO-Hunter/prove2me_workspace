@@ -114,9 +114,6 @@ section Basic
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-theorem fset_fbit (st : ι → ℕ) (j : ℕ) : fset st j (fbit st j) = j := by
-  simp [fset, fsetZ]
-
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
 theorem selOpF_one {st : ι → ℕ} {n : ℕ} {xs : List M} (h : xs.length = n) :

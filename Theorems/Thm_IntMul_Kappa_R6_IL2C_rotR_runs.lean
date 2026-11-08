@@ -307,41 +307,6 @@ namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW AModel Butterfly
 
-/-! ## Pushed parameter lists -/
-
-theorem pushSt_G_mem (t : IState HS) (l : List (Fin HS × ℤ)) (hnd : (l.map Prod.fst).Nodup)
-    {i : Fin HS} {v : ℤ} (hm : (i, v) ∈ l) : (pushSt t l).G i = .int v :: t.G i := by
-  rw [pushSt_G]
-  have hf : l.filter (fun p => p.1 = i) = [(i, v)] := by
-    induction l with
-    | nil => simp at hm
-    | cons p l ih =>
-      obtain ⟨j, u⟩ := p
-      simp only [List.map_cons, List.nodup_cons, List.mem_map] at hnd
-      rcases List.mem_cons.1 hm with h | h
-      · cases h
-        rw [List.filter_cons_of_pos (by simp), List.filter_eq_nil_iff.2]
-        intro q hq hq'
-        exact hnd.1 ⟨q, hq, by simpa using hq'⟩
-      · have hj : j ≠ i := fun e => hnd.1 ⟨(i, v), h, by simp [e]⟩
-        rw [List.filter_cons_of_neg (by simpa using hj)]
-        exact ih hnd.2 h
-  rw [hf]; simp [ints]
-
-/-- A push list whose expressions read none of the pushed stacks and are specified by `ESp`. -/
-theorem pushOK_of {t : IState HS} {Bb : ℕ} {l : List (Fin HS × Ex HS)}
-    (hlow : ∀ p ∈ l, p.1.val < 56) (hreg : ∀ p ∈ l, ∀ r ∈ p.2.regs, r ∉ l.map Prod.fst)
-    (hE : ∀ p ∈ l, ∃ v, ESp p.2 t Bb v) : PushOK t Bb l := by
-  intro p hp
-  obtain ⟨v, hv⟩ := hE p hp
-  exact ⟨hlow p hp, hv.clean, hreg p hp, hv.ok, hv.bnd⟩
-
-theorem pushVals_le {t : IState HS} {Bb : ℕ} {l : List (Fin HS × Ex HS)}
-    (hE : ∀ p ∈ l, ∃ v, ESp p.2 t Bb v) : ∀ q ∈ l, zsz (q.2.eval t) ≤ Bb := by
-  intro q hq
-  obtain ⟨v, hv⟩ := hE q hq
-  exact Ex.zsz_eval_le t Bb _ hv.bnd
-
 /-! ## A table generator followed by `rotF` -/
 
 theorem tabRot_runs {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
@@ -381,17 +346,6 @@ theorem tabRot_runs {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
     split_ifs with h1 h2 <;> simp_all
   rw [eout] at RT
   exact KFD.IRuns.withPushI (I := I) (iprog := iprog) pl _ t Bb hl hv h0 ys R _ (T1.seq RT)
-
-/-- The cost of a push list of bounded total size. -/
-theorem pushCost_le_size (Bb : ℕ) (l : List (Fin HS × Ex HS)) (S : ℕ)
-    (hS : (l.map fun p => p.2.size + 1).sum ≤ S) : pushCost Bb l ≤ S * 10 ^ 7 * (Bb + 2) ^ 2 + 1 := by
-  unfold pushCost
-  have : (l.map fun p => (p.2.size + 1) * 10 ^ 7 * (Bb + 2) ^ 2).sum =
-      (l.map fun p => p.2.size + 1).sum * (10 ^ 7 * (Bb + 2) ^ 2) := by
-    rw [← List.sum_map_mul_right]; congr 1; apply List.map_congr_left; intro p _; ring
-  rw [this]
-  have := Nat.mul_le_mul_right (10 ^ 7 * (Bb + 2) ^ 2) hS
-  nlinarith
 
 /-! ## The uniform table generator of a line -/
 

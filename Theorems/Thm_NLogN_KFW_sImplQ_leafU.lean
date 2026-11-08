@@ -53,20 +53,6 @@ variable {S : ℕ}
 
 namespace Ex
 
-theorem Bnd_mono (s : IState S) {B B' : ℕ} (hB : B ≤ B') : ∀ e : Ex S, e.Bnd s B → e.Bnd s B'
-  | reg _, h | lit _, h => le_trans h hB
-  | add a b, h | mul a b, h | shl a b, h | ndiv a b, h | nmod a b, h =>
-    ⟨Bnd_mono s hB a h.1, Bnd_mono s hB b h.2.1, le_trans h.2.2 hB⟩
-  | quo a b, h | rem a b, h => ⟨Bnd_mono s hB a h.1, Bnd_mono s hB b h.2⟩
-  | neg a, h => Bnd_mono s hB a h
-  | pow2 a, h => ⟨Bnd_mono s hB a h.1, le_trans h.2 hB⟩
-  | sel c x y, h => by
-    refine ⟨Bnd_mono s hB c h.1, ?_⟩
-    have h2 := h.2
-    split_ifs at h2 ⊢
-    · exact Bnd_mono s hB x h2
-    · exact Bnd_mono s hB y h2
-
 end Ex
 
 end NLogN
@@ -154,11 +140,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
-
-/-! ## Gaussian integers -/
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
 
 /-! ## Fine moves with the loop overhead bounded by the count -/
 
@@ -298,15 +279,6 @@ open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
 
-/-! ## Layer implementations -/
-
-theorem LImpl.mono {hρ : ρ < K} {r : ℕ} {T : Butterfly.Op (Fin D)} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : LImpl (P := P) (S := S) hρ r T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    LImpl (P := P) (S := S) hρ r T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 /-! ## The concrete kernels -/
 
 /-! ## The program -/
@@ -334,13 +306,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
-
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
 
 /-! ## The generic segment step -/
 
@@ -460,13 +425,6 @@ section SImplLemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImpl.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImpl r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImpl r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplLemmas
 
 section RImplDefs
@@ -474,12 +432,6 @@ section RImplDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImpl.mono {A : ROp (Fin W) m κ} {code : RS} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImpl r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) : RImpl r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplDefs
 
@@ -519,13 +471,6 @@ section SImplILemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImplI.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : ℕ → IStmt HS Pp} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImplI I iprog r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImplI I iprog r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplILemmas
 
 section RImplIDefs
@@ -533,13 +478,6 @@ section RImplIDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImplI.mono {A : ROp (Fin W) m κ} {code : ℕ → IStmt HS Pp} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImplI I iprog r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    RImplI I iprog r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplIDefs
 
@@ -648,14 +586,6 @@ section RQ
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ] {r n : ℕ} {st : Fin m × κ → ℕ}
 
-theorem RImplQ.mono {A : ROp (Fin W) m κ} {U : IStmt HS Pp} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImplQ I iprog Q lo hi r n st A U e dw c)
-    (hc : ∀ w, lo ≤ w → w + dw ≤ hi → c w ≤ c' w) :
-    RImplQ I iprog Q lo hi r n st A U e dw c' := by
-  intro s f zs l X F w hQ hC h0 hx hX hb h1 h2
-  obtain ⟨zs', r1, b1, f1⟩ := h s f zs l X F w hQ hC h0 hx hX hb h1 h2
-  exact ⟨zs', r1, b1, f1.mono (hc w h1 h2)⟩
-
 end RQ
 
 end NLogN.KFW
@@ -762,14 +692,7 @@ namespace ExV
 
 variable {σ : Fin HS → Option ℤ} {B : ℕ}
 
-theorem mono {e : Ex HS} {x : ℤ} {B' : ℕ} (h : ExV σ e x B) (hB : B ≤ B') : ExV σ e x B' :=
-  fun t ht => let ⟨a, b, c⟩ := h t ht; ⟨a, b, Ex.Bnd_mono t hB e c⟩
-
 end ExV
-
-theorem ExC.mono {σ : Fin HS → Option ℤ} {e : Ex HS} {x : ℤ} {c c' : ℕ} (h : ExC σ e x c)
-    (hc : c ≤ c') : ExC σ e x c' :=
-  fun t ht => let ⟨a, b, d⟩ := h t ht; ⟨a, b, d.trans hc⟩
 
 /-! ## The phase step -/
 
@@ -821,11 +744,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-/-! ## The node frame -/
-
-theorem ExC.congr {σ : Fin HS → Option ℤ} {e : Ex HS} {x y : ℤ} {c : ℕ} (h : ExC σ e x c)
-    (hxy : x = y) : ExC σ e y c := hxy ▸ h
 
 end NLogN.KFW
 

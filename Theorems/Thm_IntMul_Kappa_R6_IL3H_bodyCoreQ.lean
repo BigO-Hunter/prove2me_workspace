@@ -86,70 +86,6 @@ namespace Butterfly
 
 open Complex
 
-/-! ## 1. The constants -/
-
-/-! ## 2. Depth recurrence and the chain -/
-
-/-! ## 3. Dyadic depth invariant -/
-
-/-! ## 4. Final truncation toward zero -/
-
-lemma truncR_abs_le (p : ℕ) (x : ℝ) : |truncR p x| ≤ |x| ∧ |truncR p x - x| < 2⁻¹ ^ p := by
-  have h2 : (0 : ℝ) < 2 ^ p := by positivity
-  have hinv : (2 : ℝ)⁻¹ ^ p = 1 / 2 ^ p := by rw [inv_pow, one_div]
-  unfold truncR truncNum
-  split_ifs with hx
-  · have hf := Int.floor_le (x * 2 ^ p)
-    have hf' := Int.lt_floor_add_one (x * 2 ^ p)
-    have hf0 : (0 : ℝ) ≤ ⌊x * 2 ^ p⌋ := by exact_mod_cast Int.floor_nonneg.2 (by positivity)
-    constructor
-    · rw [abs_of_nonneg (by positivity), abs_of_nonneg hx, div_le_iff₀ h2]; exact hf
-    · rw [hinv, abs_sub_lt_iff]
-      constructor
-      · rw [div_sub' (by positivity)]; rw [div_lt_div_iff_of_pos_right h2]; linarith
-      · rw [sub_div' (by positivity)]; rw [div_lt_div_iff_of_pos_right h2]; linarith
-  · push Not at hx
-    have hc := Int.le_ceil (x * 2 ^ p)
-    have hc' := Int.ceil_lt_add_one (x * 2 ^ p)
-    have hc0 : (⌈x * 2 ^ p⌉ : ℝ) ≤ 0 := by
-      exact_mod_cast Int.ceil_le.2 (by push_cast; nlinarith)
-    constructor
-    · rw [abs_of_nonpos (div_nonpos_of_nonpos_of_nonneg hc0 h2.le), abs_of_neg hx,
-        neg_le_neg_iff, le_div_iff₀ h2]; exact hc
-    · rw [hinv, abs_sub_lt_iff]
-      constructor
-      · rw [div_sub' (by positivity)]; rw [div_lt_div_iff_of_pos_right h2]; linarith
-      · rw [sub_div' (by positivity)]; rw [div_lt_div_iff_of_pos_right h2]; linarith
-
-/-- Truncation does not increase the modulus (so disk arrays stay in the disk). -/
-theorem norm_Qp_le (p : ℕ) (z : ℂ) : ‖Qp p z‖ ≤ ‖z‖ := by
-  have h1 := (truncR_abs_le p z.re).1
-  have h2 := (truncR_abs_le p z.im).1
-  rw [norm_def, norm_def]
-  apply Real.sqrt_le_sqrt
-  simp only [normSq_apply, Qp]
-  nlinarith [abs_nonneg (truncR p z.re), abs_nonneg (truncR p z.im), sq_abs (truncR p z.re),
-    sq_abs z.re, sq_abs (truncR p z.im), sq_abs z.im, abs_nonneg z.re, abs_nonneg z.im,
-    mul_self_le_mul_self (abs_nonneg _) h1, mul_self_le_mul_self (abs_nonneg _) h2]
-
-/-- The truncation error is less than `√2 · 2^{-p}`. -/
-theorem norm_Qp_sub_lt (p : ℕ) (z : ℂ) : ‖Qp p z - z‖ < Real.sqrt 2 * 2⁻¹ ^ p := by
-  have h1 := (truncR_abs_le p z.re).2
-  have h2 := (truncR_abs_le p z.im).2
-  have hq : (0 : ℝ) < 2⁻¹ ^ p := by positivity
-  rw [norm_def]
-  rw [show Real.sqrt 2 * 2⁻¹ ^ p = Real.sqrt (2 * (2⁻¹ ^ p) ^ 2) by
-    rw [Real.sqrt_mul (by norm_num), Real.sqrt_sq hq.le]]
-  apply Real.sqrt_lt_sqrt (normSq_nonneg _)
-  simp only [normSq_apply, Qp, sub_re, sub_im]
-  have e1 := (sq_lt_sq' (by linarith [neg_abs_le (truncR p z.re - z.re)])
-    (lt_of_le_of_lt (le_abs_self _) h1))
-  have a1 : (truncR p z.re - z.re) ^ 2 < (2⁻¹ ^ p) ^ 2 := by
-    rw [← sq_abs]; exact pow_lt_pow_left₀ h1 (abs_nonneg _) (by norm_num)
-  have a2 : (truncR p z.im - z.im) ^ 2 < (2⁻¹ ^ p) ^ 2 := by
-    rw [← sq_abs]; exact pow_lt_pow_left₀ h2 (abs_nonneg _) (by norm_num)
-  nlinarith
-
 /-! ## 5. Width bookkeeping in the proof of Proposition 14 -/
 
 end Butterfly
@@ -173,35 +109,11 @@ namespace Butterfly
 
 open Matrix Complex Finset
 
-/-- (14): `H0 = b S C S`. -/
-theorem H0_eq : H0 = cb • (Sm * Cm * Sm) := by
-  rw [Cm_eq]
-  ext i j; fin_cases i <;> fin_cases j <;>
-    simp [H0, Sm, Matrix.mul_apply, Fin.sum_univ_two, ca, cb] <;> ring_nf <;> simp [I_sq] <;>
-    ring
-
 /-! ## Tensor products on selected bits -/
 
 section Tensor
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-theorem tens_Sm : (tens Sm : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) = SD := by
-  rw [Sm, diag2_tens, SD]; congr 1; funext x; exact prod_phase I x
-
-/-- (18): `H0^{⊗D} = b^D S_D C^{⊗D} S_D`. -/
-theorem tens_H0 : (tens H0 : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) =
-    cb ^ Fintype.card ι • (SD * tens Cm * SD) := by
-  rw [H0_eq, tens_smul, tens_mul, tens_mul, tens_Sm]
-
-/-- Every row of `H0^{⊗D}` has absolute row sum one. -/
-theorem tens_H0_row_sum (x : ι → Fin 2) : ∑ y, ‖(tens H0 : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) x y‖ = 1 := by
-  simp only [tens, tensF, norm_prod]
-  rw [← Fintype.prod_sum (fun i j => ‖H0 (x i) j‖)]
-  apply Finset.prod_eq_one
-  intro i _
-  rcases Fin.exists_fin_two.1 ⟨x i, rfl⟩ with h | h <;>
-    simp [h, H0, Fin.sum_univ_two] <;> norm_num
 
 end Tensor
 
@@ -251,52 +163,11 @@ variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
 variable (Sb : SelBits sh ι)
 
-theorem selOp_smul (c : ℂ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) (xs : List M) :
-    selOp Sb (c • T) xs = (selOp Sb T xs).map (c • ·) := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [List.getElem_map, getElem_selOp, Matrix.smul_apply, smul_eq_mul, mul_smul,
-    Finset.smul_sum]
-
-/-- (18) on arrays: `H0^{⊗D} z = b^D • S_D C^{⊗D} S_D z`. -/
-theorem butterflyLayer_eq (xs : List M) :
-    butterflyLayer Sb xs =
-      (phaseLayer Sb (cLayer Sb (phaseLayer Sb xs))).map ((cb ^ Fintype.card ι) • ·) := by
-  rw [butterflyLayer, tens_H0, selOp_smul, phaseLayer, cLayer, phaseLayer, selOp_mul, selOp_mul]
-
-/-- Disk arrays go to disk arrays (every row of `H0^{⊗D}` has absolute row sum one). -/
-theorem butterflyLayer_norm_le {N : Type*} [SeminormedAddCommGroup N] [NormedSpace ℂ N]
-    (Sb : SelBits sh ι) (xs : List N) (hxs : ∀ j (h : j < xs.length), ‖xs[j]‖ ≤ 1) :
-    ∀ j (h : j < (butterflyLayer Sb xs).length), ‖(butterflyLayer Sb xs)[j]‖ ≤ 1 := by
-  intro j h
-  rw [show (butterflyLayer Sb xs)[j] = _ from getElem_selOp Sb (tens H0) xs j h]
-  have hg : ∀ k, ‖xs.getD k 0‖ ≤ 1 := by
-    intro k
-    by_cases hk : k < xs.length
-    · rw [List.getD_eq_getElem _ _ hk]; exact hxs k hk
-    · rw [List.getD_eq_default _ _ (by omega)]; simp
-  calc ‖∑ y, (tens H0 : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) (Sb.bits (decode sh j)) y •
-          xs.getD (encode sh (Sb.set (decode sh j) y)) 0‖
-      ≤ ∑ y, ‖(tens H0 : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) (Sb.bits (decode sh j)) y •
-          xs.getD (encode sh (Sb.set (decode sh j) y)) 0‖ := norm_sum_le _ _
-    _ ≤ ∑ y, ‖(tens H0 : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) (Sb.bits (decode sh j)) y‖ := by
-        apply Finset.sum_le_sum; intro y _
-        rw [norm_smul]
-        exact mul_le_of_le_one_right (norm_nonneg _) (hg _)
-    _ = 1 := tens_H0_row_sum _
-
 /-! ## 3. The concrete layout `[P] × [2^K]^D × [S]` with bit `ρ` selected in every chunk -/
 
 section Layout
 
 variable (P K D S ρ : ℕ)
-
-/-- (18) for the concrete layout. -/
-theorem layerH_eq (hρ : ρ < K) (xs : List M) :
-    layerH P K D S ρ hρ xs =
-      (phaseLayer (layerSel P K D S ρ hρ) (cLayer (layerSel P K D S ρ hρ)
-        (phaseLayer (layerSel P K D S ρ hρ) xs))).map (((-Complex.I / 2) ^ (D / 2) * cb ^ (D % 2)) • ·) := by
-  rw [layerH, butterflyLayer_eq, Fintype.card_fin, cb_pow]
 
 end Layout
 
@@ -345,34 +216,6 @@ variable {W m s : ℕ} [NeZero W] (I : Prop8Iface W m s) (u : ℕ)
 section Prop14
 
 variable {P K D S ρ r : ℕ}
-
-/-- **Proposition 14, output (conditional on the C-layer).** Let `Cimpl` be any implementation
-of `C^{⊗D}` on the selected bits (by `recOp_eq` and `tens_blocks`/`embed_tens`, the recursive
-program on the pieces is one). The procedure returns exactly `Q_p(H0^{⊗D} z)`; for disk inputs
-every returned coefficient lies in the disk and differs from the exact layer by less than
-`√2 · 2^{-p}`. -/
-theorem prop14_output (hρ : ρ < K) (p : ℕ) (Cimpl : Op (Fin D)) (hC : Cimpl = tens Cm)
-    (xs : List (Fin r → ℂ)) (hxs : ∀ j (h : j < xs.length), ‖xs[j]‖ ≤ 1) :
-    prop14Proc (P := P) (S := S) hρ p Cimpl xs = QpArr p (layerH P K D S ρ hρ xs) ∧
-    (∀ j (h : j < (prop14Proc (P := P) (S := S) hρ p Cimpl xs).length), ∀ c,
-      ‖(prop14Proc (P := P) (S := S) hρ p Cimpl xs)[j] c‖ ≤ 1) ∧
-    (∀ j (h : j < (prop14Proc (P := P) (S := S) hρ p Cimpl xs).length)
-      (h' : j < (layerH P K D S ρ hρ xs).length), ∀ c,
-      ‖(prop14Proc (P := P) (S := S) hρ p Cimpl xs)[j] c - (layerH P K D S ρ hρ xs)[j] c‖
-        < Real.sqrt 2 * 2⁻¹ ^ p) := by
-  have hout : prop14Proc (P := P) (S := S) hρ p Cimpl xs = QpArr p (layerH P K D S ρ hρ xs) := by
-    unfold prop14Proc; rw [hC, layerH_eq]; simp only [phaseLayer, cLayer]
-  refine ⟨hout, ?_, ?_⟩
-  · intro j h c
-    rw [List.getElem_of_eq hout h]
-    have hj : j < (layerH P K D S ρ hρ xs).length := by rw [hout] at h; simpa [QpArr] using h
-    have hd := butterflyLayer_norm_le (layerSel P K D S ρ hρ) xs hxs j hj
-    unfold QpArr; rw [List.getElem_map]
-    exact (norm_Qp_le p _).trans ((norm_le_pi_norm _ c).trans hd)
-  · intro j h h' c
-    rw [List.getElem_of_eq hout h]
-    unfold QpArr; rw [List.getElem_map]
-    exact norm_Qp_sub_lt p _
 
 end Prop14
 
@@ -549,13 +392,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFH
 
 open IntMul RS AModel KIL KFD KFB Complex
-
-/-! ## The truncation pass -/
-
-theorem fok_truncP (Δ N : ℕ) : fok (truncP Δ N) = true := by
-  simp only [truncP, fok, fok_mvK_eq, Bool.and_true, Bool.true_and]
-  simp only [truncLoop, quoE, fok, touch, Ex.regs, List.append_nil, List.nil_append]
-  decide
 
 end NLogN.KFH
 
@@ -946,11 +782,6 @@ namespace NLogN.KFM
 
 open IntMul RS AModel KIL KFD KFB KFG KFH KFN Complex P8Lift Butterfly
 
-/-! ## 1. `S_D` as one phase pass -/
-
-theorem vol_layer_eq (P K D S : ℕ) : vol (Butterfly.layerShape P K D S) = P * 2 ^ (K * D) * S := by
-  rw [KFH.vol_layer, pow_mul]
-
 /-! ## 2. The wrapper -/
 
 /-! ## 3. The wrapper cost has no factor `D` on the data -/
@@ -1248,14 +1079,6 @@ end ExV
 theorem pushSeq_nil (σ : Fin HS → Option ℤ) : PushSeq σ [] [] 1 := by
   simp [PushSeq]
 
-theorem pushSeq_cons {σ : Fin HS → Option ℤ} {i : Fin HS} {e : Ex HS} {v : ℤ} {c1 c2 : ℕ}
-    {l : List (Fin HS × Ex HS)} {vl : List (Fin HS × ℤ)} (hi : i.val < 56) (hc : e.Clean)
-    (he : ExC σ e v c1) (hr : PushSeq (Function.update σ i (some v)) l vl c2) :
-    PushSeq σ ((i, e) :: l) ((i, v) :: vl) (c1 + (2 * moveCost (zsz v) + 19) + c2) := by
-  simp only [PushSeq, true_and]
-  exact ⟨hi, hc, c1 + (2 * moveCost (zsz v) + 19), c2, le_rfl,
-    fun t ht => let ⟨a, b, d⟩ := he t ht; ⟨a, b, by omega⟩, hr⟩
-
 /-! ## The phase step -/
 
 end NLogN.KFW
@@ -1338,12 +1161,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-theorem pushSeq_consC {σ : Fin HS → Option ℤ} {i : Fin HS} {e : Ex HS} {v : ℤ} {B c1 c2 : ℕ}
-    {l : List (Fin HS × Ex HS)} {vl : List (Fin HS × ℤ)} (hi : i.val < 56) (hc : e.Clean)
-    (he : ExC σ e v c1) (hz : zsz v ≤ B) (hr : PushSeq (Function.update σ i (some v)) l vl c2) :
-    PushSeq σ ((i, e) :: l) ((i, v) :: vl) (c1 + (2 * moveCost B + 19) + c2) :=
-  (pushSeq_cons hi hc he hr).mono (by have := moveCost_mono hz; omega)
-
 end NLogN.KFW
 
 end
@@ -1410,23 +1227,6 @@ section Run
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
 variable {σ : Fin HS → Option ℤ} {U V : IStmt HS Pp} {f g h : Fin HS → List ℤ} {c c' : ℕ}
-
-/-- **A frame** around a run specification. -/
-theorem runQ_push (pl : List (Fin HS × Ex HS)) (vl : List (Fin HS × ℤ)) (cp Bb : ℕ)
-    (hP : PushSeq σ pl vl cp) (hf : ∀ j, (σ j).isSome → f j = [])
-    (hfp : ∀ p ∈ vl, f p.1 = [] ∧ g p.1 = []) (hBb : ∀ p ∈ vl, zsz p.2 ≤ Bb)
-    (H : RunQ I iprog (σPush σ vl) U f g c) :
-    RunQ I iprog σ (withPushI pl U) f g (cp + c + (vl.length * (2 * Bb + 2) + 1)) := by
-  intro s hs
-  have hag : Agree σ (encK s f) := agree_encK hs hf
-  have S1 := Sp.pushSeq pl vl σ cp hP (encK s f) hag
-  rw [encK_pushSt s f vl (fun p hp => (hfp p hp).1)] at S1
-  have Hr := H (pushSt s vl) (agree_pushSt' vl hs)
-  have S3 := Sp.popsR Bb vl (encK s g) (fun p hp => ⟨hP.lt p hp, hBb p hp⟩)
-  rw [encK_pushSt s g vl (fun p hp => (hfp p hp).2), hP.fst] at S3
-  have := (S1.toIRuns (I := I) (iprog := iprog)).seq (Hr.seq (S3.toIRuns (I := I) (iprog := iprog)))
-  refine this.mono (le_of_eq ?_)
-  ring
 
 end Run
 

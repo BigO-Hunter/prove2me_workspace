@@ -155,13 +155,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
 
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
-
 /-! ## The generic segment step -/
 
 /-! ## Expression combinators -/
@@ -659,14 +652,6 @@ end ExV
 
 theorem pushSeq_nil (σ : Fin HS → Option ℤ) : PushSeq σ [] [] 1 := by
   simp [PushSeq]
-
-theorem pushSeq_cons {σ : Fin HS → Option ℤ} {i : Fin HS} {e : Ex HS} {v : ℤ} {c1 c2 : ℕ}
-    {l : List (Fin HS × Ex HS)} {vl : List (Fin HS × ℤ)} (hi : i.val < 56) (hc : e.Clean)
-    (he : ExC σ e v c1) (hr : PushSeq (Function.update σ i (some v)) l vl c2) :
-    PushSeq σ ((i, e) :: l) ((i, v) :: vl) (c1 + (2 * moveCost (zsz v) + 19) + c2) := by
-  simp only [PushSeq, true_and]
-  exact ⟨hi, hc, c1 + (2 * moveCost (zsz v) + 19), c2, le_rfl,
-    fun t ht => let ⟨a, b, d⟩ := he t ht; ⟨a, b, by omega⟩, hr⟩
 
 /-! ## The phase step -/
 

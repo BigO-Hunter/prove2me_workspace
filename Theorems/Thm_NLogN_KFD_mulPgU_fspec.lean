@@ -10,6 +10,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs12
 import Definitions.Def_IntMul_Kappa_R6_Defs14
 import Definitions.Def_IntMul_Kappa_R6_Defs16
 import Theorems.Thm_NLogN_KIL_Sp_pop
+import Theorems.Thm_NLogN_KIL_Sp_asg
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -179,9 +180,6 @@ open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
-theorem IState.top_eq {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (h : s.G i = .int a :: L) :
-    s.top i = a := by simp [IState.top, h]
-
 namespace Ex
 
 end Ex
@@ -205,9 +203,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-
-theorem IState.isInt_of {s : IState S} {i : Fin S} {a : ℤ} {L : List Item}
-    (h : s.G i = .int a :: L) : s.IsInt i := ⟨L, by rw [IState.top_eq h, h]⟩
 
 namespace Ex
 
@@ -345,25 +340,6 @@ namespace KIL
 
 theorem encK_nil (s : IState HS) : NLogN.KIL.encK s (fun _ => []) = s := by
   cases s; rfl
-
-theorem top_encK {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (NLogN.KIL.encK s f).top i = a :=
-  IState.top_eq (L := ints l ++ s.G i) (by simp [h])
-
-section
-variable (s : IState HS) (f : Fin HS → List ℤ)
-
-theorem Sp.asg {i : Fin HS} {e : Ex HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56)
-    (hf : f i = a :: l) (ha : zsz a ≤ B) (hc : e.Clean) (hok : e.ok (NLogN.KIL.encK s f)) (hl : e.Lin)
-    (hB : e.Bnd (NLogN.KIL.encK s f) B) :
-    Sp (.asg i e) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i (e.eval (NLogN.KIL.encK s f) :: l)))
-      ((e.size + 1) * 2000 * (B + 2)) := by
-  refine ⟨⟨hi, hc, hok, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [NLogN.RS.run]
-    rw [← encK_upd]; simp [hf, ints]
-  · exact asgCost_le_lin i e _ B hl hB (by rw [top_encK hf]; exact ha)
-
-end
 
 theorem ok_reg {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
     (h : f i = a :: l) : (Ex.reg i).ok (NLogN.KIL.encK s f) := isInt_encK h

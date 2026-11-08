@@ -3,6 +3,8 @@
 import Definitions.Def_IntMul_HvdH_M_Defs8
 import Theorems.Thm_NLogN_exp_inv_all
 import Theorems.Thm_NLogN_exp_loop
+import Theorems.Thm_NLogN_twoAtanP_ok
+import Definitions.Def_IntMul_Kappa_R6_Defs16
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -23,10 +25,6 @@ end IRuns
 namespace IRuns
 
 end IRuns
-
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
 
 end NLogN
 
@@ -61,42 +59,6 @@ open IntMul
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
-
-theorem iter_ip (f : IState HS → IState HS) (hf : ∀ t, (f t).ip = t.ip ∧ (f t).out = t.out) :
-    ∀ k t, (f^[k] t).ip = t.ip ∧ (f^[k] t).out = t.out
-  | 0, t => ⟨rfl, rfl⟩
-  | k + 1, t => by
-    rw [Function.iterate_succ_apply']
-    exact ⟨(hf _).1.trans (iter_ip f hf k t).1, (hf _).2.trans (iter_ip f hf k t).2⟩
-
-theorem run_ip_out : ∀ (p : RS) (s : IState HS), (p.run s).ip = s.ip ∧ (p.run s).out = s.out
-  | skip, s => ⟨rfl, rfl⟩
-  | asg i e, s | push i e, s | pop i, s => by simp [NLogN.RS.run]
-  | seq a b, s => by
-    simp only [NLogN.RS.run]
-    exact ⟨(run_ip_out b _).1.trans (run_ip_out a s).1, (run_ip_out b _).2.trans (run_ip_out a s).2⟩
-  | ite c a b, s => by
-    simp only [NLogN.RS.run]; split_ifs
-    · exact run_ip_out a s
-    · exact run_ip_out b s
-  | rep i n b, s => by
-    simp only [NLogN.RS.run, IState.upd_ip, IState.upd_out]
-    have := iter_ip (fun t => decSt i (b.run t))
-      (fun t => by simp only [decSt, IState.upd_ip, IState.upd_out]; exact run_ip_out b t)
-      (n.eval s).toNat (s.upd i (.int (n.eval s) :: s.G i))
-    simpa using this
-
-theorem repSt_ip_out (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (k : ℕ) :
-    (NLogN.RS.repSt i n b s k).ip = s.ip ∧ (NLogN.RS.repSt i n b s k).out = s.out := by
-  have := iter_ip (fun t => decSt i (b.run t))
-    (fun t => by simp only [decSt, IState.upd_ip, IState.upd_out]; exact NLogN.RS.run_ip_out b t)
-    k (s.upd i (.int (n.eval s) :: s.G i))
-  simpa [NLogN.RS.repSt] using this
-
-/-- Two register-program results agree when all their stacks agree. -/
-theorem run_ext {p : RS} {s t : IState HS} (h : ∀ j, (p.run s).G j = t.G j) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : p.run s = t :=
-  IState.ext' h ((NLogN.RS.run_ip_out p s).1.trans hip) ((NLogN.RS.run_ip_out p s).2.trans hout)
 
 end RS
 

@@ -8,6 +8,7 @@ import Theorems.Thm_NLogN_zsz_le_of_lt
 import Theorems.Thm_NLogN_KFL_card_moved
 import Definitions.Def_IntMul_Kappa_R6_Defs12
 import Definitions.Def_IntMul_Kappa_R6_Defs14
+import Theorems.Thm_NLogN_KIL_Sp_pop
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -217,14 +218,6 @@ theorem Sp.pushQ {i : Fin HS} {e : Ex HS} {B : ℕ} (hi : i.val < 56) (hc : e.Cl
   · simp only [NLogN.RS.run]
     rw [← encK_upd]; simp [ints]
   · exact pushCost_le e _ B hB
-
-theorem Sp.pop {i : Fin HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l)
-    (ha : zsz a ≤ B) :
-    Sp (.pop i) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i l)) (2 * B + 2) := by
-  refine ⟨⟨hi, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [NLogN.RS.run]
-    rw [← encK_upd]; simp [hf]
-  · simp only [NLogN.RS.cost, top_encK hf]; omega
 
 end
 

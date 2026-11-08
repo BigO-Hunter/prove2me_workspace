@@ -11,6 +11,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs15
 import Definitions.Def_IntMul_Kappa_K_Defs13
 import Definitions.Def_IntMul_HvdH_M_Defs2
 import Definitions.Def_IntMul_Kappa_K_Defs19
+import Theorems.Thm_NLogN_KFR_rowImpl_of_lem13
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -255,9 +256,6 @@ open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
 
-theorem stS_eq (K D S i : ℕ) (hi : i < D) : stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S := by
-  simp [stS, layerShape_drop 1 K D S i hi, vol]
-
 /-! ## The kernel pass on records -/
 
 /-! ## The self-contained pass -/
@@ -302,36 +300,6 @@ open AModel Matrix Finset
 /-! ## The layer layout -/
 
 section Layer
-
-theorem vol_repl_S (B D S : ℕ) : vol (List.replicate D B ++ [S]) = B ^ D * S := by
-  induction D with
-  | zero => simp [vol]
-  | succ D ih =>
-    rw [List.replicate_succ, List.cons_append, vol_cons, ih, pow_succ]; ring
-
-theorem encode_repl (B S : ℕ) : ∀ (D : ℕ) (c : Fin D → ℕ) (s : ℕ),
-    encode (List.replicate D B ++ [S]) (List.ofFn c ++ [s]) =
-      ∑ i : Fin D, c i * (B ^ (D - (i + 1)) * S) + s
-  | 0, c, s => by simp [encode]
-  | D + 1, c, s => by
-    rw [List.replicate_succ, List.cons_append, List.ofFn_succ, List.cons_append, encode,
-      List.headD_cons, List.tail_cons, encode_repl B S D (fun i => c i.succ) s, vol_repl_S,
-      Fin.sum_univ_succ]
-    simp only [Fin.val_zero, Fin.val_succ]
-    rw [add_assoc]
-    congr 2
-    refine Finset.sum_congr rfl fun i _ => ?_
-    congr 3; omega
-
-theorem encode_mkAddr (P K D S : ℕ) (p : ℕ) (c : Fin D → ℕ) (s : ℕ) :
-    encode (Butterfly.layerShape P K D S) (Butterfly.mkAddr D p c s) =
-      p * ((2 ^ K) ^ D * S) + ∑ i : Fin D, c i * KFH.stS K D S i + s := by
-  simp only [Butterfly.layerShape, Butterfly.mkAddr, List.cons_append, encode, List.headD_cons,
-    List.tail_cons, vol_repl_S, encode_repl]
-  have hs : ∀ i : Fin D, KFH.stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S :=
-    fun i => KFH.stS_eq K D S i i.isLt
-  simp only [hs]
-  ring
 
 variable {P K D S ρ : ℕ}
 
@@ -388,5 +356,3 @@ end Layer
 end NLogN.KFN
 
 end
-
-theorem NLogN.KFN.strideSel_layer : type_of% @NLogN.KFN.strideSel_layer_sol_aux := @NLogN.KFN.strideSel_layer_sol_aux

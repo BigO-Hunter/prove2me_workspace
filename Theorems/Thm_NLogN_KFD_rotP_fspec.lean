@@ -9,6 +9,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs11
 import Definitions.Def_IntMul_Kappa_R6_Defs12
 import Definitions.Def_IntMul_Kappa_R6_Defs14
 import Definitions.Def_IntMul_Kappa_R6_Defs16
+import Theorems.Thm_NLogN_KIL_Sp_pop
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -162,9 +163,6 @@ open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
-theorem IState.top_eq {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (h : s.G i = .int a :: L) :
-    s.top i = a := by simp [IState.top, h]
-
 namespace Ex
 
 end Ex
@@ -188,9 +186,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-
-theorem IState.isInt_of {s : IState S} {i : Fin S} {a : ℤ} {L : List Item}
-    (h : s.G i = .int a :: L) : s.IsInt i := ⟨L, by rw [IState.top_eq h, h]⟩
 
 namespace Ex
 
@@ -312,10 +307,6 @@ open IntMul RS
 
 namespace KIL
 
-theorem top_encK {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (NLogN.KIL.encK s f).top i = a :=
-  IState.top_eq (L := ints l ++ s.G i) (by simp [h])
-
 theorem top_encK' (s : IState HS) (f : Fin HS → List ℤ) (i : Fin HS) :
     (NLogN.KIL.encK s f).top i = (f i).headD (s.top i) := by
   unfold IState.top
@@ -336,14 +327,6 @@ theorem Sp.pushQ {i : Fin HS} {e : Ex HS} {B : ℕ} (hi : i.val < 56) (hc : e.Cl
   · simp only [NLogN.RS.run]
     rw [← encK_upd]; simp [ints]
   · exact pushCost_le e _ B hB
-
-theorem Sp.pop {i : Fin HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l)
-    (ha : zsz a ≤ B) :
-    Sp (.pop i) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i l)) (2 * B + 2) := by
-  refine ⟨⟨hi, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [NLogN.RS.run]
-    rw [← encK_upd]; simp [hf]
-  · simp only [NLogN.RS.cost, top_encK hf]; omega
 
 end
 

@@ -4,6 +4,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs20
 import Theorems.Thm_NLogN_KFN_lv_all
 import Theorems.Thm_NLogN_KFN_selOpF_subOp
 import Theorems.Thm_NLogN_KFH_layer_partner
+import Theorems.Thm_IntMul_Kappa_R6_IL3H_kerQ
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -459,37 +460,6 @@ theorem length_pcs (m : ℕ) (hm : 1 ≤ m) :
 section Ops
 
 variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
-
-/-- **A tensor power on a subfamily is the tensor product of an indicator.** -/
-theorem subOp_tens {g : κ → ι} (hg : Function.Injective g) (A : Butterfly.M2) :
-    subOp g (Butterfly.tens A : Matrix (κ → Fin 2) (κ → Fin 2) ℂ) =
-      tensF (fun i => if ∃ k, g k = i then A else 1) := by
-  classical
-  ext x y
-  simp only [subOp, tensF, Butterfly.tens]
-  rw [← Finset.prod_filter_mul_prod_filter_not Finset.univ (fun i => ∃ k, g k = i)]
-  have hR : (Finset.univ.filter fun i => ∃ k, g k = i) = Finset.univ.image g := by
-    ext i; simp
-  rw [hR, Finset.prod_image (fun a _ b _ h => hg h)]
-  have hin : ∀ k, (if ∃ k', g k' = g k then A else 1) = A := fun k => if_pos ⟨k, rfl⟩
-  simp_rw [hin]
-  by_cases hc : ∀ i, (∀ k, g k ≠ i) → x i = y i
-  · rw [if_pos hc]
-    have : ∏ i ∈ Finset.univ.filter (fun i => ¬ ∃ k, g k = i),
-        (if ∃ k, g k = i then A else 1) (x i) (y i) = 1 := by
-      refine Finset.prod_eq_one fun i hi => ?_
-      simp only [Finset.mem_filter] at hi
-      rw [if_neg hi.2, Matrix.one_apply, if_pos (hc i (fun k hk => hi.2 ⟨k, hk⟩))]
-    rw [this, mul_one]; rfl
-  · rw [if_neg hc]
-    push Not at hc
-    obtain ⟨i, hi, hxy⟩ := hc
-    have hni : ¬ ∃ k, g k = i := fun ⟨k, hk⟩ => hi k hk
-    have : ∏ i ∈ Finset.univ.filter (fun i => ¬ ∃ k, g k = i),
-        (if ∃ k, g k = i then A else 1) (x i) (y i) = 0 := by
-      refine Finset.prod_eq_zero (i := i) (by simpa using hi) ?_
-      rw [if_neg hni, Matrix.one_apply, if_neg hxy]
-    rw [this, mul_zero]
 
 theorem prod_ind (A : Butterfly.M2) {α : Type*} (P : α → Bool) :
     ∀ l : List α, (l.map fun a => if P a then A else 1).prod = A ^ l.countP P

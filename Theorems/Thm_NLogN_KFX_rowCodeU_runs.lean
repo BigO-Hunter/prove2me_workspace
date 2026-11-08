@@ -1097,14 +1097,8 @@ theorem zV {v : ℤ} (h0 : -((VbR T S0 B r H : ℕ) : ℤ) ≤ v) (h1 : v ≤ (V
   le_trans (zsz_mono (b := ((VbR T S0 B r H : ℕ) : ℤ)) (by
     rw [Int.natAbs_natCast]
     exact Int.ofNat_le.mp (by rw [Int.natCast_natAbs]; exact abs_le.mpr ⟨h0, h1⟩))) hBb
-
-omit hA in
-include hp hBb in
-include hp hBb in
-include hp hBb in
 include hp hA hBb
 
-omit hp hBb in
 theorem sFp : ESp (pr 0) u Bb ((mC ^ k : ℕ) : ℤ) :=
   sPr' hA 0 rfl (zT hp hBb (by have : (0 : ℤ) ≤ ((mC ^ k : ℕ) : ℤ) := Nat.cast_nonneg _; omega)
     (by exact_mod_cast hp.fT))
@@ -1158,6 +1152,7 @@ theorem sHp : ESp (pr 7) u Bb (H : ℤ) :=
   sPr' hA 7 rfl (zV hBb (by omega) (by
     have := (VbR_ge (H := H) hp).2.2.2.1; exact_mod_cast (by omega : H ≤ VbR T S0 B r H)))
 
+omit hp hA hBb in
 theorem hR_le (i j : ℕ) : hR i j ≤ 2 := by unfold hR; split_ifs <;> omega
 
 theorem sAm : ESp eAm u Bb ((min (i : ℕ) (j : ℕ) : ℕ) : ℤ) := by

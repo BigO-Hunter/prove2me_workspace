@@ -6,6 +6,7 @@ import Theorems.Thm_NLogN_KFR_permRecs_GB
 import Theorems.Thm_NLogN_KFR_permRecs_recRep
 import Theorems.Thm_NLogN_KFR_selOpF_Pm
 import Theorems.Thm_NLogN_KFH_layer_partner
+import Theorems.Thm_NLogN_KFN_selOpF_subOp
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -244,30 +245,7 @@ section Sub
 
 variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
 
-theorem extB_g {g : κ → ι} (hg : Function.Injective g) (x : ι → Fin 2) (z : κ → Fin 2) (k : κ) :
-    extB g x z (g k) = z k := by
-  have h : ∃ k', g k' = g k := ⟨k, rfl⟩
-  simp only [extB, dif_pos h]
-  exact congrArg z (hg (Classical.choose_spec h))
-
-theorem extB_off {g : κ → ι} (x : ι → Fin 2) (z : κ → Fin 2) {i : ι} (hi : ∀ k, g k ≠ i) :
-    extB g x z i = x i := by
-  have h : ¬ ∃ k, g k = i := fun ⟨k, hk⟩ => hi k hk
-  simp only [extB, dif_neg h]
-
 theorem fbit_comp (st : ι → ℕ) (g : κ → ι) (j : ℕ) : fbit (st ∘ g) j = fbit st j ∘ g := rfl
-
-theorem fsetZ_extB {g : κ → ι} (hg : Function.Injective g) (st : ι → ℕ) (j : ℕ) (z : κ → Fin 2) :
-    fsetZ st j (extB g (fbit st j) z) = fsetZ (st ∘ g) j z := by
-  unfold fsetZ
-  congr 1
-  rw [← Finset.sum_subset (Finset.subset_univ (Finset.univ.image g))]
-  · rw [Finset.sum_image (fun a _ b _ h => hg h)]
-    refine Finset.sum_congr rfl fun k _ => ?_
-    rw [extB_g hg]; rfl
-  · intro i _ hi
-    have hi' : ∀ k, g k ≠ i := fun k hk => hi (Finset.mem_image.2 ⟨k, Finset.mem_univ _, hk⟩)
-    rw [extB_off _ _ hi']; ring
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 

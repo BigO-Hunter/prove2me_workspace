@@ -10,6 +10,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs12
 import Definitions.Def_IntMul_Kappa_R6_Defs14
 import Definitions.Def_IntMul_Kappa_R6_Defs16
 import Definitions.Def_IntMul_Kappa_R6_Defs20
+import Theorems.Thm_NLogN_IState_isInt_of
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -161,9 +162,6 @@ open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
-theorem IState.top_eq {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (h : s.G i = .int a :: L) :
-    s.top i = a := by simp [IState.top, h]
-
 namespace Ex
 
 end Ex
@@ -187,9 +185,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-
-theorem IState.isInt_of {s : IState S} {i : Fin S} {a : ℤ} {L : List Item}
-    (h : s.G i = .int a :: L) : s.IsInt i := ⟨L, by rw [IState.top_eq h, h]⟩
 
 namespace Ex
 

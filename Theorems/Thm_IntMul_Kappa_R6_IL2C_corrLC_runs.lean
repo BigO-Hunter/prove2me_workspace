@@ -29,6 +29,9 @@ import Definitions.Def_IntMul_Kappa_K_Defs11
 import Definitions.Def_IntMul_Kappa_K_Defs33
 import Definitions.Def_IntMul_Kappa_K_Defs3
 import Definitions.Def_IntMul_Kappa_K_Defs17
+import Theorems.Thm_NLogN_KFD_bodyF_run
+import Theorems.Thm_NLogN_KFW_sImplQ_phase
+import Theorems.Thm_IntMul_Kappa_R6_IL2C_Psi_good
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -138,27 +141,6 @@ namespace NLogN.KIL
 
 open IntMul RS AModel
 
-/-! ## Pushes and pops -/
-
-theorem pushSt_G_of_not_mem (t : IState HS) (r : Fin HS) :
-    ∀ l : List (Fin HS × ℤ), r ∉ l.map Prod.fst → (pushSt t l).G r = t.G r
-  | [], _ => rfl
-  | (i, v) :: l, h => by
-    simp only [List.map_cons, List.mem_cons, not_or] at h
-    simp only [pushSt]
-    rw [pushSt_G_of_not_mem _ r l h.2]
-    simp [Ne.symm h.1, h.1]
-
-theorem pushSt_G (t : IState HS) (r : Fin HS) : ∀ l : List (Fin HS × ℤ),
-    (pushSt t l).G r = ints ((l.filter (fun p => p.1 = r)).map Prod.snd).reverse ++ t.G r
-  | [] => by simp [pushSt]
-  | (i, v) :: l => by
-    simp only [pushSt]
-    rw [pushSt_G _ r l]
-    by_cases h : i = r
-    · subst h; simp [List.filter_cons, ints_append, ints]
-    · simp [List.filter_cons, h, Ne.symm h]
-
 /-! ## Products of positive parameters -/
 
 /-! ## The table stage pushes -/
@@ -195,24 +177,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-/-! ## Push-list hygiene -/
-
-theorem clean_of_rd {e : Ex HS} (h : ∀ r ∈ e.regs, RdOK r) : e.Clean := fun j hj =>
-  clean_of_lt (h j hj).lt j (by simp [Ex.regs])
-
-theorem pushOK_of {t : IState HS} {Bb : ℕ} (L : List (Fin HS × Ex HS))
-    (hL : ∀ p ∈ L, 24 ≤ p.1.val ∧ p.1.val ≤ 37) (hg : ∀ p ∈ L, GoodE t Bb p.2) :
-    PushOK t Bb L := by
-  intro p hp
-  obtain ⟨h1, h2⟩ := hL p hp
-  refine ⟨by omega, clean_of_rd (hg p hp).rd, ?_, (hg p hp).ok, (hg p hp).bnd⟩
-  intro r hr hm
-  obtain ⟨q, hq, rfl⟩ := List.mem_map.1 hm
-  have := hL q hq
-  rcases (hg p hp).rd q.1 hr with h | h
-  · rw [h] at this; exact absurd this.1 (by decide)
-  · omega
 
 /-! ## Templates -/
 
@@ -673,44 +637,6 @@ theorem HRef.fok {p p' : RS} {X : ℕ} (h : HRef p p' X) : KFD.fok p = true → 
   | push => intro _; rfl
   | mono _ _ ih => exact ih
 
-/-! ## Substitution of untouched registers -/
-
-theorem Ex.sub_id (σ : Fin HS → Option ℤ) : ∀ e : Ex HS, (∀ i ∈ e.regs, σ i = none) →
-    Ex.sub σ e = e
-  | .reg i, h => by simp [Ex.sub, h i (by simp [Ex.regs])]
-  | .lit _, _ => rfl
-  | .add a b, h | .mul a b, h | .shl a b, h | .quo a b, h | .rem a b, h | .ndiv a b, h
-  | .nmod a b, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.sub, Ex.sub_id σ a (fun i hi => h i (Or.inl hi)),
-      Ex.sub_id σ b (fun i hi => h i (Or.inr hi))]
-  | .neg a, h | .pow2 a, h => by
-    simp only [Ex.regs] at h; simp only [Ex.sub, Ex.sub_id σ a h]
-  | .sel c x y, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.sub, Ex.sub_id σ c (fun i hi => h i (Or.inl (Or.inl hi))),
-      Ex.sub_id σ x (fun i hi => h i (Or.inl (Or.inr hi))), Ex.sub_id σ y (fun i hi => h i (Or.inr hi))]
-
-theorem RS.sub_id (σ : Fin HS → Option ℤ) : ∀ p : RS, (∀ i ∈ touch p, σ i = none) → RS.sub σ p = p
-  | .skip, _ => rfl
-  | .asg i e, h | .push i e, h => by
-    simp only [touch, List.mem_cons] at h
-    simp only [RS.sub, Ex.sub_id σ e (fun j hj => h j (Or.inr hj))]
-  | .pop _, _ => rfl
-  | .seq a b, h => by
-    simp only [touch, List.mem_append] at h
-    simp only [RS.sub, RS.sub_id σ a (fun i hi => h i (Or.inl hi)),
-      RS.sub_id σ b (fun i hi => h i (Or.inr hi))]
-  | .ite c a b, h => by
-    simp only [touch, List.mem_append] at h
-    simp only [RS.sub, Ex.sub_id σ c (fun i hi => h i (Or.inl hi)),
-      RS.sub_id σ a (fun i hi => h i (Or.inr (Or.inl hi))),
-      RS.sub_id σ b (fun i hi => h i (Or.inr (Or.inr hi)))]
-  | .rep i n b, h => by
-    simp only [touch, List.mem_cons, List.mem_append] at h
-    simp only [RS.sub, Ex.sub_id σ n (fun j hj => h j (Or.inr (Or.inl hj))),
-      RS.sub_id σ b (fun j hj => h j (Or.inr (Or.inr hj)))]
-
 /-! ## Uniform register programs -/
 
 /-! ## Pushed parameters in the background -/
@@ -765,35 +691,6 @@ namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW AModel Butterfly
 
-/-! ## Pushed parameter lists -/
-
-/-- A push list whose expressions read none of the pushed stacks and are specified by `ESp`. -/
-theorem pushOK_of {t : IState HS} {Bb : ℕ} {l : List (Fin HS × Ex HS)}
-    (hlow : ∀ p ∈ l, p.1.val < 56) (hreg : ∀ p ∈ l, ∀ r ∈ p.2.regs, r ∉ l.map Prod.fst)
-    (hE : ∀ p ∈ l, ∃ v, ESp p.2 t Bb v) : PushOK t Bb l := by
-  intro p hp
-  obtain ⟨v, hv⟩ := hE p hp
-  exact ⟨hlow p hp, hv.clean, hreg p hp, hv.ok, hv.bnd⟩
-
-theorem pushVals_le {t : IState HS} {Bb : ℕ} {l : List (Fin HS × Ex HS)}
-    (hE : ∀ p ∈ l, ∃ v, ESp p.2 t Bb v) : ∀ q ∈ l, zsz (q.2.eval t) ≤ Bb := by
-  intro q hq
-  obtain ⟨v, hv⟩ := hE q hq
-  exact Ex.zsz_eval_le t Bb _ hv.bnd
-
-/-! ## A table generator followed by `rotF` -/
-
-/-- The cost of a push list of bounded total size. -/
-theorem pushCost_le_size (Bb : ℕ) (l : List (Fin HS × Ex HS)) (S : ℕ)
-    (hS : (l.map fun p => p.2.size + 1).sum ≤ S) : pushCost Bb l ≤ S * 10 ^ 7 * (Bb + 2) ^ 2 + 1 := by
-  unfold pushCost
-  have : (l.map fun p => (p.2.size + 1) * 10 ^ 7 * (Bb + 2) ^ 2).sum =
-      (l.map fun p => p.2.size + 1).sum * (10 ^ 7 * (Bb + 2) ^ 2) := by
-    rw [← List.sum_map_mul_right]; congr 1; apply List.map_congr_left; intro p _; ring
-  rw [this]
-  have := Nat.mul_le_mul_right (10 ^ 7 * (Bb + 2) ^ 2) hS
-  nlinarith
-
 /-! ## The uniform table generator of a line -/
 
 /-! ## One line, register-driven -/
@@ -830,36 +727,6 @@ namespace IntMul.Kappa.R6.IL2C
 
 open Finset
 
-/-- `x = Σ_{s<n} dgt s x W^s + W^n (x / W^n)`. -/
-theorem digits_sum (W : ℕ) : ∀ (n x : ℕ),
-    (x : ℤ) = ∑ s ∈ range n, (dgt W s x : ℤ) * (W : ℤ) ^ s + (W : ℤ) ^ n * ((x / W ^ n : ℕ) : ℤ)
-  | 0, x => by simp
-  | n + 1, x => by
-    have ih := digits_sum W n (x / W)
-    rw [sum_range_succ']
-    have h1 : x = x % W + W * (x / W) := (Nat.mod_add_div x W).symm
-    have e : x / W ^ (n + 1) = x / W / W ^ n := by
-      rw [pow_succ, mul_comm, Nat.div_div_eq_div_mul]
-    simp only [dgt_succ, dgt_zero, e]
-    have : (x : ℤ) = ((x % W : ℕ) : ℤ) + (W : ℤ) * ((x / W : ℕ) : ℤ) := by exact_mod_cast h1
-    rw [this, ih]
-    simp only [pow_zero, mul_one, pow_succ]
-    rw [mul_add, mul_sum]
-    have : ∀ s ∈ range n, (W : ℤ) * ((dgt W s (x / W) : ℤ) * (W : ℤ) ^ s) =
-        (dgt W s (x / W) : ℤ) * ((W : ℤ) ^ s * W) := fun s _ => by ring
-    rw [sum_congr rfl this]
-    ring
-
-theorem eq_of_digits (W n : ℕ) {x x' : ℕ} (hd : ∀ s < n, dgt W s x = dgt W s x')
-    (hh : x / W ^ n = x' / W ^ n) : x = x' := by
-  have a := digits_sum W n x
-  have b := digits_sum W n x'
-  have : (x : ℤ) = x' := by
-    rw [a, b, hh]
-    congr 1
-    exact sum_congr rfl fun s hs => by rw [hd s (mem_range.1 hs)]
-  exact_mod_cast this
-
 /-! ## Parameters and the offsets -/
 
 /-! ## Closed forms of the offsets -/
@@ -875,12 +742,6 @@ end Closed
 section Slot
 
 variable {K ρ n L : ℕ}
-
-/-- Slots with equal low part, segments and high part are equal. -/
-theorem slot_eq {y y' : ℕ} (h0 : y % 2 ^ ρ = y' % 2 ^ ρ) (hs : ∀ s < n, seg K ρ s y = seg K ρ s y')
-    (hh : y / 2 ^ ρ / (2 ^ K) ^ n = y' / 2 ^ ρ / (2 ^ K) ^ n) : y = y' := by
-  have e : y / 2 ^ ρ = y' / 2 ^ ρ := eq_of_digits (2 ^ K) n (fun s h => hs s h) hh
-  rw [← Nat.mod_add_div y (2 ^ ρ), ← Nat.mod_add_div y' (2 ^ ρ), h0, e]
 
 end Slot
 

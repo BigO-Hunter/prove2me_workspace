@@ -12,6 +12,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs14
 import Definitions.Def_IntMul_Kappa_R6_Defs16
 import Definitions.Def_IntMul_Kappa_R6_Defs20
 import Theorems.Thm_NLogN_KFD_FSp_irun
+import Theorems.Thm_NLogN_KIL_Sp_pop
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -182,12 +183,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-theorem pushCost_le (e : Ex HS) (s : IState HS) (B : ℕ) (h : e.Bnd s B) :
-    e.cost s + (2 * moveCost (zsz (e.eval s)) + 19) ≤ (e.size + 1) * 10 ^ 7 * (B + 2) ^ 2 := by
-  have h1 := Ex.cost_le s B e h
-  have h2 := Ex.zsz_eval_le s B e h
-  simp only [moveCost]; nlinarith
-
 end RS
 
 end NLogN
@@ -275,64 +270,16 @@ open IntMul RS
 
 namespace KIL
 
-theorem top_encK {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (NLogN.KIL.encK s f).top i = a :=
-  IState.top_eq (L := ints l ++ s.G i) (by simp [h])
-
-theorem Sp.seq {a b : RS} {s t u : IState HS} {c1 c2 : ℕ} (ha : Sp a s t c1) (hb : Sp b t u c2) :
-    Sp (.seq a b) s u (c1 + c2) := by
-  refine ⟨⟨ha.1, ?_⟩, ?_, ?_⟩
-  · rw [ha.2.1]; exact hb.1
-  · simp only [NLogN.RS.run, ha.2.1, hb.2.1]
-  · simp only [NLogN.RS.cost]; rw [ha.2.1]; have := ha.2.2; have := hb.2.2; omega
-
 section
 variable (s : IState HS) (f : Fin HS → List ℤ)
 
-/-- A push of an arbitrary (e.g. multiplying) expression, with the quadratic cost bound. -/
-theorem Sp.pushQ {i : Fin HS} {e : Ex HS} {B : ℕ} (hi : i.val < 56) (hc : e.Clean)
-    (hok : e.ok (NLogN.KIL.encK s f)) (hB : e.Bnd (NLogN.KIL.encK s f) B) :
-    Sp (.push i e) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i (e.eval (NLogN.KIL.encK s f) :: f i)))
-      ((e.size + 1) * 10 ^ 7 * (B + 2) ^ 2) := by
-  refine ⟨⟨hi, hc, hok⟩, ?_, ?_⟩
-  · simp only [NLogN.RS.run]
-    rw [← encK_upd]; simp [ints]
-  · exact pushCost_le e _ B hB
-
-theorem Sp.pop {i : Fin HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l)
-    (ha : zsz a ≤ B) :
-    Sp (.pop i) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i l)) (2 * B + 2) := by
-  refine ⟨⟨hi, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [NLogN.RS.run]
-    rw [← encK_upd]; simp [hf]
-  · simp only [NLogN.RS.cost, top_encK hf]; omega
-
 end
-
-theorem ok_reg {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (Ex.reg i).ok (NLogN.KIL.encK s f) := isInt_encK h
 
 theorem eval_reg {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
     (h : f i = a :: l) : (Ex.reg i).eval (NLogN.KIL.encK s f) = a := top_encK h
 
-theorem bnd_reg {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    {B : ℕ} (h : f i = a :: l) (ha : zsz a ≤ B) : (Ex.reg i).Bnd (NLogN.KIL.encK s f) B := by
-  simp only [Ex.Bnd, top_encK h]; exact ha
-
-theorem clean_reg {i : Fin HS} (hi : i.val < 56) : (Ex.reg i).Clean := clean_of_lt hi
-
-theorem clean_add {a b : Ex HS} (ha : a.Clean) (hb : b.Clean) : (Ex.add a b).Clean := by
-  intro j hj
-  simp only [Ex.regs, List.mem_append] at hj
-  rcases hj with hj | hj
-  · exact ha j hj
-  · exact hb j hj
-
 theorem bnd_reverse {B : ℕ} {l : List ℤ} (h : Bnd B l) : Bnd B l.reverse :=
   fun a ha => h a (List.mem_reverse.1 ha)
-
-theorem clean_lit (c : ℤ) : (Ex.lit (S := HS) c).Clean := by
-  intro j hj; simp [Ex.regs] at hj
 
 end KIL
 
@@ -1079,16 +1026,6 @@ open KFC (marks marks_zero marks_succ isMk NM NM_int isMk_marks_succ isMk_NM toU
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-theorem FSp.irun {p : RS} {s t : IState HS} {c : ℕ} (hf : fok p = true) (h : FSp p s t c) :
-    IRuns I iprog (fcode p) s t c := by
-  have := fcode_runs0 (I := I) (iprog := iprog) p s h.1 hf
-  rw [h.2.1] at this
-  exact this.mono h.2.2
-
-theorem FSp.of_norep {p : RS} {s t : IState HS} {c : ℕ} (hr : norep p = true)
-    (h : KIL.Sp p s t c) : FSp p s t c :=
-  ⟨h.1, h.2.1, by rw [fcost_norep p hr]; exact h.2.2⟩
-
 open KIL in
 open KIL in
 theorem fcost_sim {π : KIL.PMap} (hπ : KIL.PLow π) {p p' : RS} (h : KIL.RSim π p p') :
@@ -1196,21 +1133,6 @@ open IntMul RS
 namespace KFD
 
 open KIL
-
-theorem cost_lit (t : IState HS) (c : ℤ) : (Ex.lit (S := HS) c).cost t = zsz c + 2 := rfl
-
-/-- Fine counted loop with a literal count. -/
-theorem FSp.repLit {C : Fin HS} {b : RS} {s : IState HS} {F : ℕ → Fin HS → List ℤ}
-    {N c Bb : ℕ} (hC5 : C.val < 56) (hC : ∀ k, F k C = []) (hw : C ∉ b.writes)
-    (hNB : zsz (N : ℤ) ≤ Bb)
-    (hb : ∀ k < N, FSp b (encK s (Function.update (F k) C [(N : ℤ) - k]))
-      (encK s (Function.update (F (k + 1)) C [(N : ℤ) - k])) c) :
-    FSp (.rep C (.lit (N : ℤ)) b) (encK s (F 0)) (encK s (F N)) (cLp N c Bb) := by
-  have H := FSp.rep (n := .lit (N : ℤ)) hC5 hC hw (clean_lit _) trivial rfl hb
-  refine H.mono ?_
-  rw [cost_lit]
-  have := cRep_le hNB
-  unfold cLp; nlinarith
 
 /-- Fine `mvK` with the count on top of a register. -/
 theorem FSp.mvR {X Y C r : Fin HS} (hXY : X ≠ Y) (hXC : X ≠ C) (hYC : Y ≠ C) (hX5 : X.val < 56)

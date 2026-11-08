@@ -409,11 +409,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-/-! ## Frames of natural pushes -/
-
-theorem frV_keys (σ : Fin HS → Option ℤ) (l : List (Fin HS × NE)) :
-    (frV σ l).map Prod.fst = l.map Prod.fst := by simp [frV, List.map_map, Function.comp_def]
-
 section Frames
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
@@ -466,9 +461,6 @@ end Scale
 /-! ## The depth -/
 
 section Dep
-
-theorem dep_lt {m x : ℕ} (h : x < 2 * m) : dep m x = 0 := by
-  rw [dep, dif_neg (by omega)]
 
 theorem dep_ge {m x : ℕ} (hm : 1 ≤ m) (h : 2 * m ≤ x) : dep m x = 1 + dep m ((m - 1) * (x / m)) := by
   rw [dep, dif_pos ⟨h, hm⟩]
@@ -755,17 +747,6 @@ namespace IntMul.Kappa.R6.IL3H
 open IntMul NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN.KFN NLogN.KFW
   Complex P8Lift Butterfly IntMul.Kappa.R6.Cx
 
-theorem VbH_mono (c : Cfg) {K t S0 r H E e B E' e' B' : ℕ} (hE : E' ≤ E) (he : e' ≤ e)
-    (hB : B' ≤ B) : VbH c K t S0 r H E' e' B' ≤ VbH c K t S0 r H E e B := by
-  unfold VbH
-  have h1 : (E' + 1) ^ c.p ≤ (E + 1) ^ c.p := Nat.pow_le_pow_left (by omega) _
-  have h2 : c.Aw * (E' + 1) ^ c.p ≤ c.Aw * (E + 1) ^ c.p := Nat.mul_le_mul_left _ h1
-  have h3 : K * E' ≤ K * E := Nat.mul_le_mul_left _ hE
-  have h4 : c.Wr * (B' * 2 ^ t * S0 * r) ≤ c.Wr * (B * 2 ^ t * S0 * r) :=
-    Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ (Nat.mul_le_mul_right _
-      (Nat.mul_le_mul_right _ hB)))
-  omega
-
 /-! ## Side lemmas -/
 
 theorem het_sub {e K t : ℕ} (hK : 1 ≤ K) (het : e - e % K + K ≤ t) (j : ℕ) :
@@ -798,11 +779,6 @@ theorem dvd_childG {W m E B S0 s G : ℕ} (hW : 1 ≤ W) (hm : 1 ≤ m) (hE : 2 
   · refine dvd_trans (mul_dvd_mul_left _ ?_) (Nat.dvd_div_of_mul_dvd hXB)
     exact pow_dvd_pow 2 (Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ (Nat.sub_le_sub_right hF 1)))
   · exact dvd_trans (pow_dvd_pow 2 (Nat.mul_le_mul_right _ (Nat.sub_le_sub_right hF 1))) hS
-
-/-- A pushed frame keeps the registers outside its keys. -/
-theorem σPush_frV_ne (σ σ' : Fin HS → Option ℤ) (l : List (Fin HS × NE)) {i : Fin HS}
-    (hi : i ∉ l.map Prod.fst) : σPush σ' (frV σ l) i = σ' i :=
-  σPush_ne _ _ _ (fun p hp e => hi (by rw [← frV_keys σ l, ← e]; exact List.mem_map_of_mem hp))
 
 /-- The widths of the steps of a list. -/
 theorem sum_dwStH (c : Cfg) (F : ℕ) : ∀ l : List (HStep (Fin c.Wr) c.m),

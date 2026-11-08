@@ -10,6 +10,9 @@ import Theorems.Thm_NLogN_zsz_le_of_lt
 import Definitions.Def_IntMul_Kappa_R6_Defs11
 import Definitions.Def_IntMul_Kappa_R6_Defs12
 import Definitions.Def_IntMul_Kappa_R6_Defs20
+import Theorems.Thm_NLogN_KIL_Sp_pop
+import Theorems.Thm_NLogN_KIL_Sp_asg
+import Theorems.Thm_IntMul_Kappa_R6_IL_cLevBody_le
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -34,9 +37,6 @@ lemma encode_decode {sh : Shape} {m : ℕ} (h : m < AModel.vol sh) : encode sh (
 
 section Pull
 variable {α : Type*}
-
-@[simp] lemma length_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) :
-    (AModel.pull sh sh' g d xs).length = AModel.vol sh' := by simp [AModel.pull]
 
 lemma getElem_pull (sh sh' : Shape) (g : List ℕ → List ℕ) (d : α) (xs : List α) (j : ℕ)
     (hj : j < (AModel.pull sh sh' g d xs).length) :
@@ -422,9 +422,6 @@ open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
-theorem IState.top_eq {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (h : s.G i = .int a :: L) :
-    s.top i = a := by simp [IState.top, h]
-
 namespace Ex
 
 end Ex
@@ -448,9 +445,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-
-theorem IState.isInt_of {s : IState S} {i : Fin S} {a : ℤ} {L : List Item}
-    (h : s.G i = .int a :: L) : s.IsInt i := ⟨L, by rw [IState.top_eq h, h]⟩
 
 namespace Ex
 
@@ -575,10 +569,6 @@ open IntMul RS
 
 namespace KIL
 
-theorem top_encK {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (NLogN.KIL.encK s f).top i = a :=
-  IState.top_eq (L := ints l ++ s.G i) (by simp [h])
-
 theorem Sp.seq {a b : RS} {s t u : IState HS} {c1 c2 : ℕ} (ha : Sp a s t c1) (hb : Sp b t u c2) :
     Sp (.seq a b) s u (c1 + c2) := by
   refine ⟨⟨ha.1, ?_⟩, ?_, ?_⟩
@@ -592,24 +582,6 @@ theorem Sp.irun {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P} {p : RS}
 
 section
 variable (s : IState HS) (f : Fin HS → List ℤ)
-
-theorem Sp.pop {i : Fin HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l)
-    (ha : zsz a ≤ B) :
-    Sp (.pop i) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i l)) (2 * B + 2) := by
-  refine ⟨⟨hi, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [NLogN.RS.run]
-    rw [← encK_upd]; simp [hf]
-  · simp only [NLogN.RS.cost, top_encK hf]; omega
-
-theorem Sp.asg {i : Fin HS} {e : Ex HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56)
-    (hf : f i = a :: l) (ha : zsz a ≤ B) (hc : e.Clean) (hok : e.ok (NLogN.KIL.encK s f)) (hl : e.Lin)
-    (hB : e.Bnd (NLogN.KIL.encK s f) B) :
-    Sp (.asg i e) (NLogN.KIL.encK s f) (NLogN.KIL.encK s (Function.update f i (e.eval (NLogN.KIL.encK s f) :: l)))
-      ((e.size + 1) * 2000 * (B + 2)) := by
-  refine ⟨⟨hi, hc, hok, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [NLogN.RS.run]
-    rw [← encK_upd]; simp [hf, ints]
-  · exact asgCost_le_lin i e _ B hl hB (by rw [top_encK hf]; exact ha)
 
 end
 
@@ -940,14 +912,6 @@ open IntMul RS AModel AModelL12
 
 variable {m : ℕ}
 
-theorem pushCost_eq (Bb : ℕ) : ∀ l : List (Fin HS × Ex HS),
-    pushCost Bb l = pushSz l * 10 ^ 7 * (Bb + 2) ^ 2 + 1
-  | [] => by simp [pushCost, pushSz]
-  | p :: l => by
-    have := pushCost_eq Bb l
-    simp only [pushCost, pushSz, List.map_cons, List.sum_cons] at this ⊢
-    rw [show ∀ a b : ℕ, a + b + 1 = a + (b + 1) from fun a b => by ring, this]; ring
-
 end NLogN.KIL
 
 end
@@ -1186,43 +1150,6 @@ namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
-theorem cUL_le (n : ℕ) : cUL n ≤ 1300 * n + 1000 := by
-  have := NLogN.KFC.zsz_nat_le n; unfold cUL; omega
-
-/-- All four conversions and the constant are absorbed: `O(V)` total. -/
-theorem cUL4_le (P q M B w : ℕ) (hB1 : 1 ≤ B) (hM1 : 1 ≤ M) (hq1 : 1 ≤ q) (hP1 : 1 ≤ P) :
-    cUL P + cUL q + cUL M + cUL B + 1000 ≤ 51 * kap w * (P * q * M * B) := by
-  have hk : 200 ≤ kap w := by simp [kap]
-  set V := P * q * M * B with hV
-  have h1 : 1 ≤ V := Nat.mul_pos (Nat.mul_pos (Nat.mul_pos hP1 hq1) hM1) hB1
-  have hPV : P ≤ V := by
-    have : P ≤ P * q := Nat.le_mul_of_pos_right _ hq1
-    have : P * q ≤ P * q * M := Nat.le_mul_of_pos_right _ hM1
-    have : P * q * M ≤ V := Nat.le_mul_of_pos_right _ hB1
-    omega
-  have hqV : q ≤ V := by
-    have : q ≤ P * q := Nat.le_mul_of_pos_left _ hP1
-    have : P * q ≤ P * q * M := Nat.le_mul_of_pos_right _ hM1
-    have : P * q * M ≤ V := Nat.le_mul_of_pos_right _ hB1
-    omega
-  have hMV : M ≤ V := by
-    have : M ≤ P * q * M := Nat.le_mul_of_pos_left _ (Nat.mul_pos hP1 hq1)
-    have : P * q * M ≤ V := Nat.le_mul_of_pos_right _ hB1
-    omega
-  have hBV : B ≤ V := Nat.le_mul_of_pos_left _ (Nat.mul_pos (Nat.mul_pos hP1 hq1) hM1)
-  have := cUL_le P; have := cUL_le q; have := cUL_le M; have := cUL_le B
-  have h2 : 200 * V ≤ kap w * V := Nat.mul_le_mul_right _ hk
-  have e : 51 * kap w * V = 51 * (kap w * V) := by ring
-  rw [e]; omega
-
-theorem cFwdF_le (P q M B w : ℕ) (hB1 : 1 ≤ B) (hM1 : 1 ≤ M) (hq1 : 1 ≤ q) (hP1 : 1 ≤ P) :
-    cFwdF P q M B w ≤ (2 * q + 67) * kap w * (P * q * M * B) := by
-  have := cUL4_le P q M B w hB1 hM1 hq1 hP1
-  unfold cFwdF
-  have e : (2 * q + 67) * kap w * (P * q * M * B) =
-      (2 * q + 16) * kap w * (P * q * M * B) + 51 * kap w * (P * q * M * B) := by ring
-  omega
-
 end KFC
 
 end NLogN
@@ -1242,14 +1169,6 @@ open IntMul AModel
 namespace KFC
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-theorem cBwdF_le (P q M B w : ℕ) (hB1 : 1 ≤ B) (hM1 : 1 ≤ M) (hq1 : 1 ≤ q) (hP1 : 1 ≤ P) :
-    cBwdF P q M B w ≤ (2 * q + 69) * kap w * (P * q * M * B) := by
-  have := cUL4_le P q M B w hB1 hM1 hq1 hP1
-  unfold cBwdF
-  have e : (2 * q + 69) * kap w * (P * q * M * B) =
-      (2 * q + 18) * kap w * (P * q * M * B) + 51 * kap w * (P * q * M * B) := by ring
-  omega
 
 end KFC
 

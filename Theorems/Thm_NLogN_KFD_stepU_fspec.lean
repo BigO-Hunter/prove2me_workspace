@@ -5,6 +5,7 @@ import Theorems.Thm_NLogN_KFD_shFracU_fspec
 import Theorems.Thm_NLogN_Ex_cost_le
 import Theorems.Thm_NLogN_Ex_zsz_eval_le
 import Theorems.Thm_NLogN_zsz_le_of_lt
+import Theorems.Thm_NLogN_KFX_rowCodeU_runs
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -485,25 +486,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-theorem pushSt_G_of_not_mem (t : IState HS) (r : Fin HS) :
-    ∀ l : List (Fin HS × ℤ), r ∉ l.map Prod.fst → (pushSt t l).G r = t.G r
-  | [], _ => rfl
-  | (i, v) :: l, h => by
-    simp only [List.map_cons, List.mem_cons, not_or] at h
-    simp only [pushSt]
-    rw [pushSt_G_of_not_mem _ r l h.2]
-    simp [Ne.symm h.1, h.1]
-
-theorem pushSt_G (t : IState HS) (r : Fin HS) : ∀ l : List (Fin HS × ℤ),
-    (pushSt t l).G r = ints ((l.filter (fun p => p.1 = r)).map Prod.snd).reverse ++ t.G r
-  | [] => by simp [pushSt]
-  | (i, v) :: l => by
-    simp only [pushSt]
-    rw [pushSt_G _ r l]
-    by_cases h : i = r
-    · subst h; simp [List.filter_cons, ints_append, ints]
-    · simp [List.filter_cons, h, Ne.symm h]
 
 @[simp] theorem pushSt_ip (t : IState HS) : ∀ l, (pushSt t l).ip = t.ip
   | [] => rfl
@@ -1120,22 +1102,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-theorem clean_of_rd {e : Ex HS} (h : ∀ r ∈ e.regs, RdOK r) : e.Clean := fun j hj =>
-  clean_of_lt (h j hj).lt j (by simp [Ex.regs])
-
-theorem pushOK_of {t : IState HS} {Bb : ℕ} (L : List (Fin HS × Ex HS))
-    (hL : ∀ p ∈ L, 24 ≤ p.1.val ∧ p.1.val ≤ 37) (hg : ∀ p ∈ L, GoodE t Bb p.2) :
-    PushOK t Bb L := by
-  intro p hp
-  obtain ⟨h1, h2⟩ := hL p hp
-  refine ⟨by omega, clean_of_rd (hg p hp).rd, ?_, (hg p hp).ok, (hg p hp).bnd⟩
-  intro r hr hm
-  obtain ⟨q, hq, rfl⟩ := List.mem_map.1 hm
-  have := hL q hq
-  rcases (hg p hp).rd q.1 hr with h | h
-  · rw [h] at this; exact absurd this.1 (by decide)
-  · omega
 
 theorem goodE_pos {t : IState HS} {Bb : ℕ} {e : Ex HS} (hp : PosE t e)
     (hr : ∀ r ∈ e.regs, RdOK r) {M : ℕ} (hle : e.eval t ≤ M) (hM : zsz (M : ℤ) ≤ Bb) :

@@ -1013,6 +1013,10 @@ abbrev T₀ := {S : Finset (Fin 100) // S.card = 3}
 /-- The indicator map of the triple family. -/
 def ind₀ : NetProp7.T₀ → Finset (Fin 100) := Subtype.val
 
+lemma ind₀_card (t : NetProp7.T₀) : (NetProp7.ind₀ t).card = 3 := t.2
+
+lemma ind₀_inj : Function.Injective NetProp7.ind₀ := Subtype.val_injective
+
 lemma card_T₀ : Fintype.card NetProp7.T₀ = 161700 := by
   rw [Fintype.card_finset_len, Fintype.card_fin, Nat.choose_eq_descFactorial_div_factorial]
   norm_num [Nat.descFactorial, Nat.factorial]

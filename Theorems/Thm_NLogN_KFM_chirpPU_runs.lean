@@ -152,15 +152,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
 
-theorem GB.bnd {w : ℕ} {zs : List GI} (h : NLogN.KFB.GB w zs) : Bnd w (gflat zs) := by
-  intro x hx
-  obtain ⟨z, hz, h1 | h1⟩ := mem_gflat.1 hx <;> subst h1
-  · exact (h z hz).1
-  · exact (h z hz).2
-
-theorem GB.sub {w : ℕ} {zs zs' : List GI} (h : NLogN.KFB.GB w zs) (hs : ∀ z ∈ zs', z ∈ zs) : NLogN.KFB.GB w zs' :=
-  fun z hz => h z (hs z hz)
-
 end NLogN.KFB
 
 end

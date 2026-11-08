@@ -8,6 +8,7 @@ import Theorems.Thm_NLogN_Ex_code_runs
 import Theorems.Thm_NLogN_Ex_cost_le
 import Theorems.Thm_NLogN_Ex_zsz_eval_le
 import Theorems.Thm_NLogN_zsz_le_of_lt
+import Theorems.Thm_IntMul_Kappa_R6_IL_cLevBody_le
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -838,14 +839,6 @@ open IntMul RS AModel AModelL12
 
 variable {m : ℕ}
 
-theorem pushCost_eq (Bb : ℕ) : ∀ l : List (Fin HS × Ex HS),
-    pushCost Bb l = pushSz l * 10 ^ 7 * (Bb + 2) ^ 2 + 1
-  | [] => by simp [pushCost, pushSz]
-  | p :: l => by
-    have := pushCost_eq Bb l
-    simp only [pushCost, pushSz, List.map_cons, List.sum_cons] at this ⊢
-    rw [show ∀ a b : ℕ, a + b + 1 = a + (b + 1) from fun a b => by ring, this]; ring
-
 end NLogN.KIL
 
 end
@@ -1309,45 +1302,6 @@ end Body
 
 variable {m : ℕ}
 
-theorem cStepGF_le (rX : Fin HS) (T : TSh m) (V w Bb : ℕ) :
-    cStepGF T.k T.d (stgT rX T).length V w Bb (paT rX T) (pcT T) (stgT rX T) ≤
-      tKF rX T * (10 ^ 13 * ((V + 1) * (w + 2)) + 10 ^ 10 * (Bb + 2) ^ 2) := by
-  unfold cStepGF cShFF cFrF cShUF tKF
-  rw [pushCost_eq]
-  set S := pushSz (prmL (paT rX T) (pcT T) ++ stgPush (stgT rX T))
-  set n := (stgT rX T).length
-  set a := (T.k + 1) ^ 3
-  set e := (T.d + 1) ^ 3
-  set Z := (V + 1) * (w + 2)
-  set Y := (Bb + 2) ^ 2
-  have hY : Bb + 2 ≤ Y := by simp only [Y]; nlinarith
-  have hY1 : 4 ≤ Y := by simp only [Y]; nlinarith
-  have hk : T.k + 1 ≤ a := by simp only [a]; exact Nat.le_self_pow (by norm_num) _
-  have hd : T.d + 1 ≤ e := by simp only [e]; exact Nat.le_self_pow (by norm_num) _
-  have h1 : 10 ^ 8 * ((T.k + 1) * Y) ≤ 10 ^ 8 * (a * Y) := Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ hk)
-  have h2 : 10 ^ 8 * ((T.d + 1) * Y) ≤ 10 ^ 8 * (e * Y) := Nat.mul_le_mul_left _ (Nat.mul_le_mul_right _ hd)
-  have e1 : 100 * (S * 10 ^ 7 * Y + 1) = 10 ^ 9 * (S * Y) + 100 := by ring
-  have e2 : (S + a + e + n + 3) * (10 ^ 13 * Z + 10 ^ 10 * Y) =
-      10 ^ 13 * (S * Z) + 10 ^ 10 * (S * Y) + 10 ^ 13 * (a * Z) + 10 ^ 10 * (a * Y) +
-      10 ^ 13 * (e * Z) + 10 ^ 10 * (e * Y) + 10 ^ 13 * ((n + 1) * Z) + 10 ^ 10 * ((n + 1) * Y) +
-      2 * 10 ^ 13 * Z + 2 * 10 ^ 10 * Y := by ring
-  have e3 : 10 ^ 10 * (a * Z) = 10 ^ 10 * (a * Z) := rfl
-  rw [e1, e2]
-  have h3 : 10 ^ 10 * (a * Z) ≤ 10 ^ 13 * (a * Z) := Nat.mul_le_mul_right _ (by norm_num)
-  have h4 : 10 ^ 10 * (e * Z) ≤ 10 ^ 13 * (e * Z) := Nat.mul_le_mul_right _ (by norm_num)
-  have h5 : 2 * 10 ^ 12 * ((n + 1) * Z) ≤ 10 ^ 13 * ((n + 1) * Z) := Nat.mul_le_mul_right _ (by norm_num)
-  nlinarith
-
-theorem cStepsUF_le (rX : Fin HS) (V w Bb : ℕ) : ∀ Ts : List (TSh m),
-    cStepsUF rX V w Bb Ts ≤ tKFs rX Ts * (10 ^ 13 * ((V + 1) * (w + 2)) + 10 ^ 10 * (Bb + 2) ^ 2) + 1
-  | [] => by simp [cStepsUF, tKFs]
-  | T :: Ts => by
-    have h1 := cStepGF_le rX T V w Bb
-    have h2 := cStepsUF_le rX V w Bb Ts
-    simp only [cStepsUF, tKFs, List.map_cons, List.sum_cons] at h2 ⊢
-    rw [add_mul]
-    omega
-
 end KFD
 
 end NLogN
@@ -1494,12 +1448,6 @@ theorem edgeCostF_le (v Bb cC : ℕ) : ∀ Ts : List (TStep m),
     simp only [edgeCost, List.map_cons, List.sum_cons, tCost, shKF, swN] at IH ⊢
     rw [add_mul, one_mul]
     omega
-
-theorem cCF_le (V Bb : ℕ) : cCF V Bb ≤ 10 ^ 9 * (V + 1) + 10 ^ 8 * (Bb + 2) ^ 2 := by
-  unfold cCF cOF cPushT
-  have hB : Bb + 2 ≤ (Bb + 2) ^ 2 := Nat.le_self_pow (by norm_num) _
-  generalize (Bb + 2) ^ 2 = Y at hB ⊢
-  omega
 
 end Costs
 

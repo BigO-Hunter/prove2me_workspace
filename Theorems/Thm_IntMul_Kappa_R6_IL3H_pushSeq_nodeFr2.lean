@@ -28,6 +28,8 @@ import Definitions.Def_IntMul_Kappa_K_Defs3
 import Definitions.Def_IntMul_Kappa_K_Defs15
 import Definitions.Def_IntMul_Kappa_K_Defs13
 import Theorems.Thm_NLogN_KIL_desc4_sp
+import Theorems.Thm_IntMul_Kappa_R6_IL3H_pushSeq_child
+import Theorems.Thm_IntMul_Kappa_R6_IL3H_nodeRH_of
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -49,20 +51,6 @@ open IntMul
 variable {S : ℕ}
 
 namespace Ex
-
-theorem Bnd_mono (s : IState S) {B B' : ℕ} (hB : B ≤ B') : ∀ e : Ex S, e.Bnd s B → e.Bnd s B'
-  | reg _, h | lit _, h => le_trans h hB
-  | add a b, h | mul a b, h | shl a b, h | ndiv a b, h | nmod a b, h =>
-    ⟨Bnd_mono s hB a h.1, Bnd_mono s hB b h.2.1, le_trans h.2.2 hB⟩
-  | quo a b, h | rem a b, h => ⟨Bnd_mono s hB a h.1, Bnd_mono s hB b h.2⟩
-  | neg a, h => Bnd_mono s hB a h
-  | pow2 a, h => ⟨Bnd_mono s hB a h.1, le_trans h.2 hB⟩
-  | sel c x y, h => by
-    refine ⟨Bnd_mono s hB c h.1, ?_⟩
-    have h2 := h.2
-    split_ifs at h2 ⊢
-    · exact Bnd_mono s hB x h2
-    · exact Bnd_mono s hB y h2
 
 end Ex
 
@@ -168,11 +156,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
 
-/-! ## Gaussian integers -/
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
-
 /-! ## Linear-combination expressions -/
 
 /-! ## Fine moves with the loop overhead bounded by the count -/
@@ -216,15 +199,6 @@ namespace NLogN.KFH
 open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
-
-/-! ## Layer implementations -/
-
-theorem LImpl.mono {hρ : ρ < K} {r : ℕ} {T : Butterfly.Op (Fin D)} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : LImpl (P := P) (S := S) hρ r T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    LImpl (P := P) (S := S) hρ r T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 /-! ## The concrete kernels -/
 
@@ -343,13 +317,6 @@ section SImplLemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImpl.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImpl r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImpl r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplLemmas
 
 section RImplDefs
@@ -357,12 +324,6 @@ section RImplDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImpl.mono {A : ROp (Fin W) m κ} {code : RS} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImpl r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) : RImpl r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplDefs
 
@@ -402,13 +363,6 @@ section SImplILemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImplI.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : ℕ → IStmt HS Pp} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImplI I iprog r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImplI I iprog r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplILemmas
 
 section RImplIDefs
@@ -416,13 +370,6 @@ section RImplIDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImplI.mono {A : ROp (Fin W) m κ} {code : ℕ → IStmt HS Pp} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImplI I iprog r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    RImplI I iprog r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplIDefs
 
@@ -490,28 +437,12 @@ section SQ
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImplQ.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {U : IStmt HS Pp} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImplQ I iprog Q lo hi r st n T U e dw c)
-    (hc : ∀ w, lo ≤ w → w + dw ≤ hi → c w ≤ c' w) :
-    SImplQ I iprog Q lo hi r st n T U e dw c' := by
-  intro s f zs l xs F w hQ hC h0 hx hl hb h1 h2
-  obtain ⟨zs', r1, b1, f1⟩ := h s f zs l xs F w hQ hC h0 hx hl hb h1 h2
-  exact ⟨zs', r1, b1, f1.mono (hc w h1 h2)⟩
-
 end SQ
 
 section RQ
 
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ] {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImplQ.mono {A : ROp (Fin W) m κ} {U : IStmt HS Pp} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImplQ I iprog Q lo hi r n st A U e dw c)
-    (hc : ∀ w, lo ≤ w → w + dw ≤ hi → c w ≤ c' w) :
-    RImplQ I iprog Q lo hi r n st A U e dw c' := by
-  intro s f zs l X F w hQ hC h0 hx hX hb h1 h2
-  obtain ⟨zs', r1, b1, f1⟩ := h s f zs l X F w hQ hC h0 hx hX hb h1 h2
-  exact ⟨zs', r1, b1, f1.mono (hc w h1 h2)⟩
 
 end RQ
 
@@ -544,20 +475,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFN
-
-/-! ## The lookup expression -/
-
-/-! ## The affine positions -/
-
-/-! ## The affine exponent expression -/
-
-/-! ## The two instances -/
-
-theorem clean_of_lt {e : Ex HS} (h : ∀ j ∈ e.regs, j.val < 56) : e.Clean := by
-  intro j hj hz
-  have := h j hj
-  simp only [zX_all, List.mem_cons, List.not_mem_nil, or_false] at hz
-  rcases hz with rfl | rfl | rfl | rfl | rfl | rfl | rfl | rfl <;> exact absurd this (by decide)
 
 end NLogN.KFW
 
@@ -624,22 +541,7 @@ variable {σ : Fin HS → Option ℤ} {B : ℕ}
 
 theorem congr {e : Ex HS} {x y : ℤ} (h : ExV σ e x B) (hxy : x = y) : ExV σ e y B := hxy ▸ h
 
-theorem mono {e : Ex HS} {x : ℤ} {B' : ℕ} (h : ExV σ e x B) (hB : B ≤ B') : ExV σ e x B' :=
-  fun t ht => let ⟨a, b, c⟩ := h t ht; ⟨a, b, Ex.Bnd_mono t hB e c⟩
-
 end ExV
-
-theorem ExC.mono {σ : Fin HS → Option ℤ} {e : Ex HS} {x : ℤ} {c c' : ℕ} (h : ExC σ e x c)
-    (hc : c ≤ c') : ExC σ e x c' :=
-  fun t ht => let ⟨a, b, d⟩ := h t ht; ⟨a, b, d.trans hc⟩
-
-theorem pushSeq_cons {σ : Fin HS → Option ℤ} {i : Fin HS} {e : Ex HS} {v : ℤ} {c1 c2 : ℕ}
-    {l : List (Fin HS × Ex HS)} {vl : List (Fin HS × ℤ)} (hi : i.val < 56) (hc : e.Clean)
-    (he : ExC σ e v c1) (hr : PushSeq (Function.update σ i (some v)) l vl c2) :
-    PushSeq σ ((i, e) :: l) ((i, v) :: vl) (c1 + (2 * moveCost (zsz v) + 19) + c2) := by
-  simp only [PushSeq, true_and]
-  exact ⟨hi, hc, c1 + (2 * moveCost (zsz v) + 19), c2, le_rfl,
-    fun t ht => let ⟨a, b, d⟩ := he t ht; ⟨a, b, by omega⟩, hr⟩
 
 /-! ## The phase step -/
 
@@ -666,36 +568,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem PushSeq.mono : ∀ {σ : Fin HS → Option ℤ} {pl : List (Fin HS × Ex HS)}
-    {vl : List (Fin HS × ℤ)} {c c' : ℕ}, PushSeq σ pl vl c → c ≤ c' → PushSeq σ pl vl c'
-  | _, [], [], _, _, h, hc => by simp only [PushSeq] at h ⊢; omega
-  | _, [], _ :: _, _, _, h, _ => absurd h (by simp [PushSeq])
-  | _, _ :: _, [], _, _, h, _ => absurd h (by simp [PushSeq])
-  | _, (i, e) :: l, (j, v) :: vl, _, _, h, hc => by
-    simp only [PushSeq] at h ⊢
-    obtain ⟨h1, h2, h3, c1, c2, h4, h5, h6⟩ := h
-    exact ⟨h1, h2, h3, c1, c2, by omega, h5, h6⟩
-
-theorem moveCost_mono {a b : ℕ} (h : a ≤ b) : moveCost a ≤ moveCost b := by
-  unfold moveCost; omega
-
-/-- A push whose expression is bounded by `ExV`. -/
-theorem pushSeq_consV {σ : Fin HS → Option ℤ} {i : Fin HS} {e : Ex HS} {v : ℤ} {B sz c2 : ℕ}
-    {l : List (Fin HS × Ex HS)} {vl : List (Fin HS × ℤ)} (hi : i.val < 56) (hc : e.Clean)
-    (he : ExV σ e v B) (hsz : e.size ≤ sz) (hr : PushSeq (Function.update σ i (some v)) l vl c2) :
-    PushSeq σ ((i, e) :: l) ((i, v) :: vl) (sz * 10 ^ 7 * (B + 2) ^ 2 + (2 * moveCost B + 19) + c2) := by
-  have hz : ∀ t, Agree σ t → zsz v ≤ B := fun t ht => by
-    obtain ⟨a, b, c⟩ := he t ht
-    rw [← b]; exact Ex.zsz_eval_le t B e c
-  simp only [PushSeq, true_and]
-  refine ⟨hi, hc, sz * 10 ^ 7 * (B + 2) ^ 2 + (2 * moveCost B + 19), c2, le_rfl, fun t ht => ?_, hr⟩
-  obtain ⟨a, b, c⟩ := he t ht
-  have c' := Ex.cost_le t B e c
-  have m := moveCost_mono (hz t ht)
-  have : e.size * 10 ^ 7 * (B + 2) ^ 2 ≤ sz * 10 ^ 7 * (B + 2) ^ 2 :=
-    Nat.mul_le_mul_right _ (Nat.mul_le_mul_right _ hsz)
-  exact ⟨a, b, by omega⟩
 
 /-! ## The row-addition step -/
 
@@ -726,29 +598,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-/-! ## Reading pushed assignments -/
-
-theorem σPush_ne : ∀ (l : List (Fin HS × ℤ)) (σ : Fin HS → Option ℤ) (i : Fin HS),
-    (∀ p ∈ l, p.1 ≠ i) → σPush σ l i = σ i
-  | [], _, _, _ => rfl
-  | (j, v) :: l, σ, i, h => by
-    simp only [σPush]
-    rw [σPush_ne l _ i (fun p hp => h p (List.mem_cons_of_mem _ hp)),
-      Function.update_of_ne (fun e => h (j, v) List.mem_cons_self e.symm)]
-
-theorem σPush_mem : ∀ (l : List (Fin HS × ℤ)) (σ : Fin HS → Option ℤ) (i : Fin HS) (v : ℤ),
-    (l.map Prod.fst).Nodup → (i, v) ∈ l → σPush σ l i = some v
-  | [], _, _, _, _, h => absurd h (by simp)
-  | (j, u) :: l, σ, i, v, hnd, h => by
-    simp only [List.map_cons, List.nodup_cons] at hnd
-    simp only [σPush]
-    rcases List.mem_cons.1 h with e | h'
-    · simp only [Prod.mk.injEq] at e
-      obtain ⟨rfl, rfl⟩ := e
-      rw [σPush_ne l _ i (fun p hp e => hnd.1 (by rw [← e]; exact List.mem_map_of_mem hp)),
-        Function.update_self]
-    · exact σPush_mem l _ i v hnd.2 h'
-
 /-! ## Level registers -/
 
 /-! ## Phase-pass registers and the `ZD` pass -/
@@ -775,12 +624,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem pushSeq_consC {σ : Fin HS → Option ℤ} {i : Fin HS} {e : Ex HS} {v : ℤ} {B c1 c2 : ℕ}
-    {l : List (Fin HS × Ex HS)} {vl : List (Fin HS × ℤ)} (hi : i.val < 56) (hc : e.Clean)
-    (he : ExC σ e v c1) (hz : zsz v ≤ B) (hr : PushSeq (Function.update σ i (some v)) l vl c2) :
-    PushSeq σ ((i, e) :: l) ((i, v) :: vl) (c1 + (2 * moveCost B + 19) + c2) :=
-  (pushSeq_cons hi hc he hr).mono (by have := moveCost_mono hz; omega)
 
 /-! ## The node frame -/
 
@@ -812,48 +655,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-/-! ## Expression values and frames -/
-
-theorem ExV.of_regs {σ σ' : Fin HS → Option ℤ} {e : Ex HS} {v : ℤ} {B : ℕ}
-    (h : ExV σ e v B) (hr : ∀ j ∈ e.regs, σ j = σ' j) : ExV σ' e v B := by
-  intro t ht
-  classical
-  let t' : IState HS := { t with G := fun j => if j ∈ e.regs then t.G j else
-      (match σ j with | some v => [.int v] | none => []) }
-  have hag : Agree σ t' := by
-    intro j u hj
-    by_cases hje : j ∈ e.regs
-    · obtain ⟨L, hL⟩ := ht j u (by rw [← hr j hje]; exact hj)
-      exact ⟨L, by simp [t', hje, hL]⟩
-    · exact ⟨[], by simp [t', hje, hj]⟩
-  obtain ⟨a, b, c⟩ := h t' hag
-  have hc := Ex.congrG (s := t') (s' := t) e (fun j hj => by simp [t', hj])
-  refine ⟨hc.2.1.1 a, ?_, (hc.2.2.1 B).1 c⟩
-  rw [← hc.1]; exact b
-
-/-- **A frame with shadowing.** -/
-theorem pushSeq_of (σ0 : Fin HS → Option ℤ) (B sz : ℕ) :
-    ∀ (pre : List (Fin HS)) (l : List (Fin HS × Ex HS × ℤ)) (σ : Fin HS → Option ℤ),
-      (∀ j, j ∉ pre → σ j = σ0 j) →
-      (∀ x ∈ l, x.1.val < 56 ∧ x.2.1.Clean ∧ x.2.1.size ≤ sz ∧ ExV σ0 x.2.1 x.2.2 B) →
-      NoRd pre l →
-      PushSeq σ (l.map fun x => (x.1, x.2.1)) (l.map fun x => (x.1, x.2.2)) (cFrame l.length sz B)
-  | pre, [], σ, _, _, _ => by simp [PushSeq, cFrame]
-  | pre, x :: l, σ, hσ, h, hn => by
-    obtain ⟨h1, h3, h4, h5⟩ := h x List.mem_cons_self
-    have hv : ExV σ x.2.1 x.2.2 B := h5.of_regs (fun j hj => (hσ j (hn.1 j hj)).symm)
-    have IH := pushSeq_of σ0 B sz (x.1 :: pre) l (Function.update σ x.1 (some x.2.2))
-      (fun j hj => by
-        have hj1 : j ≠ x.1 := fun h => hj (by rw [h]; exact List.mem_cons_self)
-        rw [Function.update_of_ne hj1]
-        exact hσ j (fun h => hj (List.mem_cons_of_mem _ h)))
-      (fun y hy => h y (List.mem_cons_of_mem _ hy)) hn.2
-    have := pushSeq_consV h1 h3 hv h4 IH
-    simp only [List.map_cons]
-    refine this.mono (le_of_eq ?_)
-    simp only [cFrame, List.length_cons]
-    ring
 
 /-! ## Run specifications -/
 
@@ -893,23 +694,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-/-! ## Natural values of expressions -/
-
-theorem vOf_eq {σ : Fin HS → Option ℤ} {i : Fin HS} {n : ℕ} (h : σ i = some (n : ℤ)) :
-    vOf σ i = n := by simp [vOf, h]
-
-theorem exV_NE {σ : Fin HS → Option ℤ} {e : NE} (hn : NatR σ e) {M B : ℕ}
-    (hM : zsz (M : ℤ) ≤ B) (hok : e.OK (vOf σ) M) :
-    ExV σ e.toEx ((e.val (vOf σ) : ℕ) : ℤ) B := by
-  intro t ht
-  have hh : NE.Holds t (vOf σ) e := by
-    intro i hi
-    obtain ⟨n, hn⟩ := hn i hi
-    obtain ⟨L, hL⟩ := ht i _ hn
-    exact ⟨L, by rw [hL, vOf_eq hn]⟩
-  obtain ⟨a, b, c⟩ := NE.good hM e hh hok
-  exact ⟨a, c, b⟩
 
 /-! ## Frames of natural pushes -/
 
@@ -1062,16 +846,6 @@ namespace Cfg
 
 end Cfg
 
-/-! ## Natural expressions -/
-
-theorem powNE_val (v : Fin HS → ℕ) (x : NE) : ∀ k, (powNE x k).val v = x.val v ^ k
-  | 0 => rfl
-  | k + 1 => by simp only [powNE, NE.val, powNE_val v x k, pow_succ]
-
-theorem gsNE_val (v : Fin HS → ℕ) (Aw p m : ℕ) (x : NE) :
-    (gsNE Aw p m x).val v = Gs Aw p m (x.val v) := by
-  simp only [gsNE, NE.val, powNE_val, Gs]
-
 /-! ## The gate choice and the local scale -/
 
 /-! ## Codes -/
@@ -1197,69 +971,6 @@ namespace IntMul.Kappa.R6.IL3H
 open IntMul NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN.KFN NLogN.KFW
   Complex P8Lift Butterfly IntMul.Kappa.R6.Cx
 
-/-! ## The scale expressions -/
-
-theorem powNE_OK {v : Fin HS → ℕ} {M : ℕ} (hM : 1 ≤ M) (x : NE) (hx : x.OK v M) :
-    ∀ k, (x.val v) ^ k ≤ M → (powNE x k).OK v M
-  | 0, h => by simp only [powNE, NE.OK]; exact hM
-  | k + 1, h => by
-    have hk : (x.val v) ^ k ≤ M := by
-      rcases Nat.eq_zero_or_pos (x.val v) with h0 | h0
-      · rcases Nat.eq_zero_or_pos k with hk0 | hk0
-        · subst hk0; simpa using hM
-        · rw [h0, zero_pow (by omega)]; exact Nat.zero_le _
-      · exact le_trans (Nat.pow_le_pow_right h0 (by omega)) h
-    refine ⟨powNE_OK hM x hx k hk, hx, ?_⟩
-    rw [powNE_val, ← pow_succ]; exact h
-
-theorem gsNE_OK {v : Fin HS → ℕ} {M : ℕ} (Aw p m : ℕ) (x : NE) (hx : x.OK v M)
-    (hM : Aw * ((x.val v + 1) ^ p) + (x.val v + 1) ^ p + x.val v + 2 * m + 1 ≤ M) :
-    (gsNE Aw p m x).OK v M := by
-  have hX := NE.le_of_OK x hx
-  have hp1 : 1 ≤ (x.val v + 1) ^ p := Nat.one_le_pow _ _ (by omega)
-  have h1 : (NE.add x (.lit 1)).OK v M := ⟨hx, by simp only [NE.OK]; omega, by
-    simp only [NE.val]
-    have : x.val v + 1 ≤ (x.val v + 1) ^ p ∨ p = 0 := by
-      rcases Nat.eq_zero_or_pos p with h | h
-      · exact Or.inr h
-      · exact Or.inl (Nat.le_self_pow (by omega) _)
-    rcases this with h | h
-    · omega
-    · subst h; simp at hM; omega⟩
-  have hpow : (powNE (.add x (.lit 1)) p).OK v M :=
-    powNE_OK (by omega) _ h1 p (by simp only [NE.val]; omega)
-  simp only [gsNE, NE.OK]
-  refine ⟨hx, by omega, ?_⟩
-  split_ifs with h
-  · exact hx
-  · have hA : Aw ≤ Aw * (x.val v + 1) ^ p := Nat.le_mul_of_pos_right _ hp1
-    have hsub : Aw * ((x.val v + 1) ^ p - 1) ≤ Aw * (x.val v + 1) ^ p :=
-      Nat.mul_le_mul_left _ (Nat.sub_le _ _)
-    refine ⟨?_, ⟨hpow, ?_, ?_⟩, ?_⟩
-    · show Aw ≤ M; omega
-    · show 1 ≤ M; omega
-    · show 1 ≤ (powNE (.add x (.lit 1)) p).val v
-      rw [powNE_val]; exact hp1
-    · show Aw * ((powNE (.add x (.lit 1)) p).val v - 1) ≤ M
-      rw [powNE_val]; simp only [NE.val]; omega
-
-theorem powNE_regs (x : NE) : ∀ k, ∀ i ∈ (powNE x k).regs, i ∈ x.regs
-  | 0, i, hi => by simp [powNE, NE.regs] at hi
-  | k + 1, i, hi => by
-    simp only [powNE, NE.regs, List.mem_append] at hi
-    rcases hi with h | h
-    · exact powNE_regs x k i h
-    · exact h
-
-theorem gsNE_regs (Aw p m : ℕ) (x : NE) : ∀ i ∈ (gsNE Aw p m x).regs, i ∈ x.regs := by
-  intro i hi
-  have : i ∈ x.regs ∨ i ∈ (powNE (NE.add x (.lit 1)) p).regs := by
-    simp [gsNE, NE.regs] at hi; tauto
-  rcases this with h | h
-  · exact h
-  · have := powNE_regs _ p i h
-    simpa [NE.regs] using this
-
 theorem Gs_le_pow {A p m x : ℕ} (hA : 1 ≤ A) (hp : 1 ≤ p) : Gs A p m x ≤ A * (x + 1) ^ p :=
   le_trans (Gs_le hA hp) (Nat.mul_le_mul_left _ (Nat.sub_le _ _))
 
@@ -1337,16 +1048,6 @@ theorem δNE_regs (c : Cfg) : ∀ i ∈ (δNE c).regs, i = vX ∨ i = wF ∨ i =
   · exact Or.inl h
   · exact Or.inr (Or.inl (sumGsNE_regs c _ i h))
   · exact Or.inr (Or.inr h)
-
-/-! ## The node registers -/
-
-theorem nodeVL1_keys (c : Cfg) (K S0 r E B : ℕ) (p : Fin HS × ℤ) (hp : p ∈ nodeVL1 c K S0 r E B) :
-    p.1 ∈ [wF, wB, wR0, wKF, w1, vF] := by
-  simp only [nodeVL1, List.mem_cons, List.not_mem_nil, or_false] at hp
-  rcases hp with rfl | rfl | rfl | rfl | rfl | rfl <;> simp
-
-theorem nodeVL1_nodup (c : Cfg) (K S0 r E B : ℕ) : ((nodeVL1 c K S0 r E B).map Prod.fst).Nodup := by
-  simp only [nodeVL1, List.map_cons, List.map_nil]; decide
 
 /-! ## The frames -/
 

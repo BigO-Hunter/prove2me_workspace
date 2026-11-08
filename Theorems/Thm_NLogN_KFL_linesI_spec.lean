@@ -85,23 +85,6 @@ theorem gc_sc_lo {Q S Q' S' m : ℕ} (hS' : 0 < S') (hS : S = S' * Q' * m) (v n 
 
 theorem sc_gc (Q S n : ℕ) : NLogN.KFL.sc Q S (gc Q S n) n = n := (decomp Q S n).symm
 
-theorem sc_lt {Q S m v n : ℕ} (hS : 0 < S) (hv : v < Q) (hn : n < Q * S * m) :
-    NLogN.KFL.sc Q S v n < Q * S * m := by
-  have hQS : 0 < Q * S := Nat.mul_pos (by omega) hS
-  have h1 : n / (Q * S) < m := by
-    rw [Nat.div_lt_iff_lt_mul hQS]; linarith
-  have hr : v * S + n % S < Q * S := by
-    have := Nat.mod_lt n hS
-    have : v * S + S ≤ Q * S := by nlinarith
-    omega
-  unfold NLogN.KFL.sc
-  have : n / (Q * S) * (Q * S) + (Q * S) ≤ Q * S * m := by nlinarith
-  omega
-
-theorem getD_rix {α : Type*} {V : ℕ} (φ : ℕ → ℕ) (d : α) (xs : List α) {j : ℕ} (hj : j < V) :
-    (rix V φ d xs).getD j d = xs.getD (φ j) d := by
-  simp [rix, List.getD_eq_getElem?_getD, hj]
-
 theorem rix_rix {α : Type*} {V : ℕ} (φ₁ φ₂ : ℕ → ℕ) (h : ∀ j < V, φ₂ j < V) (d : α)
     (xs : List α) : rix V φ₂ d (rix V φ₁ d xs) = rix V (φ₁ ∘ φ₂) d xs := by
   apply List.ext_getElem (by simp)
@@ -152,23 +135,6 @@ theorem trOf_phi {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) (n : �
   · simp only; rw [gc1_sc0 hg, gc_sc_self hg.s1 h1]
   · simp only; rw [gc2_sc0 hg, gc2_sc1 hg, gc_sc_self hg.s2 h2]
 
-theorem phi_lt {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) {n : ℕ} (hn : n < g.V) :
-    phi g F n < g.V := by
-  obtain ⟨h0, h1, h2⟩ := hF _ (TV_trOf hg n)
-  have hV : g.V = g.Q * g.S0 * g.N0 := rfl
-  have hS0 : g.Q * g.S0 * g.N0 = g.Q * g.S1 * (g.N1 * g.Q * g.N0) := by
-    simp only [Geo.S0]; ring
-  have hS1 : g.Q * g.S1 * (g.N1 * g.Q * g.N0) = g.Q * g.S2 * (g.N2 * g.Q * g.N1 * g.Q * g.N0) := by
-    simp only [Geo.S0, Geo.S1]; ring
-  simp only [phi]
-  rw [hV]
-  refine sc_lt hg.s0 h0 ?_
-  rw [hS0]
-  refine sc_lt hg.s1 h1 ?_
-  rw [hS1]
-  refine sc_lt hg.s2 h2 ?_
-  rw [← hS1, ← hS0, ← hV]; exact hn
-
 theorem phi_phi {F G : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c))
     (hG : ∀ c, TV g.Q c → TV g.Q (G c)) (n : ℕ) :
     phi g F (phi g G n) = phi g (F ∘ G) n := by
@@ -197,9 +163,6 @@ theorem rixT_id {g : Geo} {xs : List ℤ} (h : xs.length = g.V) : rixT g id xs =
   unfold rixT
   rw [rix_congr (φ' := id) (fun j _ => phi_id j)]
   exact rix_id 0 h
-
-theorem length_rixT (g : Geo) (F : Tr → Tr) (xs : List ℤ) : (rixT g F xs).length = g.V := by
-  simp [rixT]
 
 theorem rixT_congr {g : Geo} (hg : g.Pos) {F F' : Tr → Tr} (h : ∀ c, TV g.Q c → F c = F' c)
     (xs : List ℤ) : rixT g F xs = rixT g F' xs := by

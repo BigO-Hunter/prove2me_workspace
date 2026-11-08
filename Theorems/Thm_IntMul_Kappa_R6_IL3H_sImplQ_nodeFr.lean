@@ -27,6 +27,8 @@ import Definitions.Def_IntMul_Kappa_R6_Defs10
 import Definitions.Def_IntMul_Kappa_K_Defs3
 import Definitions.Def_IntMul_Kappa_K_Defs15
 import Definitions.Def_IntMul_Kappa_K_Defs13
+import Theorems.Thm_IntMul_Kappa_R6_IL3H_loopQS
+import Theorems.Thm_IntMul_Kappa_R6_IL3H_gloopQ
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -58,50 +60,6 @@ open IntMul RS
 section ESimLemmas
 
 variable {π : PMap} {s : IState HS}
-
-theorem ESim.regs_sub {e e' : Ex HS} (h : ESim π e e') :
-    ∀ j ∈ e'.regs, j ∈ e.regs ∨ ∃ v, π j = some v := by
-  induction h with
-  | reg i => intro j hj; exact Or.inl hj
-  | lit c => intro j hj; simp [Ex.regs] at hj
-  | par hi =>
-    intro j hj
-    simp only [Ex.regs, List.mem_singleton] at hj
-    subst hj; exact Or.inr ⟨_, hi⟩
-  | add _ _ iha ihb | mul _ _ iha ihb | shl _ _ iha ihb | quo _ _ iha ihb | rem _ _ iha ihb
-  | ndiv _ _ iha ihb | nmod _ _ iha ihb =>
-    intro j hj
-    simp only [Ex.regs, List.mem_append] at hj ⊢
-    rcases hj with hj | hj
-    · rcases iha j hj with h | h
-      · exact Or.inl (Or.inl h)
-      · exact Or.inr h
-    · rcases ihb j hj with h | h
-      · exact Or.inl (Or.inr h)
-      · exact Or.inr h
-  | neg _ iha | pow2 _ iha =>
-    intro j hj
-    simp only [Ex.regs] at hj ⊢
-    exact iha j hj
-  | sel _ _ _ ihc iha ihb =>
-    intro j hj
-    simp only [Ex.regs, List.mem_append] at hj ⊢
-    rcases hj with (hj | hj) | hj
-    · rcases ihc j hj with h | h
-      · exact Or.inl (Or.inl (Or.inl h))
-      · exact Or.inr h
-    · rcases iha j hj with h | h
-      · exact Or.inl (Or.inl (Or.inr h))
-      · exact Or.inr h
-    · rcases ihb j hj with h | h
-      · exact Or.inl (Or.inr h)
-      · exact Or.inr h
-
-theorem ESim.clean (hπ : PLow π) {e e' : Ex HS} (h : ESim π e e') (hc : e.Clean) : e'.Clean := by
-  intro j hj
-  rcases h.regs_sub j hj with h1 | ⟨v, hv⟩
-  · exact hc j h1
-  · exact (clean_of_lt (hπ j v hv)) j (by simp [Ex.regs])
 
 end ESimLemmas
 
@@ -332,33 +290,6 @@ namespace NLogN.KFW
 
 open IntMul RS KFD KIL
 
-/-! ## Header refinement -/
-
-/-! ## Substitution of untouched registers -/
-
-/-! ## Uniform register programs -/
-
-/-! ## Pushed parameters in the background -/
-
-theorem encK_upd_bg (s : IState HS) (f : Fin HS → List ℤ) (i : Fin HS) (hi : f i = []) (L : List Item) :
-    (encK s f).upd i L = encK (s.upd i L) f := by
-  refine IState.ext' (fun j => ?_) rfl rfl
-  simp only [IState.upd_G, encK_G, Function.update_apply]
-  split_ifs with h
-  · subst h; simp [hi]
-  · rfl
-
-theorem encK_pushSt (s : IState HS) (f : Fin HS → List ℤ) :
-    ∀ l : List (Fin HS × ℤ), (∀ p ∈ l, f p.1 = []) → pushSt (encK s f) l = encK (pushSt s l) f
-  | [], _ => rfl
-  | (i, v) :: l, h => by
-    have hi : f i = [] := h (i, v) List.mem_cons_self
-    simp only [pushSt]
-    have e : (encK s f).upd i (.int v :: (encK s f).G i) = encK (s.upd i (.int v :: s.G i)) f := by
-      rw [encK_upd_bg s f i hi]; simp [hi]
-    rw [e]
-    exact encK_pushSt _ f l (fun p hp => h p (List.mem_cons_of_mem _ hp))
-
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
 end NLogN.KFW
@@ -388,13 +319,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex P8Lift Butterfly
-
-theorem agree_encK {σ : Fin HS → Option ℤ} {s : IState HS} (hs : Agree σ s)
-    {f : Fin HS → List ℤ} (hf : ∀ j, (σ j).isSome → f j = []) : Agree σ (encK s f) := by
-  intro i v hv
-  obtain ⟨L, hL⟩ := hs i v hv
-  refine ⟨L, ?_⟩
-  rw [encK_G, hf i (by simp [hv]), hL]; rfl
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
@@ -469,53 +393,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex P8Lift Butterfly
-
-/-! ## Register assignments after pushes -/
-
-theorem agree_upd_push {σ : Fin HS → Option ℤ} {t : IState HS} (h : Agree σ t) (i : Fin HS)
-    (v : ℤ) : Agree (Function.update σ i (some v)) (t.upd i (.int v :: t.G i)) := by
-  intro j u hj
-  by_cases hji : j = i
-  · subst hji
-    rw [Function.update_self] at hj
-    cases hj
-    exact ⟨t.G j, by simp⟩
-  · rw [Function.update_of_ne hji] at hj
-    obtain ⟨L, hL⟩ := h j u hj
-    exact ⟨L, by simp [hji, hL]⟩
-
-theorem agree_pushSt' : ∀ (l : List (Fin HS × ℤ)) {σ : Fin HS → Option ℤ} {t : IState HS},
-    Agree σ t → Agree (σPush σ l) (pushSt t l)
-  | [], _, _, h => h
-  | (i, v) :: l, σ, t, h => by
-    simp only [σPush, pushSt]
-    exact agree_pushSt' l (agree_upd_push h i v)
-
-/-! ## Sequential pushes -/
-
-theorem Sp.pushSeq : ∀ (pl : List (Fin HS × Ex HS)) (vl : List (Fin HS × ℤ))
-    (σ : Fin HS → Option ℤ) (c : ℕ), PushSeq σ pl vl c → ∀ t, Agree σ t →
-    Sp (pushes pl) t (pushSt t vl) c
-  | [], [], σ, c, h, t, _ => (Sp.skip t).mono h
-  | [], _ :: _, _, _, h, _, _ => absurd h (by simp [PushSeq])
-  | _ :: _, [], _, _, h, _, _ => absurd h (by simp [PushSeq])
-  | (i, e) :: l, (j, v) :: vl, σ, c, h, t, ht => by
-    obtain ⟨rfl, hi, hc, c1, c2, hc12, hev, hrest⟩ := h
-    obtain ⟨ho, hv, hco⟩ := hev t ht
-    have S1 : Sp (.push i e) t (t.upd i (.int v :: t.G i)) c1 :=
-      ⟨⟨hi, hc, ho⟩, by simp only [RS.run, hv], by simp only [RS.cost, hv]; omega⟩
-    have S2 := Sp.pushSeq l vl _ c2 hrest _ (agree_upd_push ht i v)
-    exact (S1.seq S2).mono hc12
-
-theorem PushSeq.fst : ∀ {σ : Fin HS → Option ℤ} {pl : List (Fin HS × Ex HS)}
-    {vl : List (Fin HS × ℤ)} {c : ℕ}, PushSeq σ pl vl c → vl.map Prod.fst = pl.map Prod.fst
-  | _, [], [], _, _ => rfl
-  | _, [], _ :: _, _, h => absurd h (by simp [PushSeq])
-  | _, _ :: _, [], _, h => absurd h (by simp [PushSeq])
-  | _, (i, e) :: l, (j, v) :: vl, _, h => by
-    obtain ⟨rfl, _, _, _, _, _, _, hrest⟩ := h
-    simp only [List.map_cons]
-    rw [PushSeq.fst hrest]
 
 /-! ## Frames around uniform programs -/
 
@@ -664,36 +541,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-/-! ## Frames of natural pushes -/
-
-theorem noRd_of_N (σ : Fin HS → Option ℤ) :
-    ∀ (pre : List (Fin HS)) (l : List (Fin HS × NE)), NoRdN pre l →
-      NoRd pre (l.map fun x => (x.1, x.2.toEx, ((x.2.val (vOf σ) : ℕ) : ℤ)))
-  | _, [], _ => trivial
-  | pre, x :: l, h => ⟨fun j hj => h.1 j (by rw [NE.regs_toEx] at hj; exact hj),
-      noRd_of_N σ (x.1 :: pre) l h.2⟩
-
-theorem pushSeq_NE (σ : Fin HS → Option ℤ) (M B sz : ℕ) (hM : zsz (M : ℤ) ≤ B)
-    (l : List (Fin HS × NE)) (h : FrOK σ M sz l) (hn : NoRdN [] l) :
-    PushSeq σ (fr l) (frV σ l) (cFrame l.length sz B) := by
-  have H := pushSeq_of σ B sz [] (l.map fun x => (x.1, x.2.toEx, ((x.2.val (vOf σ) : ℕ) : ℤ))) σ
-    (fun j _ => rfl) (fun x hx => by
-      obtain ⟨y, hy, rfl⟩ := List.mem_map.1 hx
-      obtain ⟨h1, h2, h3, h4, h5⟩ := h y hy
-      exact ⟨h1, NE.clean h2, by rw [NE.size_toEx]; exact h3, exV_NE h4 hM h5⟩)
-    (noRd_of_N σ [] l hn)
-  simp only [List.map_map, List.length_map] at H
-  exact H
-
-theorem frV_length (σ : Fin HS → Option ℤ) (l : List (Fin HS × NE)) :
-    (frV σ l).length = l.length := by simp [frV]
-
-theorem frV_zsz {σ : Fin HS → Option ℤ} {M B sz : ℕ} (hM : zsz (M : ℤ) ≤ B)
-    {l : List (Fin HS × NE)} (h : FrOK σ M sz l) : ∀ p ∈ frV σ l, zsz p.2 ≤ B := by
-  intro p hp
-  obtain ⟨y, hy, rfl⟩ := List.mem_map.1 hp
-  exact le_trans (zsz_natCast_le (NE.le_of_OK _ (h y hy).2.2.2.2)) hM
-
 theorem fr_keys (l : List (Fin HS × NE)) : (fr l).map Prod.fst = l.map Prod.fst := by
   simp [fr, List.map_map, Function.comp_def]
 
@@ -761,22 +608,6 @@ end NLogN.KFW
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem regsLt_of_all {e : NE} (h : e.regs.all (fun i => decide (i.val < 56)) = true) :
-    e.RegsLt := by
-  intro i hi; have := List.all_eq_true.1 h i hi; simpa using this
-
-theorem noRdN_of_B : ∀ (pre : List (Fin HS)) (l : List (Fin HS × NE)), noRdB pre l = true →
-    NoRdN pre l
-  | _, [], _ => trivial
-  | pre, x :: l, h => by
-    simp only [noRdB, Bool.and_eq_true, List.all_eq_true] at h
-    refine ⟨fun j hj hm => ?_, noRdN_of_B _ l h.2⟩
-    have := h.1 j hj
-    simp [hm] at this
-
-theorem natR_of {σ : Fin HS → Option ℤ} (L : List (Fin HS)) (hL : ∀ i ∈ L, ∃ n : ℕ, σ i = some (n : ℤ))
-    {e : NE} (hsub : ∀ i ∈ e.regs, i ∈ L) : NatR σ e := fun i hi => hL i (hsub i hi)
 
 /-! ## The top kernels -/
 

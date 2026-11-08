@@ -923,12 +923,6 @@ namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW KFH AModel Butterfly
 
-theorem ESp.mulN {a b : Ex HS} {t : IState HS} {Bb : ℕ} {x y : ℕ} (ha : ESp a t Bb (x : ℤ))
-    (hb : ESp b t Bb (y : ℤ)) (h : zsz ((x * y : ℕ) : ℤ) ≤ Bb) :
-    ESp (.mul a b) t Bb ((x * y : ℕ) : ℤ) := by
-  have := ESp.mul ha hb (by push_cast at h; exact h)
-  push_cast; exact this
-
 /-! ## The expressions of the pieces -/
 
 section Vals

@@ -16,6 +16,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs4
 import Definitions.Def_IntMul_Kappa_K_Defs10
 import Definitions.Def_IntMul_Kappa_K_Defs13
 import Definitions.Def_IntMul_Kappa_K_Defs21
+import Theorems.Thm_NLogN_KFL_bits_permRecs
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -261,57 +262,6 @@ namespace NLogN.KFH
 
 open IntMul RS AModel KIL KFD KFB Complex
 
-/-! ## Mixed-radix arithmetic -/
-
-theorem encode_set : ∀ (sh : Shape) (a : List ℕ) (k v : ℕ), k < a.length → a.length ≤ sh.length →
-    ((encode sh (a.set k v) : ℕ) : ℤ) = encode sh a + ((v : ℤ) - a.getD k 0) * vol (sh.drop (k + 1))
-  | [], a, k, v, h, h' => by simp only [List.length_nil] at h'; omega
-  | q :: sh, [], k, v, h, _ => by simp at h
-  | q :: sh, x :: a, 0, v, _, _ => by
-    simp only [List.set_cons_zero, encode, List.headD_cons, List.tail_cons, List.getD_cons_zero,
-      List.drop_succ_cons, List.drop_zero]
-    push_cast; ring
-  | q :: sh, x :: a, k + 1, v, h, h' => by
-    simp only [List.length_cons] at h h'
-    simp only [List.set_cons_succ, encode, List.headD_cons, List.tail_cons, List.getD_cons_succ,
-      List.drop_succ_cons]
-    push_cast
-    rw [encode_set sh a k v (by omega) (by omega)]; ring
-
-theorem vol_pos_of_valid {sh : Shape} {a : List ℕ} (h : Valid sh a) : 0 < vol sh := by
-  have := encode_lt h; omega
-
-theorem getD_digit : ∀ (sh : Shape) (a : List ℕ) (k : ℕ), Valid sh a → k < a.length →
-    a.getD k 0 = encode sh a / vol (sh.drop (k + 1)) % sh.getD k 0
-  | [], a, k, h, hk => by cases h; simp at hk
-  | q :: sh, [], k, h, hk => by simp at hk
-  | q :: sh, x :: a, 0, h, _ => by
-    obtain ⟨hx, hr⟩ := List.forall₂_cons.1 h
-    have he := encode_lt hr
-    have hV : 0 < vol sh := by omega
-    simp only [List.getD_cons_zero, encode, List.headD_cons, List.tail_cons, List.drop_succ_cons,
-      List.drop_zero, List.getD_cons_zero]
-    rw [show x * vol sh + encode sh a = encode sh a + vol sh * x by ring,
-      Nat.add_mul_div_left _ _ hV, Nat.div_eq_of_lt he, zero_add, Nat.mod_eq_of_lt hx]
-  | q :: sh, x :: a, k + 1, h, hk => by
-    obtain ⟨hx, hr⟩ := List.forall₂_cons.1 h
-    simp only [List.length_cons] at hk
-    have ih := getD_digit sh a k hr (by omega)
-    simp only [List.getD_cons_succ, encode, List.headD_cons, List.tail_cons, List.drop_succ_cons]
-    rw [ih]
-    have hsl : k < sh.length := by rw [← hr.length_eq]; omega
-    have hV' : 0 < vol (sh.drop (k + 1)) :=
-      vol_pos_of_valid (List.forall₂_drop (k + 1) hr)
-    have hT : vol sh = vol (sh.take (k + 1)) * vol (sh.drop (k + 1)) := by
-      simp only [vol]; rw [List.prod_take_mul_prod_drop]
-    obtain ⟨u, hu⟩ : sh.getD k 0 ∣ vol (sh.take (k + 1)) := by
-      rw [show sh.take (k + 1) = sh.take k ++ [sh[k]] from (List.take_concat_get' sh k hsl).symm]
-      simp only [vol, List.prod_append, List.prod_singleton]
-      rw [List.getD_eq_getElem _ _ hsl]; exact Dvd.intro_left _ rfl
-    rw [hT, hu, show x * (sh.getD k 0 * u * vol (sh.drop (k + 1))) + encode sh a =
-      encode sh a + vol (sh.drop (k + 1)) * (x * u * sh.getD k 0) by ring,
-      Nat.add_mul_div_left _ _ hV', Nat.add_mul_mod_self_right]
-
 /-! ## The layer layout -/
 
 variable {P K D S ρ : ℕ}
@@ -349,48 +299,6 @@ namespace NLogN.KFL
 
 open AModel
 
-/-! ## Chunk get / set -/
-
-theorem decomp (Q S n : ℕ) : n = n / (Q * S) * (Q * S) + gc Q S n * S + n % S := by
-  unfold gc
-  have h1 := Nat.div_add_mod n S
-  have h2 := Nat.div_add_mod (n / S) Q
-  rw [Nat.div_div_eq_div_mul] at h2
-  rw [mul_comm Q S]
-  nlinarith [h1, h2]
-
-theorem sc_int (Q S v n : ℕ) : (sc Q S v n : ℤ) = n + ((v : ℤ) - gc Q S n) * S := by
-  have h := decomp Q S n
-  unfold sc
-  have h' : (n : ℤ) = (n / (Q * S) * (Q * S) : ℕ) + (gc Q S n * S : ℕ) + (n % S : ℕ) := by
-    exact_mod_cast h
-  push_cast at h' ⊢
-  linarith
-
-theorem gc_lt {Q S : ℕ} (hQ : 0 < Q) (n : ℕ) : gc Q S n < Q := Nat.mod_lt _ hQ
-
-theorem div_sc {Q S : ℕ} (hS : 0 < S) {v : ℕ} (hv : v < Q) (n : ℕ) :
-    sc Q S v n / (Q * S) = n / (Q * S) := by
-  unfold sc
-  have hQS : 0 < Q * S := Nat.mul_pos (by omega) hS
-  have hr : v * S + n % S < Q * S := by
-    have := Nat.mod_lt n hS
-    have : v * S + S ≤ Q * S := by nlinarith
-    omega
-  rw [add_assoc, Nat.add_comm, Nat.add_mul_div_right _ _ hQS, Nat.div_eq_of_lt hr, zero_add]
-
-/-- A chunk at a higher stride `S' = Q S m` is unchanged. -/
-theorem gc_sc_hi {Q S Q' S' m : ℕ} (hS : 0 < S) (hm : 0 < m) (hS' : S' = Q * S * m) {v : ℕ}
-    (hv : v < Q) (n : ℕ) : gc Q' S' (sc Q S v n) = gc Q' S' n := by
-  unfold gc
-  subst hS'
-  rw [← Nat.div_div_eq_div_mul (sc Q S v n), ← Nat.div_div_eq_div_mul n, div_sc hS hv]
-
-/-! ## Reindexing -/
-
-@[simp] theorem length_rix {α : Type*} (V : ℕ) (φ : ℕ → ℕ) (d : α) (xs : List α) :
-    (rix V φ d xs).length = V := by simp [rix]
-
 /-! ## Geometry and triple maps -/
 
 namespace Geo
@@ -404,35 +312,10 @@ theorem vol_sh8 : vol g.sh8 = g.V := by
 
 end Geo
 
-theorem TV_trOf {g : Geo} (hg : g.Pos) (n : ℕ) : TV g.Q (trOf g n) :=
-  ⟨gc_lt hg.q _, gc_lt hg.q _, gc_lt hg.q _⟩
-
 section Phi
 
 variable {g : Geo} (hg : g.Pos)
 include hg
-
-theorem gc1_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S1 (sc g.Q g.S2 v n) = gc g.Q g.S1 n :=
-  gc_sc_hi hg.s2 hg.n2 rfl hv n
-
-theorem gc0_sc2 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (sc g.Q g.S2 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s2 (Nat.mul_pos hg.n2 (Nat.mul_pos hg.q hg.n1))
-    (by simp only [Geo.S0, Geo.S1]; ring) hv n
-
-theorem gc0_sc1 (v n : ℕ) (hv : v < g.Q) : gc g.Q g.S0 (sc g.Q g.S1 v n) = gc g.Q g.S0 n :=
-  gc_sc_hi hg.s1 hg.n1 rfl hv n
-
-/-- Integer formula of `phi`. -/
-theorem phi_int {F : Tr → Tr} (hF : ∀ c, TV g.Q c → TV g.Q (F c)) (n : ℕ) :
-    (phi g F n : ℤ) = n + (((F (trOf g n)).1 : ℤ) - (trOf g n).1) * g.S0 +
-      (((F (trOf g n)).2.1 : ℤ) - (trOf g n).2.1) * g.S1 +
-      (((F (trOf g n)).2.2 : ℤ) - (trOf g n).2.2) * g.S2 := by
-  obtain ⟨h0, h1, h2⟩ := hF _ (TV_trOf hg n)
-  show ((sc g.Q g.S0 (F (trOf g n)).1 (sc g.Q g.S1 (F (trOf g n)).2.1
-    (sc g.Q g.S2 (F (trOf g n)).2.2 n)) : ℕ) : ℤ) = _
-  generalize F (trOf g n) = c at h0 h1 h2 ⊢
-  rw [sc_int, sc_int, sc_int, gc0_sc1 hg _ _ h1, gc0_sc2 hg _ _ h2, gc1_sc2 hg _ _ h2]
-  simp only [trOf]; ring
 
 end Phi
 

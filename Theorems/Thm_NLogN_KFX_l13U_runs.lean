@@ -34,6 +34,7 @@ import Theorems.Thm_NLogN_KFL_tabGen_fsp
 import Theorems.Thm_NLogN_KFL_toBitsI_spec
 import Theorems.Thm_NLogN_KFW_FSp_uni
 import Theorems.Thm_NLogN_zsz_le_of_lt
+import Theorems.Thm_NLogN_KFX_rowCodeU_runs
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -238,9 +239,6 @@ open IntMul RS
 
 namespace KIL
 
-theorem encK_nil (s : IState HS) : NLogN.KIL.encK s (fun _ => []) = s := by
-  cases s; rfl
-
 section
 variable (s : IState HS) (f : Fin HS → List ℤ)
 
@@ -340,25 +338,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-theorem pushSt_G_of_not_mem (t : IState HS) (r : Fin HS) :
-    ∀ l : List (Fin HS × ℤ), r ∉ l.map Prod.fst → (pushSt t l).G r = t.G r
-  | [], _ => rfl
-  | (i, v) :: l, h => by
-    simp only [List.map_cons, List.mem_cons, not_or] at h
-    simp only [pushSt]
-    rw [pushSt_G_of_not_mem _ r l h.2]
-    simp [Ne.symm h.1, h.1]
-
-theorem pushSt_G (t : IState HS) (r : Fin HS) : ∀ l : List (Fin HS × ℤ),
-    (pushSt t l).G r = ints ((l.filter (fun p => p.1 = r)).map Prod.snd).reverse ++ t.G r
-  | [] => by simp [pushSt]
-  | (i, v) :: l => by
-    simp only [pushSt]
-    rw [pushSt_G _ r l]
-    by_cases h : i = r
-    · subst h; simp [List.filter_cons, NLogN.ints_append, ints]
-    · simp [List.filter_cons, h, Ne.symm h]
 
 end NLogN.KIL
 
@@ -971,9 +950,6 @@ section Geom
 
 variable {N0 N1 N2 N3 L R w : ℕ}
 
-theorem geoB_V : (geoB N0 N1 N2 N3 L R w).V = vol (rect N0 N1 N2 N3 L) * R * (2 * (w + 1)) := by
-  rw [Geo.V_rec, ← vol_rect (R := R) (w := w)]; simp [geoB]; ring
-
 end Geom
 
 theorem TV_swT {Q : ℕ} (i : Fin 3) (c : Tr) (h : NLogN.KFL.TV Q c) : NLogN.KFL.TV Q (swT i c) := by
@@ -1276,39 +1252,6 @@ namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW AModel Butterfly
 
-theorem pushSt_G_mem (t : IState HS) (l : List (Fin HS × ℤ)) (hnd : (l.map Prod.fst).Nodup)
-    {i : Fin HS} {v : ℤ} (hm : (i, v) ∈ l) : (pushSt t l).G i = .int v :: t.G i := by
-  rw [pushSt_G]
-  have hf : l.filter (fun p => p.1 = i) = [(i, v)] := by
-    induction l with
-    | nil => simp at hm
-    | cons p l ih =>
-      obtain ⟨j, u⟩ := p
-      simp only [List.map_cons, List.nodup_cons, List.mem_map] at hnd
-      rcases List.mem_cons.1 hm with h | h
-      · cases h
-        rw [List.filter_cons_of_pos (by simp), List.filter_eq_nil_iff.2]
-        intro q hq hq'
-        exact hnd.1 ⟨q, hq, by simpa using hq'⟩
-      · have hj : j ≠ i := fun e => hnd.1 ⟨(i, v), h, by simp [e]⟩
-        rw [List.filter_cons_of_neg (by simpa using hj)]
-        exact ih hnd.2 h
-  rw [hf]; simp [ints]
-
-/-- A push list whose expressions read none of the pushed stacks and are specified by `ESp`. -/
-theorem pushOK_of {t : IState HS} {Bb : ℕ} {l : List (Fin HS × Ex HS)}
-    (hlow : ∀ p ∈ l, p.1.val < 56) (hreg : ∀ p ∈ l, ∀ r ∈ p.2.regs, r ∉ l.map Prod.fst)
-    (hE : ∀ p ∈ l, ∃ v, ESp p.2 t Bb v) : NLogN.KIL.PushOK t Bb l := by
-  intro p hp
-  obtain ⟨v, hv⟩ := hE p hp
-  exact ⟨hlow p hp, hv.clean, hreg p hp, hv.ok, hv.bnd⟩
-
-theorem pushVals_le {t : IState HS} {Bb : ℕ} {l : List (Fin HS × Ex HS)}
-    (hE : ∀ p ∈ l, ∃ v, ESp p.2 t Bb v) : ∀ q ∈ l, zsz (q.2.eval t) ≤ Bb := by
-  intro q hq
-  obtain ⟨v, hv⟩ := hE q hq
-  exact Ex.zsz_eval_le t Bb _ hv.bnd
-
 theorem tabRot_runs {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
     {pl : List (Fin HS × Ex HS)} {U : RS} (hfU : fok U = true) (t : IState HS) (Bb : ℕ)
     (hl : NLogN.KIL.PushOK t Bb pl) (hv : ∀ q ∈ pl, zsz (q.2.eval t) ≤ Bb)
@@ -1346,17 +1289,6 @@ theorem tabRot_runs {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
     split_ifs with h1 h2 <;> simp_all
   rw [eout] at RT
   exact KFD.IRuns.withPushI (I := I) (iprog := iprog) pl _ t Bb hl hv h0 ys R _ (T1.seq RT)
-
-/-- The cost of a push list of bounded total size. -/
-theorem pushCost_le_size (Bb : ℕ) (l : List (Fin HS × Ex HS)) (S : ℕ)
-    (hS : (l.map fun p => p.2.size + 1).sum ≤ S) : pushCost Bb l ≤ S * 10 ^ 7 * (Bb + 2) ^ 2 + 1 := by
-  unfold pushCost
-  have : (l.map fun p => (p.2.size + 1) * 10 ^ 7 * (Bb + 2) ^ 2).sum =
-      (l.map fun p => p.2.size + 1).sum * (10 ^ 7 * (Bb + 2) ^ 2) := by
-    rw [← List.sum_map_mul_right]; congr 1; apply List.map_congr_left; intro p _; ring
-  rw [this]
-  have := Nat.mul_le_mul_right (10 ^ 7 * (Bb + 2) ^ 2) hS
-  nlinarith
 
 theorem offE_sub (P Q d0 d1 r2 fm k2 b : ℤ) : Ex.sub (σT P Q d0 d1 r2 fm k2) (offE b) = offE b := by
   unfold offE; split_ifs <;> rfl
@@ -1705,12 +1637,6 @@ set_option maxRecDepth 20000
 namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW KFH AModel Butterfly
-
-theorem ESp.mulN {a b : Ex HS} {t : IState HS} {Bb : ℕ} {x y : ℕ} (ha : ESp a t Bb (x : ℤ))
-    (hb : ESp b t Bb (y : ℤ)) (h : zsz ((x * y : ℕ) : ℤ) ≤ Bb) :
-    ESp (.mul a b) t Bb ((x * y : ℕ) : ℤ) := by
-  have := ESp.mul ha hb (by push_cast at h; exact h)
-  push_cast; exact this
 
 theorem ESp.ndivN {a b : Ex HS} {t : IState HS} {Bb : ℕ} {x y : ℕ} (ha : ESp a t Bb (x : ℤ))
     (hb : ESp b t Bb (y : ℤ)) (hy : 0 < y) (h : zsz ((x / y : ℕ) : ℤ) ≤ Bb) :

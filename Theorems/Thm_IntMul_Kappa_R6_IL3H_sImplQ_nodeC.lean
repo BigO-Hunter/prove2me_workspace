@@ -84,10 +84,6 @@ section SQ
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImplQ.congrE {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {U : IStmt HS Pp} {e e' dw dw' : ℕ}
-    {c : ℕ → ℕ} (h : SImplQ I iprog Q lo hi r st n T U e dw c) (he : e = e') (hd : dw = dw') :
-    SImplQ I iprog Q lo hi r st n T U e' dw' c := he ▸ hd ▸ h
-
 end SQ
 
 end NLogN.KFW

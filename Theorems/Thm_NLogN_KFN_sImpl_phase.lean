@@ -9,6 +9,8 @@ import Definitions.Def_IntMul_Kappa_R6_Defs12
 import Definitions.Def_IntMul_Kappa_R6_Defs14
 import Definitions.Def_IntMul_Kappa_R6_Defs16
 import Definitions.Def_IntMul_Kappa_R6_Defs20
+import Theorems.Thm_NLogN_KIL_Sp_pop
+import Theorems.Thm_NLogN_KIL_Sp_asg
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -120,9 +122,6 @@ open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
-theorem IState.top_eq {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (h : s.G i = .int a :: L) :
-    s.top i = a := by simp [IState.top, h]
-
 namespace Ex
 
 end Ex
@@ -146,9 +145,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-
-theorem IState.isInt_of {s : IState S} {i : Fin S} {a : ℤ} {L : List Item}
-    (h : s.G i = .int a :: L) : s.IsInt i := ⟨L, by rw [IState.top_eq h, h]⟩
 
 namespace Ex
 
@@ -278,30 +274,8 @@ open IntMul RS
 
 namespace KIL
 
-theorem top_encK {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (encK s f).top i = a :=
-  IState.top_eq (L := ints l ++ s.G i) (by simp [h])
-
 section
 variable (s : IState HS) (f : Fin HS → List ℤ)
-
-theorem Sp.pop {i : Fin HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l)
-    (ha : zsz a ≤ B) :
-    Sp (.pop i) (encK s f) (encK s (Function.update f i l)) (2 * B + 2) := by
-  refine ⟨⟨hi, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [NLogN.RS.run]
-    rw [← encK_upd]; simp [hf]
-  · simp only [NLogN.RS.cost, top_encK hf]; omega
-
-theorem Sp.asg {i : Fin HS} {e : Ex HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56)
-    (hf : f i = a :: l) (ha : zsz a ≤ B) (hc : e.Clean) (hok : e.ok (encK s f)) (hl : e.Lin)
-    (hB : e.Bnd (encK s f) B) :
-    Sp (.asg i e) (encK s f) (encK s (Function.update f i (e.eval (encK s f) :: l)))
-      ((e.size + 1) * 2000 * (B + 2)) := by
-  refine ⟨⟨hi, hc, hok, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [NLogN.RS.run]
-    rw [← encK_upd]; simp [hf, ints]
-  · exact asgCost_le_lin i e _ B hl hB (by rw [top_encK hf]; exact ha)
 
 end
 
@@ -1240,7 +1214,11 @@ theorem phL_fsp (s : IState HS) (f : Fin HS → List ℤ) (R0 t B u : ℕ) (aE :
   simp only [Ex.eval] at a7
   set f7 := Function.update f6 xN [((2 * (B * (R0 * 2 ^ t)) : ℕ) : ℤ)]
   have hlo : (gflat (KFG.mulL (repT B T) zs)).reverse.length = 2 * (B * (R0 * 2 ^ t)) := by
-    simp [length_mulL _ _ (show (repT B T).length = zs.length by rw [length_repT, hlen, hTl]), hlen]
+    have hg : ∀ ms : List GI, (gflat ms).length = 2 * ms.length := by
+      intro ms; induction ms with
+      | nil => simp
+      | cons z ms ih => simp only [gflat_cons, List.length_cons, ih]; omega
+    simp [hg, length_mulL _ _ (show (repT B T).length = zs.length by rw [length_repT, hlen, hTl]), hlen]
   have m8 := FSp.mvN (X := qO) (Y := 0) (C := NLogN.KFB.c1) (r := xN) (by decide) (by decide) (by decide)
     (by decide) (by decide) (by decide) (by decide) s f7 (gflat (KFG.mulL (repT B T) zs)).reverse []
     (by simp +decide [f7, f6, f5, f4]) (Lr := s.G xN) (by simp +decide [f7, ints, hlo]) w

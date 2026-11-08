@@ -524,22 +524,6 @@ section Frames
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {lo hi r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-/-- **A natural frame** around a run specification. -/
-theorem runQ_fr {σ : Fin HS → Option ℤ} (l : List (Fin HS × NE))
-    (M B sz : ℕ) (hM : zsz (M : ℤ) ≤ B) (h : FrOK σ M sz l) (hn : NoRdN [] l)
-    {f g : Fin HS → List ℤ} (hf : ∀ j, (σ j).isSome → f j = [])
-    (hfp : ∀ x ∈ l, f x.1 = [] ∧ g x.1 = []) {U : IStmt HS Pp} {c : ℕ}
-    (H : RunQ I iprog (σPush σ (frV σ l)) U f g c) :
-    RunQ I iprog σ (withPushI (fr l) U) f g
-      (cFrame l.length sz B + c + (l.length * (2 * B + 2) + 1)) := by
-  have := runQ_push (fr l) (frV σ l) _ B (pushSeq_NE σ M B sz hM l h hn) hf
-    (fun p hp => by
-      obtain ⟨y, hy, rfl⟩ := List.mem_map.1 hp
-      exact hfp y hy)
-    (frV_zsz hM h) H
-  rw [frV_length] at this
-  exact this
-
 end Frames
 
 end NLogN.KFW
@@ -677,16 +661,6 @@ namespace Cfg
 
 end Cfg
 
-/-! ## Natural expressions -/
-
-theorem powNE_val (v : Fin HS → ℕ) (x : NE) : ∀ k, (powNE x k).val v = x.val v ^ k
-  | 0 => rfl
-  | k + 1 => by simp only [powNE, NE.val, powNE_val v x k, pow_succ]
-
-theorem gsNE_val (v : Fin HS → ℕ) (Aw p m : ℕ) (x : NE) :
-    (gsNE Aw p m x).val v = Gs Aw p m (x.val v) := by
-  simp only [gsNE, NE.val, powNE_val, Gs]
-
 /-! ## The gate choice and the local scale -/
 
 /-! ## Codes -/
@@ -722,69 +696,6 @@ namespace IntMul.Kappa.R6.IL3H
 
 open IntMul NLogN NLogN.KIL NLogN.KFD NLogN.KFB NLogN.KFG NLogN.KFH NLogN.KFN NLogN.KFW
   Complex P8Lift Butterfly IntMul.Kappa.R6.Cx
-
-/-! ## The scale expressions -/
-
-theorem powNE_OK {v : Fin HS → ℕ} {M : ℕ} (hM : 1 ≤ M) (x : NE) (hx : x.OK v M) :
-    ∀ k, (x.val v) ^ k ≤ M → (powNE x k).OK v M
-  | 0, h => by simp only [powNE, NE.OK]; exact hM
-  | k + 1, h => by
-    have hk : (x.val v) ^ k ≤ M := by
-      rcases Nat.eq_zero_or_pos (x.val v) with h0 | h0
-      · rcases Nat.eq_zero_or_pos k with hk0 | hk0
-        · subst hk0; simpa using hM
-        · rw [h0, zero_pow (by omega)]; exact Nat.zero_le _
-      · exact le_trans (Nat.pow_le_pow_right h0 (by omega)) h
-    refine ⟨powNE_OK hM x hx k hk, hx, ?_⟩
-    rw [powNE_val, ← pow_succ]; exact h
-
-theorem gsNE_OK {v : Fin HS → ℕ} {M : ℕ} (Aw p m : ℕ) (x : NE) (hx : x.OK v M)
-    (hM : Aw * ((x.val v + 1) ^ p) + (x.val v + 1) ^ p + x.val v + 2 * m + 1 ≤ M) :
-    (gsNE Aw p m x).OK v M := by
-  have hX := NE.le_of_OK x hx
-  have hp1 : 1 ≤ (x.val v + 1) ^ p := Nat.one_le_pow _ _ (by omega)
-  have h1 : (NE.add x (.lit 1)).OK v M := ⟨hx, by simp only [NE.OK]; omega, by
-    simp only [NE.val]
-    have : x.val v + 1 ≤ (x.val v + 1) ^ p ∨ p = 0 := by
-      rcases Nat.eq_zero_or_pos p with h | h
-      · exact Or.inr h
-      · exact Or.inl (Nat.le_self_pow (by omega) _)
-    rcases this with h | h
-    · omega
-    · subst h; simp at hM; omega⟩
-  have hpow : (powNE (.add x (.lit 1)) p).OK v M :=
-    powNE_OK (by omega) _ h1 p (by simp only [NE.val]; omega)
-  simp only [gsNE, NE.OK]
-  refine ⟨hx, by omega, ?_⟩
-  split_ifs with h
-  · exact hx
-  · have hA : Aw ≤ Aw * (x.val v + 1) ^ p := Nat.le_mul_of_pos_right _ hp1
-    have hsub : Aw * ((x.val v + 1) ^ p - 1) ≤ Aw * (x.val v + 1) ^ p :=
-      Nat.mul_le_mul_left _ (Nat.sub_le _ _)
-    refine ⟨?_, ⟨hpow, ?_, ?_⟩, ?_⟩
-    · show Aw ≤ M; omega
-    · show 1 ≤ M; omega
-    · show 1 ≤ (powNE (.add x (.lit 1)) p).val v
-      rw [powNE_val]; exact hp1
-    · show Aw * ((powNE (.add x (.lit 1)) p).val v - 1) ≤ M
-      rw [powNE_val]; simp only [NE.val]; omega
-
-theorem powNE_regs (x : NE) : ∀ k, ∀ i ∈ (powNE x k).regs, i ∈ x.regs
-  | 0, i, hi => by simp [powNE, NE.regs] at hi
-  | k + 1, i, hi => by
-    simp only [powNE, NE.regs, List.mem_append] at hi
-    rcases hi with h | h
-    · exact powNE_regs x k i h
-    · exact h
-
-theorem gsNE_regs (Aw p m : ℕ) (x : NE) : ∀ i ∈ (gsNE Aw p m x).regs, i ∈ x.regs := by
-  intro i hi
-  have : i ∈ x.regs ∨ i ∈ (powNE (NE.add x (.lit 1)) p).regs := by
-    simp [gsNE, NE.regs] at hi; tauto
-  rcases this with h | h
-  · exact h
-  · have := powNE_regs _ p i h
-    simpa [NE.regs] using this
 
 theorem Gs_mono {A p m : ℕ} (hA : 1 ≤ A) (hp : 1 ≤ p) {x y : ℕ} (hxy : x ≤ y) :
     Gs A p m x ≤ Gs A p m y := by

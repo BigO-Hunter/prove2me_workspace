@@ -6,6 +6,7 @@ import Theorems.Thm_NLogN_KFN_sImpl_cinv
 import Theorems.Thm_NLogN_KFN_selOpF_subOp
 import Theorems.Thm_NLogN_KFH_layer_partner
 import Theorems.Thm_NLogN_zsz_le_of_lt
+import Theorems.Thm_NLogN_KFR_rowImpl_of_lem13
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -16,17 +17,6 @@ section
 namespace AModel
 
 open Matrix
-
-lemma decode_encode {sh : Shape} {a : List ℕ} (h : AModel.Valid sh a) : decode sh (encode sh a) = a := by
-  induction h with
-  | nil => rfl
-  | @cons x q as sh hx hr ih =>
-    have he := encode_lt hr
-    have hV : 0 < AModel.vol sh := by omega
-    simp only [encode, List.headD_cons, List.tail_cons, decode]
-    rw [show x * AModel.vol sh + encode sh as = encode sh as + AModel.vol sh * x by ring,
-      Nat.add_mul_div_left _ _ hV, Nat.div_eq_of_lt he, Nat.add_mul_mod_self_left,
-      Nat.mod_eq_of_lt he, ih, zero_add, Nat.mod_eq_of_lt hx]
 
 section Pull
 variable {α : Type*}
@@ -173,13 +163,6 @@ open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
 
-theorem stS_eq (K D S i : ℕ) (hi : i < D) : stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S := by
-  simp [stS, layerShape_drop 1 K D S i hi, vol]
-
-theorem vol_layer (P K D S : ℕ) :
-    vol (Butterfly.layerShape P K D S) = P * (2 ^ K) ^ D * S := by
-  simp [Butterfly.layerShape, vol]; ring
-
 end NLogN.KFH
 
 end
@@ -215,105 +198,13 @@ section Bridge
 
 variable {sh : Shape} {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-theorem StrideSel.fset_eq {Sb : Butterfly.SelBits sh ι} {st : ι → ℕ} (h : StrideSel Sb st)
-    {j : ℕ} (hj : j < vol sh) (y : ι → Fin 2) :
-    fset st j y = encode sh (Sb.set (decode sh j) y) := by
-  unfold fset; rw [← (h j hj).2 y]; simp
-
-theorem slaws_of_strideSel {Sb : Butterfly.SelBits sh ι} {st : ι → ℕ} (h : StrideSel Sb st) :
-    SLaws st (vol sh) := by
-  refine ⟨fun j hj y => ?_, fun j hj y => ?_, fun j hj y => ?_⟩
-  · rw [← (h j hj).2 y]; positivity
-  · rw [h.fset_eq hj]; exact encode_lt (Sb.valid_set _ _ (valid_decode hj))
-  · have hv := Sb.valid_set _ y (valid_decode hj)
-    rw [h.fset_eq hj, ← (h _ (encode_lt hv)).1, decode_encode hv, Sb.bits_set _ _ (valid_decode hj)]
-
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
 end Bridge
 
 section Layer
 
-theorem vol_repl_S (B D S : ℕ) : vol (List.replicate D B ++ [S]) = B ^ D * S := by
-  induction D with
-  | zero => simp [vol]
-  | succ D ih =>
-    rw [List.replicate_succ, List.cons_append, vol_cons, ih, pow_succ]; ring
-
-theorem encode_repl (B S : ℕ) : ∀ (D : ℕ) (c : Fin D → ℕ) (s : ℕ),
-    encode (List.replicate D B ++ [S]) (List.ofFn c ++ [s]) =
-      ∑ i : Fin D, c i * (B ^ (D - (i + 1)) * S) + s
-  | 0, c, s => by simp [encode]
-  | D + 1, c, s => by
-    rw [List.replicate_succ, List.cons_append, List.ofFn_succ, List.cons_append, encode,
-      List.headD_cons, List.tail_cons, encode_repl B S D (fun i => c i.succ) s, vol_repl_S,
-      Fin.sum_univ_succ]
-    simp only [Fin.val_zero, Fin.val_succ]
-    rw [add_assoc]
-    congr 2
-    refine Finset.sum_congr rfl fun i _ => ?_
-    congr 3; omega
-
-theorem encode_mkAddr (P K D S : ℕ) (p : ℕ) (c : Fin D → ℕ) (s : ℕ) :
-    encode (Butterfly.layerShape P K D S) (Butterfly.mkAddr D p c s) =
-      p * ((2 ^ K) ^ D * S) + ∑ i : Fin D, c i * KFH.stS K D S i + s := by
-  simp only [Butterfly.layerShape, Butterfly.mkAddr, List.cons_append, encode, List.headD_cons,
-    List.tail_cons, vol_repl_S, encode_repl]
-  have hs : ∀ i : Fin D, KFH.stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S :=
-    fun i => KFH.stS_eq K D S i i.isLt
-  simp only [hs]
-  ring
-
 variable {P K D S ρ : ℕ}
-
-/-- **The layer layout has the record strides `stT`.** -/
-theorem strideSel_layer (hρ : ρ < K) :
-    StrideSel (Butterfly.layerSel P K D S ρ hρ) (fun i : Fin D => KFH.stT K D S ρ i) := by
-  intro j hj
-  set sh := Butterfly.layerShape P K D S
-  set a := decode sh j
-  have hv : Valid sh a := valid_decode hj
-  have hl : a.length = D + 2 := by rw [hv.length_eq]; simp [sh, Butterfly.layerShape]
-  have hbit : ∀ i : Fin D, (Butterfly.layerBits D ρ a i : ℕ) = j / KFH.stT K D S ρ i % 2 := by
-    intro i
-    have := (KFH.layer_partner (P := P) (S := S) hρ i hj 0).1
-    exact this
-  refine ⟨funext fun i => Fin.ext (hbit i), fun y => ?_⟩
-  show ((encode sh (Butterfly.layerSet D ρ a y) : ℕ) : ℤ) = _
-  have ea : a = Butterfly.mkAddr D (a.headD 0) (fun i => a.getD (i + 1) 0) (a.getD (D + 1) 0) :=
-    Butterfly.eq_mkAddr D hl
-  have e1 : ((encode sh (Butterfly.layerSet D ρ a y) : ℕ) : ℤ) =
-      ((a.headD 0 * ((2 ^ K) ^ D * S) + ∑ i : Fin D,
-        Butterfly.setBit ρ (a.getD (i + 1) 0) (y i) * KFH.stS K D S i + a.getD (D + 1) 0 : ℕ) : ℤ) := by
-    rw [Butterfly.layerSet, encode_mkAddr]
-  have e2 : (j : ℤ) = ((a.headD 0 * ((2 ^ K) ^ D * S) + ∑ i : Fin D,
-        a.getD (i + 1) 0 * KFH.stS K D S i + a.getD (D + 1) 0 : ℕ) : ℤ) := by
-    have := encode_decode hj
-    rw [← this]
-    conv_lhs => rw [show decode sh j = a from rfl, ea]
-    rw [encode_mkAddr]
-  rw [e1, fsetZ, e2]
-  push_cast
-  have e3 : ∀ i : Fin D, ((Butterfly.setBit ρ (a.getD (i + 1) 0) (y i) : ℕ) : ℤ) =
-      (a.getD (i + 1) 0 : ℤ) + (((y i : ℕ) : ℤ) - ((fbit (fun i : Fin D => KFH.stT K D S ρ i) j i : ℕ) : ℤ)) *
-        2 ^ ρ := by
-    intro i
-    have := KFH.setBit_sub ρ (a.getD (i + 1) 0) (y i)
-    have hb : (Butterfly.getBit ρ (a.getD (i + 1) 0) : ℕ) = (fbit (fun i : Fin D => KFH.stT K D S ρ i) j i : ℕ) := by
-      rw [show (Butterfly.getBit ρ (a.getD (i + 1) 0) : ℕ) = Butterfly.layerBits D ρ a i from rfl, hbit i]
-      rfl
-    rw [hb] at this
-    linarith
-  simp_rw [e3]
-  have e4 : ∀ i : Fin D, ((KFH.stT K D S ρ i : ℕ) : ℤ) = 2 ^ ρ * (KFH.stS K D S i : ℤ) := by
-    intro i; simp [KFH.stT]
-  simp_rw [e4, add_mul, Finset.sum_add_distrib]
-  ring_nf
-
-theorem slaws_layer (hρ : ρ < K) :
-    SLaws (fun i : Fin D => KFH.stT K D S ρ i) (P * (2 ^ K) ^ D * S) := by
-  have := slaws_of_strideSel (strideSel_layer (P := P) (D := D) (S := S) hρ)
-  rwa [KFH.vol_layer] at this
 
 end Layer
 
@@ -321,23 +212,7 @@ section Sub
 
 variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
 
-theorem fbit_comp (st : ι → ℕ) (g : κ → ι) (j : ℕ) : fbit (st ∘ g) j = fbit st j ∘ g := rfl
-
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
-
-/-- Laws transfer to a subfamily. -/
-theorem SLaws.comp {st : ι → ℕ} {n : ℕ} (h : SLaws st n) {g : κ → ι} (hg : Function.Injective g) :
-    SLaws (st ∘ g) n := by
-  refine ⟨fun j hj z => ?_, fun j hj z => ?_, fun j hj z => ?_⟩
-  · rw [← fsetZ_extB hg]; exact h.nonneg j hj _
-  · have := h.lt j hj (extB g (fbit st j) z)
-    unfold fset at this ⊢; rwa [fsetZ_extB hg] at this
-  · have := h.bit_set j hj (extB g (fbit st j) z)
-    have e : fset st j (extB g (fbit st j) z) = fset (st ∘ g) j z := by
-      unfold fset; rw [fsetZ_extB hg]
-    rw [e] at this
-    rw [fbit_comp, this]
-    funext k; exact extB_g hg _ _ k
 
 end Sub
 
@@ -472,27 +347,6 @@ open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 section Pow
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-theorem stT_one (t S0 p : ℕ) (hp : p < t) :
-    KFH.stT 1 t S0 0 (t - 1 - p) = 2 ^ p * S0 := by
-  rw [KFH.stT, KFH.stS_eq 1 t S0 _ (by omega), pow_zero, one_mul, pow_one]
-  congr 2; omega
-
-/-- **Power-of-two stride layouts satisfy the selected-bit laws.** -/
-theorem slaws_pow (pos : ι → ℕ) (hinj : Function.Injective pos) (t S0 B : ℕ)
-    (hpos : ∀ i, pos i < t) : SLaws (fun i => 2 ^ pos i * S0) (B * 2 ^ t * S0) := by
-  set g : ι → Fin t := fun i => ⟨t - 1 - pos i, by have := hpos i; omega⟩
-  have hg : Function.Injective g := by
-    intro a b h
-    have := congrArg Fin.val h
-    simp only [g] at this
-    have := hpos a; have := hpos b
-    exact hinj (by omega)
-  have H := (slaws_layer (P := B) (K := 1) (D := t) (S := S0) (ρ := 0) (by norm_num)).comp hg
-  have e1 : ((fun i : Fin t => KFH.stT 1 t S0 0 i) ∘ g) = fun i => 2 ^ pos i * S0 := by
-    funext i; simp only [Function.comp_apply, g]; exact stT_one t S0 (pos i) (hpos i)
-  rw [e1, pow_one] at H
-  exact H
 
 end Pow
 

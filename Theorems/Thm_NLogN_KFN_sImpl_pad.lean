@@ -336,13 +336,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
 
-theorem Cl.upd0 {f : Fin HS → List ℤ} (h : Cl f) (v : List ℤ) : Cl (Function.update f 0 v) :=
-  ⟨⟨by simp +decide [h.scr.t], by simp +decide [h.scr.o], by simp +decide [h.scr.ur],
-    by simp +decide [h.scr.ui], by simp +decide [h.scr.vr], by simp +decide [h.scr.vi],
-    by simp +decide [h.scr.c]⟩, by simp +decide [h.a], by simp +decide [h.g], by simp +decide [h.b],
-    by simp +decide [h.b2], by simp +decide [h.b4], by simp +decide [h.rg], by simp +decide [h.rn],
-    by simp +decide [h.rp], by simp +decide [h.p]⟩
-
 end NLogN.KFB
 
 end
@@ -355,12 +348,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
-
-theorem ClP.upd0 {f : Fin HS → List ℤ} (h : ClP f) (v : List ℤ) : ClP (Function.update f 0 v) :=
-  ⟨⟨by simp +decide [h.scr.t], by simp +decide [h.scr.o], by simp +decide [h.scr.ur],
-    by simp +decide [h.scr.ui], by simp +decide [h.scr.vr], by simp +decide [h.scr.vi],
-    by simp +decide [h.scr.c]⟩, by simp +decide [h.a], by simp +decide [h.p], by simp +decide [h.q],
-    by simp +decide [h.b], by simp +decide [h.b2], by simp +decide [h.rp], by simp +decide [h.rq]⟩
 
 end NLogN.KFG
 
@@ -419,15 +406,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFN
 
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
-
-theorem ClT.upd0 {f : Fin HS → List ℤ} (h : KFG.ClT f) (v : List ℤ) :
-    KFG.ClT (Function.update f 0 v) :=
-  ⟨by simp +decide [h.a], by simp +decide [h.b], by simp +decide [h.c], by simp +decide [h.d],
-    by simp +decide [h.n], by simp +decide [h.c1], by simp +decide [h.ur], by simp +decide [h.ui],
-    by simp +decide [h.o], by simp +decide [h.p], by simp +decide [h.rp]⟩
-
-theorem ClN.upd0 {f : Fin HS → List ℤ} (h : ClN f) (v : List ℤ) : ClN (Function.update f 0 v) :=
-  ⟨h.cl.upd0 v, h.p.upd0 v, ClT.upd0 h.t v, by simp +decide [h.o]⟩
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 

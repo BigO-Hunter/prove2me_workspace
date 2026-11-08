@@ -21,6 +21,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs33
 import Definitions.Def_IntMul_HvdH_M_Defs1
 import Definitions.Def_IntMul_Kappa_K_Defs13
 import Definitions.Def_IntMul_Kappa_K_Defs11
+import Theorems.Thm_NLogN_KFX_rowCodeU_runs
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -100,9 +101,6 @@ open IntMul RS
 
 namespace KIL
 
-theorem encK_nil (s : IState HS) : encK s (fun _ => []) = s := by
-  cases s; rfl
-
 /-! ## Elementary statements -/
 
 /-! ## Moving integers between stacks -/
@@ -136,27 +134,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel
-
-/-! ## Pushes and pops -/
-
-theorem pushSt_G_of_not_mem (t : IState HS) (r : Fin HS) :
-    ∀ l : List (Fin HS × ℤ), r ∉ l.map Prod.fst → (pushSt t l).G r = t.G r
-  | [], _ => rfl
-  | (i, v) :: l, h => by
-    simp only [List.map_cons, List.mem_cons, not_or] at h
-    simp only [pushSt]
-    rw [pushSt_G_of_not_mem _ r l h.2]
-    simp [Ne.symm h.1, h.1]
-
-theorem pushSt_G (t : IState HS) (r : Fin HS) : ∀ l : List (Fin HS × ℤ),
-    (pushSt t l).G r = ints ((l.filter (fun p => p.1 = r)).map Prod.snd).reverse ++ t.G r
-  | [] => by simp [pushSt]
-  | (i, v) :: l => by
-    simp only [pushSt]
-    rw [pushSt_G _ r l]
-    by_cases h : i = r
-    · subst h; simp [List.filter_cons, ints_append, ints]
-    · simp [List.filter_cons, h, Ne.symm h]
 
 /-! ## Products of positive parameters -/
 
@@ -194,22 +171,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-theorem clean_of_rd {e : Ex HS} (h : ∀ r ∈ e.regs, RdOK r) : e.Clean := fun j hj =>
-  clean_of_lt (h j hj).lt j (by simp [Ex.regs])
-
-theorem pushOK_of {t : IState HS} {Bb : ℕ} (L : List (Fin HS × Ex HS))
-    (hL : ∀ p ∈ L, 24 ≤ p.1.val ∧ p.1.val ≤ 37) (hg : ∀ p ∈ L, GoodE t Bb p.2) :
-    PushOK t Bb L := by
-  intro p hp
-  obtain ⟨h1, h2⟩ := hL p hp
-  refine ⟨by omega, clean_of_rd (hg p hp).rd, ?_, (hg p hp).ok, (hg p hp).bnd⟩
-  intro r hr hm
-  obtain ⟨q, hq, rfl⟩ := List.mem_map.1 hm
-  have := hL q hq
-  rcases (hg p hp).rd q.1 hr with h | h
-  · rw [h] at this; exact absurd this.1 (by decide)
-  · omega
 
 /-! ## Templates -/
 
@@ -989,35 +950,6 @@ set_option maxRecDepth 20000
 namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW AModel Butterfly
-
-/-! ## Pushed parameter lists -/
-
-/-- A push list whose expressions read none of the pushed stacks and are specified by `ESp`. -/
-theorem pushOK_of {t : IState HS} {Bb : ℕ} {l : List (Fin HS × Ex HS)}
-    (hlow : ∀ p ∈ l, p.1.val < 56) (hreg : ∀ p ∈ l, ∀ r ∈ p.2.regs, r ∉ l.map Prod.fst)
-    (hE : ∀ p ∈ l, ∃ v, ESp p.2 t Bb v) : PushOK t Bb l := by
-  intro p hp
-  obtain ⟨v, hv⟩ := hE p hp
-  exact ⟨hlow p hp, hv.clean, hreg p hp, hv.ok, hv.bnd⟩
-
-theorem pushVals_le {t : IState HS} {Bb : ℕ} {l : List (Fin HS × Ex HS)}
-    (hE : ∀ p ∈ l, ∃ v, ESp p.2 t Bb v) : ∀ q ∈ l, zsz (q.2.eval t) ≤ Bb := by
-  intro q hq
-  obtain ⟨v, hv⟩ := hE q hq
-  exact Ex.zsz_eval_le t Bb _ hv.bnd
-
-/-! ## A table generator followed by `rotF` -/
-
-/-- The cost of a push list of bounded total size. -/
-theorem pushCost_le_size (Bb : ℕ) (l : List (Fin HS × Ex HS)) (S : ℕ)
-    (hS : (l.map fun p => p.2.size + 1).sum ≤ S) : pushCost Bb l ≤ S * 10 ^ 7 * (Bb + 2) ^ 2 + 1 := by
-  unfold pushCost
-  have : (l.map fun p => (p.2.size + 1) * 10 ^ 7 * (Bb + 2) ^ 2).sum =
-      (l.map fun p => p.2.size + 1).sum * (10 ^ 7 * (Bb + 2) ^ 2) := by
-    rw [← List.sum_map_mul_right]; congr 1; apply List.map_congr_left; intro p _; ring
-  rw [this]
-  have := Nat.mul_le_mul_right (10 ^ 7 * (Bb + 2) ^ 2) hS
-  nlinarith
 
 /-! ## One line, register-driven -/
 

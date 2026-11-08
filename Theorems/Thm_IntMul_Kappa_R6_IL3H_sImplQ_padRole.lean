@@ -572,13 +572,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
 
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
-
 /-! ## The generic segment step -/
 
 /-! ## Expression combinators -/
@@ -635,12 +628,6 @@ section Basic
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
-
-theorem getD_selOpF (st : ι → ℕ) (n : ℕ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
-    (xs : List M) {j : ℕ} (hj : j < n) :
-    (selOpF st n T xs).getD j 0 = ∑ y, T (fbit st j) y • xs.getD (fset st j y) 0 := by
-  rw [List.getD_eq_getElem _ _ (by simpa using hj)]
-  simp [selOpF]
 
 end Basic
 
@@ -1099,11 +1086,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-/-! ## The node frame -/
-
-theorem ExC.congr {σ : Fin HS → Option ℤ} {e : Ex HS} {x y : ℤ} {c : ℕ} (h : ExC σ e x c)
-    (hxy : x = y) : ExC σ e y c := hxy ▸ h
-
 end NLogN.KFW
 
 end
@@ -1139,9 +1121,6 @@ section Run
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
 variable {σ : Fin HS → Option ℤ} {U V : IStmt HS Pp} {f g h : Fin HS → List ℤ} {c c' : ℕ}
-
-theorem RunQ.congr {g' : Fin HS → List ℤ} (H : RunQ I iprog σ U f g c) (he : g = g') :
-    RunQ I iprog σ U f g' c := he ▸ H
 
 end Run
 

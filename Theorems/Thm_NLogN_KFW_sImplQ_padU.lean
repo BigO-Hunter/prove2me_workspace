@@ -588,12 +588,6 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
-theorem getD_selOpF (st : ι → ℕ) (n : ℕ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
-    (xs : List M) {j : ℕ} (hj : j < n) :
-    (selOpF st n T xs).getD j 0 = ∑ y, T (fbit st j) y • xs.getD (fset st j y) 0 := by
-  rw [List.getD_eq_getElem _ _ (by simpa using hj)]
-  simp [selOpF]
-
 end Basic
 
 /-! ## The bridge to `SelBits` -/

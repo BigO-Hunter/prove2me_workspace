@@ -16,6 +16,9 @@ import Definitions.Def_IntMul_Kappa_R6_Defs12
 import Definitions.Def_IntMul_Kappa_R6_Defs14
 import Definitions.Def_IntMul_Kappa_R6_Defs16
 import Definitions.Def_IntMul_Kappa_R6_Defs20
+import Theorems.Thm_NLogN_KFR_rowImpl_of_lem13
+import Theorems.Thm_NLogN_KFL_rotStep_runs
+import Theorems.Thm_NLogN_KFN_sImpl_cinv
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -495,20 +498,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-@[simp] theorem run_ip (p : RS) (s : IState HS) : (p.run s).ip = s.ip := (run_ip_out p s).1
-@[simp] theorem run_out (p : RS) (s : IState HS) : (p.run s).out = s.out := (run_ip_out p s).2
-
-theorem repSt_ip_out (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (k : ℕ) :
-    (NLogN.RS.repSt i n b s k).ip = s.ip ∧ (NLogN.RS.repSt i n b s k).out = s.out := by
-  have := iter_ip (fun t => decSt i (b.run t))
-    (fun t => by simp only [decSt, IState.upd_ip, IState.upd_out]; exact run_ip_out b t)
-    k (s.upd i (.int (n.eval s) :: s.G i))
-  simpa [NLogN.RS.repSt] using this
-
-@[simp] theorem decSt_G (i : Fin HS) (t : IState HS) (j : Fin HS) :
-    (decSt i t).G j = if j = i then .int (t.top i - 1) :: (t.G i).tail else t.G j := by
-  simp [decSt, IState.upd_G]
-
 end RS
 
 end NLogN
@@ -638,313 +627,7 @@ namespace KFD
 
 open KFC (marks marks_zero marks_succ isMk NM NM_int isMk_marks_succ isMk_NM toUL toUL_runs cUL uK uR uY uB)
 
-theorem top_congr {s t : IState HS} {i : Fin HS} (h : s.G i = t.G i) : s.top i = t.top i := by
-  simp [IState.top, h]
-
-theorem isInt_congr {s t : IState HS} {i : Fin HS} (h : s.G i = t.G i) :
-    s.IsInt i ↔ t.IsInt i := by
-  simp [IState.IsInt, NLogN.KFD.top_congr h, h]
-
-theorem eval_congr {s t : IState HS} : ∀ (e : Ex HS), (∀ i ∈ e.regs, s.G i = t.G i) →
-    e.eval s = e.eval t
-  | .reg i, h => NLogN.KFD.top_congr (h i (by simp [Ex.regs]))
-  | .lit _, _ => rfl
-  | .add a b, h | .mul a b, h | .shl a b, h | .quo a b, h | .rem a b, h | .ndiv a b, h
-  | .nmod a b, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.eval, eval_congr a (fun i hi => h i (Or.inl hi)),
-      eval_congr b (fun i hi => h i (Or.inr hi))]
-  | .neg a, h | .pow2 a, h => by
-    simp only [Ex.regs] at h
-    simp only [Ex.eval, eval_congr a h]
-  | .sel c x y, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.eval, eval_congr c (fun i hi => h i (Or.inl (Or.inl hi))),
-      eval_congr x (fun i hi => h i (Or.inl (Or.inr hi))),
-      eval_congr y (fun i hi => h i (Or.inr hi))]
-
-theorem ok_congr {s t : IState HS} : ∀ (e : Ex HS), (∀ i ∈ e.regs, s.G i = t.G i) →
-    (e.ok s ↔ e.ok t)
-  | .reg i, h => NLogN.KFD.isInt_congr (h i (by simp [Ex.regs]))
-  | .lit _, _ => Iff.rfl
-  | .add a b, h | .mul a b, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.ok, ok_congr a (fun i hi => h i (Or.inl hi)),
-      ok_congr b (fun i hi => h i (Or.inr hi))]
-  | .shl a b, h | .quo a b, h | .rem a b, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.ok, ok_congr a (fun i hi => h i (Or.inl hi)),
-      ok_congr b (fun i hi => h i (Or.inr hi)), eval_congr b (fun i hi => h i (Or.inr hi))]
-  | .ndiv a b, h | .nmod a b, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.ok, ok_congr a (fun i hi => h i (Or.inl hi)),
-      ok_congr b (fun i hi => h i (Or.inr hi)), eval_congr a (fun i hi => h i (Or.inl hi)),
-      eval_congr b (fun i hi => h i (Or.inr hi))]
-  | .neg a, h => by
-    simp only [Ex.regs] at h
-    simp only [Ex.ok, ok_congr a h]
-  | .pow2 a, h => by
-    simp only [Ex.regs] at h
-    simp only [Ex.ok, ok_congr a h, eval_congr a h]
-  | .sel c x y, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.ok, ok_congr c (fun i hi => h i (Or.inl (Or.inl hi))),
-      ok_congr x (fun i hi => h i (Or.inl (Or.inr hi))),
-      ok_congr y (fun i hi => h i (Or.inr hi)),
-      eval_congr c (fun i hi => h i (Or.inl (Or.inl hi)))]
-
-theorem cost_congr {s t : IState HS} : ∀ (e : Ex HS), (∀ i ∈ e.regs, s.G i = t.G i) →
-    e.cost s = e.cost t
-  | .reg i, h => by simp only [Ex.cost, NLogN.KFD.top_congr (h i (by simp [Ex.regs]))]
-  | .lit _, _ => rfl
-  | .add a b, h | .mul a b, h | .shl a b, h | .quo a b, h | .rem a b, h | .ndiv a b, h
-  | .nmod a b, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.cost, cost_congr a (fun i hi => h i (Or.inl hi)),
-      cost_congr b (fun i hi => h i (Or.inr hi)), eval_congr a (fun i hi => h i (Or.inl hi)),
-      eval_congr b (fun i hi => h i (Or.inr hi))]
-  | .neg a, h => by
-    simp only [Ex.regs] at h
-    simp only [Ex.cost, cost_congr a h]
-  | .pow2 a, h => by
-    simp only [Ex.regs] at h
-    simp only [Ex.cost, cost_congr a h, eval_congr a h]
-  | .sel c x y, h => by
-    simp only [Ex.regs, List.mem_append] at h
-    simp only [Ex.cost, cost_congr c (fun i hi => h i (Or.inl (Or.inl hi))),
-      cost_congr x (fun i hi => h i (Or.inl (Or.inr hi))),
-      cost_congr y (fun i hi => h i (Or.inr hi)),
-      eval_congr c (fun i hi => h i (Or.inl (Or.inl hi)))]
-
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
-
-theorem ovr_self {gs : List (Fin HS)} {s s' : IState HS} (h : Agr gs s s') : ovr gs s' s = s' := by
-  refine IState.ext' (fun j => ?_) h.2.1.symm h.2.2.symm
-  simp only [ovr_G]
-  split_ifs with hj
-  · rfl
-  · exact (h.1 j hj).symm
-
-theorem ovr_ovr (gs : List (Fin HS)) (s' t u : IState HS) : ovr gs (ovr gs s' t) u = ovr gs s' u := by
-  refine IState.ext' (fun j => ?_) rfl rfl
-  simp only [ovr_G]; split_ifs <;> rfl
-
-theorem agr_ovr (gs : List (Fin HS)) (s' t : IState HS) : Agr gs t (ovr gs s' t) :=
-  ⟨fun j hj => by simp [hj], rfl, rfl⟩
-
-theorem not_ghost {gs : List (Fin HS)} {p : RS} (hg : ∀ g ∈ gs, g ∉ touch p) {j : Fin HS}
-    (hj : j ∈ touch p) : j ∉ gs := fun h => hg j h hj
-
-theorem regs_agr {gs : List (Fin HS)} {s s' : IState HS} (h : Agr gs s s') (e : Ex HS)
-    (he : ∀ i ∈ e.regs, i ∉ gs) : ∀ i ∈ e.regs, s'.G i = s.G i := fun i hi => h.1 i (he i hi)
-
-theorem upd_ovr {gs : List (Fin HS)} {s s' : IState HS} (h : Agr gs s s') {i : Fin HS}
-    (hi : i ∉ gs) (L : List Item) : s'.upd i L = ovr gs s' (s.upd i L) := by
-  refine IState.ext' (fun j => ?_) h.2.1 h.2.2
-  simp only [ovr_G, IState.upd_G]
-  by_cases hj : j = i
-  · subst hj; simp [hi]
-  · simp only [hj, if_false]
-    split_ifs with hg
-    · rfl
-    · exact h.1 j hg
-
-theorem fcode_runs : ∀ (p : RS) (gs : List (Fin HS)) (s s' : IState HS), p.ok s → NLogN.KFD.fok p = true →
-    (∀ g ∈ gs, g ∉ touch p) → Agr gs s s' →
-    IRuns I iprog (fcode p) s' (ovr gs s' (p.run s)) (fcost p s)
-  | .skip, gs, s, s', _, _, _, ha => by
-    refine (IRuns.skip s').mono' ?_ le_rfl
-    simp only [RS.run]; exact (ovr_self ha).symm
-  | .asg i e, gs, s, s', hok, _, hg, ha => by
-    obtain ⟨hi, hc, he, hint⟩ := hok
-    have hig : i ∉ gs := not_ghost hg (by simp [touch])
-    have hr := regs_agr ha e (fun r hr => not_ghost hg (by simp [touch, hr]))
-    have hiG : s'.G i = s.G i := ha.1 i hig
-    have H := RS.code_runs (I := I) (iprog := iprog) (.asg i e) s'
-      ⟨hi, hc, (ok_congr e hr).2 he, (NLogN.KFD.isInt_congr hiG).2 hint⟩
-    refine H.mono' ?_ (le_of_eq ?_)
-    · simp only [RS.run]
-      rw [eval_congr e hr, hiG]
-      exact upd_ovr ha hig _
-    · simp only [RS.cost, fcost, asgCost]
-      rw [eval_congr e hr, cost_congr e hr, NLogN.KFD.top_congr hiG]
-  | .push i e, gs, s, s', hok, _, hg, ha => by
-    obtain ⟨hi, hc, he⟩ := hok
-    have hig : i ∉ gs := not_ghost hg (by simp [touch])
-    have hr := regs_agr ha e (fun r hr => not_ghost hg (by simp [touch, hr]))
-    have hiG : s'.G i = s.G i := ha.1 i hig
-    have H := RS.code_runs (I := I) (iprog := iprog) (.push i e) s' ⟨hi, hc, (ok_congr e hr).2 he⟩
-    refine H.mono' ?_ (le_of_eq ?_)
-    · simp only [RS.run]
-      rw [eval_congr e hr, hiG]
-      exact upd_ovr ha hig _
-    · simp only [RS.cost, fcost]
-      rw [eval_congr e hr, cost_congr e hr]
-  | .pop i, gs, s, s', hok, _, hg, ha => by
-    obtain ⟨hi, hint⟩ := hok
-    have hig : i ∉ gs := not_ghost hg (by simp [touch])
-    have hiG : s'.G i = s.G i := ha.1 i hig
-    have H := RS.code_runs (I := I) (iprog := iprog) (.pop i) s' ⟨hi, (NLogN.KFD.isInt_congr hiG).2 hint⟩
-    refine H.mono' ?_ (le_of_eq ?_)
-    · simp only [RS.run]
-      rw [hiG]
-      exact upd_ovr ha hig _
-    · simp only [RS.cost, fcost]
-      rw [NLogN.KFD.top_congr hiG]
-  | .seq a b, gs, s, s', hok, hf, hg, ha => by
-    obtain ⟨hoa, hob⟩ := hok
-    simp only [NLogN.KFD.fok, Bool.and_eq_true] at hf
-    have hga : ∀ g ∈ gs, g ∉ touch a := fun g h hm => hg g h (by simp [touch, hm])
-    have hgb : ∀ g ∈ gs, g ∉ touch b := fun g h hm => hg g h (by simp [touch, hm])
-    have H1 := fcode_runs a gs s s' hoa hf.1 hga ha
-    have H2 := fcode_runs b gs (a.run s) (ovr gs s' (a.run s)) hob hf.2 hgb (agr_ovr _ _ _)
-    rw [ovr_ovr] at H2
-    exact (H1.seq H2).mono' rfl (by simp [fcost, RS.run])
-  | .ite c a b, gs, s, s', hok, hf, hg, ha => by
-    obtain ⟨hcc, hoc, hab⟩ := hok
-    simp only [NLogN.KFD.fok, Bool.and_eq_true] at hf
-    have hr := regs_agr ha c (fun r hr => not_ghost hg (by simp [touch, hr]))
-    have hga : ∀ g ∈ gs, g ∉ touch a := fun g h hm => hg g h (by simp [touch, hm])
-    have hgb : ∀ g ∈ gs, g ∉ touch b := fun g h hm => hg g h (by simp [touch, hm])
-    have hev : c.eval s' = c.eval s := eval_congr c hr
-    have h1 := Ex.code_runs (I := I) (iprog := iprog) c s' hcc ((ok_congr c hr).2 hoc)
-    have h2 := IRuns.mv (I := I) (iprog := iprog) (s := s'.upd 56 (.int (c.eval s') :: s'.G 56))
-      (i := zX.V) (j := zX.A) (a := c.eval s') (L := s'.G 56) (by decide) (by simp)
-    set s2 := ((s'.upd 56 (.int (c.eval s') :: s'.G 56)).upd zX.V (s'.G 56)).upd zX.A
-      (.int (c.eval s') :: (s'.upd 56 (.int (c.eval s') :: s'.G 56)).G zX.A)
-    have hd := IRuns.drop (I := I) (iprog := iprog) (s := s2) (i := zX.A) (a := c.eval s')
-      (L := s'.G 57) (by simp [s2])
-    have e3 : s2.upd zX.A (s'.G 57) = s' := by simp only [s2]; ((apply IState.ext' <;> intros <;> simp +decide only [IState.upd_G, IState.upd_ip, IState.upd_out] <;> split_ifs <;> simp_all +decide))
-    rw [e3] at hd
-    by_cases hneg : c.eval s < 0
-    · have hx := fcode_runs a gs s s' (by simpa [hneg] using hab) hf.1 hga ha
-      have hi := IRuns.iteT (I := I) (iprog := iprog) (i := zX.A) (f := fun k => k == .neg)
-        (q := .seq (.op (.drop zX.A)) (fcode b))
-        (by rw [cl_int s2 zX.A (c.eval s') (s'.G 57) (by simp [s2])]; simp [hev, hneg]; omega)
-        (hd.seq hx)
-      refine (h1.seq (h2.seq hi)).mono' (by simp [RS.run, hneg]) ?_
-      simp only [fcost, if_pos hneg, cost_congr c hr, hev]; omega
-    · have hy := fcode_runs b gs s s' (by simpa [hneg] using hab) hf.2 hgb ha
-      have hi := IRuns.iteF (I := I) (iprog := iprog) (i := zX.A) (f := fun k => k == .neg)
-        (p := .seq (.op (.drop zX.A)) (fcode a))
-        (by rw [cl_int s2 zX.A (c.eval s') (s'.G 57) (by simp [s2])]; simp [hev, hneg];
-            split_ifs <;> simp)
-        (hd.seq hy)
-      refine (h1.seq (h2.seq hi)).mono' (by simp [RS.run, hneg]) ?_
-      simp only [fcost, if_neg hneg, cost_congr c hr, hev]; omega
-  | .rep i n b, gs, s, s', hok, hf, hg, ha => by
-    obtain ⟨hi, hc, hno, hn0, hw, hb⟩ := hok
-    simp only [NLogN.KFD.fok, Bool.and_eq_true, Bool.not_eq_true'] at hf
-    obtain ⟨⟨hib, hsc⟩, hfb⟩ := hf
-    have hib : i ∉ touch b := by simpa using hib
-    have hsc : i ∉ scr := by simpa using hsc
-    have hig : i ∉ gs := not_ghost hg (by simp [touch])
-    have hr := regs_agr ha n (fun r hr => not_ghost hg (by simp [touch, hr]))
-    have hiG : s'.G i = s.G i := ha.1 i hig
-    have hev : n.eval s' = n.eval s := eval_congr n hr
-    set N := (n.eval s).toNat with hN
-    have hNv : n.eval s = (N : ℤ) := by omega
-    have hgb : ∀ g ∈ i :: gs, g ∉ touch b := by
-      intro g hgm
-      rcases List.mem_cons.1 hgm with h | h
-      · subst h; exact hib
-      · exact fun hm => hg g h (by simp [touch, hm])
-    have hsc' : i ≠ uK ∧ i ≠ uR ∧ i ≠ uY ∧ i ≠ uB := by
-      simp only [NLogN.KFD.scr, List.mem_cons, List.not_mem_nil, or_false, not_or] at hsc
-      exact hsc
-    -- push the count
-    have H1 := RS.code_runs (I := I) (iprog := iprog) (.push i n) s' ⟨hi, hc, (ok_congr n hr).2 hno⟩
-    simp only [RS.run, RS.cost, hev, hNv] at H1
-    set u0 := s'.upd i (.int (N : ℤ) :: s'.G i)
-    -- to unary
-    have H2 := toUL_runs (I := I) (iprog := iprog) (A := i) (X := i) hsc'.1 hsc'.1 hsc'.2.1
-      hsc'.2.2.1 hsc'.2.2.2 u0 N (s'.G i) (by simp [u0]) (by simp [u0]; exact NM_int _ _)
-    -- the loop states
-    set F : ℕ → IState HS := fun k =>
-      (ovr gs s' (repSt i n b s k)).upd i (marks (N - k) ++ .int (N : ℤ) :: s'.G i) with hF
-    have eF0 : u0.upd i (marks N ++ u0.G i) = F 0 := by
-      refine IState.ext' (fun j => ?_) ?_ ?_
-      · simp only [hF, u0, IState.upd_G, ovr_G, RS.repSt, Function.iterate_zero, id]
-        by_cases hj : j = i
-        · subst hj; simp
-        · simp only [hj, if_false]
-          split_ifs with hjg
-          · rfl
-          · exact ha.1 j hjg
-      · simp [hF, u0, RS.repSt, ha.2.1]
-      · simp [hF, u0, RS.repSt, ha.2.2]
-    rw [eF0] at H2
-    have hrep := RS.repSt_G i n b s hw
-    have hip := RS.repSt_ip_out i n b s
-    have hL := IRuns.loop (I := I) (iprog := iprog) (i := i) (f := isMk)
-      (p := .seq (.op (.unmark i)) (fcode b)) F (fun k => 1 + fcost b (repSt i n b s k)) N
-      (fun k hk => by
-        obtain ⟨j, hj⟩ : ∃ j, N - k = j + 1 := ⟨N - k - 1, by omega⟩
-        simp only [hF, IState.cl_def, IState.upd_G, if_true, hj]
-        exact isMk_marks_succ _ _)
-      (by simp only [hF, IState.cl_def, IState.upd_G, if_true, Nat.sub_self, marks_zero,
-            List.nil_append]; exact isMk_NM (NM_int _ _))
-      (fun k hk => by
-        obtain ⟨j, hj⟩ : ∃ j, N - k = j + 1 := ⟨N - k - 1, by omega⟩
-        have hj' : N - (k + 1) = j := by omega
-        have u1 := IRuns.unmark (I := I) (iprog := iprog) (s := F k) (i := i)
-          (L := marks j ++ .int (N : ℤ) :: s'.G i) (by simp [hF, hj, marks_succ])
-        set F' := (F k).upd i (marks j ++ .int (N : ℤ) :: s'.G i)
-        have hag : Agr (i :: gs) (repSt i n b s k) F' := by
-          refine ⟨fun x hx => ?_, ?_, ?_⟩
-          · simp only [List.mem_cons, not_or] at hx
-            simp [F', hF, hx.1, hx.2]
-          · simp [F', hF]
-          · simp [F', hF]
-        have u2 := fcode_runs b (i :: gs) (repSt i n b s k) F' (hb k (by omega)) hfb hgb hag
-        refine (u1.seq u2).mono' ?_ le_rfl
-        refine IState.ext' (fun x => ?_) ?_ ?_
-        · have hrs : repSt i n b s (k + 1) = decSt i (b.run (repSt i n b s k)) := by
-            simp only [RS.repSt, Function.iterate_succ_apply']
-          simp only [hF]
-          rw [hrs]
-          simp only [ovr_G, F', hF, IState.upd_G, List.mem_cons, decSt_G, hj']
-          by_cases hx : x = i
-          · subst hx; simp
-          · simp only [hx, false_or, if_false]
-            split_ifs <;> rfl
-        · simp [F', hF, RS.repSt, Function.iterate_succ_apply', decSt]
-        · simp [F', hF, RS.repSt, Function.iterate_succ_apply', decSt])
-    -- drop the sentinel
-    have H4 := IRuns.drop (I := I) (iprog := iprog) (s := F N) (i := i) (a := (N : ℤ))
-      (L := s'.G i) (by simp [hF])
-    have eE : (F N).upd i (s'.G i) = ovr gs s' ((RS.rep i n b).run s) := by
-      rw [RS.run_rep i n b s hw hn0]
-      refine IState.ext' (fun x => ?_) ?_ ?_
-      · simp only [hF, IState.upd_G, ovr_G, ← hN]
-        by_cases hx : x = i
-        · subst hx; simp [hig, hiG]
-        · simp [hx]
-      · simp [hF, ← hN]
-      · simp [hF, ← hN]
-    rw [eE] at H4
-    refine (H1.seq (H2.seq (hL.seq H4))).mono ?_
-    simp only [fcost]
-    rw [← hN, hNv, cost_congr n hr]
-    have : ∑ k ∈ Finset.range N, (1 + fcost b (repSt i n b s k) + 30) =
-        ∑ k ∈ Finset.range N, (fcost b (repSt i n b s k) + 31) :=
-      Finset.sum_congr rfl (fun k _ => by omega)
-    rw [this]
-    have hz : zsz (n.eval s) = zsz (N : ℤ) := by rw [hNv]
-    omega
-
-theorem fcode_runs0 (p : RS) (s : IState HS) (hok : p.ok s) (hf : NLogN.KFD.fok p = true) :
-    IRuns I iprog (fcode p) s (p.run s) (fcost p s) := by
-  have := fcode_runs (I := I) (iprog := iprog) p [] s s hok hf (by simp) ⟨fun _ _ => rfl, rfl, rfl⟩
-  refine this.mono' ?_ le_rfl
-  refine IState.ext' (fun j => ?_) rfl rfl
-  simp
-
-theorem FSp.irun {p : RS} {s t : IState HS} {c : ℕ} (hf : NLogN.KFD.fok p = true) (h : FSp p s t c) :
-    IRuns I iprog (fcode p) s t c := by
-  have := fcode_runs0 (I := I) (iprog := iprog) p s h.1 hf
-  rw [h.2.1] at this
-  exact this.mono h.2.2
 
 end KFD
 
@@ -986,10 +669,6 @@ open KIL AModel AModelL12
 
 theorem not_contains_of {l : List (Fin HS)} {x : Fin HS} (h : x ∉ l) : l.contains x = false := by
   simpa using h
-
-theorem fok_mvK_eq (X Y C : Fin HS) (n : Ex HS) :
-    NLogN.KFD.fok (NLogN.mvK X Y C n) = (!([Y, X, X].contains C) && !(NLogN.KFD.scr.contains C)) := by
-  simp [NLogN.mvK, NLogN.KFD.fok, touch, Ex.regs]
 
 end KFD
 
@@ -1315,13 +994,6 @@ theorem Sm_ipw (k : ℕ) : Sm (ipw k) := by
 
 theorem Sm_zero : Sm (0 : GI) := by simp [Sm]
 
-theorem Cl.upd0 {f : Fin HS → List ℤ} (h : Cl f) (v : List ℤ) : Cl (Function.update f 0 v) :=
-  ⟨⟨by simp +decide [h.scr.t], by simp +decide [h.scr.o], by simp +decide [h.scr.ur],
-    by simp +decide [h.scr.ui], by simp +decide [h.scr.vr], by simp +decide [h.scr.vi],
-    by simp +decide [h.scr.c]⟩, by simp +decide [h.a], by simp +decide [h.g], by simp +decide [h.b],
-    by simp +decide [h.b2], by simp +decide [h.b4], by simp +decide [h.rg], by simp +decide [h.rn],
-    by simp +decide [h.rp], by simp +decide [h.p]⟩
-
 end NLogN.KFB
 
 end
@@ -1335,12 +1007,6 @@ namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
 
-theorem ClP.upd0 {f : Fin HS → List ℤ} (h : ClP f) (v : List ℤ) : ClP (Function.update f 0 v) :=
-  ⟨⟨by simp +decide [h.scr.t], by simp +decide [h.scr.o], by simp +decide [h.scr.ur],
-    by simp +decide [h.scr.ui], by simp +decide [h.scr.vr], by simp +decide [h.scr.vi],
-    by simp +decide [h.scr.c]⟩, by simp +decide [h.a], by simp +decide [h.p], by simp +decide [h.q],
-    by simp +decide [h.b], by simp +decide [h.b2], by simp +decide [h.rp], by simp +decide [h.rq]⟩
-
 end NLogN.KFG
 
 end
@@ -1353,13 +1019,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
-
-theorem fok_dblP (ε : ℤ) : NLogN.KFD.fok (dblP ε) = true := by
-  simp +decide [dblP, dblB, NLogN.KFG.dE, NLogN.KFD.fok, fok_mvK_eq, touch, scr, Ex.regs]
-
-theorem fok_tblP (aE : ℕ → ℕ) : ∀ t, NLogN.KFD.fok (tblP aE t) = true
-  | 0 => rfl
-  | t + 1 => by simp [tblP, NLogN.KFD.fok, fok_tblP aE t, fok_dblP]
 
 section
 variable {s : IState HS} {f : Fin HS → List ℤ} {e x y : ℤ} {A X Y : List ℤ}
@@ -1566,67 +1225,13 @@ section Basic
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-theorem fset_cast {st : ι → ℕ} {n : ℕ} (h : SLaws st n) {j : ℕ} (hj : j < n) (y : ι → Fin 2) :
-    ((fset st j y : ℕ) : ℤ) = fsetZ st j y := Int.toNat_of_nonneg (h.nonneg j hj y)
-
-theorem SLaws.set_set {st : ι → ℕ} {n : ℕ} (h : SLaws st n) {j : ℕ} (hj : j < n)
-    (y z : ι → Fin 2) : fset st (fset st j y) z = fset st j z := by
-  have h1 := fset_cast h hj y
-  have hb := h.bit_set j hj y
-  have e : fsetZ st (fset st j y) z = fsetZ st j z := by
-    unfold fsetZ
-    rw [hb, h1]
-    unfold fsetZ
-    rw [add_assoc, ← Finset.sum_add_distrib]
-    congr 1
-    refine Finset.sum_congr rfl fun i _ => ?_
-    ring
-  show (fsetZ st (fset st j y) z).toNat = (fsetZ st j z).toNat
-  rw [e]
-
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
-
-theorem getD_selOpF (st : ι → ℕ) (n : ℕ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
-    (xs : List M) {j : ℕ} (hj : j < n) :
-    (selOpF st n T xs).getD j 0 = ∑ y, T (fbit st j) y • xs.getD (fset st j y) 0 := by
-  rw [List.getD_eq_getElem _ _ (by simpa using hj)]
-  simp [selOpF]
-
-theorem selOpF_mul {st : ι → ℕ} {n : ℕ} (h : SLaws st n) (T U : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
-    (xs : List M) : selOpF st n T (selOpF st n U xs) = selOpF st n (T * U) xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_selOpF] at h₁
-  simp only [selOpF, List.getElem_map, List.getElem_range]
-  have e : ∀ y, (List.map (fun j => ∑ y, U (fbit st j) y • xs.getD (fset st j y) 0)
-      (List.range n)).getD (fset st j y) 0 =
-      ∑ z, U y z • xs.getD (fset st j z) 0 := by
-    intro y
-    have := getD_selOpF st n U xs (h.lt j h₁ y)
-    simp only [selOpF] at this
-    rw [this, h.bit_set j h₁ y]
-    simp_rw [h.set_set h₁]
-  simp_rw [e, Finset.smul_sum, smul_smul, Matrix.mul_apply, Finset.sum_smul]
-  exact Finset.sum_comm
 
 end Basic
 
 section Bridge
 
 variable {sh : Shape} {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-theorem StrideSel.fset_eq {Sb : Butterfly.SelBits sh ι} {st : ι → ℕ} (h : StrideSel Sb st)
-    {j : ℕ} (hj : j < vol sh) (y : ι → Fin 2) :
-    fset st j y = encode sh (Sb.set (decode sh j) y) := by
-  unfold fset; rw [← (h j hj).2 y]; simp
-
-theorem slaws_of_strideSel {Sb : Butterfly.SelBits sh ι} {st : ι → ℕ} (h : StrideSel Sb st) :
-    SLaws st (vol sh) := by
-  refine ⟨fun j hj y => ?_, fun j hj y => ?_, fun j hj y => ?_⟩
-  · rw [← (h j hj).2 y]; positivity
-  · rw [h.fset_eq hj]; exact encode_lt (Sb.valid_set _ _ (valid_decode hj))
-  · have hv := Sb.valid_set _ y (valid_decode hj)
-    rw [h.fset_eq hj, ← (h _ (encode_lt hv)).1, decode_encode hv, Sb.bits_set _ _ (valid_decode hj)]
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
@@ -1646,81 +1251,7 @@ end Bridge
 
 section Layer
 
-theorem vol_repl_S (B D S : ℕ) : vol (List.replicate D B ++ [S]) = B ^ D * S := by
-  induction D with
-  | zero => simp [vol]
-  | succ D ih =>
-    rw [List.replicate_succ, List.cons_append, vol_cons, ih, pow_succ]; ring
-
-theorem encode_repl (B S : ℕ) : ∀ (D : ℕ) (c : Fin D → ℕ) (s : ℕ),
-    encode (List.replicate D B ++ [S]) (List.ofFn c ++ [s]) =
-      ∑ i : Fin D, c i * (B ^ (D - (i + 1)) * S) + s
-  | 0, c, s => by simp [encode]
-  | D + 1, c, s => by
-    rw [List.replicate_succ, List.cons_append, List.ofFn_succ, List.cons_append, encode,
-      List.headD_cons, List.tail_cons, encode_repl B S D (fun i => c i.succ) s, vol_repl_S,
-      Fin.sum_univ_succ]
-    simp only [Fin.val_zero, Fin.val_succ]
-    rw [add_assoc]
-    congr 2
-    refine Finset.sum_congr rfl fun i _ => ?_
-    congr 3; omega
-
-theorem encode_mkAddr (P K D S : ℕ) (p : ℕ) (c : Fin D → ℕ) (s : ℕ) :
-    encode (Butterfly.layerShape P K D S) (Butterfly.mkAddr D p c s) =
-      p * ((2 ^ K) ^ D * S) + ∑ i : Fin D, c i * KFH.stS K D S i + s := by
-  simp only [Butterfly.layerShape, Butterfly.mkAddr, List.cons_append, encode, List.headD_cons,
-    List.tail_cons, vol_repl_S, encode_repl]
-  have hs : ∀ i : Fin D, KFH.stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S :=
-    fun i => KFH.stS_eq K D S i i.isLt
-  simp only [hs]
-  ring
-
 variable {P K D S ρ : ℕ}
-
-/-- **The layer layout has the record strides `stT`.** -/
-theorem strideSel_layer (hρ : ρ < K) :
-    StrideSel (Butterfly.layerSel P K D S ρ hρ) (fun i : Fin D => KFH.stT K D S ρ i) := by
-  intro j hj
-  set sh := Butterfly.layerShape P K D S
-  set a := decode sh j
-  have hv : Valid sh a := valid_decode hj
-  have hl : a.length = D + 2 := by rw [hv.length_eq]; simp [sh, Butterfly.layerShape]
-  have hbit : ∀ i : Fin D, (Butterfly.layerBits D ρ a i : ℕ) = j / KFH.stT K D S ρ i % 2 := by
-    intro i
-    have := (KFH.layer_partner (P := P) (S := S) hρ i hj 0).1
-    exact this
-  refine ⟨funext fun i => Fin.ext (hbit i), fun y => ?_⟩
-  show ((encode sh (Butterfly.layerSet D ρ a y) : ℕ) : ℤ) = _
-  have ea : a = Butterfly.mkAddr D (a.headD 0) (fun i => a.getD (i + 1) 0) (a.getD (D + 1) 0) :=
-    Butterfly.eq_mkAddr D hl
-  have e1 : ((encode sh (Butterfly.layerSet D ρ a y) : ℕ) : ℤ) =
-      ((a.headD 0 * ((2 ^ K) ^ D * S) + ∑ i : Fin D,
-        Butterfly.setBit ρ (a.getD (i + 1) 0) (y i) * KFH.stS K D S i + a.getD (D + 1) 0 : ℕ) : ℤ) := by
-    rw [Butterfly.layerSet, encode_mkAddr]
-  have e2 : (j : ℤ) = ((a.headD 0 * ((2 ^ K) ^ D * S) + ∑ i : Fin D,
-        a.getD (i + 1) 0 * KFH.stS K D S i + a.getD (D + 1) 0 : ℕ) : ℤ) := by
-    have := encode_decode hj
-    rw [← this]
-    conv_lhs => rw [show decode sh j = a from rfl, ea]
-    rw [encode_mkAddr]
-  rw [e1, fsetZ, e2]
-  push_cast
-  have e3 : ∀ i : Fin D, ((Butterfly.setBit ρ (a.getD (i + 1) 0) (y i) : ℕ) : ℤ) =
-      (a.getD (i + 1) 0 : ℤ) + (((y i : ℕ) : ℤ) - ((fbit (fun i : Fin D => KFH.stT K D S ρ i) j i : ℕ) : ℤ)) *
-        2 ^ ρ := by
-    intro i
-    have := KFH.setBit_sub ρ (a.getD (i + 1) 0) (y i)
-    have hb : (Butterfly.getBit ρ (a.getD (i + 1) 0) : ℕ) = (fbit (fun i : Fin D => KFH.stT K D S ρ i) j i : ℕ) := by
-      rw [show (Butterfly.getBit ρ (a.getD (i + 1) 0) : ℕ) = Butterfly.layerBits D ρ a i from rfl, hbit i]
-      rfl
-    rw [hb] at this
-    linarith
-  simp_rw [e3]
-  have e4 : ∀ i : Fin D, ((KFH.stT K D S ρ i : ℕ) : ℤ) = 2 ^ ρ * (KFH.stS K D S i : ℤ) := by
-    intro i; simp [KFH.stT]
-  simp_rw [e4, add_mul, Finset.sum_add_distrib]
-  ring_nf
 
 end Layer
 
@@ -1745,10 +1276,6 @@ namespace NLogN.KFN
 
 open IntMul RS AModel KIL KFD KFB KFG Complex
 
-theorem fok_phL (R0 t B u : ℕ) (aE : ℕ → ℕ) : NLogN.KFD.fok (phL R0 t B u aE) = true := by
-  simp only [phL, initP, blkP, NLogN.KFD.fok, fok_tblP, fok_mvK_eq, Bool.and_true, Bool.true_and]
-  simp +decide [mulB, NLogN.KFG.reE, NLogN.KFG.imE, ckE, NLogN.KFD.fok, touch, scr, Ex.regs]
-
 end NLogN.KFN
 
 end
@@ -1762,15 +1289,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFN
 
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
-
-theorem ClT.upd0 {f : Fin HS → List ℤ} (h : KFG.ClT f) (v : List ℤ) :
-    KFG.ClT (Function.update f 0 v) :=
-  ⟨by simp +decide [h.a], by simp +decide [h.b], by simp +decide [h.c], by simp +decide [h.d],
-    by simp +decide [h.n], by simp +decide [h.c1], by simp +decide [h.ur], by simp +decide [h.ui],
-    by simp +decide [h.o], by simp +decide [h.p], by simp +decide [h.rp]⟩
-
-theorem ClN.upd0 {f : Fin HS → List ℤ} (h : ClN f) (v : List ℤ) : ClN (Function.update f 0 v) :=
-  ⟨h.cl.upd0 v, h.p.upd0 v, ClT.upd0 h.t v, by simp +decide [h.o]⟩
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
@@ -1819,29 +1337,6 @@ variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 section SImplILemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
-
-theorem SImpl.toI {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : RS} {e dw : ℕ} {c : ℕ → ℕ}
-    (h : SImpl r st n T code e dw c) (hf : NLogN.KFD.fok code = true) :
-    SImplI I iprog r st n T (fun _ => fcode code) e dw c := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.irun hf⟩
-
-/-- Sequential composition: first `T`, then `U`. -/
-theorem SImplI.comp (hs : SLaws st n) {T U : Matrix (ι → Fin 2) (ι → Fin 2) ℂ}
-    {c1 c2 : ℕ → IStmt HS Pp} {e1 e2 d1 d2 : ℕ} {k1 k2 : ℕ → ℕ}
-    (h1 : SImplI I iprog r st n T c1 e1 d1 k1) (h2 : SImplI I iprog r st n U c2 e2 d2 k2) :
-    SImplI I iprog r st n (U * T) (seqI c1 c2 d1) (e1 + e2) (d1 + d2)
-      (fun w => k1 w + k2 (w + d1)) := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs1, r1, b1, f1⟩ := h1 s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs2, r2, b2, f2⟩ := h2 s (Function.update f 0 (gflat zs1 ++ l)) zs1 l _ (F + e1) (w + d1)
-    (hC.upd0 _) (by simp) r1 (length_selOpF _ _ _ _) b1
-  refine ⟨zs2, ?_, ?_, ?_⟩
-  · rw [← selOpF_mul hs, ← add_assoc]; exact r2
-  · rw [← add_assoc]; exact b2
-  · have := f1.seq f2
-    rwa [Function.update_idem] at this
 
 end SImplILemmas
 

@@ -10,6 +10,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs31
 import Definitions.Def_IntMul_Kappa_K_Defs20
 import Definitions.Def_IntMul_HvdH_M_Defs1
 import Definitions.Def_IntMul_Kappa_R6_Defs12
+import Theorems.Thm_IntMul_Kappa_R6_IL3H_nodeRH_of
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -150,30 +151,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
-
-theorem σPush_cases : ∀ (l : List (Fin HS × ℤ)) (σ : Fin HS → Option ℤ) (i : Fin HS) (v : ℤ),
-    σPush σ l i = some v → (∃ p ∈ l, p.1 = i) ∨ σ i = some v
-  | [], _, _, _, h => Or.inr h
-  | (j, u) :: l, σ, i, v, h => by
-    simp only [σPush] at h
-    rcases σPush_cases l _ i v h with ⟨p, hp, hpi⟩ | h'
-    · exact Or.inl ⟨p, List.mem_cons_of_mem _ hp, hpi⟩
-    · by_cases hij : i = j
-      · exact Or.inl ⟨(j, u), List.mem_cons_self, hij.symm⟩
-      · rw [Function.update_of_ne hij] at h'; exact Or.inr h'
-
-theorem σPush_mem : ∀ (l : List (Fin HS × ℤ)) (σ : Fin HS → Option ℤ) (i : Fin HS) (v : ℤ),
-    (l.map Prod.fst).Nodup → (i, v) ∈ l → σPush σ l i = some v
-  | [], _, _, _, _, h => absurd h (by simp)
-  | (j, u) :: l, σ, i, v, hnd, h => by
-    simp only [List.map_cons, List.nodup_cons] at hnd
-    simp only [σPush]
-    rcases List.mem_cons.1 h with e | h'
-    · simp only [Prod.mk.injEq] at e
-      obtain ⟨rfl, rfl⟩ := e
-      rw [σPush_ne l _ i (fun p hp e => hnd.1 (by rw [← e]; exact List.mem_map_of_mem hp)),
-        Function.update_self]
-    · exact σPush_mem l _ i v hnd.2 h'
 
 /-! ## Level registers -/
 

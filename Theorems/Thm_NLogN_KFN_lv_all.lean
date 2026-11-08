@@ -7,6 +7,7 @@ import Theorems.Thm_NLogN_KFN_selOpF_subOp
 import Theorems.Thm_NLogN_Ex_code_runs
 import Theorems.Thm_NLogN_KFC_toUL_runs
 import Theorems.Thm_NLogN_zsz_le_of_lt
+import Theorems.Thm_NLogN_KFM_p14Ph_iruns
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -280,94 +281,6 @@ namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD
 
-theorem mem_reT (p q : GI) : ∀ t ∈ reT p q, t.2 ∈ ([rUr, rUi, rVr, rVi] : List (Fin HS)) := by
-  intro t ht; simp only [reT, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> simp
-
-theorem mem_imT (p q : GI) : ∀ t ∈ imT p q, t.2 ∈ ([rUr, rUi, rVr, rVi] : List (Fin HS)) := by
-  intro t ht; simp only [imT, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> simp
-
-theorem touch_lcE_reT (p q : GI) : ∀ x ∈ (lcE (reT p q)).regs, x ∈ qT_all := by
-  intro x hx
-  obtain ⟨t, ht, rfl⟩ := lcE_regs _ x hx
-  have := mem_reT p q t ht
-  simp only [List.mem_cons, List.not_mem_nil, or_false] at this
-  simp only [qT_all, List.mem_cons, List.not_mem_nil, or_false]; tauto
-
-theorem touch_lcE_imT (p q : GI) : ∀ x ∈ (lcE (imT p q)).regs, x ∈ qT_all := by
-  intro x hx
-  obtain ⟨t, ht, rfl⟩ := lcE_regs _ x hx
-  have := mem_imT p q t ht
-  simp only [List.mem_cons, List.not_mem_nil, or_false] at this
-  simp only [qT_all, List.mem_cons, List.not_mem_nil, or_false]; tauto
-
-theorem touch_zb (M : M2G) : ∀ x ∈ touch (zb M), x ∈ qT_all ∧ x ≠ c1 := by
-  intro x hx
-  simp only [zb, touch, List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hx
-  have h1 := touch_lcE_reT M.a M.b x; have h2 := touch_lcE_imT M.a M.b x
-  have h3 := touch_lcE_reT M.c M.d x; have h4 := touch_lcE_imT M.c M.d x
-  have k1 : ∀ y ∈ (lcE (reT M.a M.b)).regs, y ≠ c1 := fun y hy => by
-    obtain ⟨t, ht, rfl⟩ := lcE_regs _ y hy; have := mem_reT _ _ t ht; simp at this
-    rcases this with h | h | h | h <;> rw [h] <;> decide
-  have k2 : ∀ y ∈ (lcE (imT M.a M.b)).regs, y ≠ c1 := fun y hy => by
-    obtain ⟨t, ht, rfl⟩ := lcE_regs _ y hy; have := mem_imT _ _ t ht; simp at this
-    rcases this with h | h | h | h <;> rw [h] <;> decide
-  have k3 : ∀ y ∈ (lcE (reT M.c M.d)).regs, y ≠ c1 := fun y hy => by
-    obtain ⟨t, ht, rfl⟩ := lcE_regs _ y hy; have := mem_reT _ _ t ht; simp at this
-    rcases this with h | h | h | h <;> rw [h] <;> decide
-  have k4 : ∀ y ∈ (lcE (imT M.c M.d)).regs, y ≠ c1 := fun y hy => by
-    obtain ⟨t, ht, rfl⟩ := lcE_regs _ y hy; have := mem_imT _ _ t ht; simp at this
-    rcases this with h | h | h | h <;> rw [h] <;> decide
-  rcases hx with (h | h) | (h | h) | (h | h) | (h | h) | h | h | h | h
-  all_goals first
-    | (subst h; exact ⟨by simp [qT_all], by decide⟩)
-    | exact ⟨h1 h, k1 x h⟩ | exact ⟨h2 h, k2 x h⟩ | exact ⟨h3 h, k3 x h⟩ | exact ⟨h4 h, k4 x h⟩
-
-theorem touch_blk (M : M2G) : ∀ x ∈ touch (NLogN.KFB.blk M), x ∈ qT_all := by
-  intro x hx
-  simp only [NLogN.KFB.blk, touch, List.mem_append] at hx
-  rcases hx with h | h | h | h | h | h
-  · exact (by decide : ∀ y ∈ touch (NLogN.mvK 0 qT c1 (.reg rB4)), y ∈ qT_all) x h
-  · exact (by decide : ∀ y ∈ touch (distB rVr rVi), y ∈ qT_all) x h
-  · exact (by decide : ∀ y ∈ touch (distB rUr rUi), y ∈ qT_all) x h
-  · simp only [zipR, touch, Ex.regs, List.mem_cons, List.mem_append, List.not_mem_nil,
-      or_false] at h
-    rcases h with h | h | h
-    · subst h; decide
-    · subst h; decide
-    · exact (touch_zb M x h).1
-  · exact (by decide : ∀ y ∈ touch (NLogN.mvK qO qT c1 (.reg rB2)), y ∈ qT_all) x h
-  · exact (by decide : ∀ y ∈ touch (NLogN.mvK qT qA c1 (.reg rB2)), y ∈ qT_all) x h
-
-theorem touch_blks : ∀ (Ms : List M2G), ∀ x ∈ touch (blks Ms), x ∈ qT_all
-  | [], x, hx => by simp [blks, touch] at hx
-  | M :: Ms, x, hx => by
-    simp only [blks, touch, List.mem_append] at hx
-    rcases hx with h | h
-    · exact touch_blk M x h
-    · exact touch_blks Ms x h
-
-theorem fok_zipR (M : M2G) : NLogN.KFD.fok (zipR M) = true := by
-  have : (touch (zb M)).contains NLogN.KFB.c1 = false :=
-    not_contains_of fun h => (touch_zb M NLogN.KFB.c1 h).2 rfl
-  simp only [zipR, NLogN.KFD.fok, this]
-  simp +decide [zb, NLogN.KFD.fok, NLogN.KFD.scr]
-
-theorem fok_blk (M : M2G) : NLogN.KFD.fok (NLogN.KFB.blk M) = true := by
-  simp only [NLogN.KFB.blk, NLogN.KFD.fok, fok_zipR, Bool.and_true, Bool.true_and, fok_mvK_eq]
-  simp +decide [distB, NLogN.KFD.fok, touch, Ex.regs, NLogN.KFD.scr]
-
-theorem fok_blks : ∀ Ms : List M2G, NLogN.KFD.fok (blks Ms) = true
-  | [] => rfl
-  | M :: Ms => by simp [blks, NLogN.KFD.fok, fok_blk, fok_blks Ms]
-
-theorem fok_qop (Ms : List M2G) : NLogN.KFD.fok (qop Ms) = true := by
-  have : (touch (blks Ms)).contains cG = false :=
-    not_contains_of fun h => by have := touch_blks Ms cG h; revert this; decide
-  simp only [qop, NLogN.KFD.fok, this, fok_blks, fok_mvK_eq]
-  simp +decide [NLogN.KFD.scr]
-
 end NLogN.KFB
 
 end
@@ -380,10 +293,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD
-
-theorem fok_qopW (Ms : List M2G) (B1 G off : ℕ) : NLogN.KFD.fok (qopW Ms B1 G off) = true := by
-  simp only [qopW, NLogN.KFD.fok, fok_qop, fok_mvK_eq, Bool.and_true, Bool.true_and]
-  decide
 
 end NLogN.KFB
 
@@ -399,9 +308,6 @@ namespace NLogN.KFH
 open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
-
-theorem fok_kerP (K D S ρ P r : ℕ) (i : ℕ) (M : M2G) : NLogN.KFD.fok (kerP K D S ρ P r i M) = true :=
-  fok_qopW _ _ _ _
 
 end NLogN.KFH
 

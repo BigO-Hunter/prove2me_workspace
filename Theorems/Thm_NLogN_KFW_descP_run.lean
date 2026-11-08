@@ -4,6 +4,7 @@ import Definitions.Def_IntMul_Kappa_K_Defs22
 import Theorems.Thm_NLogN_Ex_cost_le
 import Theorems.Thm_NLogN_Ex_zsz_eval_le
 import Theorems.Thm_NLogN_zsz_le_of_lt
+import Theorems.Thm_NLogN_KIL_Sp_pop
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -99,10 +100,6 @@ end IRuns
 @[simp] theorem IState.upd_self (s : IState S) (i : Fin S) : s.upd i (s.G i) = s := by
   simp [IState.upd]
 
-theorem IState.ext' {s t : IState S} (hG : ∀ x, s.G x = t.G x) (hip : s.ip = t.ip)
-    (hout : s.out = t.out) : s = t := by
-  cases s; cases t; simp only [IState.mk.injEq]; exact ⟨funext hG, hip, hout⟩
-
 end NLogN
 
 end
@@ -125,9 +122,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-
-theorem IState.top_eq {s : IState S} {i : Fin S} {a : ℤ} {L : List Item} (h : s.G i = .int a :: L) :
-    s.top i = a := by simp [IState.top, h]
 
 namespace Ex
 
@@ -152,9 +146,6 @@ namespace NLogN
 open IntMul
 
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
-
-theorem IState.isInt_of {s : IState S} {i : Fin S} {a : ℤ} {L : List Item}
-    (h : s.G i = .int a :: L) : s.IsInt i := ⟨L, by rw [IState.top_eq h, h]⟩
 
 namespace Ex
 
@@ -387,10 +378,6 @@ open IntMul RS
 
 namespace KIL
 
-theorem top_encK {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (encK s f).top i = a :=
-  IState.top_eq (L := ints l ++ s.G i) (by simp [h])
-
 theorem top_encK' (s : IState HS) (f : Fin HS → List ℤ) (i : Fin HS) :
     (encK s f).top i = (f i).headD (s.top i) := by
   unfold IState.top
@@ -398,17 +385,6 @@ theorem top_encK' (s : IState HS) (f : Fin HS → List ℤ) (i : Fin HS) :
   rcases f i with _ | ⟨a, l⟩
   · simp
   · simp [ints]
-
-theorem isInt_encK {s : IState HS} {f : Fin HS → List ℤ} {i : Fin HS} {a : ℤ} {l : List ℤ}
-    (h : f i = a :: l) : (encK s f).IsInt i :=
-  IState.isInt_of (L := ints l ++ s.G i) (a := a) (by simp [h])
-
-theorem encK_upd (s : IState HS) (f : Fin HS → List ℤ) (i : Fin HS) (l : List ℤ) :
-    (encK s f).upd i (ints l ++ s.G i) = encK s (Function.update f i l) := by
-  refine IState.ext' (fun j => ?_) rfl rfl
-  by_cases h : j = i
-  · subst h; simp
-  · simp [h]
 
 theorem Sp.seq {a b : RS} {s t u : IState HS} {c1 c2 : ℕ} (ha : Sp a s t c1) (hb : Sp b t u c2) :
     Sp (.seq a b) s u (c1 + c2) := by
@@ -429,14 +405,6 @@ theorem Sp.pushQ {i : Fin HS} {e : Ex HS} {B : ℕ} (hi : i.val < 56) (hc : e.Cl
   · simp only [NLogN.RS.run]
     rw [← encK_upd]; simp [ints]
   · exact pushCost_le e _ B hB
-
-theorem Sp.pop {i : Fin HS} {a : ℤ} {l : List ℤ} {B : ℕ} (hi : i.val < 56) (hf : f i = a :: l)
-    (ha : zsz a ≤ B) :
-    Sp (.pop i) (encK s f) (encK s (Function.update f i l)) (2 * B + 2) := by
-  refine ⟨⟨hi, isInt_encK hf⟩, ?_, ?_⟩
-  · simp only [NLogN.RS.run]
-    rw [← encK_upd]; simp [hf]
-  · simp only [NLogN.RS.cost, top_encK hf]; omega
 
 end
 

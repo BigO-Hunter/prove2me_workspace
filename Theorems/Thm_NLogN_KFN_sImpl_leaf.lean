@@ -13,6 +13,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs14
 import Definitions.Def_IntMul_Kappa_R6_Defs16
 import Definitions.Def_IntMul_Kappa_R6_Defs2
 import Definitions.Def_IntMul_Kappa_R6_Defs20
+import Theorems.Thm_NLogN_KFR_rowImpl_of_lem13
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -769,19 +770,11 @@ variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
-@[simp] theorem length_selOpF (st : ι → ℕ) (n : ℕ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
-    (xs : List M) : (selOpF st n T xs).length = n := by simp [selOpF]
-
 end Basic
 
 section Bridge
 
 variable {sh : Shape} {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-theorem StrideSel.fset_eq {Sb : Butterfly.SelBits sh ι} {st : ι → ℕ} (h : StrideSel Sb st)
-    {j : ℕ} (hj : j < vol sh) (y : ι → Fin 2) :
-    fset st j y = encode sh (Sb.set (decode sh j) y) := by
-  unfold fset; rw [← (h j hj).2 y]; simp
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
@@ -801,81 +794,7 @@ end Bridge
 
 section Layer
 
-theorem vol_repl_S (B D S : ℕ) : vol (List.replicate D B ++ [S]) = B ^ D * S := by
-  induction D with
-  | zero => simp [vol]
-  | succ D ih =>
-    rw [List.replicate_succ, List.cons_append, vol_cons, ih, pow_succ]; ring
-
-theorem encode_repl (B S : ℕ) : ∀ (D : ℕ) (c : Fin D → ℕ) (s : ℕ),
-    encode (List.replicate D B ++ [S]) (List.ofFn c ++ [s]) =
-      ∑ i : Fin D, c i * (B ^ (D - (i + 1)) * S) + s
-  | 0, c, s => by simp [encode]
-  | D + 1, c, s => by
-    rw [List.replicate_succ, List.cons_append, List.ofFn_succ, List.cons_append, encode,
-      List.headD_cons, List.tail_cons, encode_repl B S D (fun i => c i.succ) s, vol_repl_S,
-      Fin.sum_univ_succ]
-    simp only [Fin.val_zero, Fin.val_succ]
-    rw [add_assoc]
-    congr 2
-    refine Finset.sum_congr rfl fun i _ => ?_
-    congr 3; omega
-
-theorem encode_mkAddr (P K D S : ℕ) (p : ℕ) (c : Fin D → ℕ) (s : ℕ) :
-    encode (Butterfly.layerShape P K D S) (Butterfly.mkAddr D p c s) =
-      p * ((2 ^ K) ^ D * S) + ∑ i : Fin D, c i * KFH.stS K D S i + s := by
-  simp only [Butterfly.layerShape, Butterfly.mkAddr, List.cons_append, encode, List.headD_cons,
-    List.tail_cons, vol_repl_S, encode_repl]
-  have hs : ∀ i : Fin D, KFH.stS K D S i = (2 ^ K) ^ (D - (i + 1)) * S :=
-    fun i => KFH.stS_eq K D S i i.isLt
-  simp only [hs]
-  ring
-
 variable {P K D S ρ : ℕ}
-
-/-- **The layer layout has the record strides `stT`.** -/
-theorem strideSel_layer (hρ : ρ < K) :
-    StrideSel (Butterfly.layerSel P K D S ρ hρ) (fun i : Fin D => KFH.stT K D S ρ i) := by
-  intro j hj
-  set sh := Butterfly.layerShape P K D S
-  set a := decode sh j
-  have hv : Valid sh a := valid_decode hj
-  have hl : a.length = D + 2 := by rw [hv.length_eq]; simp [sh, Butterfly.layerShape]
-  have hbit : ∀ i : Fin D, (Butterfly.layerBits D ρ a i : ℕ) = j / KFH.stT K D S ρ i % 2 := by
-    intro i
-    have := (KFH.layer_partner (P := P) (S := S) hρ i hj 0).1
-    exact this
-  refine ⟨funext fun i => Fin.ext (hbit i), fun y => ?_⟩
-  show ((encode sh (Butterfly.layerSet D ρ a y) : ℕ) : ℤ) = _
-  have ea : a = Butterfly.mkAddr D (a.headD 0) (fun i => a.getD (i + 1) 0) (a.getD (D + 1) 0) :=
-    Butterfly.eq_mkAddr D hl
-  have e1 : ((encode sh (Butterfly.layerSet D ρ a y) : ℕ) : ℤ) =
-      ((a.headD 0 * ((2 ^ K) ^ D * S) + ∑ i : Fin D,
-        Butterfly.setBit ρ (a.getD (i + 1) 0) (y i) * KFH.stS K D S i + a.getD (D + 1) 0 : ℕ) : ℤ) := by
-    rw [Butterfly.layerSet, encode_mkAddr]
-  have e2 : (j : ℤ) = ((a.headD 0 * ((2 ^ K) ^ D * S) + ∑ i : Fin D,
-        a.getD (i + 1) 0 * KFH.stS K D S i + a.getD (D + 1) 0 : ℕ) : ℤ) := by
-    have := encode_decode hj
-    rw [← this]
-    conv_lhs => rw [show decode sh j = a from rfl, ea]
-    rw [encode_mkAddr]
-  rw [e1, fsetZ, e2]
-  push_cast
-  have e3 : ∀ i : Fin D, ((Butterfly.setBit ρ (a.getD (i + 1) 0) (y i) : ℕ) : ℤ) =
-      (a.getD (i + 1) 0 : ℤ) + (((y i : ℕ) : ℤ) - ((fbit (fun i : Fin D => KFH.stT K D S ρ i) j i : ℕ) : ℤ)) *
-        2 ^ ρ := by
-    intro i
-    have := KFH.setBit_sub ρ (a.getD (i + 1) 0) (y i)
-    have hb : (Butterfly.getBit ρ (a.getD (i + 1) 0) : ℕ) = (fbit (fun i : Fin D => KFH.stT K D S ρ i) j i : ℕ) := by
-      rw [show (Butterfly.getBit ρ (a.getD (i + 1) 0) : ℕ) = Butterfly.layerBits D ρ a i from rfl, hbit i]
-      rfl
-    rw [hb] at this
-    linarith
-  simp_rw [e3]
-  have e4 : ∀ i : Fin D, ((KFH.stT K D S ρ i : ℕ) : ℤ) = 2 ^ ρ * (KFH.stS K D S i : ℤ) := by
-    intro i; simp [KFH.stT]
-  simp_rw [e4, add_mul, Finset.sum_add_distrib]
-  ring_nf
 
 end Layer
 

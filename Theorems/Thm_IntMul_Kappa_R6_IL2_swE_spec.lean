@@ -398,11 +398,6 @@ namespace NLogN.KFW
 
 open IntMul RS KFD
 
-theorem Agree.congr {σ : Fin HS → Option ℤ} {s t : IState HS} (h : Agree σ s)
-    (he : ∀ i, (σ i).isSome → t.G i = s.G i) : Agree σ t := by
-  intro i v hi
-  rw [he i (by simp [hi])]; exact h i v hi
-
 end NLogN.KFW
 
 end

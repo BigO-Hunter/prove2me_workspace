@@ -41,31 +41,6 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-/-! ## Frame -/
-
-/-! ## Compilation -/
-
-/-! ## Sequences and reasoning lemmas -/
-
-/-! ## Cost bounds -/
-
-/-- Invariant reasoning for counted loops. -/
-theorem repSt_inv (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (Inv : ℕ → IState HS → Prop)
-    (h0 : Inv 0 (s.upd i (.int (n.eval s) :: s.G i)))
-    (hs : ∀ k < (n.eval s).toNat, Inv k (repSt i n b s k) →
-      Inv (k + 1) (decSt i (b.run (repSt i n b s k)))) :
-    ∀ k ≤ (n.eval s).toNat, Inv k (repSt i n b s k) := by
-  intro k; induction k with
-  | zero => intro _; exact h0
-  | succ k ih =>
-    intro hk
-    have := hs k (by omega) (ih (by omega))
-    simpa [repSt, Function.iterate_succ_apply'] using this
-
-@[simp] theorem decSt_G (i : Fin HS) (t : IState HS) (j : Fin HS) :
-    (decSt i t).G j = if j = i then .int (t.top i - 1) :: (t.G i).tail else t.G j := by
-  simp [decSt, IState.upd_G]
-
 end RS
 
 end NLogN

@@ -102,18 +102,6 @@ variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
 variable (Sb : SelBits sh ι)
 
-/-- Composition of selected-bit operators is the matrix product. -/
-theorem selOp_mul (T U : Matrix (ι → Fin 2) (ι → Fin 2) ℂ) (xs : List M) :
-    selOp Sb T (selOp Sb U xs) = selOp Sb (T * U) xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_selOp] at h₁
-  have hv := valid_decode h₁
-  rw [getElem_selOp, getElem_selOp]
-  simp_rw [getD_selOp_encode Sb U xs (Sb.valid_set _ _ hv), Sb.bits_set _ _ hv,
-    Sb.set_set _ _ _ hv, Finset.smul_sum, smul_smul, Matrix.mul_apply, Finset.sum_smul]
-  exact Finset.sum_comm
-
 /-! ## 2. Individual kernels and the full layer -/
 
 /-! ## 3. The concrete layout `[P] × [2^K]^D × [S]` with bit `ρ` selected in every chunk -/
@@ -265,25 +253,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
-
-/-! ## Powers of `i` -/
-
-/-! ## Binary digits -/
-
-/-! ## One segment pass on the list level -/
-
-/-! ## The phase passes on the list level -/
-
-/-! ## The array encoding and the `phase` step -/
-
-/-! ## The phase program -/
-
-theorem Cl.upd0 {f : Fin HS → List ℤ} (h : Cl f) (v : List ℤ) : Cl (Function.update f 0 v) :=
-  ⟨⟨by simp +decide [h.scr.t], by simp +decide [h.scr.o], by simp +decide [h.scr.ur],
-    by simp +decide [h.scr.ui], by simp +decide [h.scr.vr], by simp +decide [h.scr.vi],
-    by simp +decide [h.scr.c]⟩, by simp +decide [h.a], by simp +decide [h.g], by simp +decide [h.b],
-    by simp +decide [h.b2], by simp +decide [h.b4], by simp +decide [h.rg], by simp +decide [h.rn],
-    by simp +decide [h.rp], by simp +decide [h.p]⟩
 
 end NLogN.KFB
 
@@ -515,48 +484,7 @@ section Basic
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-theorem fset_cast {st : ι → ℕ} {n : ℕ} (h : SLaws st n) {j : ℕ} (hj : j < n) (y : ι → Fin 2) :
-    ((fset st j y : ℕ) : ℤ) = fsetZ st j y := Int.toNat_of_nonneg (h.nonneg j hj y)
-
-theorem SLaws.set_set {st : ι → ℕ} {n : ℕ} (h : SLaws st n) {j : ℕ} (hj : j < n)
-    (y z : ι → Fin 2) : fset st (fset st j y) z = fset st j z := by
-  have h1 := fset_cast h hj y
-  have hb := h.bit_set j hj y
-  have e : fsetZ st (fset st j y) z = fsetZ st j z := by
-    unfold fsetZ
-    rw [hb, h1]
-    unfold fsetZ
-    rw [add_assoc, ← Finset.sum_add_distrib]
-    congr 1
-    refine Finset.sum_congr rfl fun i _ => ?_
-    ring
-  show (fsetZ st (fset st j y) z).toNat = (fsetZ st j z).toNat
-  rw [e]
-
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
-
-theorem getD_selOpF (st : ι → ℕ) (n : ℕ) (T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
-    (xs : List M) {j : ℕ} (hj : j < n) :
-    (selOpF st n T xs).getD j 0 = ∑ y, T (fbit st j) y • xs.getD (fset st j y) 0 := by
-  rw [List.getD_eq_getElem _ _ (by simpa using hj)]
-  simp [selOpF]
-
-theorem selOpF_mul {st : ι → ℕ} {n : ℕ} (h : SLaws st n) (T U : Matrix (ι → Fin 2) (ι → Fin 2) ℂ)
-    (xs : List M) : selOpF st n T (selOpF st n U xs) = selOpF st n (T * U) xs := by
-  apply List.ext_getElem (by simp)
-  intro j h₁ h₂
-  simp only [length_selOpF] at h₁
-  simp only [selOpF, List.getElem_map, List.getElem_range]
-  have e : ∀ y, (List.map (fun j => ∑ y, U (fbit st j) y • xs.getD (fset st j y) 0)
-      (List.range n)).getD (fset st j y) 0 =
-      ∑ z, U y z • xs.getD (fset st j z) 0 := by
-    intro y
-    have := getD_selOpF st n U xs (h.lt j h₁ y)
-    simp only [selOpF] at this
-    rw [this, h.bit_set j h₁ y]
-    simp_rw [h.set_set h₁]
-  simp_rw [e, Finset.smul_sum, smul_smul, Matrix.mul_apply, Finset.sum_smul]
-  exact Finset.sum_comm
 
 end Basic
 
@@ -565,14 +493,6 @@ end Basic
 section Bridge
 
 variable {sh : Shape} {ι : Type*} [Fintype ι] [DecidableEq ι]
-
-theorem slaws_of_strideSel {Sb : Butterfly.SelBits sh ι} {st : ι → ℕ} (h : StrideSel Sb st) :
-    SLaws st (vol sh) := by
-  refine ⟨fun j hj y => ?_, fun j hj y => ?_, fun j hj y => ?_⟩
-  · rw [← (h j hj).2 y]; positivity
-  · rw [h.fset_eq hj]; exact encode_lt (Sb.valid_set _ _ (valid_decode hj))
-  · have hv := Sb.valid_set _ y (valid_decode hj)
-    rw [h.fset_eq hj, ← (h _ (encode_lt hv)).1, decode_encode hv, Sb.bits_set _ _ (valid_decode hj)]
 
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
 
@@ -584,11 +504,6 @@ section Layer
 
 variable {P K D S ρ : ℕ}
 
-theorem slaws_layer (hρ : ρ < K) :
-    SLaws (fun i : Fin D => KFH.stT K D S ρ i) (P * (2 ^ K) ^ D * S) := by
-  have := slaws_of_strideSel (strideSel_layer (P := P) (D := D) (S := S) hρ)
-  rwa [KFH.vol_layer] at this
-
 end Layer
 
 /-! ## Operators on a subfamily of the selected bits -/
@@ -597,23 +512,7 @@ section Sub
 
 variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
 
-theorem fbit_comp (st : ι → ℕ) (g : κ → ι) (j : ℕ) : fbit (st ∘ g) j = fbit st j ∘ g := rfl
-
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
-
-/-- Laws transfer to a subfamily. -/
-theorem SLaws.comp {st : ι → ℕ} {n : ℕ} (h : SLaws st n) {g : κ → ι} (hg : Function.Injective g) :
-    SLaws (st ∘ g) n := by
-  refine ⟨fun j hj z => ?_, fun j hj z => ?_, fun j hj z => ?_⟩
-  · rw [← fsetZ_extB hg]; exact h.nonneg j hj _
-  · have := h.lt j hj (extB g (fbit st j) z)
-    unfold fset at this ⊢; rwa [fsetZ_extB hg] at this
-  · have := h.bit_set j hj (extB g (fbit st j) z)
-    have e : fset st j (extB g (fbit st j) z) = fset (st ∘ g) j z := by
-      unfold fset; rw [fsetZ_extB hg]
-    rw [e] at this
-    rw [fbit_comp, this]
-    funext k; exact extB_g hg _ _ k
 
 end Sub
 
@@ -724,17 +623,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFN
 
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
-
-/-! ## Clean scratch -/
-
-theorem ClT.upd0 {f : Fin HS → List ℤ} (h : KFG.ClT f) (v : List ℤ) :
-    KFG.ClT (Function.update f 0 v) :=
-  ⟨by simp +decide [h.a], by simp +decide [h.b], by simp +decide [h.c], by simp +decide [h.d],
-    by simp +decide [h.n], by simp +decide [h.c1], by simp +decide [h.ur], by simp +decide [h.ui],
-    by simp +decide [h.o], by simp +decide [h.p], by simp +decide [h.rp]⟩
-
-theorem ClN.upd0 {f : Fin HS → List ℤ} (h : ClN f) (v : List ℤ) : ClN (Function.update f 0 v) :=
-  ⟨h.cl.upd0 v, h.p.upd0 v, ClT.upd0 h.t v, by simp +decide [h.o]⟩
 
 /-! ## Role streams stored one after the other -/
 
@@ -872,22 +760,6 @@ section SImplILemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-/-- Sequential composition: first `T`, then `U`. -/
-theorem SImplI.comp (hs : SLaws st n) {T U : Matrix (ι → Fin 2) (ι → Fin 2) ℂ}
-    {c1 c2 : ℕ → IStmt HS Pp} {e1 e2 d1 d2 : ℕ} {k1 k2 : ℕ → ℕ}
-    (h1 : SImplI I iprog r st n T c1 e1 d1 k1) (h2 : SImplI I iprog r st n U c2 e2 d2 k2) :
-    SImplI I iprog r st n (U * T) (seqI c1 c2 d1) (e1 + e2) (d1 + d2)
-      (fun w => k1 w + k2 (w + d1)) := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs1, r1, b1, f1⟩ := h1 s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs2, r2, b2, f2⟩ := h2 s (Function.update f 0 (gflat zs1 ++ l)) zs1 l _ (F + e1) (w + d1)
-    (hC.upd0 _) (by simp) r1 (length_selOpF _ _ _ _) b1
-  refine ⟨zs2, ?_, ?_, ?_⟩
-  · rw [← selOpF_mul hs, ← add_assoc]; exact r2
-  · rw [← add_assoc]; exact b2
-  · have := f1.seq f2
-    rwa [Function.update_idem] at this
-
 end SImplILemmas
 
 section RImplIDefs
@@ -1016,27 +888,6 @@ section Pow
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-theorem stT_one (t S0 p : ℕ) (hp : p < t) :
-    KFH.stT 1 t S0 0 (t - 1 - p) = 2 ^ p * S0 := by
-  rw [KFH.stT, KFH.stS_eq 1 t S0 _ (by omega), pow_zero, one_mul, pow_one]
-  congr 2; omega
-
-/-- **Power-of-two stride layouts satisfy the selected-bit laws.** -/
-theorem slaws_pow (pos : ι → ℕ) (hinj : Function.Injective pos) (t S0 B : ℕ)
-    (hpos : ∀ i, pos i < t) : SLaws (fun i => 2 ^ pos i * S0) (B * 2 ^ t * S0) := by
-  set g : ι → Fin t := fun i => ⟨t - 1 - pos i, by have := hpos i; omega⟩
-  have hg : Function.Injective g := by
-    intro a b h
-    have := congrArg Fin.val h
-    simp only [g] at this
-    have := hpos a; have := hpos b
-    exact hinj (by omega)
-  have H := (slaws_layer (P := B) (K := 1) (D := t) (S := S0) (ρ := 0) (by norm_num)).comp hg
-  have e1 : ((fun i : Fin t => KFH.stT 1 t S0 0 i) ∘ g) = fun i => 2 ^ pos i * S0 := by
-    funext i; simp only [Function.comp_apply, g]; exact stT_one t S0 (pos i) (hpos i)
-  rw [e1, pow_one] at H
-  exact H
-
 end Pow
 
 /-! ## Transport along an equivalence of bit types -/
@@ -1132,23 +983,6 @@ section SQ
 
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
-
-/-- Sequential composition: first `T`, then `U`. -/
-theorem SImplQ.comp (hs : SLaws st n) {T T' : Matrix (ι → Fin 2) (ι → Fin 2) ℂ}
-    {c1 c2 : IStmt HS Pp} {e1 e2 d1 d2 : ℕ} {k1 k2 : ℕ → ℕ}
-    (h1 : SImplQ I iprog Q lo hi r st n T c1 e1 d1 k1)
-    (h2 : SImplQ I iprog Q lo hi r st n T' c2 e2 d2 k2) :
-    SImplQ I iprog Q lo hi r st n (T' * T) (.seq c1 c2) (e1 + e2) (d1 + d2)
-      (fun w => k1 w + k2 (w + d1)) := by
-  intro s f zs l xs F w hQ hC h0 hx hl hb hlo hhi
-  obtain ⟨zs1, r1, b1, f1⟩ := h1 s f zs l xs F w hQ hC h0 hx hl hb hlo (by omega)
-  obtain ⟨zs2, r2, b2, f2⟩ := h2 s (Function.update f 0 (gflat zs1 ++ l)) zs1 l _ (F + e1) (w + d1)
-    hQ (hC.upd0 _) (by simp) r1 (length_selOpF _ _ _ _) b1 (by omega) (by omega)
-  refine ⟨zs2, ?_, ?_, ?_⟩
-  · rw [← selOpF_mul hs, ← add_assoc]; exact r2
-  · rw [← add_assoc]; exact b2
-  · have := f1.seq f2
-    rwa [Function.update_idem] at this
 
 end SQ
 
@@ -1478,26 +1312,6 @@ set_option maxRecDepth 20000
 namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW KFH AModel Butterfly
-
-/-! ## The bit-length loop -/
-
-/-! ## The Lemma 13 core as a hypothesis -/
-
-/-! ## The code -/
-
-/-! ## The masters agree -/
-
-/-! ## The geometry of a row addition -/
-
-theorem posR_he {k K e : ℕ} (he : K * (mC ^ k * mC - 1) ≤ e) (p : Fin mC × Fin (mC ^ k)) :
-    posR K e k p + K * (p.2.val + mC ^ k * p.1.val) = e := by
-  have h1 := p.1.isLt; have h2 := p.2.isLt
-  have h3 : mC ^ k * p.1.val ≤ mC ^ k * (mC - 1) := Nat.mul_le_mul_left _ (by omega)
-  have h4 : mC ^ k * (mC - 1) = mC ^ k * mC - mC ^ k := Nat.mul_sub_one _ _
-  have h6 : mC ^ k ≤ mC ^ k * mC := Nat.le_mul_of_pos_right _ (by norm_num [mC])
-  have h5 : p.2.val + mC ^ k * p.1.val ≤ mC ^ k * mC - 1 := by omega
-  have := Nat.mul_le_mul_left K h5
-  unfold posR; omega
 
 /-! ## Header cost -/
 

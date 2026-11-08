@@ -27,6 +27,8 @@ import Definitions.Def_IntMul_Kappa_K_Defs3
 import Definitions.Def_IntMul_Kappa_R6_Defs16
 import Theorems.Thm_NLogN_KFD_bodyF_run
 import Theorems.Thm_NLogN_KFW_mdTQ
+import Theorems.Thm_NLogN_KFN_rImpl_gate
+import Theorems.Thm_IntMul_Kappa_R6_IL3H_wrapQ_zero
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -82,9 +84,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFB
 
 open IntMul RS AModel KIL KFD Complex
-
-theorem GB.mono {w w' : ℕ} {zs : List GI} (h : GB w zs) (hw : w ≤ w') : GB w' zs :=
-  fun z hz => ⟨(h z hz).1.trans hw, (h z hz).2.trans hw⟩
 
 /-! ## Fine moves with the loop overhead bounded by the count -/
 
@@ -171,43 +170,6 @@ namespace NLogN.KFG
 
 open IntMul RS AModel KIL KFD KFB Complex
 
-/-! ## Compilability -/
-
-theorem lsE_regs_ne {l : List (ℤ × ℕ × Fin HS)} {y : Fin HS} (h : ∀ t ∈ l, t.2.2 ≠ y) :
-    y ∉ (lsE l).regs := fun hy => by
-  obtain ⟨t, ht, e⟩ := lsE_regs l y hy
-  exact h t ht e.symm
-
-theorem reS_ne (p q : SC) : ∀ t ∈ reS p q, t.2.2 ≠ c1 := by
-  intro t ht; simp only [reS, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> dsimp only <;> decide
-
-theorem imS_ne (p q : SC) : ∀ t ∈ imS p q, t.2.2 ≠ c1 := by
-  intro t ht; simp only [imS, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> dsimp only <;> decide
-
-theorem touch_zbS (M : M2S) : c1 ∉ touch (zbS M) := by
-  intro h
-  simp only [zbS, touch, List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at h
-  have k1 := lsE_regs_ne (reS_ne M.a M.b); have k2 := lsE_regs_ne (imS_ne M.a M.b)
-  have k3 := lsE_regs_ne (reS_ne M.c M.d); have k4 := lsE_regs_ne (imS_ne M.c M.d)
-  rcases h with (h | h) | (h | h) | (h | h) | (h | h) | h | h | h | h
-  all_goals first | exact absurd h (by decide) | exact k1 h | exact k2 h | exact k3 h | exact k4 h
-
-theorem fok_zipRS (M : M2S) : fok (zipRS M) = true := by
-  have : (touch (zbS M)).contains c1 = false := not_contains_of (touch_zbS M)
-  simp only [zipRS, fok, this]
-  simp +decide [zbS, fok, scr]
-
-theorem fok_pairP (M : M2S) : fok (pairP M) = true := by
-  simp only [pairP, fok, fok_zipRS, Bool.and_true, Bool.true_and, fok_mvK_eq]
-  simp +decide [distB, fok, touch, Ex.regs, scr]
-
-/-! ## The wrapper -/
-
-theorem fok_pairW (M : M2S) (L i j : ℕ) : fok (pairW M L i j) = true := by
-  simp only [pairW, fok, fok_pairP, Bool.and_true, Bool.true_and]
-
 end NLogN.KFG
 
 end
@@ -244,42 +206,6 @@ namespace Atom
 variable (a : Atom) (e : ℕ → ℕ)
 
 end Atom
-
-theorem fok_atomP (a : Atom) (e : ℕ → ℕ) (L : ℕ) : fok (a.P e L) = true := by
-  unfold Atom.P; split_ifs <;> exact fok_pairW _ _ _ _
-
-/-! ## Gates: lists of atoms -/
-
-theorem fok_gateP : ∀ (as : List Atom) (e : ℕ → ℕ) (L : ℕ), fok (gateP as e L) = true
-  | [], _, _ => rfl
-  | a :: as, e, L => by simp [gateP, fok, fok_atomP, fok_gateP as]
-
-/-! ## The gate matrix -/
-
-/-! ## Unit scalings -/
-
-/-! ## Role swaps and permutations -/
-
-theorem fok_swapsP (L : ℕ) : ∀ l, fok (swapsP L l) = true
-  | [] => rfl
-  | (i, j) :: l => by simp [swapsP, fok, fok_pairW, fok_swapsP L l]
-
-theorem pf_swap {W : ℕ} (a b : Fin W) (w : ℕ) : pf (Equiv.swap a b) w = nsw a.val b.val w := by
-  unfold pf nsw
-  by_cases hw : w < W
-  · rw [dif_pos hw]
-    by_cases e1 : w = a.val
-    · have : (⟨w, hw⟩ : Fin W) = a := Fin.ext e1
-      rw [this, Equiv.swap_apply_left, if_pos e1]
-    · by_cases e2 : w = b.val
-      · have : (⟨w, hw⟩ : Fin W) = b := Fin.ext e2
-        rw [this, Equiv.swap_apply_right, if_neg e1, if_pos e2]
-      · rw [Equiv.swap_apply_of_ne_of_ne (fun h => e1 (by rw [← h])) (fun h => e2 (by rw [← h])),
-          if_neg e1, if_neg e2]
-  · rw [dif_neg hw]
-    have : w ≠ a.val := by have := a.isLt; omega
-    have : w ≠ b.val := by have := b.isLt; omega
-    simp [*]
 
 end NLogN.KFG
 
@@ -359,15 +285,6 @@ namespace NLogN.KFH
 open IntMul RS AModel KIL KFD KFB Complex
 
 variable {P K D S ρ : ℕ}
-
-/-! ## Layer implementations -/
-
-theorem LImpl.mono {hρ : ρ < K} {r : ℕ} {T : Butterfly.Op (Fin D)} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : LImpl (P := P) (S := S) hρ r T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    LImpl (P := P) (S := S) hρ r T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 /-! ## The concrete kernels -/
 
@@ -454,41 +371,6 @@ namespace NLogN.KFN
 
 open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 
-/-! ## Clean scratch -/
-
-/-! ## Role streams stored one after the other -/
-
-theorem length_flatR {α : Type*} {W n : ℕ} {X : Fin W → List α} (hX : ∀ v, (X v).length = n) :
-    (flatR X).length = W * n := by
-  induction W with
-  | zero => simp [flatR]
-  | succ W ih =>
-    rw [flatR, List.finRange_succ, List.flatMap_cons, List.flatMap_map, List.length_append, hX]
-    have := ih (X := fun v => X v.succ) (fun v => hX _)
-    rw [flatR] at this
-    try simp only [Function.comp_def] at this ⊢
-    rw [this]; ring
-
-theorem getD_flatR {α : Type*} {W n : ℕ} {X : Fin W → List α} (hX : ∀ v, (X v).length = n)
-    (d : α) (v : Fin W) {j : ℕ} (hj : j < n) : (flatR X).getD (v.val * n + j) d = (X v).getD j d := by
-  induction W with
-  | zero => exact v.elim0
-  | succ W ih =>
-    rw [flatR, List.finRange_succ, List.flatMap_cons, List.flatMap_map]
-    by_cases hv : v = 0
-    · subst hv
-      rw [List.getD_append _ _ _ _ (by simp [hX]; omega)]
-      simp
-    · obtain ⟨v', rfl⟩ := Fin.exists_succ_eq.2 hv
-      rw [List.getD_append_right _ _ _ _ (by rw [hX]; simp; nlinarith), hX]
-      have e : v'.succ.val * n + j - n = v'.val * n + j := by
-        simp only [Fin.val_succ]; rw [Nat.succ_mul]; omega
-      rw [e]
-      have := ih (X := fun v => X v.succ) (fun v => hX _) v'
-      rw [flatR] at this
-      try simp only [Function.comp_def] at this ⊢
-      exact this
-
 /-! ## Implementations -/
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
@@ -497,13 +379,6 @@ section SImplLemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImpl.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : RS} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImpl r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImpl r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplLemmas
 
 section RImplDefs
@@ -511,12 +386,6 @@ section RImplDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImpl.mono {A : ROp (Fin W) m κ} {code : RS} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImpl r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) : RImpl r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplDefs
 
@@ -556,75 +425,11 @@ section EncBridge
 
 variable {W r n F : ℕ}
 
-theorem enc_of_rec (hr : 0 < r) {X : Fin W → List (Fin r → ℂ)} (hX : ∀ v, (X v).length = n)
-    {zs : List GI} (h : RecRep r F zs (flatR X)) : Enc W (n * r) (fun _ => F) zs (yR r X) := by
-  refine ⟨by rw [h.1, length_flatR hX]; ring, fun w hw p hp => ?_⟩
-  have hpr : p / r < n := by rw [Nat.div_lt_iff_lt_mul hr]; exact hp
-  have e : w * (n * r) + p = (w * n + p / r) * r + (⟨p % r, Nat.mod_lt _ hr⟩ : Fin r) := by
-    simp only; conv_lhs => rw [← Nat.div_add_mod p r]
-    ring
-  have hj : w * n + p / r < (flatR X).length := by
-    rw [length_flatR hX]
-    have : (w + 1) * n ≤ W * n := Nat.mul_le_mul_right _ hw
-    rw [Nat.succ_mul] at this; omega
-  rw [e, h.2 _ _ hj]
-  simp only [yR, dif_pos (And.intro hw hr)]
-  rw [getD_flatR hX 0 ⟨w, hw⟩ hpr]
-
-theorem rec_of_enc (hr : 0 < r) {Y : Fin W → List (Fin r → ℂ)} (hY : ∀ v, (Y v).length = n)
-    {zs : List GI} {y : ℕ → ℕ → ℂ} (h : Enc W (n * r) (fun _ => F) zs y)
-    (hy : ∀ v : Fin W, ∀ j < n, ∀ c : Fin r, y v.val (j * r + c) = (Y v).getD j 0 c) :
-    RecRep r F zs (flatR Y) := by
-  refine ⟨by rw [h.1, length_flatR hY]; ring, fun J c hJ => ?_⟩
-  rw [length_flatR hY] at hJ
-  have hn0 : 0 < n := by
-    rcases Nat.eq_zero_or_pos n with h0 | h0
-    · simp [h0] at hJ
-    · exact h0
-  set v : Fin W := ⟨J / n, by rw [Nat.div_lt_iff_lt_mul hn0]; linarith⟩
-  have hJ' : J = v.val * n + J % n := by simp only [v]; rw [mul_comm, Nat.div_add_mod]
-  have hjn : J % n < n := Nat.mod_lt _ hn0
-  have hp : J % n * r + c < n * r := by
-    have := c.isLt
-    have : (J % n + 1) * r ≤ n * r := Nat.mul_le_mul_right _ hjn
-    rw [Nat.succ_mul] at this; omega
-  have e : J * r + c = v.val * (n * r) + (J % n * r + c) := by
-    conv_lhs => rw [hJ']
-    ring
-  rw [e, h.2 v.val v.isLt _ hp, hy v _ hjn c]
-  conv_rhs => rw [hJ', getD_flatR hY 0 v hjn]
-
-theorem enc_congr_e {W L : ℕ} {e e' : ℕ → ℕ} {zs : List GI} {y : ℕ → ℕ → ℂ}
-    (h : Enc W L e zs y) (he : ∀ w < W, e w = e' w) : Enc W L e' zs y :=
-  ⟨h.1, fun w hw p hp => by rw [← he w hw]; exact h.2 w hw p hp⟩
-
 end EncBridge
 
 /-! ## Gate programs depend only on scale differences -/
 
 section Shift
-
-theorem atomE_shE (a : KFG.Atom) (F : ℕ) (e : ℕ → ℕ) : a.E (shE F e) = a.E e + F := by
-  simp only [KFG.Atom.E, shE]; omega
-
-theorem atomal_shE (a : KFG.Atom) (F : ℕ) (e : ℕ → ℕ) : a.al (shE F e) = a.al e := by
-  simp only [KFG.Atom.al, atomE_shE, shE]; omega
-
-theorem atombe_shE (a : KFG.Atom) (F : ℕ) (e : ℕ → ℕ) : a.be (shE F e) = a.be e := by
-  simp only [KFG.Atom.be, atomE_shE, shE]; omega
-
-theorem atomsc_shE (a : KFG.Atom) (F : ℕ) (e : ℕ → ℕ) : a.sc (shE F e) = shE F (a.sc e) := by
-  funext t
-  simp only [KFG.Atom.sc, shE, Function.update_apply, atomE_shE]
-  split_ifs <;> rfl
-
-theorem atomM_shE (a : KFG.Atom) (F : ℕ) (e : ℕ → ℕ) : a.M (shE F e) = a.M e := by
-  simp only [KFG.Atom.M, atomal_shE, atombe_shE]
-
-theorem gateP_shE (F L : ℕ) : ∀ (as : List KFG.Atom) (e : ℕ → ℕ), gateP as (shE F e) L = gateP as e L
-  | [], _ => rfl
-  | a :: as, e => by
-    simp only [gateP, KFG.Atom.P, atomM_shE, atomsc_shE, gateP_shE F L as]
 
 end Shift
 
@@ -632,89 +437,11 @@ end Shift
 
 section Scales
 
-theorem NoTS.tail {a : KFG.Atom} {as : List KFG.Atom} (h : NoTS (a :: as)) : NoTS as :=
-  fun b hb c hc => h b (List.mem_cons_of_mem _ hb) c (List.mem_cons_of_mem _ hc)
-
-/-- Sources keep their scales. -/
-theorem sc_src {a : KFG.Atom} {as : List KFG.Atom} (h : NoTS (a :: as)) (e : ℕ → ℕ) {b : KFG.Atom}
-    (hb : b ∈ as) : a.sc e b.s = e b.s := by
-  simp only [KFG.Atom.sc]
-  rw [Function.update_of_ne (Ne.symm (h a List.mem_cons_self b (List.mem_cons_of_mem _ hb)))]
-
-theorem levA_ok {W t0 : ℕ} (ht0 : t0 < W) : ∀ a ∈ levA W t0, a.Ok W ∧ a.h ≤ 1 := by
-  intro a ha
-  simp only [levA, List.mem_map, List.mem_filter, List.mem_range] at ha
-  obtain ⟨t, ⟨ht, hne⟩, rfl⟩ := ha
-  exact ⟨⟨ht, ht0, by simpa using hne, by simp [KFB.Sm]⟩, by simp⟩
-
-theorem levA_nots (W t0 : ℕ) : NoTS (levA W t0) := by
-  intro a ha b hb
-  simp only [levA, List.mem_map, List.mem_filter, List.mem_range] at ha hb
-  obtain ⟨t, ⟨ht, hne⟩, rfl⟩ := ha
-  obtain ⟨t', -, rfl⟩ := hb
-  simpa using hne
-
-theorem levA_src {W t0 : ℕ} : ∀ a ∈ levA W t0, a.s = t0 ∧ a.h = 0 ∧ a.c = (0, 0) := by
-  intro a ha
-  simp only [levA, List.mem_map] at ha
-  obtain ⟨t, -, rfl⟩ := ha
-  exact ⟨rfl, rfl, rfl⟩
-
-theorem levA_len (W t0 : ℕ) : (levA W t0).length ≤ W := by
-  simp only [levA, List.length_map]
-  exact le_trans (List.length_filter_le _ _) (by simp)
-
-/-- After leveling every role has the scale of `t0`. -/
-theorem gateE_levA {W t0 H : ℕ} (ht0 : t0 < W) (e : ℕ → ℕ) (he0 : e t0 = H)
-    (he : ∀ t, e t ≤ H) : ∀ t < W, gateE (levA W t0) e t = H := by
-  have key : ∀ (l : List KFG.Atom) (e : ℕ → ℕ), (∀ a ∈ l, a.s = t0 ∧ a.h = 0 ∧ a.t ≠ t0) →
-      e t0 = H → (∀ t, e t ≤ H) →
-      ∀ t, gateE l e t = if t ∈ l.map KFG.Atom.t then H else e t := by
-    intro l
-    induction l with
-    | nil => intro e _ _ _ t; simp [gateE]
-    | cons a l ih =>
-      intro e hl he0 he t
-      obtain ⟨has, hah, hat⟩ := hl a List.mem_cons_self
-      have he0' : a.sc e t0 = H := by
-        simp only [KFG.Atom.sc]; rw [Function.update_of_ne (Ne.symm hat)]; exact he0
-      have he' : ∀ t, a.sc e t ≤ H := by
-        intro t; simp only [KFG.Atom.sc, Function.update_apply, KFG.Atom.E, has, hah, he0]
-        split_ifs
-        · have := he a.t; omega
-        · exact he t
-      rw [gateE, ih (a.sc e) (fun b hb => hl b (List.mem_cons_of_mem _ hb)) he0' he' t]
-      simp only [List.map_cons, List.mem_cons]
-      by_cases h1 : t = a.t
-      · subst h1
-        simp only [true_or, if_true, KFG.Atom.sc, Function.update_self, KFG.Atom.E, has, hah, he0]
-        split_ifs <;> (have := he a.t; omega)
-      · simp only [h1, false_or]
-        split_ifs <;> simp [KFG.Atom.sc, Function.update_of_ne h1]
-  intro t ht
-  rw [key (levA W t0) e (fun a ha => ⟨(levA_src a ha).1, (levA_src a ha).2.1, by
-      simp only [levA, List.mem_map, List.mem_filter, List.mem_range] at ha
-      obtain ⟨t, ⟨-, hne⟩, rfl⟩ := ha; simpa using hne⟩) he0 he t]
-  split_ifs with h
-  · rfl
-  · by_cases h' : t = t0
-    · subst h'; exact he0
-    · exfalso; apply h
-      simp only [levA, List.map_map, List.mem_map, List.mem_filter, List.mem_range]
-      exact ⟨t, ⟨ht, by simpa using h'⟩, rfl⟩
-
 end Scales
 
 /-! ## Width and cost of a gate pass -/
 
 section Bounds
-
-theorem cAtom_mono {w w' D D' L W Z : ℕ} (hw : w ≤ w') (hD : D ≤ D') :
-    cAtom w D L W Z ≤ cAtom w' D' L W Z := by
-  unfold cAtom cPairW
-  have := cPair_mono (L := L) (P := 0 * L) (Q := (W - 0 - 1) * L) (P' := 0 * L)
-    (Q' := (W - 0 - 1) * L) hw hD le_rfl
-  omega
 
 end Bounds
 
@@ -722,27 +449,7 @@ end Bounds
 
 section GateStep
 
-theorem gateY_zero {l : List KFG.Atom} (h : ∀ a ∈ l, a.c = (0, 0)) (y : ℕ → ℕ → ℂ) :
-    gateY l y = y := by
-  funext v p
-  simp only [gateY]
-  rw [List.sum_eq_zero, add_zero]
-  intro x hx
-  simp only [List.mem_map] at hx
-  obtain ⟨a, ha, rfl⟩ := hx
-  split_ifs <;> simp [h a ha, toC]
-
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
-
-theorem yR_val {r : ℕ} (hr : 0 < r) (X : Fin W → List (Fin r → ℂ)) (q : Fin W) (j : ℕ)
-    (c : Fin r) : yR r X q.val (j * r + c) = (X q).getD j 0 c := by
-  have h1 : (j * r + c) / r = j := by
-    rw [Nat.add_comm, Nat.add_mul_div_right _ _ hr, Nat.div_eq_of_lt c.isLt, zero_add]
-  have h2 : (j * r + c) % r = c := by
-    rw [Nat.add_comm, Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt c.isLt]
-  simp only [yR, dif_pos (And.intro q.isLt hr), h1, Fin.eta]
-  have hc : (⟨(j * r + c) % r, Nat.mod_lt _ hr⟩ : Fin r) = c := Fin.ext h2
-  rw [hc]
 
 end GateStep
 
@@ -775,49 +482,6 @@ open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly
 /-! ## Widths and costs with a general scale window -/
 
 section Bounds2
-
-theorem sc_inv2 (lo hi : ℕ) {a : KFG.Atom} {as : List KFG.Atom} {e : ℕ → ℕ}
-    (hts : NoTS (a :: as)) (hs : ∀ b ∈ a :: as, e b.s + b.h ≤ hi)
-    (he : ∀ t, lo ≤ e t ∧ e t ≤ hi) :
-    (∀ b ∈ as, a.sc e b.s + b.h ≤ hi) ∧ (∀ t, lo ≤ a.sc e t ∧ a.sc e t ≤ hi) ∧
-      a.D e ≤ hi - lo := by
-  refine ⟨fun b hb => ?_, fun t => ?_, ?_⟩
-  · rw [sc_src hts e hb]; exact hs b (List.mem_cons_of_mem _ hb)
-  · simp only [KFG.Atom.sc, Function.update_apply, KFG.Atom.E]
-    split_ifs with h
-    · have := hs a List.mem_cons_self; have := he a.t
-      constructor <;> omega
-    · exact he t
-  · have h1 := hs a List.mem_cons_self; have h2 := he a.t; have h3 := he a.s
-    simp only [KFG.Atom.D, KFG.Atom.al, KFG.Atom.be, KFG.Atom.E]
-    omega
-
-theorem gateW_le2 (lo hi : ℕ) : ∀ (as : List KFG.Atom) (e : ℕ → ℕ) (w : ℕ), NoTS as →
-    (∀ a ∈ as, e a.s + a.h ≤ hi) → (∀ t, lo ≤ e t ∧ e t ≤ hi) →
-    gateW as e w ≤ w + (hi - lo + 2) * as.length
-  | [], _, _, _, _, _ => by simp [gateW]
-  | a :: as, e, w, hts, hs, he => by
-    obtain ⟨h1, h2, h3⟩ := sc_inv2 lo hi hts hs he
-    have := gateW_le2 lo hi as (a.sc e) (w + a.D e + 2) (NoTS.tail hts) h1 h2
-    simp only [gateW, List.length_cons]
-    nlinarith
-
-theorem cGate_le2 (lo hi L W Z : ℕ) : ∀ (as : List KFG.Atom) (e : ℕ → ℕ) (w : ℕ), NoTS as →
-    (∀ a ∈ as, e a.s + a.h ≤ hi) → (∀ t, lo ≤ e t ∧ e t ≤ hi) →
-    cGate as e w L W Z ≤
-      as.length * cAtom (w + (hi - lo + 2) * as.length) (hi - lo) L W Z + 1
-  | [], _, _, _, _, _ => by simp [cGate]
-  | a :: as, e, w, hts, hs, he => by
-    obtain ⟨h1, h2, h3⟩ := sc_inv2 lo hi hts hs he
-    have IH := cGate_le2 lo hi L W Z as (a.sc e) (w + a.D e + 2) (NoTS.tail hts) h1 h2
-    have m1 : cAtom w (a.D e) L W Z ≤
-        cAtom (w + (hi - lo + 2) * (as.length + 1)) (hi - lo) L W Z :=
-      cAtom_mono (by nlinarith) h3
-    have m2 : cAtom (w + a.D e + 2 + (hi - lo + 2) * as.length) (hi - lo) L W Z ≤
-        cAtom (w + (hi - lo + 2) * (as.length + 1)) (hi - lo) L W Z :=
-      cAtom_mono (by nlinarith) le_rfl
-    simp only [cGate, List.length_cons]
-    nlinarith
 
 end Bounds2
 
@@ -874,12 +538,6 @@ end Seg
 
 section Wrap
 
-theorem swapsF_swL (w v : ℕ) : swapsF (swL w) v = nsw 0 w v := by
-  unfold swL
-  split_ifs with h
-  · subst h; simp [swapsF, nsw]; split_ifs <;> omega
-  · simp [swapsF]
-
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 end Wrap
@@ -918,13 +576,6 @@ section SImplILemmas
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-theorem SImplI.mono {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {code : ℕ → IStmt HS Pp} {e dw : ℕ}
-    {c c' : ℕ → ℕ} (h : SImplI I iprog r st n T code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    SImplI I iprog r st n T code e dw c' := by
-  intro s f zs l xs F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l xs F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
-
 end SImplILemmas
 
 section RImplIDefs
@@ -932,13 +583,6 @@ section RImplIDefs
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ]
 
 variable {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImplI.mono {A : ROp (Fin W) m κ} {code : ℕ → IStmt HS Pp} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImplI I iprog r n st A code e dw c) (hc : ∀ w, c w ≤ c' w) :
-    RImplI I iprog r n st A code e dw c' := by
-  intro s f zs l X F w hC h0 hx hl hb
-  obtain ⟨zs', h1, h2, h3⟩ := h s f zs l X F w hC h0 hx hl hb
-  exact ⟨zs', h1, h2, h3.mono (hc w)⟩
 
 end RImplIDefs
 
@@ -991,16 +635,6 @@ namespace NLogN.KFW
 
 open IntMul RS KFD KIL
 
-/-! ## Header refinement -/
-
-theorem HRef.writes {p p' : RS} {X : ℕ} (h : HRef p p' X) : p'.writes = p.writes := by
-  induction h with
-  | refl => rfl
-  | seq _ _ ha hb => simp [RS.writes, ha, hb]
-  | ite _ _ ha hb => simp [RS.writes, ha, hb]
-  | push => rfl
-  | mono _ _ ih => exact ih
-
 /-! ## Pushed parameters in the background -/
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
@@ -1033,10 +667,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex P8Lift Butterfly
 
-theorem Clean0.upd0 {f : Fin HS → List ℤ} (h : Clean0 f) (v : List ℤ) :
-    Clean0 (Function.update f 0 v) := by
-  intro j hj; rw [Function.update_of_ne hj]; exact h j hj
-
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
 section SQ
@@ -1050,14 +680,6 @@ section RQ
 
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {W m : ℕ} {κ : Type} [Fintype κ] [DecidableEq κ] {r n : ℕ} {st : Fin m × κ → ℕ}
-
-theorem RImplQ.mono {A : ROp (Fin W) m κ} {U : IStmt HS Pp} {e dw : ℕ} {c c' : ℕ → ℕ}
-    (h : RImplQ I iprog Q lo hi r n st A U e dw c)
-    (hc : ∀ w, lo ≤ w → w + dw ≤ hi → c w ≤ c' w) :
-    RImplQ I iprog Q lo hi r n st A U e dw c' := by
-  intro s f zs l X F w hQ hC h0 hx hX hb h1 h2
-  obtain ⟨zs', r1, b1, f1⟩ := h s f zs l X F w hQ hC h0 hx hX hb h1 h2
-  exact ⟨zs', r1, b1, f1.mono (hc w h1 h2)⟩
 
 end RQ
 
@@ -1088,254 +710,6 @@ set_option linter.unusedSectionVars false
 namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex
-
-theorem pairPz_zbS (M : M2S) : pairPz (zbS M) = pairP M := rfl
-
-theorem Ex.sub_reg_none {σ : Fin HS → Option ℤ} {i : Fin HS} (h : σ i = none) :
-    Ex.sub σ (.reg i) = .reg i := by simp [Ex.sub, h]
-
-theorem touch_mvK (X Y C : Fin HS) (n : Ex HS) :
-    touch (NLogN.mvK X Y C n) = C :: (n.regs ++ (Y :: X :: [X])) := by
-  simp [NLogN.mvK, touch, Ex.regs]
-
-theorem sub_mvK {σ : Fin HS → Option ℤ} (hσ : OffG σ) (X Y C r : Fin HS) (hX : X ∈ gT)
-    (hY : Y ∈ gT) (hC : C ∈ gT) (hr : r ∈ gT) :
-    RS.sub σ (NLogN.mvK X Y C (.reg r)) = NLogN.mvK X Y C (.reg r) := by
-  apply RS.sub_id
-  intro i hi
-  rw [touch_mvK] at hi
-  simp only [Ex.regs, List.mem_cons, List.mem_append, List.mem_singleton, List.not_mem_nil,
-    or_false] at hi
-  rcases hi with h | h | h | h | h <;> subst h <;> exact hσ _ (by assumption)
-
-theorem sub_distB {σ : Fin HS → Option ℤ} (hσ : OffG σ) (Xr Xi : Fin HS) (h1 : Xr ∈ gT)
-    (h2 : Xi ∈ gT) : RS.sub σ (distB Xr Xi) = distB Xr Xi := by
-  apply RS.sub_id
-  intro i hi
-  simp only [distB, touch, Ex.regs, List.mem_cons, List.mem_append, List.not_mem_nil,
-    or_false, List.nil_append, List.cons_append] at hi
-  rcases hi with h | h | h | h | h | h | h | h | h <;> (try subst h) <;>
-    first | exact hσ _ (by decide) | exact hσ _ h1 | exact hσ _ h2
-
-theorem sub_pairPz {σ : Fin HS → Option ℤ} (hσ : OffG σ) (z : RS) :
-    RS.sub σ (pairPz z) = pairPz (RS.sub σ z) := by
-  simp only [pairPz, RS.sub]
-  rw [sub_distB hσ rUr rUi (by decide) (by decide), sub_distB hσ rVr rVi (by decide) (by decide),
-    Ex.sub_reg_none (hσ rB (by decide))]
-  rw [sub_mvK hσ 0 qP c1 rP (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ 0 qT c1 rB2 (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ 0 qQ c1 rQ (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ qO 0 c1 rB2 (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ qQ 0 c1 rQ (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ qA 0 c1 rB2 (by decide) (by decide) (by decide) (by decide),
-    sub_mvK hσ qP 0 c1 rP (by decide) (by decide) (by decide) (by decide)]
-
-theorem href_push_closed (i : Fin HS) (e : Ex HS) (v : ℤ) (hr : e.regs = [])
-    (hv : ∀ s, e.eval s = v) (hok : ∀ s, e.ok s) (B : ℕ) (hB : ∀ s, e.Bnd s B) :
-    HRef (.push i (.lit v)) (.push i e) (e.size * 10 ^ 7 * (B + 2) ^ 2) :=
-  HRef.push hr hv hok (fun s => Ex.cost_le s B e (hB s))
-
-/-- **Header refinement of a pair pass.** -/
-theorem pairWG_href {σ : Fin HS → Option ℤ} (hσ : OffG σ) {ρ : Fin HS} {L : ℕ}
-    (hρ : σ ρ = some (L : ℤ)) (z : RS) (M : M2S) (hz : RS.sub σ z = zbS M) (i j Z : ℕ)
-    (hij : i < j) (hL : 1 ≤ L) (hZ : zsz ((2 * ((j + 1) * L) : ℕ) : ℤ) ≤ Z) :
-    HRef (pairW M L i j) (RS.sub σ (pairWG z ρ i j)) (Xp Z) := by
-  have zl : ∀ k : ℕ, k ≤ 2 * ((j + 1) * L) → zsz (k : ℤ) ≤ Z :=
-    fun k hk => le_trans (zsz_natCast_le hk) hZ
-  have hjL1 : j + 1 ≤ (j + 1) * L := Nat.le_mul_of_pos_right _ hL
-  have hiL : 2 * i ≤ 2 * ((j + 1) * L) := by omega
-  have hjL : 2 * (j - i - 1) ≤ 2 * ((j + 1) * L) := by
-    have : j + 1 ≤ (j + 1) * L := Nat.le_mul_of_pos_right _ hL
-    omega
-  have hiL2 : 2 * i * L ≤ 2 * ((j + 1) * L) := by nlinarith
-  have hjL2 : 2 * (j - i - 1) * L ≤ 2 * ((j + 1) * L) := by
-    have : (j - i - 1) * L ≤ (j + 1) * L := Nat.mul_le_mul_right _ (by omega)
-    nlinarith
-  simp only [pairWG, pairW, RS.sub, Ex.sub, hρ, sub_pairPz hσ, hz, pairPz_zbS]
-  have e4 : Xp Z = 0 + (Xq Z + (Xq Z + (Xq Z + (0 + (0 + (0 + (0 + 0))))))) := by
-    unfold Xp; ring
-  rw [e4]
-  refine .seq (.refl _) (.seq ?_ (.seq ?_ (.seq ?_ (.seq (.refl _) (.seq (.refl _) (.seq (.refl _)
-    (.seq (.refl _) (.refl _))))))))
-  · refine (href_push_closed _ _ _ rfl (fun s => by simp [Ex.eval]; push_cast; ring)
-      (fun s => by simp [Ex.ok]) Z (fun s => ?_)).mono (by unfold Xq; simp only [Ex.size]; omega)
-    refine ⟨zl L (by nlinarith), zl L (by nlinarith), ?_⟩
-    simp only [Ex.eval]
-    have := zl (2 * L) (by nlinarith); push_cast at this ⊢
-    rw [show (L : ℤ) + L = 2 * L by ring]; exact this
-  · refine (href_push_closed _ _ _ rfl (fun s => by simp [Ex.eval]; push_cast; ring)
-      (fun s => by simp [Ex.ok]) Z (fun s => ?_)).mono (by unfold Xq; simp only [Ex.size]; omega)
-    refine ⟨zl _ hiL, zl L (by nlinarith), ?_⟩
-    simp only [Ex.eval]
-    have := zl (2 * i * L) hiL2; push_cast at this ⊢; exact this
-  · refine (href_push_closed _ _ _ rfl (fun s => by simp [Ex.eval]; push_cast; ring)
-      (fun s => by simp [Ex.ok]) Z (fun s => ?_)).mono (by unfold Xq; simp only [Ex.size]; omega)
-    refine ⟨zl _ hjL, zl L (by nlinarith), ?_⟩
-    simp only [Ex.eval]
-    have := zl (2 * (j - i - 1) * L) hjL2; push_cast at this ⊢; exact this
-
-/-! ## Fixed parts are unchanged by the substitution -/
-
-theorem sub_tmE {σ : Fin HS → Option ℤ} (c : ℤ) (r : Fin HS) (hr : σ r = none) :
-    Ex.sub σ (tmE c r) = tmE c r := by
-  unfold tmE; split_ifs <;> simp [Ex.sub, hr]
-
-theorem sub_lsE {σ : Fin HS → Option ℤ} : ∀ (l : List (ℤ × ℕ × Fin HS)),
-    (∀ t ∈ l, σ t.2.2 = none) → Ex.sub σ (lsE l) = lsE l
-  | [], _ => rfl
-  | (c, d, r) :: l, h => by
-    simp only [lsE, tsE, Ex.sub, sub_tmE c r (h _ List.mem_cons_self),
-      sub_lsE l (fun t ht => h t (List.mem_cons_of_mem _ ht))]
-
-theorem reS_regs (p q : SC) : ∀ t ∈ reS p q, t.2.2 ∈ gT := by
-  intro t ht; simp only [reS, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> dsimp only <;> decide
-
-theorem imS_regs (p q : SC) : ∀ t ∈ imS p q, t.2.2 ∈ gT := by
-  intro t ht; simp only [imS, List.mem_cons, List.not_mem_nil, or_false] at ht
-  rcases ht with rfl | rfl | rfl | rfl <;> dsimp only <;> decide
-
-theorem sub_zbS {σ : Fin HS → Option ℤ} (hσ : OffG σ) (M : M2S) : RS.sub σ (zbS M) = zbS M := by
-  simp only [zbS, RS.sub]
-  rw [sub_lsE _ (fun t ht => hσ _ (reS_regs _ _ t ht)), sub_lsE _ (fun t ht => hσ _ (imS_regs _ _ t ht)),
-    sub_lsE _ (fun t ht => hσ _ (reS_regs _ _ t ht)), sub_lsE _ (fun t ht => hσ _ (imS_regs _ _ t ht))]
-
-/-! ## Gates -/
-
-theorem swapsG_href {σ : Fin HS → Option ℤ} (hσ : OffG σ) {ρ : Fin HS} {L W Z : ℕ}
-    (hρ : σ ρ = some (L : ℤ)) (hL : 1 ≤ L) (hZ : zsz ((2 * (W * L) : ℕ) : ℤ) ≤ Z) :
-    ∀ (l : List (ℕ × ℕ)), (∀ p ∈ l, p.1 < p.2 ∧ p.2 < W) →
-      HRef (KFG.swapsP L l) (RS.sub σ (swapsG ρ l)) (l.length * Xp Z)
-  | [], _ => by simpa [KFG.swapsP, swapsG, RS.sub] using HRef.refl RS.skip
-  | (i, j) :: l, hl => by
-    obtain ⟨hij, hj⟩ := hl (i, j) List.mem_cons_self
-    have IH := swapsG_href hσ hρ hL hZ l (fun p hp => hl p (List.mem_cons_of_mem _ hp))
-    have hz : zsz ((2 * ((j + 1) * L) : ℕ) : ℤ) ≤ Z :=
-      le_trans (zsz_natCast_le (by have := Nat.mul_le_mul_right L (show j + 1 ≤ W by omega); omega)) hZ
-    simp only [KFG.swapsP, swapsG, RS.sub]
-    exact (HRef.seq (pairWG_href hσ hρ _ _ (sub_zbS hσ _) i j Z hij hL hz) IH).mono
-      (le_of_eq (by simp [List.length_cons]; ring))
-
-/-! ## Leveling -/
-
-theorem sub_zbLev {σ : Fin HS → Option ℤ} (hσ : OffG σ) {ρE : Fin HS} {e : ℕ}
-    (hE : σ ρE = some ((2 : ℤ) ^ e)) : RS.sub σ (zbLev ρE) = zbS (Mlev e) := by
-  have h1 : σ rUr = none := hσ _ (by decide)
-  have h2 : σ rUi = none := hσ _ (by decide)
-  have h3 : σ rVr = none := hσ _ (by decide)
-  have h4 : σ rVi = none := hσ _ (by decide)
-  simp only [zbLev, zbS, RS.sub, Mlev]
-  rw [sub_lsE _ (fun t ht => hσ _ (reS_regs _ _ t ht)), sub_lsE _ (fun t ht => hσ _ (imS_regs _ _ t ht))]
-  simp [lsEx, lsE, reS, imS, tsE, Ex.sub, sub_tmE _ _ h1, sub_tmE _ _ h2, sub_tmE _ _ h3,
-    sub_tmE _ _ h4, hE, scOne, scZero]
-
-theorem gateP_lev (L e : ℕ) : ∀ (l : List ℕ) (g : ℕ → ℕ), l.Nodup → (∀ t ∈ l, t ≠ 0 ∧ g t = 0) →
-    g 0 = e →
-    gateP (l.map fun t => (⟨t, 0, (0, 0), 0⟩ : Atom)) g L =
-      l.foldr (fun t p => .seq (pairW (Mlev e) L 0 t) p) .skip
-  | [], _, _, _, _ => rfl
-  | t :: l, g, hnd, hl, hg => by
-    obtain ⟨ht0, hgt⟩ := hl t List.mem_cons_self
-    simp only [List.map_cons, gateP, List.foldr_cons]
-    congr 1
-    · simp only [Atom.P, Atom.M, Atom.al, Atom.be, Atom.E, hgt, hg]
-      rw [if_neg (by omega), if_neg (by omega)]
-      simp [Mlev]
-    · refine gateP_lev L e l _ (List.nodup_cons.1 hnd).2 (fun u hu => ⟨(hl u (List.mem_cons_of_mem _ hu)).1, ?_⟩) ?_
-      · simp only [Atom.sc, Function.update_apply]
-        split_ifs with h
-        · subst h; exact absurd hu (List.nodup_cons.1 hnd).1
-        · exact (hl u (List.mem_cons_of_mem _ hu)).2
-      · simp only [Atom.sc, Function.update_apply, if_neg (Ne.symm ht0)]; exact hg
-
-theorem levA_eq (W : ℕ) : levA W 0 = ((List.range W).filter fun t => t ≠ 0).map
-    fun t => (⟨t, 0, (0, 0), 0⟩ : Atom) := rfl
-
-theorem levG_href {σ : Fin HS → Option ℤ} (hσ : OffG σ) {ρ ρE : Fin HS} {L W Z e : ℕ}
-    (hρ : σ ρ = some (L : ℤ)) (hE : σ ρE = some ((2 : ℤ) ^ e)) (hL : 1 ≤ L)
-    (hZ : zsz ((2 * (W * L) : ℕ) : ℤ) ≤ Z) :
-    HRef (gateP (levA W 0) (Function.update (fun _ => 0) 0 e) L) (RS.sub σ (levG W ρ ρE))
-      (W * Xp Z) := by
-  rw [levA_eq, gateP_lev L e _ _ (List.Nodup.filter _ List.nodup_range)
-    (fun t ht => by
-      simp only [List.mem_filter, List.mem_range, decide_eq_true_eq] at ht
-      exact ⟨ht.2, by simp [ht.2]⟩) (by simp)]
-  unfold levG
-  have key : ∀ l : List ℕ, (∀ t ∈ l, 0 < t ∧ t < W) →
-      HRef (l.foldr (fun t p => .seq (pairW (Mlev e) L 0 t) p) .skip)
-        (RS.sub σ (l.foldr (fun t p => .seq (pairWG (zbLev ρE) ρ 0 t) p) .skip)) (l.length * Xp Z) := by
-    intro l
-    induction l with
-    | nil => intro _; simpa [RS.sub] using HRef.refl RS.skip
-    | cons t l ih =>
-      intro hl
-      obtain ⟨ht0, ht⟩ := hl t List.mem_cons_self
-      have hz : zsz ((2 * ((t + 1) * L) : ℕ) : ℤ) ≤ Z :=
-        le_trans (zsz_natCast_le (by have := Nat.mul_le_mul_right L (show t + 1 ≤ W by omega); omega)) hZ
-      simp only [List.foldr_cons, RS.sub]
-      exact (HRef.seq (pairWG_href hσ hρ _ _ (sub_zbLev hσ hE) 0 t Z ht0 hL hz)
-        (ih fun u hu => hl u (List.mem_cons_of_mem _ hu))).mono (le_of_eq (by simp [List.length_cons]; ring))
-  refine (key _ (fun t ht => by
-    simp only [List.mem_filter, List.mem_range, decide_eq_true_eq] at ht
-    exact ⟨Nat.pos_of_ne_zero ht.2, ht.1⟩)).mono ?_
-  have := List.length_filter_le (fun t => decide (t ≠ 0)) (List.range W)
-  rw [List.length_range] at this
-  exact Nat.mul_le_mul_right _ this
-
-/-! ## Written stacks -/
-
-theorem writes_mvK (X Y C : Fin HS) (n : Ex HS) : (NLogN.mvK X Y C n).writes = [C, Y, X] := by
-  simp [NLogN.mvK, RS.writes]
-
-theorem writes_pairPz (z : RS) : ∀ k ∈ (pairPz z).writes, k ∈ gT ∨ k ∈ z.writes := by
-  intro k hk
-  simp only [pairPz, RS.writes, writes_mvK, distB, List.mem_append, List.mem_cons,
-    List.not_mem_nil, or_false] at hk
-  rcases hk with ((h | h | h) | (h | h | h) | (h | h | h | h | h) | (h | h | h) | (h | h | h) |
-    (h | h | h | h | h) | (h | h) | (h | h | h) | (h | h | h) | (h | h | h) | (h | h | h)) <;>
-    first | exact Or.inr h | (subst h; exact Or.inl (by decide))
-
-theorem writes_pairWG (z : RS) (ρ : Fin HS) (i j : ℕ) :
-    ∀ k ∈ (pairWG z ρ i j).writes, k ∈ gT ∨ k ∈ z.writes := by
-  intro k hk
-  simp only [pairWG, RS.writes, List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hk
-  rcases hk with h | h | h | h | h | h | h | h | h
-  all_goals first | exact writes_pairPz z k h | (subst h; exact Or.inl (by decide))
-
-theorem writes_zbS (M : M2S) : ∀ k ∈ (zbS M).writes, k ∈ gT := by
-  intro k hk
-  simp only [zbS, RS.writes, List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hk
-  rcases hk with h | h | h | h | h | h | h | h <;> subst h <;> decide
-
-theorem writes_zbLev (ρE : Fin HS) : ∀ k ∈ (zbLev ρE).writes, k ∈ gT := by
-  intro k hk
-  simp only [zbLev, RS.writes, List.mem_append, List.mem_cons, List.not_mem_nil, or_false] at hk
-  rcases hk with h | h | h | h | h | h | h | h <;> subst h <;> decide
-
-theorem pairWG_gT {z : RS} (hz : ∀ k ∈ z.writes, k ∈ gT) (ρ : Fin HS) (i j : ℕ) :
-    ∀ k ∈ (pairWG z ρ i j).writes, k ∈ gT := fun k hk =>
-  (writes_pairWG z ρ i j k hk).elim id (hz k)
-
-theorem swapsG_gT (ρ : Fin HS) : ∀ (l : List (ℕ × ℕ)), ∀ k ∈ (swapsG ρ l).writes, k ∈ gT
-  | [] => by simp [swapsG, RS.writes]
-  | (i, j) :: l => by
-    intro k hk
-    simp only [swapsG, RS.writes, List.mem_append] at hk
-    rcases hk with h | h
-    · exact pairWG_gT (writes_zbS _) _ _ _ k h
-    · exact swapsG_gT ρ l k h
-
-theorem levG_gT (W : ℕ) (ρ ρE : Fin HS) : ∀ k ∈ (levG W ρ ρE).writes, k ∈ gT := by
-  unfold levG
-  generalize ((List.range W).filter fun t => t ≠ 0) = l
-  induction l with
-  | nil => simp [RS.writes]
-  | cons t l ih =>
-    intro k hk
-    simp only [List.foldr_cons, RS.writes, List.mem_append] at hk
-    rcases hk with h | h
-    · exact pairWG_gT (writes_zbLev _) _ _ _ k h
-    · exact ih k h
 
 end NLogN.KFW
 

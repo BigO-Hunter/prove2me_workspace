@@ -513,9 +513,6 @@ section Geom
 
 variable {N0 N1 N2 N3 L R w : ℕ}
 
-theorem geoB_V : (geoB N0 N1 N2 N3 L R w).V = vol (rect N0 N1 N2 N3 L) * R * (2 * (w + 1)) := by
-  rw [Geo.V_rec, ← vol_rect (R := R) (w := w)]; simp [geoB]; ring
-
 end Geom
 
 /-! ## The slot row addition as a triple map -/

@@ -424,44 +424,6 @@ section Rows
 
 variable {K m k e : ℕ} {pos : Fin m × Fin (m ^ k) → ℕ}
 
-theorem rowE_le (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) :
-    K * (m ^ k * (r.val + 1) - 1) ≤ e := by
-  have hf : 1 ≤ m ^ k := Nat.one_le_pow _ _ (by have := r.isLt; omega)
-  have := he (r, ⟨m ^ k - 1, by omega⟩)
-  simp only at this
-  have e1 : m ^ k - 1 + m ^ k * r.val = m ^ k * (r.val + 1) - 1 := by
-    rw [Nat.mul_succ]; omega
-  rw [e1] at this
-  omega
-
-theorem sR_add (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) :
-    sR K (m ^ k) e r + e % K = e - K * (m ^ k * (r.val + 1) - 1) := by
-  have h1 := rowE_le he r
-  set E := K * (m ^ k * (r.val + 1) - 1)
-  have h2 : (e - E) % K = e % K := by
-    simp only [E]; rw [Nat.sub_mul_mod h1]
-  have h3 : (e - E) % K ≤ e - E := Nat.mod_le _ _
-  unfold sR
-  omega
-
-/-- Rows further down start lower by `fK` per row. -/
-theorem sR_lt (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) {r r' : Fin m}
-    (h : r < r') : sR K (m ^ k) e r' + m ^ k * K * (r'.val - r.val) = sR K (m ^ k) e r := by
-  have h0 := sR_add he r
-  have h1 := sR_add he r'
-  have hf : 1 ≤ m ^ k := Nat.one_le_pow _ _ (by have := r.isLt; omega)
-  have hlt : r.val < r'.val := h
-  have e1 : m ^ k * (r'.val + 1) - 1 = (m ^ k * (r.val + 1) - 1) + m ^ k * (r'.val - r.val) := by
-    have : m ^ k * (r'.val + 1) = m ^ k * (r.val + 1) + m ^ k * (r'.val - r.val) := by
-      rw [← Nat.mul_add]; congr 1; omega
-    have : 1 ≤ m ^ k * (r.val + 1) := Nat.one_le_iff_ne_zero.2 (by positivity)
-    omega
-  have e2 : K * (m ^ k * (r'.val + 1) - 1) =
-      K * (m ^ k * (r.val + 1) - 1) + m ^ k * K * (r'.val - r.val) := by
-    rw [e1, Nat.mul_add]; ring
-  have h2 := rowE_le he r'
-  omega
-
 end Rows
 
 end NLogN.KFR
@@ -489,43 +451,12 @@ open IntMul RS AModel KIL KFD KFB KFG KFH Complex P8Lift Butterfly KFN
 
 variable {K m k e : ℕ} {pos : Fin m × Fin (m ^ k) → ℕ}
 
-theorem sR_top (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (r : Fin m) :
-    sR K (m ^ k) e r + m ^ k * K ≤ e - e % K + K := by
-  have h0 := sR_add he r
-  have h1 := rowE_le he r
-  have hf : 1 ≤ m ^ k := Nat.one_le_pow _ _ (by have := r.isLt; omega)
-  have a1 : K * (m ^ k - 1) ≤ K * (m ^ k * (r.val + 1) - 1) :=
-    Nat.mul_le_mul_left _ (by rw [Nat.mul_succ]; omega)
-  have a2 : K * (m ^ k - 1) + K = m ^ k * K := by
-    rw [Nat.mul_comm (m ^ k) K, ← Nat.mul_succ]; congr 1; omega
-  have a3 := Nat.mod_le e K
-  omega
-
-theorem sR_gap (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) {r r' : Fin m}
-    (h : r < r') : sR K (m ^ k) e r' + m ^ k * K ≤ sR K (m ^ k) e r := by
-  have h1 := sR_lt he h
-  have : m ^ k * K ≤ m ^ k * K * (r'.val - r.val) :=
-    Nat.le_mul_of_pos_right _ (by have : r.val < r'.val := h; omega)
-  omega
-
-theorem pow_mul_pow_mul' (x y S : ℕ) : 2 ^ x * (2 ^ y * S) = 2 ^ (x + y) * S := by
-  rw [← mul_assoc, ← pow_add]
-
 section Shape
 
 variable {t S0 B : ℕ} {σ : Fin 3 → Fin m}
   (he : ∀ p, pos p + K * (p.2.val + m ^ k * p.1.val) = e) (htop : e - e % K + K ≤ t)
   (hσ : σ 0 < σ 1 ∧ σ 1 < σ 2)
 include he htop hσ
-
-theorem shR_vol : vol (shR K (m ^ k) e t S0 B σ) = B * 2 ^ t * S0 := by
-  have g1 := sR_gap he hσ.1
-  have g2 := sR_gap he hσ.2
-  have g0 := sR_top he (σ 0)
-  simp only [shR, rect, vol_cons, vol_nil, mul_one]
-  repeat rw [pow_mul_pow_mul']
-  rw [mul_assoc B, mul_assoc B, pow_mul_pow_mul']
-  congr 3; omega
 
 end Shape
 
@@ -577,17 +508,6 @@ set_option linter.unusedVariables false
 namespace NLogN.KFW
 
 open IntMul RS KFD KIL
-
-/-! ## Header refinement -/
-
-/-! ## Substitution of untouched registers -/
-
-/-! ## Uniform register programs -/
-
-/-! ## Pushed parameters in the background -/
-
-theorem evalP_fst' (t : IState HS) (l : List (Fin HS × Ex HS)) : (evalP t l).map Prod.fst = l.map Prod.fst := by
-  simp [evalP, List.map_map, Function.comp_def]
 
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
@@ -830,171 +750,18 @@ section Rows
 variable {i j : ℕ} (hij : i ≠ j)
 include hij
 
-theorem rows_lt : s0R i j < s1R i j ∧ s1R i j < s2R i j := by
-  unfold s1R s0R s2R hR; split_ifs <;> omega
-
-omit hij in
-theorem s2R_le : s2R i j ≤ max 2 (max i j) := by
-  unfold s2R hR; split_ifs <;> omega
-
-omit hij in
-theorem s1R_mid (h0 : i ≠ s0R i j) (h2 : i ≠ s2R i j) : s1R i j = i := by
-  unfold s1R; unfold s0R s2R hR at *; split_ifs at * <;> omega
-
-omit hij in
-theorem s1R_mid' (h0 : j ≠ s0R i j) (h2 : j ≠ s2R i j) : s1R i j = j := by
-  unfold s1R; unfold s0R s2R hR at *; split_ifs at * <;> omega
-
-omit hij in
-theorem σR_px : σR i j (pxR i j) = i := by
-  unfold pxR; split_ifs with h1 h2
-  · show σR i j 0 = _; unfold σR; rw [if_pos rfl]; exact h1.symm
-  · show σR i j 2 = _; unfold σR; rw [if_neg (by decide), if_neg (by decide)]; exact h2.symm
-  · show σR i j 1 = _; unfold σR; rw [if_neg (by decide), if_pos rfl]; exact s1R_mid h1 h2
-
-omit hij in
-theorem σR_py : σR i j (pyR i j) = j := by
-  unfold pyR; split_ifs with h1 h2
-  · show σR i j 0 = _; unfold σR; rw [if_pos rfl]; exact h1.symm
-  · show σR i j 2 = _; unfold σR; rw [if_neg (by decide), if_neg (by decide)]; exact h2.symm
-  · show σR i j 1 = _; unfold σR; rw [if_neg (by decide), if_pos rfl]; exact s1R_mid' h1 h2
-
-theorem pxR_ne_pyR : pxR i j ≠ pyR i j := by
-  intro h
-  have := congrArg (σR i j) h
-  rw [σR_px, σR_py] at this; exact hij this
-
 end Rows
-
-theorem pxR_eq0 (a b : ℕ) : pxR a b = 0 ↔ a = s0R a b := by
-  unfold pxR; by_cases h1 : a = s0R a b
-  · rw [if_pos h1]; exact ⟨fun _ => h1, fun _ => rfl⟩
-  · rw [if_neg h1]; by_cases h2 : a = s2R a b
-    · rw [if_pos h2]; exact ⟨fun h => absurd h (by decide), fun h => absurd h h1⟩
-    · rw [if_neg h2]; exact ⟨fun h => absurd h (by decide), fun h => absurd h h1⟩
-
-theorem pyR_eq0 (a b : ℕ) : pyR a b = 0 ↔ b = s0R a b := by
-  unfold pyR; by_cases h1 : b = s0R a b
-  · rw [if_pos h1]; exact ⟨fun _ => h1, fun _ => rfl⟩
-  · rw [if_neg h1]; by_cases h2 : b = s2R a b
-    · rw [if_pos h2]; exact ⟨fun h => absurd h (by decide), fun h => absurd h h1⟩
-    · rw [if_neg h2]; exact ⟨fun h => absurd h (by decide), fun h => absurd h h1⟩
-
-theorem pxR_eq2 {a b : ℕ} (hlt : s0R a b < s2R a b) : pxR a b = 2 ↔ a = s2R a b := by
-  unfold pxR; by_cases h1 : a = s0R a b
-  · rw [if_pos h1]; exact ⟨fun h => absurd h (by decide), fun h => by omega⟩
-  · rw [if_neg h1]; by_cases h2 : a = s2R a b
-    · rw [if_pos h2]; exact ⟨fun _ => h2, fun _ => rfl⟩
-    · rw [if_neg h2]; exact ⟨fun h => absurd h (by decide), fun h => absurd h h2⟩
-
-theorem pyR_eq2 {a b : ℕ} (hlt : s0R a b < s2R a b) : pyR a b = 2 ↔ b = s2R a b := by
-  unfold pyR; by_cases h1 : b = s0R a b
-  · rw [if_pos h1]; exact ⟨fun h => absurd h (by decide), fun h => by omega⟩
-  · rw [if_neg h1]; by_cases h2 : b = s2R a b
-    · rw [if_pos h2]; exact ⟨fun _ => h2, fun _ => rfl⟩
-    · rw [if_neg h2]; exact ⟨fun h => absurd h (by decide), fun h => absurd h h2⟩
-
-theorem flA_val (a b : ℕ) : ((flA (pxR a b) : ℕ) : ℤ) = if (a : ℤ) = (s0R a b : ℤ) then 0 else 1 := by
-  unfold flA; simp only [pxR_eq0, Nat.cast_inj]; split_ifs <;> rfl
-
-theorem flB_val {a b : ℕ} (hab : a ≠ b) : ((flB (pxR a b) (pyR a b) : ℕ) : ℤ) =
-    (if (b : ℤ) = (s2R a b : ℤ) then 1 else 0) +
-      (if (a : ℤ) = (s2R a b : ℤ) then 1 else 0) * (if (b : ℤ) = (s0R a b : ℤ) then 1 else 0) := by
-  have hlt := rows_lt hab
-  have hlt' : s0R a b < s2R a b := by omega
-  unfold flB; simp only [pxR_eq2 hlt', pyR_eq2 hlt', pyR_eq0, Nat.cast_inj]
-  push_cast
-  generalize s0R a b = p at *
-  generalize s2R a b = q at *
-  split_ifs <;> omega
-
-theorem gx_val {a b : ℕ} (hab : a ≠ b) (N2 K f : ℕ) : (gxV N2 K f (pxR a b) : ℤ) =
-    if (a : ℤ) = (s2R a b : ℤ) then ((2 ^ (f * K) * N2 : ℕ) : ℤ) else 1 := by
-  have hlt := rows_lt hab
-  have hlt' : s0R a b < s2R a b := by omega
-  unfold gxV; simp only [pxR_eq2 hlt', Nat.cast_inj]; split_ifs <;> simp
 
 section Comb
 
 variable {u : IState HS} {Bb : ℕ}
 
-theorem ESp.max {a b : Ex HS} {x y : ℤ} (ha : ESp a u Bb x) (hb : ESp b u Bb y)
-    (h : zsz (x - y) ≤ Bb) : ESp (eMax a b) u Bb (max x y) :=
-  ESp.sel (ESp.sub ha hb h) hb.clean ha.clean
-    (fun hl => ESp.of_eq hb (by rw [max_eq_right (by linarith)]))
-    (fun hl => ESp.of_eq ha (by rw [max_eq_left (by linarith)]))
-
-/-- `[x ≠ y]` as `sel (-(x-y)²) 1 0`. -/
-theorem ESp.neq {a b : Ex HS} {x y : ℤ} (ha : ESp a u Bb x) (hb : ESp b u Bb y)
-    (h1 : zsz (x - y) ≤ Bb) (h2 : zsz ((x - y) * (x - y)) ≤ Bb) (hB1 : 1 ≤ Bb) :
-    ESp (.sel (.neg (eSq (eSub a b))) (.lit 1) (.lit 0)) u Bb (if x = y then 0 else 1) := by
-  refine ESp.sel (ESp.neg (ESp.sq (ESp.sub ha hb h1) h2)) (clean_lit _) (clean_lit _) ?_ ?_
-  · intro hl
-    have : x ≠ y := fun e => by subst e; simp at hl
-    rw [if_neg this]; exact ESp.lit (by rw [zsz_one]; exact hB1)
-  · intro hl
-    have : x = y := by
-      by_contra hne
-      have : 0 < (x - y) * (x - y) := mul_self_pos.2 (sub_ne_zero.2 hne)
-      exact hl (by linarith)
-    rw [if_pos this]; exact ESp.lit (by rw [zsz_zero]; omega)
-
-/-- `[x = y]` as `sel (-(x-y)²) 0 1`. -/
-theorem ESp.eq {a b : Ex HS} {x y : ℤ} (ha : ESp a u Bb x) (hb : ESp b u Bb y)
-    (h1 : zsz (x - y) ≤ Bb) (h2 : zsz ((x - y) * (x - y)) ≤ Bb) (hB1 : 1 ≤ Bb) :
-    ESp (.sel (.neg (eSq (eSub a b))) (.lit 0) (.lit 1)) u Bb (if x = y then 1 else 0) := by
-  refine ESp.sel (ESp.neg (ESp.sq (ESp.sub ha hb h1) h2)) (clean_lit _) (clean_lit _) ?_ ?_
-  · intro hl
-    have : x ≠ y := fun e => by subst e; simp at hl
-    rw [if_neg this]; exact ESp.lit (by rw [zsz_zero]; omega)
-  · intro hl
-    have : x = y := by
-      by_contra hne
-      have : 0 < (x - y) * (x - y) := mul_self_pos.2 (sub_ne_zero.2 hne)
-      exact hl (by linarith)
-    rw [if_pos this]; exact ESp.lit (by rw [zsz_one]; exact hB1)
-
 end Comb
-
-/-! ## Arithmetic of the rows -/
-
-theorem sR_int {K F e s m : ℕ} (hF : 1 ≤ F) (hs : s < m) (he : K * (F * m - 1) ≤ e) :
-    K * (F * (s + 1) - 1) ≤ e ∧ e % K ≤ e - K * (F * (s + 1) - 1) ∧
-    ((KFR.sR K F e s : ℕ) : ℤ) = (e : ℤ) - (K : ℤ) * ((F : ℤ) * ((s : ℤ) + 1) - 1) - ((e % K : ℕ) : ℤ) := by
-  have hle : F * (s + 1) ≤ F * m := Nat.mul_le_mul_left _ hs
-  have h1 : 1 ≤ F * (s + 1) := Nat.one_le_iff_ne_zero.2 (by positivity)
-  have hE : K * (F * (s + 1) - 1) ≤ e := le_trans (Nat.mul_le_mul_left _ (by omega)) he
-  have hmod : (e - K * (F * (s + 1) - 1)) % K = e % K := Nat.sub_mul_mod hE
-  have hm2 := Nat.mod_le (e - K * (F * (s + 1) - 1)) K
-  refine ⟨hE, by omega, ?_⟩
-  have hc : (((F * (s + 1) - 1 : ℕ)) : ℤ) = (F : ℤ) * ((s : ℤ) + 1) - 1 := by
-    rw [Nat.cast_sub h1]; push_cast; ring
-  unfold KFR.sR
-  rw [Nat.cast_sub (by omega), Nat.cast_sub hE, Nat.cast_mul, hc]
 
 section PFacts
 
 variable {k K e T S0 B r H : ℕ} (hp : PF k K e T S0 B r)
 include hp
-
-theorem PF.KT : K ≤ T := by have := hp.ht; omega
-
-theorem PF.fT : mC ^ k ≤ T := by
-  have := hp.fm
-  calc mC ^ k = mC ^ k * 1 := (mul_one _).symm
-    _ ≤ mC ^ k * mC := Nat.mul_le_mul_left _ (by norm_num [mC])
-    _ ≤ T := hp.fm
-
-theorem PF.he' : K * (mC ^ k * mC - 1) ≤ e := by rw [← pow_succ]; exact hp.he
-
-theorem PF.fK : mC ^ k * K ≤ e := by
-  have h1 : mC ^ k ≤ mC ^ k * mC - 1 := by
-    have := f1_pos k
-    have : mC ^ k * 2 ≤ mC ^ k * mC := Nat.mul_le_mul_left _ (by norm_num [mC])
-    omega
-  have := Nat.mul_le_mul_left K h1
-  have := hp.he'
-  rw [Nat.mul_comm (mC ^ k) K]; omega
 
 end PFacts
 
@@ -1003,31 +770,6 @@ section SFacts
 variable {k K e T S0 B r : ℕ} (hp : PF k K e T S0 B r)
 include hp
 
-theorem srw_add {x y : ℕ} (hxy : x < y) (hy : y < mC) :
-    srw K e k y + mC ^ k * K * (y - x) = srw K e k x := by
-  obtain ⟨_, _, hx'⟩ := sR_int (K := K) (F := mC ^ k) (e := e) (f1_pos k) (hxy.trans hy) hp.he'
-  obtain ⟨_, _, hy'⟩ := sR_int (K := K) (F := mC ^ k) (e := e) (f1_pos k) hy hp.he'
-  have : ((srw K e k y : ℕ) : ℤ) + ((mC ^ k * K * (y - x) : ℕ) : ℤ) = ((srw K e k x : ℕ) : ℤ) := by
-    rw [hx', hy']; push_cast [Nat.cast_sub hxy.le]; ring
-  exact_mod_cast this
-
-theorem srw_top {x : ℕ} (hx : x < mC) : srw K e k x + mC ^ k * K ≤ T := by
-  obtain ⟨hE, hmod, _⟩ := sR_int (K := K) (F := mC ^ k) (e := e) (f1_pos k) hx hp.he'
-  have hf := f1_pos k
-  have hPQ : K * (mC ^ k - 1) ≤ K * (mC ^ k * (x + 1) - 1) :=
-    Nat.mul_le_mul_left _ (by have : mC ^ k ≤ mC ^ k * (x + 1) := Nat.le_mul_of_pos_right _ (by omega)
-                              omega)
-  have hQ : K * (mC ^ k - 1) + K = mC ^ k * K := by
-    rw [Nat.mul_sub_one, Nat.mul_comm (mC ^ k) K]
-    have : K ≤ K * mC ^ k := Nat.le_mul_of_pos_right _ hf
-    omega
-  have ht := hp.ht
-  have := Nat.mod_le e K
-  unfold srw KFR.sR
-  omega
-
-theorem srw_le {x : ℕ} (hx : x < mC) : srw K e k x ≤ T := by have := srw_top hp hx; omega
-
 end SFacts
 
 section Par
@@ -1035,309 +777,7 @@ section Par
 variable {k K e T S0 B r H : ℕ} {i j : Fin mC} {u : IState HS} {Bb : ℕ}
   (hp : PF k K e T S0 B r) (hA : Agree (rowσ k K e T S0 B r H i j) u)
   (hBb : zsz ((VbR T S0 B r H : ℕ) : ℤ) ≤ Bb)
-
-omit hA in
-include hBb in
-theorem zV {v : ℤ} (h0 : -((VbR T S0 B r H : ℕ) : ℤ) ≤ v) (h1 : v ≤ (VbR T S0 B r H : ℕ)) :
-    zsz v ≤ Bb :=
-  le_trans (zsz_mono (b := ((VbR T S0 B r H : ℕ) : ℤ)) (by
-    rw [Int.natAbs_natCast]
-    exact Int.ofNat_le.mp (by rw [Int.natCast_natAbs]; exact abs_le.mpr ⟨h0, h1⟩))) hBb
-
-omit hA in
-include hp hBb in
-include hp hBb in
-include hp hBb in
 include hp hA hBb
-
-omit hp hBb in
-theorem sFp : ESp (pr 0) u Bb ((mC ^ k : ℕ) : ℤ) :=
-  sPr' hA 0 rfl (zT hp hBb (by have : (0 : ℤ) ≤ ((mC ^ k : ℕ) : ℤ) := Nat.cast_nonneg _; omega)
-    (by exact_mod_cast hp.fT))
-
-theorem sKp : ESp (pr 1) u Bb (K : ℤ) :=
-  sPr' hA 1 rfl (zT hp hBb (by omega) (by exact_mod_cast hp.KT))
-
-theorem sEp : ESp (pr 2) u Bb (e : ℤ) :=
-  sPr' hA 2 rfl (zT hp hBb (by omega) (by exact_mod_cast hp.eT.le))
-
-theorem sTp : ESp (pr 3) u Bb (T : ℤ) :=
-  sPr' hA 3 rfl (zT hp hBb (by omega) le_rfl)
-
-omit hA hBb in
-theorem VbR_ge : S0 ≤ VbR T S0 B r H ∧ B ≤ VbR T S0 B r H ∧ r ≤ VbR T S0 B r H ∧
-    H + 1 ≤ VbR T S0 B r H ∧ B * 2 ^ T * S0 * r ≤ VbR T S0 B r H ∧
-    r * (2 * (H + 1)) ≤ VbR T S0 B r H := by
-  have := hp.s0; have := hp.b; have := hp.r
-  have h2 : 1 ≤ 2 ^ T := Nat.one_le_two_pow
-  have hn : 1 ≤ B * 2 ^ T * S0 := Nat.one_le_iff_ne_zero.2 (by positivity)
-  unfold VbR
-  generalize hN : B * 2 ^ T * S0 = n at hn
-  have hSn : S0 ≤ n := by
-    rw [← hN]; calc S0 = 1 * 1 * S0 := by ring
-      _ ≤ B * 2 ^ T * S0 := Nat.mul_le_mul_right _ (Nat.mul_le_mul hp.b h2)
-  have hBn : B ≤ n := by
-    rw [← hN]; calc B = B * 1 * 1 := by ring
-      _ ≤ B * 2 ^ T * S0 := Nat.mul_le_mul (Nat.mul_le_mul_left _ h2) hp.s0
-  have e1 : 2 * n * r * (H + 1) = n * (r * (2 * (H + 1))) := by ring
-  have e2 : 2 * n * r * (H + 1) = (n * r) * (2 * (H + 1)) := by ring
-  have hX : r * (2 * (H + 1)) ≤ 2 * n * r * (H + 1) := by
-    rw [e1]; exact Nat.le_mul_of_pos_left _ hn
-  have hY : n * r ≤ 2 * n * r * (H + 1) := by rw [e2]; exact Nat.le_mul_of_pos_right _ (by omega)
-  have hr2 : r ≤ r * (2 * (H + 1)) := Nat.le_mul_of_pos_right _ (by omega)
-  have hH2 : H + 1 ≤ r * (2 * (H + 1)) := by
-    calc H + 1 ≤ 1 * (2 * (H + 1)) := by omega
-      _ ≤ r * (2 * (H + 1)) := Nat.mul_le_mul_right _ hp.r
-  have hnr : n ≤ n * r := Nat.le_mul_of_pos_right _ (by omega)
-  refine ⟨by omega, by omega, by omega, by omega, hY, hX⟩
-
-theorem sSp : ESp (pr 4) u Bb (S0 : ℤ) :=
-  sPr' hA 4 rfl (zV hBb (by omega) (by exact_mod_cast (VbR_ge (H := H) hp).1))
-
-theorem sBp : ESp (pr 5) u Bb (B : ℤ) :=
-  sPr' hA 5 rfl (zV hBb (by omega) (by exact_mod_cast (VbR_ge (H := H) hp).2.1))
-
-theorem sRp : ESp (pr 6) u Bb (r : ℤ) :=
-  sPr' hA 6 rfl (zV hBb (by omega) (by exact_mod_cast (VbR_ge (H := H) hp).2.2.1))
-
-theorem sHp : ESp (pr 7) u Bb (H : ℤ) :=
-  sPr' hA 7 rfl (zV hBb (by omega) (by
-    have := (VbR_ge (H := H) hp).2.2.2.1; exact_mod_cast (by omega : H ≤ VbR T S0 B r H)))
-
-theorem hR_le (i j : ℕ) : hR i j ≤ 2 := by unfold hR; split_ifs <;> omega
-
-theorem sAm : ESp eAm u Bb ((min (i : ℕ) (j : ℕ) : ℕ) : ℤ) := by
-  have hi : (i : ℕ) < 1000000 := lt_of_lt_of_eq i.isLt mC_eq
-  have hj : (j : ℕ) < 1000000 := lt_of_lt_of_eq j.isLt mC_eq
-  exact ESp.of_eq (ESp.min (sIp hp hA hBb) (sJp hp hA hBb) (zS hp hBb (by omega) (by omega)))
-    (by push_cast; rfl)
-
-theorem sBm : ESp eBm u Bb ((max (i : ℕ) (j : ℕ) : ℕ) : ℤ) := by
-  have hi : (i : ℕ) < 1000000 := lt_of_lt_of_eq i.isLt mC_eq
-  have hj : (j : ℕ) < 1000000 := lt_of_lt_of_eq j.isLt mC_eq
-  exact ESp.of_eq (ESp.max (sIp hp hA hBb) (sJp hp hA hBb) (zS hp hBb (by omega) (by omega)))
-    (by push_cast; rfl)
-
-theorem sT0 : ESp eT0 u Bb ((s0R i j : ℕ) : ℤ) := by
-  have hi : (i : ℕ) < 1000000 := lt_of_lt_of_eq i.isLt mC_eq
-  have hj : (j : ℕ) < 1000000 := lt_of_lt_of_eq j.isLt mC_eq
-  have := hR_le i j
-  exact ESp.of_eq (ESp.min (sHr hp hA hBb) (sAm hp hA hBb) (zS hp hBb (by omega) (by omega)))
-    (by unfold s0R; push_cast; rfl)
-
-theorem sT2 : ESp eT2 u Bb ((s2R i j : ℕ) : ℤ) := by
-  have hi : (i : ℕ) < 1000000 := lt_of_lt_of_eq i.isLt mC_eq
-  have hj : (j : ℕ) < 1000000 := lt_of_lt_of_eq j.isLt mC_eq
-  have := hR_le i j
-  exact ESp.of_eq (ESp.max (sHr hp hA hBb) (sBm hp hA hBb) (zS hp hBb (by omega) (by omega)))
-    (by unfold s2R; push_cast; rfl)
-
-theorem sT1 : ESp eT1 u Bb ((s1R i j : ℕ) : ℤ) := by
-  have hi : (i : ℕ) < 1000000 := lt_of_lt_of_eq i.isLt mC_eq
-  have hj : (j : ℕ) < 1000000 := lt_of_lt_of_eq j.isLt mC_eq
-  have := hR_le i j
-  have h02 : s0R i j + s2R i j ≤ min (i : ℕ) j + max (i : ℕ) j + hR i j := by
-    unfold s0R s2R; omega
-  have hs2 : s2R i j ≤ 2 + (i : ℕ) + j := by unfold s2R; omega
-  have a1 := ESp.add (ESp.add (sAm hp hA hBb) (sBm hp hA hBb) (zS hp hBb (by omega) (by omega)))
-    (sHr hp hA hBb) (zS hp hBb (by omega) (by omega))
-  have a2 := ESp.sub a1 (sT0 hp hA hBb) (zS hp hBb (by omega) (by omega))
-  have a3 := ESp.sub a2 (sT2 hp hA hBb) (zS hp hBb (by omega) (by omega))
-  exact ESp.of_eq a3 (by unfold s1R; omega)
-
-theorem sRho : ESp eRho u Bb ((e % K : ℕ) : ℤ) := by
-  have := Nat.mod_le e K; have := hp.eT
-  exact ESp.of_eq (ESp.nmod (sEp hp hA hBb) (sKp hp hA hBb) (by omega)
-    (by have := hp.k1; omega) (by rw [← Int.natCast_mod]; exact zT hp hBb (by omega) (by omega)))
-    (Int.natCast_mod e K).symm
-
-theorem sFKp : ESp eFKp u Bb ((mC ^ k * K : ℕ) : ℤ) :=
-  ESp.mulN (sFp hp hA hBb) (sKp hp hA hBb) (zT hp hBb (by omega)
-    (by have := hp.fK; have := hp.eT; exact_mod_cast (by omega : mC ^ k * K ≤ T)))
-
-theorem sSRe {es : Ex HS} {x : ℕ} (hs : ESp es u Bb (x : ℤ)) (hx : x < mC) :
-    ESp (eSRe es) u Bb ((srw K e k x : ℕ) : ℤ) := by
-  obtain ⟨hE, hmod, hval⟩ := sR_int (K := K) (F := mC ^ k) (e := e) (f1_pos k) hx hp.he'
-  have hT := hp.fm; have heT := hp.eT; have hmT := hp.mCT
-  have hf1 := f1_pos k
-  have n1 : mC ^ k * (x + 1) ≤ T := le_trans (Nat.mul_le_mul_left _ hx) hT
-  have n2 : 1 ≤ mC ^ k * (x + 1) := Nat.one_le_iff_ne_zero.2 (by positivity)
-  have b1 : ((mC ^ k : ℕ) : ℤ) * ((x : ℤ) + 1) ≤ T := by exact_mod_cast n1
-  have b1' : 1 ≤ ((mC ^ k : ℕ) : ℤ) * ((x : ℤ) + 1) := by exact_mod_cast n2
-  have b2 : (K : ℤ) * (((mC ^ k : ℕ) : ℤ) * ((x : ℤ) + 1) - 1) ≤ e := by
-    have : ((K * (mC ^ k * (x + 1) - 1) : ℕ) : ℤ) ≤ e := by exact_mod_cast hE
-    rw [Nat.cast_mul, Nat.cast_sub n2] at this; push_cast at this ⊢; exact this
-  have b3 : 0 ≤ (K : ℤ) * (((mC ^ k : ℕ) : ℤ) * ((x : ℤ) + 1) - 1) :=
-    mul_nonneg (Nat.cast_nonneg _) (by linarith)
-  have hρ : ((e % K : ℕ) : ℤ) ≤ (e : ℤ) - (K : ℤ) * (((mC ^ k : ℕ) : ℤ) * ((x : ℤ) + 1) - 1) := by
-    have : ((e % K : ℕ) : ℤ) ≤ ((e - K * (mC ^ k * (x + 1) - 1) : ℕ) : ℤ) := by exact_mod_cast hmod
-    rw [Nat.cast_sub hE, Nat.cast_mul, Nat.cast_sub n2] at this; push_cast at this ⊢; exact this
-  have hρ0 : (0 : ℤ) ≤ ((e % K : ℕ) : ℤ) := Nat.cast_nonneg _
-  have l1 := sLit (u := u) hp hBb 1 (by norm_num) (by norm_num)
-  have a1 := ESp.add hs l1 (zT hp hBb (by omega) (by omega))
-  have a2 := ESp.mul (sFp hp hA hBb) a1 (zT hp hBb (by linarith) b1)
-  have a3 := ESp.sub a2 l1 (zT hp hBb (by linarith) (by linarith))
-  have a4 := ESp.mul (sKp hp hA hBb) a3 (zT hp hBb (by linarith) (by
-    have : (e : ℤ) ≤ T := by exact_mod_cast heT.le
-    linarith))
-  have a5 := ESp.sub (sEp hp hA hBb) a4 (zT hp hBb (by
-    have : (e : ℤ) ≤ T := by exact_mod_cast heT.le
-    linarith) (by have : (e : ℤ) ≤ T := by exact_mod_cast heT.le
-                  linarith))
-  have a6 := ESp.sub a5 (sRho hp hA hBb) (zT hp hBb (by
-    have : (e : ℤ) ≤ T := by exact_mod_cast heT.le
-    linarith) (by have : (e : ℤ) ≤ T := by exact_mod_cast heT.le
-                  linarith))
-  exact ESp.of_eq a6 hval.symm
-
-omit hp hA in
-theorem zVn {x : ℕ} (h : x ≤ VbR T S0 B r H) : zsz (x : ℤ) ≤ Bb := le_trans (zsz_nat_le h) hBb
-
-omit hA hBb in
-theorem nV : B * 2 ^ T * S0 ≤ VbR T S0 B r H :=
-  le_trans (Nat.le_mul_of_pos_right _ hp.r) (VbR_ge (H := H) hp).2.2.2.2.1
-
-omit hp hA hBb in
-theorem s_lt (hij : (i : ℕ) ≠ j) : s0R i j < mC ∧ s1R i j < mC ∧ s2R i j < mC := by
-  have hi : (i : ℕ) < 1000000 := lt_of_lt_of_eq i.isLt mC_eq
-  have hj : (j : ℕ) < 1000000 := lt_of_lt_of_eq j.isLt mC_eq
-  have := s2R_le (i := (i : ℕ)) (j := (j : ℕ))
-  have hm := mC_eq
-  have := rows_lt hij; omega
-
-omit hA in
-/-- A power-of-two exponent `x ≤ T`. -/
-theorem sPow {ex : Ex HS} {x : ℕ} (h : ESp ex u Bb (x : ℤ)) (hx : x ≤ T) :
-    ESp (.pow2 ex) u Bb ((2 ^ x : ℕ) : ℤ) := ESp.pow2 h (by have := TB hp hBb; omega)
-
-theorem xN0 (hij : (i : ℕ) ≠ j) : ESp eN0 u Bb ((N0R k K e T B i j : ℕ) : ℤ) := by
-  have h0 := (s_lt hij).1
-  have F0 := srw_top hp h0
-  have a := ESp.sub (ESp.sub (sTp hp hA hBb) (sSRe hp hA hBb (sT0 hp hA hBb) h0)
-    (zT hp hBb (by omega) (by omega))) (sFKp hp hA hBb) (zT hp hBb (by omega) (by omega))
-  have a' : ESp _ u Bb ((T - srw K e k (s0R i j) - mC ^ k * K : ℕ) : ℤ) := ESp.of_eq a (by omega)
-  refine ESp.mulN (sBp hp hA hBb) (sPow hp hBb a' (by omega)) (zVn hBb ?_)
-  calc B * 2 ^ (T - srw K e k (s0R i j) - mC ^ k * K) ≤ B * 2 ^ T * 1 := by
-        rw [mul_one]; exact Nat.mul_le_mul_left _ (Nat.pow_le_pow_right (by norm_num) (by omega))
-    _ ≤ B * 2 ^ T * S0 := Nat.mul_le_mul_left _ hp.s0
-    _ ≤ _ := nV hp
-
-theorem xN12 {x y : ℕ} {ex ey : Ex HS} (hxy : x < y) (hy : y < mC) (hx : ESp ex u Bb (x : ℤ))
-    (hy' : ESp ey u Bb (y : ℤ)) :
-    ESp (.pow2 (eSub (eSub (eSRe ex) (eSRe ey)) eFKp)) u Bb
-      ((2 ^ (srw K e k x - srw K e k y - mC ^ k * K) : ℕ) : ℤ) := by
-  have A := srw_add hp hxy hy
-  have Lx := srw_le hp (hxy.trans hy)
-  have hge : mC ^ k * K ≤ mC ^ k * K * (y - x) := Nat.le_mul_of_pos_right _ (by omega)
-  have a := ESp.sub (ESp.sub (sSRe hp hA hBb hx (hxy.trans hy)) (sSRe hp hA hBb hy' hy)
-    (zT hp hBb (by omega) (by omega))) (sFKp hp hA hBb) (zT hp hBb (by omega) (by omega))
-  have a' : ESp _ u Bb ((srw K e k x - srw K e k y - mC ^ k * K : ℕ) : ℤ) := ESp.of_eq a (by omega)
-  exact sPow hp hBb a' (by omega)
-
-theorem xN1 (hij : (i : ℕ) ≠ j) : ESp eN1 u Bb ((N1R k K e i j : ℕ) : ℤ) := by
-  have hl := s_lt hij
-  exact xN12 hp hA hBb (rows_lt hij).1 hl.2.1 (sT0 hp hA hBb) (sT1 hp hA hBb)
-
-theorem xN2 (hij : (i : ℕ) ≠ j) : ESp eN2 u Bb ((N2R k K e i j : ℕ) : ℤ) := by
-  have hl := s_lt hij
-  exact xN12 hp hA hBb (rows_lt hij).2 hl.2.2 (sT1 hp hA hBb) (sT2 hp hA hBb)
-
-theorem xN3 (hij : (i : ℕ) ≠ j) : ESp eN3 u Bb ((N3R k K e S0 i j : ℕ) : ℤ) := by
-  have h2 := (s_lt hij).2.2
-  have L := srw_le hp h2
-  refine ESp.mulN (sPow hp hBb (sSRe hp hA hBb (sT2 hp hA hBb) h2) L) (sSp hp hA hBb)
-    (zVn hBb ?_)
-  calc 2 ^ srw K e k (s2R i j) * S0 ≤ 1 * 2 ^ T * S0 := by
-        rw [one_mul]; exact Nat.mul_le_mul_right _ (Nat.pow_le_pow_right (by norm_num) L)
-    _ ≤ B * 2 ^ T * S0 := Nat.mul_le_mul_right _ (Nat.mul_le_mul_right _ hp.b)
-    _ ≤ _ := nV hp
-
-theorem xQ : ESp eQp u Bb ((2 ^ (mC ^ k * K) : ℕ) : ℤ) :=
-  sPow hp hBb (sFKp hp hA hBb) (by have := hp.fK; have := hp.eT; omega)
-
-theorem xK2 : ESp eK2p u Bb ((2 ^ K : ℕ) : ℤ) := sPow hp hBb (sKp hp hA hBb) hp.KT
-
-theorem xR2 : ESp eR2p u Bb ((2 ^ (e % K) : ℕ) : ℤ) :=
-  sPow hp hBb (sRho hp hA hBb) (by have := Nat.mod_le e K; have := hp.eT; omega)
-
-theorem xW : ESp (pr 7) u Bb (H : ℤ) := sHp hp hA hBb
-
-theorem xNt : ESp eNtp u Bb ((2 * (B * 2 ^ T * S0 * r) : ℕ) : ℤ) := by
-  have hV : 2 * (B * 2 ^ T * S0 * r) ≤ VbR T S0 B r H := by
-    unfold VbR
-    calc 2 * (B * 2 ^ T * S0 * r) = 2 * (B * 2 ^ T * S0) * r * 1 := by ring
-      _ ≤ _ := Nat.mul_le_mul_left _ (by omega)
-  have h1 : B * 2 ^ T * S0 * r ≤ VbR T S0 B r H := le_trans (by omega) hV
-  have h2 : B * 2 ^ T * S0 ≤ VbR T S0 B r H := le_trans (Nat.le_mul_of_pos_right _ hp.r) h1
-  have h3 : B * 2 ^ T ≤ VbR T S0 B r H := le_trans (Nat.le_mul_of_pos_right _ hp.s0) h2
-  have a := ESp.mulN (ESp.mulN (ESp.mulN (sBp hp hA hBb) (sPow hp hBb (sTp hp hA hBb) le_rfl)
-    (zVn hBb h3)) (sSp hp hA hBb) (zVn hBb h2)) (sRp hp hA hBb) (zVn hBb h1)
-  have l2 := sLit (u := u) hp hBb 2 (by norm_num) (by norm_num)
-  exact ESp.of_eq (ESp.mul l2 a (by
-    have := zVn hBb hV; push_cast at this ⊢; exact this)) (by push_cast; ring)
-
-theorem xBp : ESp eBp u Bb ((r * (2 * (H + 1)) : ℕ) : ℤ) := by
-  have h1 := (VbR_ge (H := H) hp).2.2.2.2.2
-  have h2 : 2 * (H + 1) ≤ VbR T S0 B r H := le_trans (Nat.le_mul_of_pos_left _ hp.r) h1
-  have h3 : H + 1 ≤ VbR T S0 B r H := by omega
-  have l1 := sLit (u := u) hp hBb 1 (by norm_num) (by norm_num)
-  have l2 := sLit (u := u) hp hBb 2 (by norm_num) (by norm_num)
-  have a := ESp.add (sHp hp hA hBb) l1 (by have := zVn hBb h3; push_cast at this; exact this)
-  have b := ESp.mul l2 a (by have := zVn hBb h2; push_cast at this; exact this)
-  exact ESp.of_eq (ESp.mul (sRp hp hA hBb) b (by have := zVn hBb h1; push_cast at this; exact this))
-    (by push_cast; ring)
-
-theorem xFa (hij : (i : ℕ) ≠ j) : ESp eFa u Bb ((flA (pxR i j) : ℕ) : ℤ) := by
-  have hl := s_lt hij
-  have hm := mC_eq
-  have := lt_of_lt_of_eq i.isLt mC_eq
-  rw [flA_val]
-  exact ESp.neq (sIp hp hA hBb) (sT0 hp hA hBb) (zS hp hBb (by omega) (by omega))
-    (zS hp hBb (by nlinarith) (by nlinarith)) (by have := TB hp hBb; have := hp.mCT; omega)
-
-theorem xFb (hij : (i : ℕ) ≠ j) : ESp eFb u Bb ((flB (pxR i j) (pyR i j) : ℕ) : ℤ) := by
-  have hl := s_lt hij
-  have hm := mC_eq
-  have := lt_of_lt_of_eq i.isLt mC_eq
-  have := lt_of_lt_of_eq j.isLt mC_eq
-  have hB1 : 1 ≤ Bb := by have := TB hp hBb; have := hp.mCT; omega
-  rw [flB_val hij]
-  have e1 := ESp.eq (sJp hp hA hBb) (sT2 hp hA hBb) (zS hp hBb (by omega) (by omega))
-    (zS hp hBb (by nlinarith) (by nlinarith)) hB1
-  have e2 := ESp.eq (sIp hp hA hBb) (sT2 hp hA hBb) (zS hp hBb (by omega) (by omega))
-    (zS hp hBb (by nlinarith) (by nlinarith)) hB1
-  have e3 := ESp.eq (sJp hp hA hBb) (sT0 hp hA hBb) (zS hp hBb (by omega) (by omega))
-    (zS hp hBb (by nlinarith) (by nlinarith)) hB1
-  refine ESp.add e1 (ESp.mul e2 e3 (zS hp hBb ?_ ?_)) (zS hp hBb ?_ ?_) <;> split_ifs <;> norm_num
-
-theorem xGx (hij : (i : ℕ) ≠ j) :
-    ESp eGx u Bb ((gxV (N2R k K e i j) K (mC ^ k) (pxR i j) : ℕ) : ℤ) := by
-  have hl := s_lt hij
-  have hm := mC_eq
-  have := lt_of_lt_of_eq i.isLt mC_eq
-  rw [gx_val hij]
-  have hrl := rows_lt hij
-  have A := srw_add (k := k) (K := K) (e := e) hp hrl.2 hl.2.2
-  have L1 := srw_le hp hl.2.1
-  have hge : mC ^ k * K ≤ mC ^ k * K * (s2R i j - s1R i j) := Nat.le_mul_of_pos_right _ (by omega)
-  refine ESp.sel (ESp.neg (ESp.sq (ESp.sub (sIp hp hA hBb) (sT2 hp hA hBb)
-    (zS hp hBb (by omega) (by omega))) (zS hp hBb (by nlinarith) (by nlinarith))))
-    (clean_lit _) (clean56 (by decide)) (fun h => ?_) (fun h => ?_)
-  · have : ((i : ℕ) : ℤ) ≠ (s2R i j : ℤ) := fun e => by rw [e] at h; simp at h
-    rw [if_neg this]; exact sLit hp hBb 1 (by norm_num) (by norm_num)
-  · have : ((i : ℕ) : ℤ) = (s2R i j : ℤ) := by
-      by_contra hc
-      have := mul_self_pos.2 (sub_ne_zero.2 hc)
-      exact h (by linarith)
-    rw [if_pos this]
-    refine ESp.mulN (xQ hp hA hBb) (xN2 hp hA hBb hij) (zVn hBb ?_)
-    unfold N2R
-    rw [← pow_add]
-    calc 2 ^ (mC ^ k * K + (srw K e k (s1R i j) - srw K e k (s2R i j) - mC ^ k * K))
-        ≤ 2 ^ T := Nat.pow_le_pow_right (by norm_num) (by omega)
-      _ = 1 * 2 ^ T * 1 := by ring
-      _ ≤ B * 2 ^ T * S0 := Nat.mul_le_mul (Nat.mul_le_mul_right _ hp.b) hp.s0
-      _ ≤ _ := nV hp
 
 end Par
 
@@ -1362,104 +802,6 @@ set_option maxRecDepth 20000
 namespace NLogN.KFX
 
 open IntMul RS KIL KFD KFE KFB KFL KFW KFH AModel Butterfly
-
-theorem rX_ne0 : rX ≠ 0 := by decide
-theorem mA_ne0 : mA ≠ 0 := by decide
-
-theorem loopZ_runs {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp} (t : IState HS)
-    (V Bb : ℕ) (hB : zsz (V : ℤ) ≤ Bb) (hB2 : 2 ≤ Bb) :
-    IRuns I iprog loopZ (ssZ t V 0) (ssZ t V (zsz (V : ℤ))) (zsz (V : ℤ) * (cZ Bb + 30) + 30) := by
-  refine IRuns.loop' (ssZ t V) (cZ Bb) (zsz (V : ℤ)) (fun m hm => ?_) ?_ (fun m hm => ?_)
-  · rw [cl_int _ _ _ _ (ssZ_G_rX t V m)]
-    have : V / 2 ^ m ≠ 0 := by
-      rw [Ne, Nat.div_eq_zero_iff_lt (by positivity), not_lt]
-      by_contra hc; push Not at hc
-      have := (zsz_le_iff (z := (V : ℤ)) (m := m)).2 (by simpa using hc)
-      omega
-    have h0 : ((V / 2 ^ m : ℕ) : ℤ) ≠ 0 := by exact_mod_cast this
-    have h1 : ¬ ((V / 2 ^ m : ℕ) : ℤ) < 0 := not_lt.2 (Nat.cast_nonneg _)
-    rw [if_neg h0, if_neg h1]; rfl
-  · rw [cl_int _ _ _ _ (ssZ_G_rX t V _)]
-    have : V / 2 ^ zsz (V : ℤ) = 0 := by
-      rw [Nat.div_eq_zero_iff_lt (by positivity)]
-      have := natAbs_lt_zsz (V : ℤ); simpa using this
-    simp [this]
-  · exact (bodyZ_sp t V m Bb hm hB hB2).toIRuns
-
-/-! ## The Lemma 13 core as a hypothesis -/
-
-/-! ## The code -/
-
-theorem hdrL_size : (hdrL.map fun p => p.2.size + 1).sum ≤ 10000 := by decide
-
-theorem hdrL_nodup : (hdrL.map Prod.fst).Nodup := by decide
-
-theorem hdrL_regs : ∀ p ∈ hdrL, ∀ r ∈ p.2.regs, r ∉ hdrL.map Prod.fst := by decide
-
-theorem hdrL_low : ∀ p ∈ hdrL, p.1.val < 56 := by decide
-
-theorem zL_regs : ∀ p ∈ zL, ∀ r ∈ p.2.regs, r ∉ zL.map Prod.fst := by decide
-
-/-! ## The masters agree -/
-
-/-! ## The geometry of a row addition -/
-
-theorem σF_val {i j : Fin mC} (hij : (i : ℕ) ≠ j) (x : Fin 3) : (σF i j x : ℕ) = σR i j x := by
-  have hl := s_lt (i := i) (j := j) hij
-  unfold σF; simp only
-  apply Nat.mod_eq_of_lt
-  unfold σR; split_ifs <;> omega
-
-theorem σF_mono {i j : Fin mC} (hij : (i : ℕ) ≠ j) : σF i j 0 < σF i j 1 ∧ σF i j 1 < σF i j 2 := by
-  have h := rows_lt hij
-  constructor <;> rw [Fin.lt_def, σF_val hij, σF_val hij] <;> simp [σR] <;> omega
-
-theorem posR_he {k K e : ℕ} (he : K * (mC ^ k * mC - 1) ≤ e) (p : Fin mC × Fin (mC ^ k)) :
-    posR K e k p + K * (p.2.val + mC ^ k * p.1.val) = e := by
-  have h1 := p.1.isLt; have h2 := p.2.isLt
-  have h3 : mC ^ k * p.1.val ≤ mC ^ k * (mC - 1) := Nat.mul_le_mul_left _ (by omega)
-  have h4 : mC ^ k * (mC - 1) = mC ^ k * mC - mC ^ k := Nat.mul_sub_one _ _
-  have h6 : mC ^ k ≤ mC ^ k * mC := Nat.le_mul_of_pos_right _ (by norm_num [mC])
-  have h5 : p.2.val + mC ^ k * p.1.val ≤ mC ^ k * mC - 1 := by omega
-  have := Nat.mul_le_mul_left K h5
-  unfold posR; omega
-
-theorem shR_eq {k K e T S0 B : ℕ} {i j : Fin mC} (hij : (i : ℕ) ≠ j) :
-    KFR.shR K (mC ^ k) e T S0 B (σF i j) =
-      rect (N0R k K e T B i j) (N1R k K e i j) (N2R k K e i j) (N3R k K e S0 i j) (mC ^ k * K) := by
-  simp only [KFR.shR, N0R, N1R, N2R, N3R, srw, σF_val hij]; rfl
-
-theorem vol_rowRect {k K e T S0 B r : ℕ} {i j : Fin mC} (hij : (i : ℕ) ≠ j) (hp : PF k K e T S0 B r) :
-    vol (rect (N0R k K e T B i j) (N1R k K e i j) (N2R k K e i j) (N3R k K e S0 i j) (mC ^ k * K)) =
-      B * 2 ^ T * S0 := by
-  rw [← shR_eq hij]
-  exact KFR.shR_vol (posR_he hp.he') hp.ht (σF_mono hij)
-
-/-! ## Header cost -/
-
-theorem zL_size : (zL.map fun p => p.2.size + 1).sum ≤ 20 := by decide
-
-theorem cHd_le {Bb M a b d1 d2 : ℕ} (hM : M ≤ Bb) (ha : a ≤ 10000 * 10 ^ 7 * (Bb + 2) ^ 2 + 1)
-    (hb : b ≤ 20 * 10 ^ 7 * (Bb + 2) ^ 2 + 1) (hd1 : d1 ≤ 2) (hd2 : d2 ≤ 2 * Bb + 2) :
-    a + (b + (M * (cZ Bb + 30) + 30) + (d1 + d2)) + (13 * (2 * Bb + 2) + 1) ≤ cHd Bb := by
-  unfold cHd cZ
-  have h1 : M * (2 * (4 * 10 ^ 7 * (Bb + 2) ^ 2) + 30) ≤ (Bb + 2) * (2 * (4 * 10 ^ 7 * (Bb + 2) ^ 2) + 30) :=
-    Nat.mul_le_mul_right _ (by omega)
-  generalize hX : Bb + 2 = X at *
-  have hX2 : 2 ≤ X := by omega
-  have h2 : X ^ 2 ≤ X ^ 3 := Nat.pow_le_pow_right (by omega) (by norm_num)
-  have h3 : X ≤ X ^ 2 := by nlinarith
-  have h4 : X * (2 * (4 * 10 ^ 7 * X ^ 2) + 30) = 8 * 10 ^ 7 * X ^ 3 + 30 * X := by ring
-  rw [h4] at h1
-  have : 1 ≤ X ^ 3 := by nlinarith
-  omega
-
-/-! ## The run -/
-
-theorem ESp.ofG {t : IState HS} {x : Fin HS} {v : ℤ} {L : List Item} {Bb : ℕ}
-    (h : t.G x = .int v :: L) (hx : x.val < 56) (hb : zsz v ≤ Bb) : ESp (.reg x) t Bb v :=
-  ⟨KFL.clean_all _ (by simp [Ex.regs, hx]), IState.isInt_of h,
-    by show zsz (t.top x) ≤ Bb; rw [IState.top_eq h]; exact hb, IState.top_eq h⟩
 
 end NLogN.KFX
 
@@ -1855,14 +1197,8 @@ theorem zV {v : ℤ} (h0 : -((VbR T S0 B r H : ℕ) : ℤ) ≤ v) (h1 : v ≤ (V
   le_trans (zsz_mono (b := ((VbR T S0 B r H : ℕ) : ℤ)) (by
     rw [Int.natAbs_natCast]
     exact Int.ofNat_le.mp (by rw [Int.natCast_natAbs]; exact abs_le.mpr ⟨h0, h1⟩))) hBb
-
-omit hA in
-include hp hBb in
-include hp hBb in
-include hp hBb in
 include hp hA hBb
 
-omit hp hBb in
 theorem sFp : ESp (pr 0) u Bb ((F : ℕ) : ℤ) :=
   sPr' hA 0 rfl (zT hp hBb (by have : (0 : ℤ) ≤ ((F : ℕ) : ℤ) := Nat.cast_nonneg _; omega)
     (by exact_mod_cast hp.fT))
@@ -1916,6 +1252,7 @@ theorem sHp : ESp (pr 7) u Bb (H : ℤ) :=
   sPr' hA 7 rfl (zV hBb (by omega) (by
     have := (VbR_ge (H := H) hp).2.2.2.1; exact_mod_cast (by omega : H ≤ VbR T S0 B r H)))
 
+omit hp hA hBb in
 theorem hR_le (i j : ℕ) : hR i j ≤ 2 := by unfold hR; split_ifs <;> omega
 
 theorem sAm : ESp eAm u Bb ((min (i : ℕ) (j : ℕ) : ℕ) : ℤ) := by

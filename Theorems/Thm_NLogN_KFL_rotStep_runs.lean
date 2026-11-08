@@ -8,6 +8,8 @@ import Theorems.Thm_NLogN_Ex_code_runs
 import Theorems.Thm_NLogN_Ex_cost_le
 import Theorems.Thm_NLogN_Ex_zsz_eval_le
 import Theorems.Thm_NLogN_zsz_le_of_lt
+import Theorems.Thm_NLogN_twoAtanP_ok
+import Definitions.Def_IntMul_Kappa_R6_Defs16
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -125,43 +127,8 @@ variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
 
 namespace RS
 
-theorem iter_ip (f : IState HS → IState HS) (hf : ∀ t, (f t).ip = t.ip ∧ (f t).out = t.out) :
-    ∀ k t, (f^[k] t).ip = t.ip ∧ (f^[k] t).out = t.out
-  | 0, t => ⟨rfl, rfl⟩
-  | k + 1, t => by
-    rw [Function.iterate_succ_apply']
-    exact ⟨(hf _).1.trans (iter_ip f hf k t).1, (hf _).2.trans (iter_ip f hf k t).2⟩
-
-theorem run_ip_out : ∀ (p : RS) (s : IState HS), (p.run s).ip = s.ip ∧ (p.run s).out = s.out
-  | skip, s => ⟨rfl, rfl⟩
-  | asg i e, s | push i e, s | pop i, s => by simp [NLogN.RS.run]
-  | seq a b, s => by
-    simp only [NLogN.RS.run]
-    exact ⟨(run_ip_out b _).1.trans (run_ip_out a s).1, (run_ip_out b _).2.trans (run_ip_out a s).2⟩
-  | ite c a b, s => by
-    simp only [NLogN.RS.run]; split_ifs
-    · exact run_ip_out a s
-    · exact run_ip_out b s
-  | rep i n b, s => by
-    simp only [NLogN.RS.run, IState.upd_ip, IState.upd_out]
-    have := iter_ip (fun t => decSt i (b.run t))
-      (fun t => by simp only [decSt, IState.upd_ip, IState.upd_out]; exact run_ip_out b t)
-      (n.eval s).toNat (s.upd i (.int (n.eval s) :: s.G i))
-    simpa using this
-
 @[simp] theorem run_ip (p : RS) (s : IState HS) : (p.run s).ip = s.ip := (run_ip_out p s).1
 @[simp] theorem run_out (p : RS) (s : IState HS) : (p.run s).out = s.out := (run_ip_out p s).2
-
-theorem repSt_ip_out (i : Fin HS) (n : Ex HS) (b : RS) (s : IState HS) (k : ℕ) :
-    (NLogN.RS.repSt i n b s k).ip = s.ip ∧ (NLogN.RS.repSt i n b s k).out = s.out := by
-  have := iter_ip (fun t => decSt i (b.run t))
-    (fun t => by simp only [decSt, IState.upd_ip, IState.upd_out]; exact run_ip_out b t)
-    k (s.upd i (.int (n.eval s) :: s.G i))
-  simpa [NLogN.RS.repSt] using this
-
-@[simp] theorem decSt_G (i : Fin HS) (t : IState HS) (j : Fin HS) :
-    (decSt i t).G j = if j = i then .int (t.top i - 1) :: (t.G i).tail else t.G j := by
-  simp [decSt, IState.upd_G]
 
 end RS
 
@@ -280,11 +247,6 @@ set_option linter.unnecessarySeqFocus false
 namespace NLogN.KIL
 
 open IntMul RS AModel AModelL12
-
-theorem RdOK.lt {r : Fin HS} (h : RdOK r) : r.val < 56 := by
-  rcases h with h | h
-  · rw [h]; decide
-  · exact h.2
 
 theorem clean_of_rd {e : Ex HS} (h : ∀ r ∈ e.regs, RdOK r) : e.Clean := fun j hj =>
   clean_of_lt (h j hj).lt j (by simp [Ex.regs])

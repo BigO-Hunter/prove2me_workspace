@@ -410,13 +410,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
 
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
-
 /-! ## The generic segment step -/
 
 /-! ## Expression combinators -/

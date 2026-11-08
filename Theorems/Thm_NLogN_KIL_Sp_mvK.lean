@@ -255,3 +255,16 @@ theorem NLogN.KIL.Sp_mvK {X Y C : Fin NLogN.HS} (hXY : X ≠ Y) (hXC : X ≠ C) 
   · subst h2; simp [hXY]
   · simp [h1, h2]
 end
+
+-- Dotted alias restored by repair: downstream proofs use `Sp.mvK` member notation;
+-- the bound itself is `NLogN.KIL.Sp_mvK`.
+theorem NLogN.KIL.Sp.mvK {X Y C : Fin NLogN.HS} (hXY : X ≠ Y) (hXC : X ≠ C) (hYC : Y ≠ C)
+    (hX5 : X.val < 56) (hY5 : Y.val < 56) (hC5 : C.val < 56) (s : NLogN.IState NLogN.HS)
+    (f : Fin NLogN.HS → List ℤ) (n : NLogN.Ex NLogN.HS) (hnc : n.Clean)
+    (hno : n.ok (NLogN.KIL.encK s f)) (L l : List ℤ) (hX : f X = L ++ l)
+    (hn : n.eval (NLogN.KIL.encK s f) = L.length) (B : ℕ) (hL : NLogN.Bnd B L) (hnl : n.Lin)
+    (hnb : n.Bnd (NLogN.KIL.encK s f) B) :
+    NLogN.KIL.Sp (NLogN.mvK X Y C n) (NLogN.KIL.encK s f)
+      (NLogN.KIL.encK s (Function.update (Function.update f X l) Y (L.reverse ++ f Y)))
+      ((n.size + 1) * 2000 * (B + 2) + L.length * (14000 * (B + 2)) + 32) :=
+  NLogN.KIL.Sp_mvK hXY hXC hYC hX5 hY5 hC5 s f n hnc hno L l hX hn B hL hnl hnb

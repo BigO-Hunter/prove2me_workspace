@@ -1065,6 +1065,29 @@ theorem pull_eq_ofFn_funLeft {R : Type*} [CommRing R] (sh : Shape) (G : List ℕ
 network on them with frames `Φ_M` = pull by `π M` on the `rest` digits, and merge back, returning
 output role `ρ w` to the rows of role `w`. The result is the pull of the whole array by `π I0` on
 the `rest` digits (prefix and row digits fixed). -/
+/- GAP (E): shear/frame stream lemmas.** The five lemmas below are referenced by
+`network_interchange_shear` and the Lemma-12 run, but were never recovered from the original
+`solutions` sources (verified absent at checkpoint 5126ec4 and in every wip snapshot).
+Statements are reconstructed exactly from the call sites; the obligations are real arithmetic
+about `streamΦ`/`shearπ` composition. -/
+
+theorem streamΦ_add {R M : Type*} [CommRing R] [AddGroup M] (P L : ℕ) (rest : AModel.Shape)
+    (π : M → List ℕ → List ℕ)
+    (hπv : ∀ m x, AModel.Valid rest x → AModel.Valid rest (π m x))
+    (hπadd : ∀ a b x, AModel.Valid rest x → π (a + b) x = π a (π b x))
+    (a b : M) (x : Fin (AModel.vol (P :: L :: rest)) → R) :
+    streamΦ P L rest π hπv (a + b) x
+      = streamΦ P L rest π hπv a (streamΦ P L rest π hπv b x) := by
+  sorry
+
+theorem streamΦ_zero {R M : Type*} [CommRing R] [AddGroup M] (P L : ℕ) (rest : AModel.Shape)
+    (π : M → List ℕ → List ℕ)
+    (hπv : ∀ m x, AModel.Valid rest x → AModel.Valid rest (π m x))
+    (hπ0 : ∀ x, AModel.Valid rest x → π 0 x = x)
+    (x : Fin (AModel.vol (P :: L :: rest)) → R) :
+    streamΦ P L rest π hπv 0 x = x := by
+  sorry
+
 theorem network_interchange_shear {R M : Type*} [CommRing R] [AddCommGroup M]
     (P W L : ℕ) [NeZero W] (rest : Shape) (π : M → List ℕ → List ℕ)
     (hπv : ∀ m x, AModel.Valid rest x → AModel.Valid rest (π m x))
@@ -1152,6 +1175,21 @@ section ShearAction
 variable {rest : Shape} {m Q : ℕ} {M : Type*} [AddCommGroup M]
 
 variable (Λ : Layout rest (m + m) Q) (φ : M →+ Matrix (Fin m) (Fin m) (ZMod Q))
+
+/-- GAP (E3): the shear address map preserves `rest`-validity. -/
+theorem shearπ_valid (m : M) (x : List ℕ) (hx : AModel.Valid rest x) :
+    AModel.Valid rest (shearπ Λ φ m x) := by
+  sorry
+
+/-- GAP (E4): `shearπ` is additive: the shear by `-(φ (a+b))` is the composed shear. -/
+theorem shearπ_add (a b : M) (x : List ℕ) (hx : AModel.Valid rest x) :
+    shearπ Λ φ (a + b) x = shearπ Λ φ a (shearπ Λ φ b x) := by
+  sorry
+
+/-- GAP (E5): the zero shear is the identity. -/
+theorem shearπ_zero (x : List ℕ) (hx : AModel.Valid rest x) :
+    shearπ Λ φ 0 x = x := by
+  sorry
 
 /-- **The row-split shear network (Prop. 11, the shear `H ← H + D`).** Split the rows into `W`
 role streams, run the gate network with the physical frame changes `Φ_a` = pull by the shear

@@ -100,11 +100,6 @@ section
 -- Source module: NLogN.Costs
 namespace NLogN
 
-theorem zsz_mul_le (a b : ℤ) : zsz (a * b) ≤ zsz a + zsz b := by
-  apply zsz_le_of_lt
-  rw [Int.natAbs_mul, pow_add]
-  exact Nat.mul_lt_mul'' (natAbs_lt_zsz a) (natAbs_lt_zsz b)
-
 end NLogN
 
 end
@@ -140,9 +135,6 @@ open IntMul
 variable {S P : ℕ} {I : List Sym} {iprog : Fin P → IStmt S P}
 
 variable {P : ℕ} {I : List Sym} {iprog : Fin P → IStmt HS P}
-
-theorem zsz_add_le' (a b : ℤ) : zsz (a + b) ≤ zsz a + zsz b + 1 := by
-  have := zsz_add_le a b; omega
 
 end NLogN
 

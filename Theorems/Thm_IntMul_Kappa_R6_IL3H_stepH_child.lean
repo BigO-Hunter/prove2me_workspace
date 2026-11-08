@@ -28,6 +28,7 @@ import Definitions.Def_IntMul_Kappa_R6_Defs10
 import Definitions.Def_IntMul_Kappa_K_Defs4
 import Definitions.Def_IntMul_Kappa_K_Defs15
 import Definitions.Def_IntMul_Kappa_K_Defs13
+import Theorems.Thm_IntMul_Kappa_R6_IL3H_kerQ
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -126,13 +127,6 @@ namespace NLogN.KFL
 
 open IntMul RS KIL KFD Butterfly
 
-/-! ## Expression specifications -/
-
-theorem ESp.congr {e : Ex HS} {t t' : IState HS} {Bb : ℕ} {v : ℤ} (h : ESp e t Bb v)
-    (hr : ∀ i ∈ e.regs, t.G i = t'.G i) : ESp e t' Bb v := by
-  obtain ⟨h1, h2, h3, _⟩ := Ex.congrG e hr
-  exact ⟨h.clean, h2.1 h.ok, (h3 Bb).1 h.bnd, h1 ▸ h.ev⟩
-
 /-! ## The generic segment step -/
 
 /-! ## Expression combinators -/
@@ -188,19 +182,7 @@ section Basic
 
 variable {ι : Type*} [Fintype ι] [DecidableEq ι]
 
-theorem fset_fbit (st : ι → ℕ) (j : ℕ) : fset st j (fbit st j) = j := by
-  simp [fset, fsetZ]
-
 variable {M : Type*} [AddCommMonoid M] [Module ℂ M]
-
-theorem selOpF_one {st : ι → ℕ} {n : ℕ} {xs : List M} (h : xs.length = n) :
-    selOpF st n 1 xs = xs := by
-  apply List.ext_getElem (by simp [h])
-  intro j h₁ h₂
-  simp only [length_selOpF] at h₁
-  simp only [selOpF, List.getElem_map, List.getElem_range, Matrix.one_apply, ite_smul, one_smul,
-    zero_smul]
-  rw [Finset.sum_ite_eq, if_pos (mem_univ _), fset_fbit, List.getD_eq_getElem]
 
 end Basic
 
@@ -426,37 +408,6 @@ section Ops
 
 variable {ι κ : Type*} [Fintype ι] [DecidableEq ι] [Fintype κ] [DecidableEq κ]
 
-/-- **A tensor power on a subfamily is the tensor product of an indicator.** -/
-theorem subOp_tens {g : κ → ι} (hg : Function.Injective g) (A : Butterfly.M2) :
-    subOp g (tens A : Matrix (κ → Fin 2) (κ → Fin 2) ℂ) =
-      tensF (fun i => if ∃ k, g k = i then A else 1) := by
-  classical
-  ext x y
-  simp only [subOp, tensF, tens]
-  rw [← Finset.prod_filter_mul_prod_filter_not Finset.univ (fun i => ∃ k, g k = i)]
-  have hR : (Finset.univ.filter fun i => ∃ k, g k = i) = Finset.univ.image g := by
-    ext i; simp
-  rw [hR, Finset.prod_image (fun a _ b _ h => hg h)]
-  have hin : ∀ k, (if ∃ k', g k' = g k then A else 1) = A := fun k => if_pos ⟨k, rfl⟩
-  simp_rw [hin]
-  by_cases hc : ∀ i, (∀ k, g k ≠ i) → x i = y i
-  · rw [if_pos hc]
-    have : ∏ i ∈ Finset.univ.filter (fun i => ¬ ∃ k, g k = i),
-        (if ∃ k, g k = i then A else 1) (x i) (y i) = 1 := by
-      refine Finset.prod_eq_one fun i hi => ?_
-      simp only [Finset.mem_filter] at hi
-      rw [if_neg hi.2, Matrix.one_apply, if_pos (hc i (fun k hk => hi.2 ⟨k, hk⟩))]
-    rw [this, mul_one]; rfl
-  · rw [if_neg hc]
-    push Not at hc
-    obtain ⟨i, hi, hxy⟩ := hc
-    have hni : ¬ ∃ k, g k = i := fun ⟨k, hk⟩ => hi k hk
-    have : ∏ i ∈ Finset.univ.filter (fun i => ¬ ∃ k, g k = i),
-        (if ∃ k, g k = i then A else 1) (x i) (y i) = 0 := by
-      refine Finset.prod_eq_zero (i := i) (by simpa using hi) ?_
-      rw [if_neg hni, Matrix.one_apply, if_neg hxy]
-    rw [this, mul_zero]
-
 end Ops
 
 end NLogN.KFN
@@ -619,15 +570,6 @@ variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 variable {Q : IState HS → Prop} {lo hi : ℕ}
 variable {ι : Type*} [Fintype ι] [DecidableEq ι] {r : ℕ} {st : ι → ℕ} {n : ℕ}
 
-/-- **A procedure call.** -/
-theorem sImplQ_call {T : Matrix (ι → Fin 2) (ι → Fin 2) ℂ} {j : Fin Pp} {body : IStmt HS Pp}
-    {e dw : ℕ} {cost : ℕ → ℕ} (hj : iprog j = body)
-    (H : SImplQ I iprog Q lo hi r st n T body e dw cost) :
-    SImplQ I iprog Q lo hi r st n T (.call j) e dw (fun w => cost w + 2) := by
-  intro s f zs l xs F w hq hC h0 hx hl hb hlo hhi
-  obtain ⟨zs', R, G, Hr⟩ := H s f zs l xs F w hq hC h0 hx hl hb hlo hhi
-  exact ⟨zs', R, G, IRuns.call (by rw [hj]; exact Hr)⟩
-
 /-- Transport along an equivalence of bit types. -/
 theorem sImplQ_equiv {κ : Type} [Fintype κ] [DecidableEq κ] {ι' : Type} [Fintype ι']
     [DecidableEq ι'] (eq : κ ≃ ι') (st' : ι' → ℕ) (A : Butterfly.M2) {U : IStmt HS Pp}
@@ -758,11 +700,6 @@ namespace NLogN.KFW
 
 open IntMul KIL KFD KFB KFG KFH KFN Complex Butterfly
 
-/-! ## The node frame -/
-
-theorem ExC.congr {σ : Fin HS → Option ℤ} {e : Ex HS} {x y : ℤ} {c : ℕ} (h : ExC σ e x c)
-    (hxy : x = y) : ExC σ e y c := hxy ▸ h
-
 end NLogN.KFW
 
 end
@@ -798,9 +735,6 @@ section Run
 variable {Pp : ℕ} {I : List Sym} {iprog : Fin Pp → IStmt HS Pp}
 
 variable {σ : Fin HS → Option ℤ} {U V : IStmt HS Pp} {f g h : Fin HS → List ℤ} {c c' : ℕ}
-
-theorem RunQ.congr {g' : Fin HS → List ℤ} (H : RunQ I iprog σ U f g c) (he : g = g') :
-    RunQ I iprog σ U f g' c := he ▸ H
 
 end Run
 
@@ -910,8 +844,6 @@ theorem Gs_le {A p m x : ℕ} (hA : 1 ≤ A) (hp : 1 ≤ p) : Gs A p m x ≤ A *
   unfold Gs; split_ifs
   · exact le_Ap hA hp
   · exact le_rfl
-
-theorem Gs_lt {A p m x : ℕ} (h : x < 2 * m) : Gs A p m x = x := by simp [Gs, h]
 
 theorem Gs_ge {A p m x : ℕ} (h : 2 * m ≤ x) : Gs A p m x = A * ((x + 1) ^ p - 1) := by
   simp [Gs, show ¬ x < 2 * m by omega]

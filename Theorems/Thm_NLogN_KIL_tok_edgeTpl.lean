@@ -3,6 +3,7 @@
 import Definitions.Def_IntMul_Kappa_K_Defs18
 import Theorems.Thm_NLogN_zsz_le_of_lt
 import Definitions.Def_IntMul_Kappa_R6_Defs10
+import Theorems.Thm_NLogN_KIL_edgeSteps_toCircuit
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -17,8 +18,6 @@ open Matrix AModel AModelFac
 section RatFac
 
 variable {m : ℕ}
-
-lemma ratFacQ_spec (A : QMat m) : RatFacSpec A (ratFacQ A) := (exists_ratFacQ A).choose_spec
 
 end RatFac
 
@@ -177,88 +176,9 @@ open AModel AModelL12 AModelFac AModelRat
 
 variable {m : ℕ}
 
-lemma coprime_den_inv {N : ℕ} {u : ℚ} (hu : u ≠ 0) (hn : Nat.Coprime u.num.natAbs N) :
-    Nat.Coprime (u⁻¹).den N := by
-  rw [Rat.den_inv_of_ne_zero hu]; exact hn
-
-lemma coprime_den_neg {N : ℕ} {u : ℚ} (h : Nat.Coprime u.den N) : Nat.Coprime (-u).den N := by
-  simpa [Rat.neg_den] using h
-
-lemma coprime_den_mul {N : ℕ} {a b : ℚ} (ha : Nat.Coprime a.den N) (hb : Nat.Coprime b.den N) :
-    Nat.Coprime (a * b).den N := (goodSub N).mul_mem ha hb
-
 namespace QStep
 
-theorem good_rev {N : ℕ} : ∀ s : QStep m, s.Good N → (s.rev).Good N
-  | .sh i u c, ⟨hu, hd, hn, hc⟩ => by
-    refine ⟨inv_ne_zero hu, coprime_den_inv hu hn, ?_, fun j hj =>
-      coprime_den_neg (coprime_den_mul (coprime_den_inv hu hn) (hc j hj))⟩
-    rw [Rat.num_inv, Int.natAbs_mul, Int.natAbs_sign_of_ne_zero (Rat.num_ne_zero.2 hu)]
-    simpa using hd
-  | .sw _ _, _ => trivial
-
 end QStep
-
-theorem revQ_good {N : ℕ} (l : List (QStep m)) (h : ∀ s ∈ l, s.Good N) :
-    ∀ s ∈ revQ l, s.Good N := by
-  intro s hs
-  simp only [revQ, List.mem_reverse, List.mem_map] at hs
-  obtain ⟨s', hs', rfl⟩ := hs
-  exact QStep.good_rev s' (h s' hs')
-
-theorem hQ_good {N : ℕ} {E : QMat m} (h : FGood N E) : ∀ s ∈ hQ E, s.Good N := by
-  intro s hs
-  simp only [hQ, List.mem_map, List.mem_reverse, List.mem_finRange, true_and] at hs
-  obtain ⟨a, rfl⟩ := hs
-  refine ⟨h.2.1 a, h.1 a a, h.2.2 a, fun j _ => ?_⟩
-  induction j using Fin.addCases with
-  | left b => simpa [hcQ, -Fin.natAdd_eq_addNat] using h.1 a b
-  | right b => simp [hcQ, -Fin.natAdd_eq_addNat]
-
-theorem dQ_good {N : ℕ} {E : QMat m} (h : FGood N E) : ∀ s ∈ dQ E, s.Good N := by
-  intro s hs
-  simp only [dQ, List.mem_map, List.mem_reverse, List.mem_finRange, true_and] at hs
-  obtain ⟨a, rfl⟩ := hs
-  refine ⟨h.2.1 a, h.1 a a, h.2.2 a, fun j _ => ?_⟩
-  induction j using Fin.addCases with
-  | left b => simp [dcQ, -Fin.natAdd_eq_addNat]
-  | right b => simpa [dcQ, -Fin.natAdd_eq_addNat] using h.1 a b
-
-theorem pivotQ_good {N : ℕ} (i j : Fin m) : ∀ s ∈ pivotQ (m := m) i j, s.Good N := by
-  have hc : ∀ l : Fin (m + m), Nat.Coprime ((Pi.single (Fin.castAdd m i) (1 : ℚ) :
-      Fin (m + m) → ℚ) l).den N := fun l => by
-    by_cases h : l = Fin.castAdd m i
-    · subst h; simp
-    · simp [Pi.single_apply, h]
-  intro s hs
-  simp only [pivotQ, List.mem_cons, List.not_mem_nil, or_false] at hs
-  rcases hs with rfl | rfl | rfl
-  · exact ⟨one_ne_zero, by simp, by simp, fun l _ => hc l⟩
-  · trivial
-  · exact ⟨by norm_num, by simp, by simp, fun l _ => hc l⟩
-
-theorem addQ_good {N : ℕ} (ps : List (Fin m × Fin m)) : ∀ s ∈ addQ (m := m) ps, s.Good N := by
-  intro s hs
-  simp only [addQ, List.mem_flatMap] at hs
-  obtain ⟨p, -, hs⟩ := hs
-  exact pivotQ_good p.1 p.2 s hs
-
-theorem shearQ_good {N : ℕ} {E₁ E₂ : QMat m} (Pi : IMat m) (h₁ : FGood N E₁) (h₂ : FGood N E₂) :
-    ∀ s ∈ shearQ E₁ Pi E₂, s.Good N := by
-  intro s hs
-  simp only [shearQ, List.mem_append] at hs
-  rcases hs with (((h | h) | h) | h) | h
-  · exact dQ_good h₂ s h
-  · exact revQ_good _ (hQ_good h₁) s h
-  · exact addQ_good _ s h
-  · exact hQ_good h₁ s h
-  · exact revQ_good _ (dQ_good h₂) s h
-
-lemma fgood_of {q b N : ℕ} (hN : N ∣ q ^ b) {E : QMat m}
-    (hd : ∀ i j, Nat.Coprime (E i j).den q) (hz : ∀ i, E i i ≠ 0)
-    (hn : ∀ i, Nat.Coprime (E i i).num.natAbs q) : FGood N E :=
-  ⟨fun i j => Nat.Coprime.coprime_dvd_right hN ((hd i j).pow_right b), hz,
-    fun i => Nat.Coprime.coprime_dvd_right hN ((hn i).pow_right b)⟩
 
 end NLogN.KIL
 

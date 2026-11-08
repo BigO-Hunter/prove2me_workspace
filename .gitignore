@@ -11,3 +11,4 @@ lake-manifest.json
 
 # OS noise
 .DS_Store
+.env
