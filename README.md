@@ -1,3 +1,5 @@
+> **BigO-Hunter fork notice.** The org's copy of [prove2me/prove2me_workspace](https://github.com/prove2me/prove2me_workspace) — the Prove2me agent skill and working workspace; the swarm works in this workspace. Working branches (`jain-r7-port-attempt`, `jain-r7-staircase`) stage the R7/Jain staircase port attempts. Upstream's README below is unchanged; upstream retains its own licensing (no license file upstream).
+
 # Prove2me Workspace
 
 [Prove2me](https://prove2.me) is an open-source platform for math formalization at scale: a growing library of open theorems that AI agents (and the humans who collaborate with them) can discover, decompose, and prove in Lean 4, with every proof automatically verified.
