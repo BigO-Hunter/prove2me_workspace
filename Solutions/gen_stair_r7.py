@@ -248,7 +248,19 @@ def main():
     assert all(sum(x) == H - 1 for x in xd)
     hist, corners = histogram(S, rk, ylev, xd, staircase_corner(H))
 
+    # derivation ledgers for the per-width reconstruction (the inner-lemma arithmetic)
     h, v, N, A = H, S.v, S.v * S.v, S.v * S.R
+    m = h * h
+    ylev_diffs = Counter()
+    for t in range(v):
+        ds = sorted(set([0] + ylev[t] + [h - 1]))
+        for a, b in zip(ds, ds[1:]):
+            ylev_diffs[b - a] += 1
+    xlev_diffs = Counter()
+    for xsl in xd:
+        for x in xsl:
+            xlev_diffs[x] += 1
+    assert sum(ylev_diffs.values()) == sum(len(set([0] + ylev[t] + [h - 1])) - 1 for t in range(v))
     m = h * h
     Wd = 2 * N + 2 * A
     L = 2 * v * h * (h - 1)
@@ -267,11 +279,64 @@ def main():
     corner_items = sorted(corners.items())
     rk_items = sorted(rk.items())
 
+    # ---- per-width decomposition (mirrors histogram(); asserted to reproduce hist) ----
+    corner_runs = staircase_corner(H)
+    terms = defaultdict(list)  # width -> list of Lean term strings
+
+    def lt_(lst, name, key):  # Lean lookup term
+        return f"{name} {key}"
+
+    def ones(k):
+        return (h - k) if 2 * k > h else k
+
+    for r, c in corner_items:
+        w = m - 2 * r
+        terms[w].append(f"2 * v * cc {r}")
+        terms[1].append(f"2 * v * cc {r} * {ones(r)}")
+        if 2 * r > h:
+            terms[2 * r - h].append(f"2 * v * cc {r}")
+    for r, c in rk_items:
+        terms[1].append(f"2 * v * rc {r} * {ones(r)}")
+        if 2 * r > h:
+            terms[2 * r - h].append(f"2 * v * rc {r}")
+    terms[1].append("2 * v * h")
+    terms[h - 2].append("2 * v * h")
+    for d, c in ylev_diffs.items():
+        terms[1].append(f"2 * v * yd {d} * {ones(d)}")
+        if 2 * d > h:
+            terms[2 * d - h].append(f"2 * v * yd {d}")
+    for d, c in xlev_diffs.items():
+        terms[1].append(f"2 * v * xd {d} * {ones(d)}")
+        if 2 * d > h:
+            terms[2 * d - h].append(f"2 * v * xd {d}")
+    terms[m - 4 * h + 2].append("2 * N")
+    for w in corner_runs:
+        terms[w].append("2 * N")
+    terms[1].append("N")
+
+    # Python-side check: the decomposition must reproduce the histogram exactly
+    import re as _re
+
+    def ev(term):  # evaluate a Lean term string in Python's namespace
+        ns = {"v": v, "N": N, "h": H,
+              "cc": lambda r: corners.get(r, 0),
+              "rc": lambda r: rk.get(r, 0),
+              "yd": lambda d: ylev_diffs.get(d, 0),
+              "xd": lambda d: xlev_diffs.get(d, 0)}
+        return eval(_re.sub(r"\b(cc|rc|yd|xd) (\d+)", r"\1(\2)", term), ns)
+
+    recon = defaultdict(int)
+    for w, ts in terms.items():
+        recon[w] = sum(ev(t) for t in ts)
+    assert dict(recon) == {w: c for w, c in hist.items()}, (
+        "per-width decomposition does not reproduce the histogram")
+
     def pairs(lst):
         return ", ".join(f"({w}, {c})" for w, c in lst)
 
     lean = f"""import Definitions.Def_IntMul_KappaFramework
 import Definitions.Def_IntMul_KappaJainData
+import Definitions.Def_IntMul_Kappa_R7_Consts
 
 set_option autoImplicit false
 set_option relaxedAutoImplicit false
@@ -347,6 +412,51 @@ def chain_rank_counts : List (ℕ × ℕ) :=
 
 /-- The chain-rank ledger total (number of chain steps over all slots). -/
 theorem chain_rank_counts_total : (chain_rank_counts.map Prod.snd).sum = {sum(c for _, c in rk_items)} := by decide
+
+/-! ## Deferred-level and X_S-chain ledgers -/
+
+/-- Deferred-readout level diffs over all `v` targets: for each target, the consecutive
+differences of `sorted(set([0] + levels + [h-1]))` (`ychains` levels of the derivation). -/
+def ychain_diff_counts : List (ℕ × ℕ) :=
+  [{pairs(sorted(ylev_diffs.items()))}]
+
+theorem ychain_diff_counts_total : (ychain_diff_counts.map Prod.snd).sum = {sum(ylev_diffs.values())} := by decide
+
+/-- `X_S` chain step widths over all leaves (`xs_order` V-gate chains; each leaf's diffs). -/
+def xchain_diff_counts : List (ℕ × ℕ) :=
+  [{pairs(sorted(xlev_diffs.items()))}]
+
+theorem xchain_diff_counts_total : (xchain_diff_counts.map Prod.snd).sum = {sum(xlev_diffs.values())} := by decide
+
+/-! ## Per-width derivation — the kernel rebuilds every count from the ledgers
+
+Each equation is the batched two-stage interchange arithmetic (upstream `histogram()`):
+each of the two stages contributes, per corner rank `r`, the big aux child `m − 2·r` and
+the inner-corner decomposition `1^(h−r) ++ [2r−h]` (Jain's `inner` lemma, applied to
+corner ranks, chain ranks, deferred-level diffs and `X_S` diffs over all `v` centres),
+the `h`-cycle per stage contributes `inner(h−1, h) = [1, h−2]`, and the data entrance
+contributes (once, stage-independent) the block `m − 4h + 2` with its staircase corner
+runs `(h−2, h−5, 1^6)` and one copy-correction singleton per pair; the stage factor 2 is
+written in each term.  `decide` re-derives each count from the ledger data above. -/
+open IntMul.Kappa.R7.Stair
+
+/-- Count of width `w` in a `(width, count)` ledger. -/
+def lcnt (l : List (ℕ × ℕ)) (w : ℕ) : ℕ :=
+  (l.filter fun p => p.1 = w).map Prod.snd |>.sum
+
+/-- Corner-rank multiplicity (`r_u = h − dim σ_u` over the side slots). -/
+def cc (r : ℕ) : ℕ := lcnt corner_counts r
+
+/-- Chain-step rank multiplicity. -/
+def rc (r : ℕ) : ℕ := lcnt chain_rank_counts r
+
+/-- Deferred-level diff multiplicity over the targets. -/
+def yd (d : ℕ) : ℕ := lcnt ychain_diff_counts d
+
+/-- `X_S` chain diff multiplicity over the leaves. -/
+def xd (d : ℕ) : ℕ := lcnt xchain_diff_counts d
+
+{chr(10).join(f"theorem stair_count_{w} : lcnt stair_hist {w} = " + " + ".join(terms[w]) + " := by decide" for w, _ in items)}
 
 end IntMul.Kappa.R7.StairHist
 """
