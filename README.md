@@ -1,4 +1,4 @@
-> **BigO-Hunter fork notice.** The org's copy of [prove2me/prove2me_workspace](https://github.com/prove2me/prove2me_workspace) — the Prove2me agent skill and working workspace; the swarm works in this workspace. Working branches (`jain-r7-port-attempt`, `jain-r7-staircase`) stage the R7/Jain staircase port attempts. Upstream's README below is unchanged; upstream retains its own licensing (no license file upstream).
+> **BigO-Hunter fork notice.** The org's copy of [prove2me/prove2me_workspace](https://github.com/prove2me/prove2me_workspace) — the Prove2me agent skill and working workspace; the swarm works in this workspace. Working branches (`jain-r7-port-attempt`, `jain-r7-staircase`) stage the R7/Jain staircase port attempts. The org stamps this copy's LICENSE with the Copy-Free/Stays-Free (CFSF) License — see [LICENSE](LICENSE) ([github.com/darkhipo/cfsf](https://github.com/darkhipo/cfsf)); upstream's content remains as published (upstream carries no license file) — see [NOTICE](NOTICE.md). Upstream's README below is unchanged.
 
 # Prove2me Workspace
 
