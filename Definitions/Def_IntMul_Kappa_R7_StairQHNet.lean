@@ -34,7 +34,9 @@ What is here:
   `entI` = entrance edges on `List.range wAuxEnd`, `corrI` = the XOR-combined
   copy-correction triple (the −759/centre gate sharing), `blk2` = entrance ++
   chunks ++ corrections, `prog = blk1 ∘ range v ++ blk2 ∘ range v`,
-  `net ch := ⟨prog ch, R7.Stair.ρ⟩`;
+  `net ch := ⟨prog ch, R7.Stair.ρ⟩`. The `ex`/`ei` edge families are indexed by
+  the side slot `w` (not the centre) — staircase ③ re-index, since the corner
+  ranks `r_u = h − dim σ_u` are slot-keyed schedule data (M2b `corner_counts`);
 * structural size receipts (kernel list-arithmetic, sorry-free) pinning the
   program shape: per-block instruction counts and the full program length;
 * the densified node bound keystone: upstream `node_dims` has **64,042**
@@ -129,14 +131,17 @@ def ch0 : Ch where
   ec a s := dfltE
 
 def entE (ch : Ch) (a w : ℕ) : Edge 529 :=
-  if w < v then ch.en a w else if w < wEnt then ch.en a (w - v) else ch.ei a
+  if w < v then ch.en a w else if w < wEnt then ch.en a (w - v) else ch.ei w
 
 /-! ## Program wiring (r8 shapes, parameterized over the chunk lists) -/
 
-/-- Stage-one block: chunks then aux exits on slots `wEnt .. wAuxEnd`. -/
+/-- Stage-one block: chunks then aux exits on slots `wEnt .. wAuxEnd`. The aux
+exit edge is indexed by the side slot (spec §5 ②: "aux exit per slot
+wEnt..wAuxEnd") — the corner rank `r_u = h − dim σ_u` is slot-keyed schedule
+data (M2b `corner_counts`), so one shared per-centre edge cannot carry it. -/
 def blk1 (ch : Ch) (cs1 : List LChunk) (b : ℕ) : List NI :=
   chunkProg (ι1 b) (ch.e1 b) cs1 ++
-    (List.range' wEnt NR).map fun w => Instr.edge (ι1 b w) (ch.ex b)
+    (List.range' wEnt NR).map fun w => Instr.edge (ι1 b w) (ch.ex w)
 
 def corrI (ch : Ch) (a s : ℕ) : List NI :=
   [xorG (ι2 a (wU s)) (ι2 a (wY s)), Instr.edge (ι2 a (wU s)) (ch.ec a s),
